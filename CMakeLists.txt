@@ -7,6 +7,9 @@ message(STATUS "PROJECT_SOURCE_DIR:" ${PROJECT_SOURCE_DIR})
 
 add_definitions(-DASIO_STANDALONE)
 
+set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++11")
+set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
+
 include_directories(./third-party
     ./third-party/asio/include
 )
