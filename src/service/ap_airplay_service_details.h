@@ -107,8 +107,8 @@ namespace aps { namespace service { namespace details {
 
         explicit response(const std::string& scheme_ver)
             : scheme_version(scheme_ver)
-            , status_text(status_string::ok)
             , status_code(status_type::ok)
+            , status_text(status_string::ok)
             , content_length(0)
         {}
 
@@ -407,7 +407,6 @@ namespace aps { namespace service { namespace details {
                     }
                     if (0 == std::strcmp(HEADER_CSEQ, name.c_str()))
                     {
-                        char* end = 0;
                         req.cseq = value;
                     }
                     req.headers[name] = value;

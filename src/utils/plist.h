@@ -60,9 +60,11 @@ public:
             this->obj_ = 0;
         }
         this->obj_ = p;
+        
+        return *this;
     }
 
-    auto_plist &operator=(auto_plist &other)
+    auto_plist&operator=(auto_plist &other)
     {
         if (this->obj_)
         {
@@ -72,6 +74,8 @@ public:
 
         this->obj_ = other.obj_;
         other.obj_ = 0;
+        
+        return *this;
     }
 
     bool operator!()

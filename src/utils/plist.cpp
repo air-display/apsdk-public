@@ -155,7 +155,6 @@ blist_integer_length(int64_t value) {
 static void
 bplist_analyze(plist_object_t *object, uint64_t *objects, uint64_t *bytes, uint64_t *refs)
 {
-    int64_t count;
     int64_t i;
 
     *objects += 1;
@@ -430,7 +429,6 @@ bplist_parse_object(const int64_t *reftab, uint64_t reftablen, uint64_t reftabid
         }
     }
     else if (object->type == PLIST_TYPE_DATA) {
-        plist_data_t *plist_data;
         uint8_t *buffer;
 
         if (dataidx + length > datalen) {

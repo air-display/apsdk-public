@@ -70,12 +70,12 @@ namespace aps { namespace network {
     {
     public:
         tcp_service_base(uint16_t port = 0, bool single_client = false)
-            : io_context_()
+            : port_(port)
+            , single_client_(single_client)
+            , io_context_()
             , io_work_(io_context_)
             , acceptor_(io_context_)
             , loop_thread_(0)
-            , port_(port)
-            , single_client_(single_client)
         {
 
         }

@@ -14,10 +14,12 @@ namespace aps {
     /// <summary>
     /// 
     /// </summary>
-    typedef PACKED(struct pair_verify_header_s {
+    PACKED(struct pair_verify_header_s {
         uint8_t is_first_frame;
         uint8_t reserved0;
         uint8_t reserved1;
         uint8_t reserved2;
-    } pair_verify_header_t);
+    });
+    
+    typedef pair_verify_header_s pair_verify_header_t;
 }
