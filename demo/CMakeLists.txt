@@ -1,0 +1,17 @@
+project(aps)
+
+file(GLOB_RECURSE SRC_FILES
+    "./*.cpp"
+    "./*.h"
+)
+
+add_executable(aps-demo
+    ${SRC_FILES}
+)
+
+target_link_libraries(aps-demo PRIVATE
+    libaps
+    libed25519
+    libcurve25519
+    libplayfair
+)
