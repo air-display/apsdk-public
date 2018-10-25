@@ -82,7 +82,7 @@ namespace aps { namespace network {
 
         ~tcp_service_base()
         {
-
+            stop();
         }
 
         virtual const uint16_t port() const override

@@ -123,7 +123,7 @@ namespace aps { namespace service {
         case asio::error::eof:
         case asio::error::connection_reset:
         {
-            close();
+            //close();
         }
         break;
         case asio::error::connection_aborted:
@@ -164,7 +164,7 @@ namespace aps { namespace service {
 
     ap_video_stream_service::~ap_video_stream_service()
     {
-
+        
     }
 
     aps::network::tcp_session_ptr ap_video_stream_service::prepare_new_session()

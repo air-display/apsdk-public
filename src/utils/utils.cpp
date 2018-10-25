@@ -1,6 +1,5 @@
-#pragma once
-#include "utils.h"
 #include <ctime>
+#include "utils.h"
 
 const char* gmt_time_string()
 {

@@ -17,14 +17,14 @@ namespace aps {
         {
             ap_config::get().init();
 
-            rtsp_service_ = std::make_shared<ap_airplay_service>(8888);
+            airplay_service_ = std::make_shared<ap_airplay_service>(8888);
 
             return true;
         }
 
         bool start()
         {
-            if (rtsp_service_ && rtsp_service_->start())
+            if (airplay_service_ && airplay_service_->start())
                 return true;
 
             return false;
@@ -32,17 +32,17 @@ namespace aps {
 
         void stop()
         {
-            if (rtsp_service_)
-                rtsp_service_->stop();
+            if (airplay_service_)
+                airplay_service_->stop();
         }
 
         void uninitialize()
         {
-            rtsp_service_.reset();
+            airplay_service_.reset();
         }
 
     private:
-        tcp_service_ptr rtsp_service_;
+        tcp_service_ptr airplay_service_;
     };
 
     ap_server::ap_server()
