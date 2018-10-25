@@ -30,7 +30,7 @@ namespace aps {
     {
         width_ = 1920;
         height_ =1080;
-        refreshRate_ = 1.0 / 24;
+        refreshRate_ = 1.0f / 24;
         uuid_ = "e5f7a68d-7b0f-4305-984b-974f677a150b";
     }
 

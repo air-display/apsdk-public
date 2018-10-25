@@ -60,7 +60,7 @@ aps::ap_crypto::~ap_crypto()
 {
 }
 
-void aps::ap_crypto::init_client_rsa_info(const uint8_t* piv, uint32_t iv_len, const uint8_t* pkey, uint32_t key_len)
+void aps::ap_crypto::init_client_rsa_info(const uint8_t* piv, uint64_t iv_len, const uint8_t* pkey, uint64_t key_len)
 {
     if (piv && iv_len)
     {
@@ -73,7 +73,7 @@ void aps::ap_crypto::init_client_rsa_info(const uint8_t* piv, uint32_t iv_len, c
     }
 }
 
-void aps::ap_crypto::init_client_public_keys(const uint8_t* pcurve, uint32_t curve_len, const uint8_t* ped, uint32_t ed_len)
+void aps::ap_crypto::init_client_public_keys(const uint8_t* pcurve, uint64_t curve_len, const uint8_t* ped, uint64_t ed_len)
 {
     if (pcurve && curve_len)
     {
@@ -151,7 +151,7 @@ void aps::ap_crypto::sign_pair_signature(std::vector<uint8_t>& sig)
     sig = signature;
 }
 
-bool aps::ap_crypto::verify_pair_signature(const uint8_t* p, uint32_t len)
+bool aps::ap_crypto::verify_pair_signature(const uint8_t* p, uint64_t len)
 {
     std::vector<uint8_t> encrypted_signature;
     encrypted_signature.assign(p, p + len);
@@ -206,9 +206,9 @@ void aps::ap_crypto::init_video_stream_aes(const uint64_t video_stream_id)
         sha512_aes_iv.data());
 }
 
-void aps::ap_crypto::decrypt_video_frame(uint8_t* frame, uint32_t len)
+void aps::ap_crypto::decrypt_video_frame(uint8_t* frame, uint64_t len)
 {
-    AES_CTR_xcrypt_buffer(&video_stream_aes_ctx, frame, len);
+    AES_CTR_xcrypt_buffer(&video_stream_aes_ctx, frame, (uint32_t)len);
 }
 
 const std::vector<uint8_t>& aps::ap_crypto::shared_secret() const

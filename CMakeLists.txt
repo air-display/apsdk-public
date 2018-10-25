@@ -2,13 +2,16 @@ cmake_minimum_required(VERSION 3.6)
 
 project(aps)
 
-set(PROJECT_ROOT_DIR ${PROJECT_SOURCE_DIR})
-message(STATUS "PROJECT_SOURCE_DIR:" ${PROJECT_SOURCE_DIR})
-
 add_definitions(-DASIO_STANDALONE)
 
-set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++11")
-set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
+if (WIN32)
+    add_definitions(-D_WIN32_WINNT=0x0501)
+endif()
+
+if (APPLE)
+    set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++11")
+    set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
+endif()
 
 include_directories(./third-party
     ./third-party/asio/include

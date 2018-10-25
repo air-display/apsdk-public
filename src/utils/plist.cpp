@@ -117,7 +117,7 @@ parse_real(const uint8_t *data, uint64_t dataidx, uint64_t length, double *value
     else {
         *value = *((double *)&data[dataidx]);
     }
-    return length;
+    return (int)length;
 }
 
 static uint8_t
@@ -155,7 +155,7 @@ blist_integer_length(int64_t value) {
 static void
 bplist_analyze(plist_object_t *object, uint64_t *objects, uint64_t *bytes, uint64_t *refs)
 {
-    int64_t i;
+    uint64_t i;
 
     *objects += 1;
     if (!object) {
@@ -236,14 +236,14 @@ bplist_serialize_string(int64_t *reftab, uint64_t *reftabidx, uint8_t *data, uin
 
     length = (int64_t)strlen(value);
     if (length < 15) {
-        data[(*dataidx)++] = PLIST_TYPE_STRING | length;
+        data[(*dataidx)++] = PLIST_TYPE_STRING | (int8_t)length;
     }
     else {
         data[(*dataidx)++] = PLIST_TYPE_STRING | 0x0f;
         data[(*dataidx)++] = PLIST_TYPE_INTEGER | blist_integer_length(length);
         serialize_integer(data, dataidx, integer_length(length), length);
     }
-    memcpy(&data[*dataidx], value, length);
+    memcpy(&data[*dataidx], value, (size_t)length);
     *dataidx += length;
 
     return objectid;
@@ -277,35 +277,35 @@ bplist_serialize_object(int64_t *reftab, uint64_t *reftabidx, uint8_t reflen, ui
     else if (object->type == PLIST_TYPE_DATA) {
         int64_t length = (int64_t)object->value.value_data.length;
         if (length < 15) {
-            data[(*dataidx)++] = PLIST_TYPE_DATA | length;
+            data[(*dataidx)++] = PLIST_TYPE_DATA | (int8_t)length;
         }
         else {
             data[(*dataidx)++] = PLIST_TYPE_DATA | 0x0f;
             data[(*dataidx)++] = PLIST_TYPE_INTEGER | blist_integer_length(length);
             serialize_integer(data, dataidx, integer_length(length), length);
         }
-        memcpy(&data[*dataidx], object->value.value_data.value, length);
+        memcpy(&data[*dataidx], object->value.value_data.value, (size_t)length);
         *dataidx += length;
     }
     else if (object->type == PLIST_TYPE_STRING) {
         int64_t length = (int64_t)strlen(object->value.value_string);
         if (length < 15) {
-            data[(*dataidx)++] = PLIST_TYPE_STRING | length;
+            data[(*dataidx)++] = PLIST_TYPE_STRING | (int8_t)length;
         }
         else {
             data[(*dataidx)++] = PLIST_TYPE_STRING | 0x0f;
             data[(*dataidx)++] = PLIST_TYPE_INTEGER | blist_integer_length(length);
             serialize_integer(data, dataidx, integer_length(length), length);
         }
-        memcpy(&data[*dataidx], object->value.value_string, length);
+        memcpy(&data[*dataidx], object->value.value_string, (size_t)length);
         *dataidx += length;
     }
     else if (object->type == PLIST_TYPE_ARRAY) {
-        int64_t size = (int64_t)object->value.value_array.size;
+        uint64_t size = (uint64_t)object->value.value_array.size;
         uint64_t valueidx;
 
         if (size < 15) {
-            data[(*dataidx)++] = PLIST_TYPE_ARRAY | size;
+            data[(*dataidx)++] = PLIST_TYPE_ARRAY | (int8_t)size;
         }
         else {
             data[(*dataidx)++] = PLIST_TYPE_ARRAY | 0x0f;
@@ -322,12 +322,12 @@ bplist_serialize_object(int64_t *reftab, uint64_t *reftabidx, uint8_t reflen, ui
         }
     }
     else if (object->type == PLIST_TYPE_DICT) {
-        int64_t size = (int64_t)object->value.value_dict.size;
+        uint64_t size = (uint64_t)object->value.value_dict.size;
         uint64_t keyidx = 0;
         uint64_t valueidx = 0;
 
         if (size < 15) {
-            data[(*dataidx)++] = PLIST_TYPE_DICT | size;
+            data[(*dataidx)++] = PLIST_TYPE_DICT | (int8_t)size;
         }
         else {
             data[(*dataidx)++] = PLIST_TYPE_DICT | 0x0f;
@@ -375,7 +375,7 @@ bplist_parse_object(const int64_t *reftab, uint64_t reftablen, uint64_t reftabid
     }
     else {
         uint8_t lentype;
-        uint64_t lenlength;
+        uint8_t lenlength;
         int64_t lenvalue;
 
         if (dataidx >= datalen) {
@@ -407,7 +407,7 @@ bplist_parse_object(const int64_t *reftab, uint64_t reftablen, uint64_t reftabid
         object->value.value_primitive = type & 0x0f;
     }
     else if (object->type == PLIST_TYPE_INTEGER) {
-        if (dataidx + (1 << length) > datalen) {
+        if (dataidx + ((uint64_t)1 << length) > datalen) {
             free(object);
             return NULL;
         }
@@ -418,11 +418,11 @@ bplist_parse_object(const int64_t *reftab, uint64_t reftablen, uint64_t reftabid
         }
     }
     else if (object->type == PLIST_TYPE_REAL) {
-        if (dataidx + (1 << length) > datalen) {
+        if (dataidx + ((uint64_t)1 << length) > datalen) {
             free(object);
             return NULL;
         }
-        ret = parse_real(data, dataidx, (1 << length), &object->value.value_real);
+        ret = parse_real(data, dataidx, ((uint64_t)1 << length), &object->value.value_real);
         if (ret < 0) {
             free(object);
             return NULL;
@@ -435,12 +435,12 @@ bplist_parse_object(const int64_t *reftab, uint64_t reftablen, uint64_t reftabid
             free(object);
             return NULL;
         }
-        buffer = (uint8_t *)malloc(length);
+        buffer = (uint8_t *)malloc((size_t)length);
         if (!buffer) {
             free(object);
             return NULL;
         }
-        memcpy(buffer, data + dataidx, length);
+        memcpy(buffer, data + dataidx, (size_t)length);
 
         object->value.value_data.length = length;
         object->value.value_data.value = buffer;
@@ -452,12 +452,12 @@ bplist_parse_object(const int64_t *reftab, uint64_t reftablen, uint64_t reftabid
             free(object);
             return NULL;
         }
-        buffer = (char *)calloc(length + 1, sizeof(char));
+        buffer = (char *)calloc((size_t)length + 1, sizeof(char));
         if (!buffer) {
             free(object);
             return NULL;
         }
-        memcpy(buffer, data + dataidx, length);
+        memcpy(buffer, data + dataidx, (size_t)length);
         object->value.value_string = buffer;
     }
     else if (object->type == PLIST_TYPE_UNICODE_STRING) {
@@ -467,12 +467,12 @@ bplist_parse_object(const int64_t *reftab, uint64_t reftablen, uint64_t reftabid
             free(object);
             return NULL;
         }
-        buffer = (char *)calloc(length + 1, sizeof(char));
+        buffer = (char *)calloc((size_t)length + 1, sizeof(char));
         if (!buffer) {
             free(object);
             return NULL;
         }
-        memcpy(buffer, data + dataidx, length);
+        memcpy(buffer, data + dataidx, (size_t)length);
         object->value.value_string = buffer;
     }
     else if (object->type == PLIST_TYPE_ARRAY) {
@@ -483,7 +483,7 @@ bplist_parse_object(const int64_t *reftab, uint64_t reftablen, uint64_t reftabid
             free(object);
             return NULL;
         }
-        values = (plist_object_t **)calloc(length, sizeof(plist_object_t *));
+        values = (plist_object_t **)calloc((size_t)length, sizeof(plist_object_t *));
         if (!values) {
             free(object);
             return NULL;
@@ -524,12 +524,12 @@ bplist_parse_object(const int64_t *reftab, uint64_t reftablen, uint64_t reftabid
             free(object);
             return NULL;
         }
-        keys = (char **)calloc(length, sizeof(char *));
+        keys = (char **)calloc((size_t)length, sizeof(char *));
         if (!keys) {
             free(object);
             return NULL;
         }
-        values = (plist_object_t **)calloc(length, sizeof(plist_object_t *));
+        values = (plist_object_t **)calloc((size_t)length, sizeof(plist_object_t *));
         if (!values) {
             free(keys);
             free(object);
@@ -698,12 +698,12 @@ plist_object_string(const char *value)
         return NULL;
     }
     valuelen = strlen(value);
-    buffer = (char *)malloc(valuelen + 1);
+    buffer = (char *)malloc((size_t)valuelen + 1);
     if (!buffer) {
         free(object);
         return NULL;
     }
-    memcpy(buffer, value, valuelen + 1);
+    memcpy(buffer, value, (size_t)valuelen + 1);
 
     object->type = PLIST_TYPE_STRING;
     object->value.value_string = buffer;
@@ -837,7 +837,7 @@ plist_object_real_get_value(const plist_object_t *object, double *value)
 }
 
 int
-plist_object_data_get_value(const plist_object_t *object, const uint8_t **value, uint32_t *valuelen)
+plist_object_data_get_value(const plist_object_t *object, const uint8_t **value, uint64_t *valuelen)
 {
     if (!object || !value || !valuelen) {
         return -1;
@@ -930,7 +930,7 @@ plist_object_from_bplist(const uint8_t *data, uint32_t datalen)
         return NULL;
     }
 
-    reftab = (int64_t *)calloc(objects, sizeof(int64_t));
+    reftab = (int64_t *)calloc((size_t)objects, sizeof(int64_t));
     if (!reftab) {
         return NULL;
     }
@@ -944,12 +944,12 @@ plist_object_from_bplist(const uint8_t *data, uint32_t datalen)
 }
 
 int
-plist_object_to_bplist(plist_object_t *object, uint8_t **data, uint32_t *datalen)
+plist_object_to_bplist(plist_object_t *object, uint8_t **data, uint64_t *datalen)
 {
     uint64_t objects, bytes, refs;
     uint8_t reflen, offlen;
     uint8_t *buf;
-    uint32_t buflen;
+    uint64_t buflen;
     uint64_t bufidx;
     int64_t *reftab;
     uint64_t reftabidx;
@@ -970,13 +970,13 @@ plist_object_to_bplist(plist_object_t *object, uint8_t **data, uint32_t *datalen
     buflen += objects * offlen;
     buflen += BPLIST_TRAILER_LEN;
 
-    buf = (uint8_t *)calloc(buflen, sizeof(uint8_t));
+    buf = (uint8_t *)calloc((size_t)buflen, sizeof(uint8_t));
     if (!buf) {
         return -2;
     }
     bufidx = 0;
 
-    reftab = (int64_t *)calloc(objects, sizeof(uint64_t));
+    reftab = (int64_t *)calloc((size_t)objects, sizeof(uint64_t));
     if (!reftab) {
         free(buf);
         return -3;

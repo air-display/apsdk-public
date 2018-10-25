@@ -52,6 +52,7 @@ namespace aps {
 
     ap_server::~ap_server()
     {
+        impl_.reset();
     }
 
     bool ap_server::initialize()
@@ -66,11 +67,11 @@ namespace aps {
 
     void ap_server::stop()
     {
-        return impl_->stop();
+        impl_->stop();
     }
 
     void ap_server::uninitialize()
     {
-        return impl_->uninitialize();
+        impl_->uninitialize();
     }
 }

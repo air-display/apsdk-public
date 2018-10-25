@@ -32,23 +32,23 @@ namespace aps {
         ~ap_crypto();
 
         void init_client_rsa_info(
-            const uint8_t* piv, uint32_t iv_len,
-            const uint8_t* pkey, uint32_t key_len);
+            const uint8_t* piv, uint64_t iv_len,
+            const uint8_t* pkey, uint64_t key_len);
 
         void init_client_public_keys(
-            const uint8_t* pcurve, uint32_t curve_len,
-            const uint8_t* ped, uint32_t ed_len);
+            const uint8_t* pcurve, uint64_t curve_len,
+            const uint8_t* ped, uint64_t ed_len);
 
         void init_pair_verify_aes();
 
         void sign_pair_signature(std::vector<uint8_t>& sig);
 
-        bool verify_pair_signature(const uint8_t* p, uint32_t len);
+        bool verify_pair_signature(const uint8_t* p, uint64_t len);
 
         void init_video_stream_aes(
             const uint64_t video_stream_id);
 
-        void decrypt_video_frame(uint8_t* frame, uint32_t len);
+        void decrypt_video_frame(uint8_t* frame, uint64_t len);
 
         const std::vector<uint8_t>& shared_secret() const;
 

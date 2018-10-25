@@ -271,13 +271,13 @@ namespace aps { namespace service {
             else
             {
                 const uint8_t* piv = 0;
-                uint32_t iv_len = 0;
+                uint64_t iv_len = 0;
                 auto eiv_obj = plist_object_dict_get_value(data_obj, "eiv");
                 if (0 != plist_object_data_get_value(eiv_obj, &piv, &iv_len))
                     break;
 
                 const uint8_t* pkey = 0;
-                uint32_t key_len = 0;
+                uint64_t key_len = 0;
                 auto ekey_obj = plist_object_dict_get_value(data_obj, "ekey");
                 if (0 != plist_object_data_get_value(ekey_obj, &pkey, &key_len))
                     break;
