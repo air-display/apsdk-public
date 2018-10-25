@@ -122,10 +122,6 @@ namespace aps { namespace service {
         {
         case asio::error::eof:
         case asio::error::connection_reset:
-        {
-            //close();
-        }
-        break;
         case asio::error::connection_aborted:
         case asio::error::access_denied:
         case asio::error::address_family_not_supported:
@@ -152,7 +148,7 @@ namespace aps { namespace service {
         case asio::error::shut_down:
         case asio::error::timed_out:
         case asio::error::would_block:
-        	break;
+            break;
         }
     }
 
