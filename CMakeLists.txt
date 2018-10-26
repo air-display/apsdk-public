@@ -60,7 +60,7 @@ file(GLOB_RECURSE SRC_THIRD
     src/crypto/aes.hpp
 )
 
-add_library(libaps STATIC
+add_library(aps STATIC
     ${SRC_AP}
     ${SRC_UTILS}
     ${SRC_SERVICE}

@@ -5,6 +5,6 @@ file(GLOB_RECURSE SRC_FILES
     "./*.h"
 )
 
-add_library(libcurve25519 STATIC
+add_library(curve25519 STATIC
     ${SRC_FILES}
 )

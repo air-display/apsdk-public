@@ -10,8 +10,8 @@ add_executable(aps-demo
 )
 
 target_link_libraries(aps-demo PRIVATE
-    libaps
-    libed25519
-    libcurve25519
-    libplayfair
+    aps
+    ed25519
+    curve25519
+    playfair
 )
