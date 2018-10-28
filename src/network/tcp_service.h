@@ -31,7 +31,7 @@ namespace aps { namespace network {
 
         virtual asio::io_context& io_context() = 0;
 
-        virtual tcp_session_ptr prepare_new_session() = 0;
+        virtual aps::network::tcp_session_ptr prepare_new_session() = 0;
     };
 
     typedef std::shared_ptr<tcp_service> tcp_service_ptr;

@@ -1,4 +1,7 @@
+#ifndef AP_HANDLER_H
+#define AP_HANDLER_H
 #pragma once
+
 #include <memory>
 
 namespace aps {
@@ -11,3 +14,4 @@ namespace aps {
 
     typedef std::shared_ptr<ap_handler> ap_handler_ptr;
 }
+#endif // AP_HANDLER_H

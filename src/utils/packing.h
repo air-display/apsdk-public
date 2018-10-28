@@ -1,3 +1,5 @@
+#ifndef PACKING_H
+#define PACKING_H
 #pragma once
 
 #ifdef __GNUC__
@@ -5,3 +7,5 @@
 #else
 #define PACKED( class_to_pack ) __pragma( pack(push, 1) ) class_to_pack __pragma( pack(pop) )
 #endif
+
+#endif // PACKING_H

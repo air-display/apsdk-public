@@ -1,4 +1,5 @@
-#include "fixedint.h"
+//#include "fixedint.h"
+#include <stdint.h>
 #include "sc.h"
 
 static uint64_t load_3(const unsigned char *in) {

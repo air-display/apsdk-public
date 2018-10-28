@@ -1,5 +1,5 @@
-#ifndef LOG_H
-#define LOG_H
+#ifndef LOGGER_H
+#define LOGGER_H
 #pragma once
 
 #include <string>
@@ -61,4 +61,4 @@ private:
 #define LOGW() logger(log_level::LL_WARN)
 #define LOGE() logger(log_level::LL_ERROR)
 
-#endif  /* LOG_H */
+#endif  // LOGGER_H

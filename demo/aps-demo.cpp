@@ -2,16 +2,15 @@
 //
 
 #include "../src/ap_server.h"
+#include "../src/ap_config.h"
 
 int main()
 {
-    aps::ap_server server;
+    aps::ap_server server(aps::ap_config::default());
     
-    server.initialize();
     server.start();
 
     getchar();
 
     server.stop();
-    server.uninitialize();
 }

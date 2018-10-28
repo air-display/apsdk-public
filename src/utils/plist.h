@@ -1,5 +1,7 @@
 #ifndef PLIST_H
 #define PLIST_H
+#pragma once
+
 #include <cstdint>
 #include <vector>
 

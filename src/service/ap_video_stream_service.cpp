@@ -5,8 +5,8 @@
 using namespace aps::service::details;
 
 namespace aps { namespace service { 
-    ap_video_stream_session::ap_video_stream_session(asio::io_context& io_ctx, ap_crypto& crypto)
-        : tcp_session_base(io_ctx)
+    ap_video_stream_session::ap_video_stream_session(asio::io_context& io_ctx, aps::ap_crypto& crypto)
+        : aps::network::tcp_session_base(io_ctx)
         , crypto_(crypto)
     {
         LOGI() << "ap_video_stream_session(" << std::hex << this << ") is allocating.";
@@ -152,8 +152,8 @@ namespace aps { namespace service {
         }
     }
 
-    ap_video_stream_service::ap_video_stream_service(ap_crypto& crypto, uint16_t port)
-        : tcp_service_base(port, true), crypto_(crypto)
+    ap_video_stream_service::ap_video_stream_service(aps::ap_crypto& crypto, uint16_t port)
+        : aps::network::tcp_service_base(port, true), crypto_(crypto)
     {
 
     }

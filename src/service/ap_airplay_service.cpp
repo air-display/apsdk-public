@@ -2,7 +2,6 @@
 #include <exception>
 #include <ctime>
 #include <playfair/fair_play.h>
-#include "../ap_config.h"
 #include "../utils/logger.h"
 #include "../utils/plist.h"
 #include "../utils/utils.h"
@@ -16,8 +15,9 @@
 using namespace aps::service::details;
 
 namespace aps { namespace service { 
-    ap_airplay_session::ap_airplay_session(asio::io_context& io_ctx)
+    ap_airplay_session::ap_airplay_session(asio::io_context& io_ctx, ap_config& config)
         : tcp_session_base(io_ctx)
+        , config_(config)
     {
         register_request_handlers();
         LOGI() << "ap_airplay_session (" << std::hex << this << ") is being created";
@@ -313,18 +313,18 @@ namespace aps { namespace service {
         DUMP_REQUEST(req);
 
         auto_plist info = plist_object_dict(15,
-            "deviceID", plist_object_string(ap_config::get().deviceID().c_str()),
-            "features", plist_object_integer(ap_config::get().features()),
+            "deviceID", plist_object_string(config_.deviceID().c_str()),
+            "features", plist_object_integer(config_.features()),
             "keepAliveLowPower", plist_object_integer(1),
             "keepAliveSendStatsAsBody", plist_object_integer(1),
-            "macAddress", plist_object_string(ap_config::get().macAddress().c_str()),
-            "model", plist_object_string(ap_config::get().model().c_str()),
-            "name", plist_object_string(ap_config::get().name().c_str()),
-            "sourceVersion", plist_object_string(ap_config::get().sourceVersion().c_str()),
-            "statusFlags", plist_object_integer(ap_config::get().statusFlag()),
-            "pi", plist_object_string(ap_config::get().pi().c_str()),
-            "pk", plist_object_data((uint8_t *)ap_config::get().pk().c_str(), ap_config::get().pk().length()),
-            "vv", plist_object_integer(ap_config::get().vv()),
+            "macAddress", plist_object_string(config_.macAddress().c_str()),
+            "model", plist_object_string(config_.model().c_str()),
+            "name", plist_object_string(config_.name().c_str()),
+            "sourceVersion", plist_object_string(config_.sourceVersion().c_str()),
+            "statusFlags", plist_object_integer(config_.statusFlag()),
+            "pi", plist_object_string(config_.pi().c_str()),
+            "pk", plist_object_data((uint8_t *)config_.pk().c_str(), config_.pk().length()),
+            "vv", plist_object_integer(config_.vv()),
             "audioFormats", plist_object_array(1,
                 plist_object_dict(3,
                     "type", plist_object_integer(96),
@@ -343,16 +343,16 @@ namespace aps { namespace service {
             "displays", plist_object_array(1,
                 plist_object_dict(11,
                     "features", plist_object_integer(14),
-                    "height", plist_object_integer(ap_config::get().display().height()),
-                    "heightPixels", plist_object_integer(ap_config::get().display().height()),
+                    "height", plist_object_integer(config_.display().height()),
+                    "heightPixels", plist_object_integer(config_.display().height()),
                     "heightPhysical", plist_object_integer(0),
-                    "width", plist_object_integer(ap_config::get().display().width()),
-                    "widthPixels", plist_object_integer(ap_config::get().display().width()),
+                    "width", plist_object_integer(config_.display().width()),
+                    "widthPixels", plist_object_integer(config_.display().width()),
                     "widthPhysical", plist_object_integer(0),
-                    "refreshRate", plist_object_real(ap_config::get().display().refreshRate()),
+                    "refreshRate", plist_object_real(config_.display().refreshRate()),
                     "overscanned", plist_object_false(),
                     "rotation", plist_object_true(),
-                    "uuid", plist_object_string(ap_config::get().display().uuid().c_str())
+                    "uuid", plist_object_string(config_.display().uuid().c_str())
                 )
             )
         );
@@ -924,19 +924,18 @@ namespace aps { namespace service {
         res.with_status(ok);
     }
 
-    ap_airplay_service::ap_airplay_service(uint16_t port)
-        : tcp_service_base(port)
+    ap_airplay_service::ap_airplay_service(ap_config& config, uint16_t port /*= 0*/)
+        : config_(config)
+        , tcp_service_base(port)
     {
-
     }
 
     ap_airplay_service::~ap_airplay_service()
     {
-
     }
 
     aps::network::tcp_session_ptr ap_airplay_service::prepare_new_session()
     {
-        return std::make_shared<ap_airplay_session>(io_context());
+        return std::make_shared<ap_airplay_session>(io_context(), config_);
     }
 } }

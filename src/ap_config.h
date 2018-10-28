@@ -1,4 +1,7 @@
+#ifndef AP_CONFIG_H
+#define AP_CONFIG_H
 #pragma once
+
 #include <cmath>
 #include <cstdint>
 #include <string>
@@ -58,8 +61,11 @@ namespace aps {
     class ap_config
     {
     public:
-        static ap_config& get();
-        void init();
+        static ap_config& default();
+
+        ap_config();
+
+        ~ap_config();
 
         DECLARE_STRING_PROPERTY(name);
         DECLARE_STRING_PROPERTY(deviceID);
@@ -76,9 +82,8 @@ namespace aps {
         DECLARE_OBJECT_PROPERTY(audio_latency, ap_config_audio_latency);
         DECLARE_OBJECT_PROPERTY(display, ap_config_display);
 
-    protected:
-        ap_config();
-        ~ap_config();
+        const std::string& features_hex_string() const;
     };
 };
 
+#endif // AP_CONFIG_H

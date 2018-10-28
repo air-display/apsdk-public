@@ -4,11 +4,10 @@
 #include <vector>
 #include <map>
 #include <asio.hpp>
+#include "../ap_config.h"
 #include "../network/tcp_service.h"
 #include "../crypto/ap_crypto.h"
 #include "ap_airplay_service_details.h"
-
-using namespace aps::network;
 
 namespace aps { namespace service {
     class ap_airplay_session
@@ -20,7 +19,9 @@ namespace aps { namespace service {
         typedef std::map<std::string, path_handler_map> request_handler_map;
 
     public:
-        explicit ap_airplay_session(asio::io_context& io_ctx);
+        explicit ap_airplay_session(
+            asio::io_context& io_ctx, 
+            aps::ap_config& config);
 
         ~ap_airplay_session();
 
@@ -93,11 +94,9 @@ namespace aps { namespace service {
         void dump_request(const details::request& req);
 
     private:
-        request_handler_map rtsp_request_handlers_;
+        aps::ap_config& config_;
 
-        request_handler_map http_request_handlers_;
-
-        ap_crypto crypto_;
+        aps::ap_crypto crypto_;
 
         asio::streambuf in_stream_;
         
@@ -107,25 +106,29 @@ namespace aps { namespace service {
         
         details::request_parser parser_;
 
-        tcp_service_ptr video_stream_service_;
+        aps::network::tcp_service_ptr video_stream_service_;
 
-        tcp_service_ptr audio_stream_service_;
+        aps::network::tcp_service_ptr audio_stream_service_;
+  
+        request_handler_map rtsp_request_handlers_;
+
+        request_handler_map http_request_handlers_;
     };
 
-    typedef std::shared_ptr<ap_airplay_session> ap_rtsp_session_ptr;
+    typedef std::shared_ptr<ap_airplay_session> ap_airplay_session_ptr;
 
     class ap_airplay_service
-        : public tcp_service_base
+        : public aps::network::tcp_service_base
     {
     public:
-        ap_airplay_service(uint16_t port);
+        ap_airplay_service(ap_config& config, uint16_t port = 0);
         ~ap_airplay_service();
 
     protected:
-        virtual tcp_session_ptr prepare_new_session() override;
+        virtual aps::network::tcp_session_ptr prepare_new_session() override;
 
     private:
-
+        aps::ap_config& config_;
     };
 
     typedef std::shared_ptr<ap_airplay_service> ap_airplay_service_ptr;

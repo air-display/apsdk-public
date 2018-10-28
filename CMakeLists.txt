@@ -11,7 +11,8 @@ else()
     message(FATAL_ERROR "INVALID FLAG BUILD_APS_DEMO=" ${BUILD_APS_DEMO})
 endif()
 
-set(CMAKE_CXX_STANDARD 11) 
+set(CMAKE_CXX_STANDARD 11)
+
 set(CXX_STANDARD_REQUIRED)
 
 add_definitions(-DASIO_STANDALONE)
@@ -26,7 +27,7 @@ if (WIN32)
 endif()
 
 file(GLOB_RECURSE SRC_AP
-    src/aps.hpp
+    src/aps.h
     src/aps.cpp
     src/ap_server.h
     src/ap_server.cpp
@@ -34,14 +35,18 @@ file(GLOB_RECURSE SRC_AP
     src/ap_config.cpp
     src/ap_handler.h
 )
-file(GLOB_RECURSE SRC_UTILS
-    src/utils/logger.cpp
-    src/utils/logger.h
-    src/utils/packing.h
-    src/utils/plist.cpp
-    src/utils/plist.h
-    src/utils/utils.cpp
-    src/utils/utils.h
+file(GLOB_RECURSE SRC_CRYPTO
+    src/crypto/ap_crypto.h
+    src/crypto/ap_crypto.cpp
+    src/crypto/aes.c
+    src/crypto/aes.h
+)
+file(GLOB_RECURSE SRC_MDNS
+    src/mdns/mdns.h
+    src/mdns/mdns.cpp
+)
+file(GLOB_RECURSE SRC_NETWORK
+    src/network/tcp_service.h
 )
 file(GLOB_RECURSE SRC_SERVICE
     src/service/ap_airplay_service.cpp
@@ -54,42 +59,38 @@ file(GLOB_RECURSE SRC_SERVICE
     src/service/ap_video_stream_service.h
     src/service/ap_video_stream_service_details.h
 )
-file(GLOB_RECURSE SRC_NETWORK
-    src/network/tcp_service.h
-)
-file(GLOB_RECURSE SRC_CRYPTO
-    src/crypto/ap_crypto.h
-    src/crypto/ap_crypto.cpp
-    src/crypto/aes.c
-    src/crypto/aes.h
-    src/crypto/aes.hpp
-)
-file(GLOB_RECURSE SRC_THIRD
-    src/crypto/aes.c
-    src/crypto/aes.h
-    src/crypto/aes.hpp
+file(GLOB_RECURSE SRC_UTILS
+    src/utils/logger.cpp
+    src/utils/logger.h
+    src/utils/packing.h
+    src/utils/plist.cpp
+    src/utils/plist.h
+    src/utils/utils.cpp
+    src/utils/utils.h
 )
 
 add_library(aps STATIC
     ${SRC_AP}
-    ${SRC_UTILS}
-    ${SRC_SERVICE}
-    ${SRC_NETWORK}
     ${SRC_CRYPTO}
+    ${SRC_NETWORK}
+    ${SRC_MDNS}
+    ${SRC_SERVICE}
+    ${SRC_UTILS}
 )
 
 source_group("ap" FILES ${SRC_AP})
-source_group("utils" FILES ${SRC_UTILS})
-source_group("service" FILES ${SRC_SERVICE})
-source_group("network" FILES ${SRC_NETWORK})
 source_group("crypto" FILES ${SRC_CRYPTO})
+source_group("mdns" FILES ${SRC_MDNS})
+source_group("network" FILES ${SRC_NETWORK})
+source_group("service" FILES ${SRC_SERVICE})
+source_group("utils" FILES ${SRC_UTILS})
 
 add_subdirectory(third-party/curve25519)
 add_subdirectory(third-party/ed25519)
 add_subdirectory(third-party/playfair)
 
 if (ANDROID)
-    add_subdirectory(jni)
+    add_subdirectory(platforms/android/aps-sdk/airplay/src/main/jni)
 endif()
 
 if (BUILD_APS_DEMO)
