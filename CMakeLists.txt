@@ -88,15 +88,6 @@ file(GLOB_RECURSE SRC_UTILS
     src/utils/utils.h
 )
 
-add_library(aps STATIC
-    ${SRC_AP}
-    ${SRC_CRYPTO}
-    ${SRC_NETWORK}
-    ${SRC_MDNS}
-    ${SRC_SERVICE}
-    ${SRC_UTILS}
-)
-
 source_group("ap" FILES ${SRC_AP})
 source_group("crypto" FILES ${SRC_CRYPTO})
 source_group("mdns" FILES ${SRC_MDNS})
@@ -114,4 +105,25 @@ endif()
 
 if (BUILD_APS_DEMO)
     add_subdirectory(demo)
+endif()
+
+add_library(aps STATIC
+    ${SRC_AP}
+    ${SRC_CRYPTO}
+    ${SRC_NETWORK}
+    ${SRC_MDNS}
+    ${SRC_SERVICE}
+    ${SRC_UTILS}
+)
+
+if (APPLE)
+    find_library(FOUNDATION_FX Foundation)
+
+    if (NOT FOUNDATION_FX)
+        message(FATAL_ERROR "Foundation.Framework not found")
+    endif()
+
+    target_link_libraries(aps PUBLIC
+        ${FOUNDATION_FX}
+    )
 endif()
