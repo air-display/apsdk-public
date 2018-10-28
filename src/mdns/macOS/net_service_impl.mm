@@ -1,7 +1,6 @@
-#include "../net_service_impl.h"
+#include "net_service_impl.h"
 
 net_service::implementation::implementation(const std::string& type)
-    : type_(type)
 {
 
 }

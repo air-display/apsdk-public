@@ -4,11 +4,9 @@
 
 #include <string>
 #include <cstdint>
-#include <map>
 
 class net_service
 {
-    typedef std::map<std::string, std::string> txt_record;
 public:
     net_service(const std::string& type);
 
