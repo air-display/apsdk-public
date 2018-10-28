@@ -6,7 +6,7 @@
 
 int main()
 {
-    aps::ap_server server(aps::ap_config::default_instance());
+    aps::ap_server server(aps::ap_config::default());
     
     server.start();
 

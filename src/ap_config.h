@@ -61,7 +61,7 @@ namespace aps {
     class ap_config
     {
     public:
-        static aps::ap_config& default_instance();
+        static ap_config& default();
 
         ap_config();
 
