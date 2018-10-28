@@ -70,18 +70,12 @@ file(GLOB_RECURSE SRC_THIRD
     src/crypto/aes.hpp
 )
 
-add_library(aps SHARED
+add_library(aps STATIC
     ${SRC_AP}
     ${SRC_UTILS}
     ${SRC_SERVICE}
     ${SRC_NETWORK}
     ${SRC_CRYPTO}
-)
-
-target_link_libraries(aps PRIVATE
-    ed25519
-    curve25519
-    playfair
 )
 
 source_group("ap" FILES ${SRC_AP})
