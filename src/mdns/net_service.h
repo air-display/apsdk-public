@@ -25,6 +25,8 @@ public:
 private:
     class implementation;
     std::unique_ptr<implementation> impl_;
+  
+    class net_service_impl;
 };
 
 #endif // MDNS_H

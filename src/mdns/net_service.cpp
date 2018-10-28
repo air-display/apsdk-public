@@ -2,14 +2,12 @@
 #include "net_service_impl.h"
 
 net_service::net_service(const std::string& type)
-    : impl_(new implementation(type))
+    : impl_(implementation::get(type))
 {
-
 }
 
 net_service::~net_service()
 {
-
 }
 
 void net_service::add_txt_record(const std::string& k, const std::string& v)
