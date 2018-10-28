@@ -54,8 +54,8 @@ namespace aps {
         static bool s_initialized = false;
         if (!s_initialized)
         {
-            s_instance.name_ = "WeCast Display";
-            s_instance.deviceID_ = "C02WF0AXJ1GQ";
+            s_instance.name_ = "Tencent WeCast Display";
+            s_instance.deviceID_ = "00:00:00:00:00:00";
             s_instance.model_ = "AppleTV3,2";
             s_instance.sourceVersion_ = "220.68";
             s_instance.pi_ = "b08f5a79-db29-4384-b456-a4784d9e6055";
