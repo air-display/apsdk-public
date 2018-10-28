@@ -1,6 +1,6 @@
 #pragma once
-#include <cstdint>
 #include <cmath>
+#include <cstdint>
 #include <string>
 
 #define DECLARE_STRING_PROPERTY(n) private: std::string n##_; \
@@ -75,6 +75,7 @@ namespace aps {
         DECLARE_OBJECT_PROPERTY(audio_format, ap_config_audio_format);
         DECLARE_OBJECT_PROPERTY(audio_latency, ap_config_audio_latency);
         DECLARE_OBJECT_PROPERTY(display, ap_config_display);
+
     protected:
         ap_config();
         ~ap_config();

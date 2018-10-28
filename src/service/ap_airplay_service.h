@@ -5,7 +5,7 @@
 #include <map>
 #include <asio.hpp>
 #include "../network/tcp_service.h"
-#include "../ap_crypto.h"
+#include "../crypto/ap_crypto.h"
 #include "ap_airplay_service_details.h"
 
 using namespace aps::network;

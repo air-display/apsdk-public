@@ -47,7 +47,7 @@ namespace aps {
 
     ap_server::ap_server()
     {
-        impl_ = std::make_shared<detail>();
+        impl_ = std::make_unique<detail>();
     }
 
     ap_server::~ap_server()

@@ -1,1 +1,1 @@
-cmake -G "Visual Studio 15 2017" CMakeLists.txt -Bbuild.win
+cmake -G "Visual Studio 15 2017" CMakeLists.txt -Bbuild.win -DBUILD_APS_DEMO=TRUE

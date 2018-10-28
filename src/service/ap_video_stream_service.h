@@ -3,7 +3,7 @@
 #include <asio.hpp>
 #include "../utils/packing.h"
 #include "../network/tcp_service.h"
-#include "../ap_crypto.h"
+#include "../crypto/ap_crypto.h"
 #include "ap_video_stream_service_details.h"
 
 using namespace aps;

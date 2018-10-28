@@ -15,6 +15,6 @@ namespace aps {
 
     private:
         class detail;
-        std::shared_ptr<detail> impl_;
+        std::unique_ptr<detail> impl_;
     };
 }
