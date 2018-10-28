@@ -47,7 +47,7 @@ namespace aps {
 
     ap_server::ap_server()
     {
-        impl_ = std::make_unique<detail>();
+        impl_ = std::unique_ptr<detail>(new detail());
     }
 
     ap_server::~ap_server()

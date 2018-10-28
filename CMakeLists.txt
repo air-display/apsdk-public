@@ -11,22 +11,19 @@ else()
     message(FATAL_ERROR "INVALID FLAG BUILD_APS_DEMO=" ${BUILD_APS_DEMO})
 endif()
 
+set(CMAKE_CXX_STANDARD 11) 
+set(CXX_STANDARD_REQUIRED)
+
 add_definitions(-DASIO_STANDALONE)
-
-if (WIN32)
-    add_definitions(-D_WIN32_WINNT=0x0501)
-endif()
-
-if (APPLE)
-    set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++11")
-    set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
-endif()
-
-set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 include_directories(./third-party
     ./third-party/asio/include
 )
+
+if (WIN32)
+    add_definitions(-D_WIN32_WINNT=0x0501)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif()
 
 file(GLOB_RECURSE SRC_AP
     src/aps.hpp
