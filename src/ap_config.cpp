@@ -48,7 +48,7 @@ namespace aps {
         uuid_.clear();
     }
 
-    ap_config& ap_config::default()
+    ap_config& ap_config::default_instance()
     {
         static ap_config s_instance;
         static bool s_initialized = false;
