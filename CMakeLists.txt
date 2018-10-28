@@ -53,7 +53,7 @@ elseif (APPLE)
         src/mdns/net_service.h
         src/mdns/net_service.cpp
         src/mdns/net_service_impl.h
-        src/mdns/macOS/net_service_impl.cpp
+        src/mdns/macOS/net_service_impl.m
     )
 elseif (ANDROID)
     file(GLOB_RECURSE SRC_MDNS
