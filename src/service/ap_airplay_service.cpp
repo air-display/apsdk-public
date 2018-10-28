@@ -925,8 +925,8 @@ namespace aps { namespace service {
     }
 
     ap_airplay_service::ap_airplay_service(ap_config& config, uint16_t port /*= 0*/)
-        : config_(config)
-        , tcp_service_base(port)
+        : tcp_service_base(port)
+        , config_(config)
     {
     }
 

@@ -92,7 +92,7 @@ namespace aps {
     {
     }
 
-    const std::string& ap_config::features_hex_string() const
+    const std::string ap_config::features_hex_string() const
     {
         std::ostringstream oss;
         oss << "0x" << std::hex << features_;

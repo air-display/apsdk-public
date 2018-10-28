@@ -451,7 +451,7 @@ namespace aps { namespace service { namespace details {
             case '/': case '[': case ']': case '?': case '=':
             case '{': case '}': case ' ': case '\t':
                 return true;
-            default_instance:
+            default:
                 return false;
             }
         }

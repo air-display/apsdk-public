@@ -82,7 +82,7 @@ namespace aps {
         DECLARE_OBJECT_PROPERTY(audio_latency, ap_config_audio_latency);
         DECLARE_OBJECT_PROPERTY(display, ap_config_display);
 
-        const std::string& features_hex_string() const;
+        const std::string features_hex_string() const;
     };
 };
 
