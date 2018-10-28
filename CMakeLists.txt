@@ -41,10 +41,29 @@ file(GLOB_RECURSE SRC_CRYPTO
     src/crypto/aes.c
     src/crypto/aes.h
 )
-file(GLOB_RECURSE SRC_MDNS
-    src/mdns/mdns.h
-    src/mdns/mdns.cpp
-)
+if (WIN32)
+    file(GLOB_RECURSE SRC_MDNS
+        src/mdns/net_service.h
+        src/mdns/net_service.cpp
+        src/mdns/net_service_impl.h
+        src/mdns/Windows/net_service_impl.cpp
+    )
+elseif (APPLE)
+    file(GLOB_RECURSE SRC_MDNS
+        src/mdns/net_service.h
+        src/mdns/net_service.cpp
+        src/mdns/net_service_impl.h
+        src/mdns/macOS/net_service_impl.cpp
+    )
+elseif (ANDROID)
+    file(GLOB_RECURSE SRC_MDNS
+        src/mdns/net_service.h
+        src/mdns/net_service.cpp
+        src/mdns/net_service_impl.h
+        src/mdns/Android/net_service_impl.cpp
+    )
+endif()
+
 file(GLOB_RECURSE SRC_NETWORK
     src/network/tcp_service.h
 )
