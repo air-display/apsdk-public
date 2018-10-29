@@ -7,6 +7,7 @@ class net_service::net_service_impl
 {
   public:
     net_service_impl(const std::string &type)
+        : type_(type)
     {
         TXTRecordCreate(&txt_records_, 0, 0);
     }
