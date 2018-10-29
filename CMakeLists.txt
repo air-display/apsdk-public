@@ -28,7 +28,7 @@ if (WIN32)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif()
 
-file(GLOB_RECURSE SRC_AP
+set(SRC_AP
     src/aps.h
     src/aps.cpp
     src/ap_server.h
@@ -37,40 +37,44 @@ file(GLOB_RECURSE SRC_AP
     src/ap_config.cpp
     src/ap_handler.h
 )
-file(GLOB_RECURSE SRC_CRYPTO
+source_group("ap" FILES ${SRC_AP})
+
+set(SRC_CRYPTO
     src/crypto/ap_crypto.h
     src/crypto/ap_crypto.cpp
     src/crypto/aes.c
     src/crypto/aes.h
 )
+source_group("crypto" FILES ${SRC_CRYPTO})
+
+set(SRC_MDNS
+    src/mdns/net_service.h
+    src/mdns/net_service.cpp
+    src/mdns/net_service_impl.h
+)
+
 if (WIN32)
-    file(GLOB_RECURSE SRC_MDNS
-        src/mdns/net_service.h
-        src/mdns/net_service.cpp
-        src/mdns/net_service_impl.h
+    list(APPEND SRC_MDNS
         src/mdns/Windows/dns_sd.h
         src/mdns/Windows/net_service_impl.cpp
     )
 elseif (APPLE)
-    file(GLOB_RECURSE SRC_MDNS
-        src/mdns/net_service.h
-        src/mdns/net_service.cpp
-        src/mdns/net_service_impl.h
+    list(APPEND SRC_MDNS
         src/mdns/macOS/net_service_impl.mm
     )
 elseif (ANDROID)
-    file(GLOB_RECURSE SRC_MDNS
-        src/mdns/net_service.h
-        src/mdns/net_service.cpp
-        src/mdns/net_service_impl.h
+    list(APPEND SRC_MDNS
         src/mdns/Android/net_service_impl.cpp
     )
 endif()
+source_group("mdns" FILES ${SRC_MDNS})
 
-file(GLOB_RECURSE SRC_NETWORK
+set(SRC_NETWORK
     src/network/tcp_service.h
 )
-file(GLOB_RECURSE SRC_SERVICE
+source_group("network" FILES ${SRC_NETWORK})
+
+set(SRC_SERVICE
     src/service/ap_airplay_service.cpp
     src/service/ap_airplay_service.h
     src/service/ap_airplay_service_details.h
@@ -81,7 +85,9 @@ file(GLOB_RECURSE SRC_SERVICE
     src/service/ap_video_stream_service.h
     src/service/ap_video_stream_service_details.h
 )
-file(GLOB_RECURSE SRC_UTILS
+source_group("service" FILES ${SRC_SERVICE})
+
+set(SRC_UTILS
     src/utils/logger.cpp
     src/utils/logger.h
     src/utils/packing.h
@@ -90,12 +96,6 @@ file(GLOB_RECURSE SRC_UTILS
     src/utils/utils.cpp
     src/utils/utils.h
 )
-
-source_group("ap" FILES ${SRC_AP})
-source_group("crypto" FILES ${SRC_CRYPTO})
-source_group("mdns" FILES ${SRC_MDNS})
-source_group("network" FILES ${SRC_NETWORK})
-source_group("service" FILES ${SRC_SERVICE})
 source_group("utils" FILES ${SRC_UTILS})
 
 add_subdirectory(third-party/curve25519)
