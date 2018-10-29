@@ -55,7 +55,7 @@ set(SRC_MDNS
 
 if (WIN32)
     list(APPEND SRC_MDNS
-        src/mdns/Windows/dns_sd.h
+        src/mdns/dns_sd.h
         src/mdns/Windows/net_service_impl.cpp
     )
 elseif (APPLE)
@@ -64,6 +64,7 @@ elseif (APPLE)
     )
 elseif (ANDROID)
     list(APPEND SRC_MDNS
+        src/mdns/dns_sd.h
         src/mdns/Android/net_service_impl.cpp
     )
 endif()

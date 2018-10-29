@@ -3,29 +3,32 @@
 #include <ap_server.h>
 #include "aps-jni.h"
 
-bool Java_com_medialab_airplay_AirPlayServer_initialize(
-    JNIEnv* env,
-    jobject /* this */) {
-    std::string info = "AirPlay Server initializes";
+#default LOG_TAG "APS-JNI"
+
+JavaVM* __current_jvm___ = 0;
+
+jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     __android_log_write(
         ANDROID_LOG_DEBUG,
-        "SHEEN",
-        info.c_str());
+        LOG_TAG,
+        "JNI_OnLoad");
+    JNIEnv* env = NULL;
+    jint result = JNI_ERR;
+    __current_jvm___ = vm;
 
-    aps::ap_server* server = new aps::ap_server();
-    server->initialize();
-    server->start();
-
-    return true;
+    if ((*vm)->GetEnv((void**) &env, JNI_VERSION_1_6) == JNI_OK) {
+    }
+    return result;
 }
 
 bool Java_com_medialab_airplay_AirPlayServer_start(
     JNIEnv* env,
     jobject /* this */) {
+
     std::string info = "AirPlay Server starts";
     __android_log_write(
         ANDROID_LOG_DEBUG,
-        "SHEEN",
+        LOG_TAG,
         info.c_str());
     return true;
 }
@@ -34,18 +37,9 @@ void Java_com_medialab_airplay_AirPlayServer_stop(
     JNIEnv* env,
     jobject /* this */) {
     std::string info = "AirPlay Server stops";
-    __android_log_write(
-        ANDROID_LOG_DEBUG,
-        "SHEEN",
-        info.c_str());
-}
 
-void Java_com_medialab_airplay_AirPlayServer_uninitialize(
-    JNIEnv* env,
-    jobject /* this */) {
-    std::string info = "AirPlay Server uninitializes";
     __android_log_write(
         ANDROID_LOG_DEBUG,
-        "SHEEN",
+        LOG_TAG,
         info.c_str());
 }

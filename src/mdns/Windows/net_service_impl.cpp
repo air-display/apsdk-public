@@ -1,5 +1,5 @@
-#include "dns_sd.h"
 #include <utils/logger.h>
+#include "dns_sd.h"
 #include "../net_service_impl.h"
 
 class net_service::net_service_impl
