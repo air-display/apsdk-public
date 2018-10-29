@@ -1,5 +1,5 @@
-#include "../utils/logger.h"
-#include "../crypto/ap_crypto.h"
+#include <utils/logger.h>
+#include <crypto/ap_crypto.h>
 #include "ap_video_stream_service.h"
 
 using namespace aps::service::details;

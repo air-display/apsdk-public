@@ -2,9 +2,9 @@
 #include <exception>
 #include <ctime>
 #include <playfair/fair_play.h>
-#include "../utils/logger.h"
-#include "../utils/plist.h"
-#include "../utils/utils.h"
+#include <utils/logger.h>
+#include <utils/plist.h>
+#include <utils/utils.h>
 #include "ap_types.h"
 #include "ap_video_stream_service.h"
 #include "ap_audio_stream_service.h"

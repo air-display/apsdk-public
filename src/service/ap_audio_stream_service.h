@@ -1,9 +1,9 @@
 #pragma once
 #include <vector>
 #include <asio.hpp>
-#include "../utils/packing.h"
-#include "../network/tcp_service.h"
-#include "../crypto/ap_crypto.h"
+#include <utils/packing.h>
+#include <network/tcp_service.h>
+#include <crypto/ap_crypto.h>
 #include "ap_video_stream_service_details.h"
 
 namespace aps { namespace service { 

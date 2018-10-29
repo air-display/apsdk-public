@@ -17,7 +17,9 @@ set(CXX_STANDARD_REQUIRED)
 
 add_definitions(-DASIO_STANDALONE)
 
-include_directories(./third-party
+include_directories(
+    ./src
+    ./third-party
     ./third-party/asio/include
 )
 
@@ -46,6 +48,7 @@ if (WIN32)
         src/mdns/net_service.h
         src/mdns/net_service.cpp
         src/mdns/net_service_impl.h
+        src/mdns/Windows/dns_sd.h
         src/mdns/Windows/net_service_impl.cpp
     )
 elseif (APPLE)

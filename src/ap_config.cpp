@@ -1,5 +1,5 @@
 #include <sstream>
-#include "ap_config.h"
+#include <ap_config.h>
 
 namespace aps {
     ap_config_audio_format::ap_config_audio_format()

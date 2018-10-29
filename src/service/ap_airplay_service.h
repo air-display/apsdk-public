@@ -4,9 +4,9 @@
 #include <vector>
 #include <map>
 #include <asio.hpp>
-#include "../ap_config.h"
-#include "../network/tcp_service.h"
-#include "../crypto/ap_crypto.h"
+#include <ap_config.h>
+#include <network/tcp_service.h>
+#include <crypto/ap_crypto.h>
 #include "ap_airplay_service_details.h"
 
 namespace aps { namespace service {
