@@ -1,11 +1,16 @@
 package com.medialab.airplay;
 
 import android.content.Context;
+import android.net.nsd.NsdManager;
+import android.net.nsd.NsdServiceInfo;
+import android.os.Build;
 
 public class AirPlayServer {
     static {
         System.loadLibrary("aps-jni");
     }
+
+    private NsdManager.RegistrationListener mRegistrationListener = null;
 
     private Context context;
 
@@ -45,4 +50,33 @@ public class AirPlayServer {
     public native boolean start();
 
     public native void stop();
+
+    private void acquireMdnsd() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            NsdServiceInfo serviceInfo = new NsdServiceInfo();
+            serviceInfo.setServiceName(".");
+            serviceInfo.setServiceType("_._");
+            serviceInfo.setPort(65535);
+            mRegistrationListener = new NsdManager.RegistrationListener() {
+                @Override
+                public void onServiceRegistered(NsdServiceInfo NsdServiceInfo) { }
+                @Override
+                public void onRegistrationFailed(NsdServiceInfo serviceInfo, int errorCode) { }
+                @Override
+                public void onServiceUnregistered(NsdServiceInfo arg0) { }
+                @Override
+                public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) { }
+            };
+
+            NsdManager nsdManager = (NsdManager)context.getSystemService(context.NSD_SERVICE);
+            nsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);
+        }
+    }
+
+    private void releaseMdnsd() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            NsdManager nsdManager = (NsdManager) context.getSystemService(context.NSD_SERVICE);
+            nsdManager.unregisterService(mRegistrationListener);
+        }
+    }
 }

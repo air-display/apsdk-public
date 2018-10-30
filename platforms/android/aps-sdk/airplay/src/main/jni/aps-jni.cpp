@@ -12,7 +12,12 @@ aps::ap_server* g_ap_server = 0;
 
 bool Java_com_medialab_airplay_AirPlayServer_start(
     JNIEnv* env,
-    jobject /* this */) {
+    jobject thiz) {
+
+    jclass thisClass = env->GetObjectClass(thiz);
+    jmethodID acquireMdnsd = env->GetMethodID(
+        thisClass, "acquireMdnsd","()V");
+    env->CallVoidMethod(thiz, acquireMdnsd);
 
     if (!g_ap_server)
         g_ap_server = new aps::ap_server(aps::ap_config::default_instance());
@@ -29,9 +34,14 @@ bool Java_com_medialab_airplay_AirPlayServer_start(
 
 void Java_com_medialab_airplay_AirPlayServer_stop(
     JNIEnv* env,
-    jobject /* this */) {
-    std::string info = "AirPlay Server stops";
+    jobject thiz) {
 
+    jclass thisClass = env->GetObjectClass(thiz);
+    jmethodID releaseMdnsd = env->GetMethodID(
+        thisClass, "releaseMdnsd","()V");
+    env->CallVoidMethod(thiz, releaseMdnsd);
+
+    std::string info = "AirPlay Server stops";
     __android_log_write(
         ANDROID_LOG_DEBUG,
         LOG_TAG,
