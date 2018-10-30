@@ -54,9 +54,9 @@ public class AirPlayServer {
     private void acquireMdnsd() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             NsdServiceInfo serviceInfo = new NsdServiceInfo();
-            serviceInfo.setServiceName(".");
-            serviceInfo.setServiceType("_._");
-            serviceInfo.setPort(65535);
+            serviceInfo.setServiceName("o");
+            serviceInfo.setServiceType("_x._tcp");
+            serviceInfo.setPort(1);
             mRegistrationListener = new NsdManager.RegistrationListener() {
                 @Override
                 public void onServiceRegistered(NsdServiceInfo NsdServiceInfo) { }
@@ -67,16 +67,17 @@ public class AirPlayServer {
                 @Override
                 public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) { }
             };
-
-            NsdManager nsdManager = (NsdManager)context.getSystemService(context.NSD_SERVICE);
+            NsdManager nsdManager = (NsdManager) context.getSystemService(context.NSD_SERVICE);
             nsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);
         }
     }
 
     private void releaseMdnsd() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            NsdManager nsdManager = (NsdManager) context.getSystemService(context.NSD_SERVICE);
-            nsdManager.unregisterService(mRegistrationListener);
+            if (null != mRegistrationListener) {
+                NsdManager nsdManager = (NsdManager) context.getSystemService(context.NSD_SERVICE);
+                nsdManager.unregisterService(mRegistrationListener);
+            }
         }
     }
 }

@@ -22,14 +22,14 @@ bool Java_com_medialab_airplay_AirPlayServer_start(
     if (!g_ap_server)
         g_ap_server = new aps::ap_server(aps::ap_config::default_instance());
 
-    g_ap_server->start();
+    bool result = g_ap_server->start();
     
     std::string info = "AirPlay Server starts";
     __android_log_write(
         ANDROID_LOG_DEBUG,
         LOG_TAG,
         info.c_str());
-    return true;
+    return result;
 }
 
 void Java_com_medialab_airplay_AirPlayServer_stop(
@@ -40,6 +40,9 @@ void Java_com_medialab_airplay_AirPlayServer_stop(
     jmethodID releaseMdnsd = env->GetMethodID(
         thisClass, "releaseMdnsd","()V");
     env->CallVoidMethod(thiz, releaseMdnsd);
+
+    if (g_ap_server)
+        g_ap_server->stop();
 
     std::string info = "AirPlay Server stops";
     __android_log_write(
