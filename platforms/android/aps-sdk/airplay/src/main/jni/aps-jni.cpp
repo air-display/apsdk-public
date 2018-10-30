@@ -14,6 +14,7 @@ bool Java_com_medialab_airplay_AirPlayServer_start(
     JNIEnv* env,
     jobject thiz) {
 
+    // Launch the mdnsd daemon process
     jclass thisClass = env->GetObjectClass(thiz);
     jmethodID acquireMdnsd = env->GetMethodID(
         thisClass, "acquireMdnsd","()V");
@@ -36,6 +37,7 @@ void Java_com_medialab_airplay_AirPlayServer_stop(
     JNIEnv* env,
     jobject thiz) {
 
+    // Stop the mdnsd daemon process
     jclass thisClass = env->GetObjectClass(thiz);
     jmethodID releaseMdnsd = env->GetMethodID(
         thisClass, "releaseMdnsd","()V");

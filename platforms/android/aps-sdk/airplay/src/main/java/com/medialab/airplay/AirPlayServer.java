@@ -52,6 +52,10 @@ public class AirPlayServer {
     public native void stop();
 
     private void acquireMdnsd() {
+        /**
+         * We use this code only for launching the mdnsd daemon process
+         * so we just register a useless service
+         */
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             NsdServiceInfo serviceInfo = new NsdServiceInfo();
             serviceInfo.setServiceName("o");
@@ -73,6 +77,9 @@ public class AirPlayServer {
     }
 
     private void releaseMdnsd() {
+        /**
+         * Release the mdnsd daemon process
+         */
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             if (null != mRegistrationListener) {
                 NsdManager nsdManager = (NsdManager) context.getSystemService(context.NSD_SERVICE);
