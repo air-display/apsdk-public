@@ -95,6 +95,12 @@ add_library(aps STATIC
     ${SRC_UTILS}
 )
 
+target_link_libraries(aps PUBLIC
+    curve25519
+    ed25519
+    playfair
+)
+
 # Dependencies
 if (APPLE)
     find_library(FOUNDATION_FX Foundation)

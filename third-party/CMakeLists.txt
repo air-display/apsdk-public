@@ -19,13 +19,13 @@ add_library(ed25519 STATIC
 )
 
 #################################################
-if (ADNDROID)
+if (ANDROID)
 add_library(mdnssd STATIC
     ./mdnsresponder/mDNSShared/dnssd_clientlib.c
     ./mdnsresponder/mDNSShared/dnssd_clientstub.c
     ./mdnsresponder/mDNSShared/dnssd_ipc.c
 )
-target_compile_definitions(mdnsd PRIVATE
+target_compile_definitions(mdnssd PRIVATE
     HAVE_IPV6
     NOT_HAVE_SA_LEN
     PLATFORM_NO_RLIMIT

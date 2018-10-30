@@ -5,7 +5,13 @@
 
 cmake_minimum_required(VERSION 3.4.1)
 
-include_directories(../../../../../../../src)
+# Include the aps directory to current source directory as a virtual directory
+add_subdirectory(../../../../../../.. aps)
+
+# Include the header files directory
+include_directories(
+	../../../../../../../src
+)
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -13,13 +19,13 @@ include_directories(../../../../../../../src)
 # Gradle automatically packages shared libraries with your APK.
 
 add_library( # Sets the name of the library.
-        aps-jni
+	aps-jni
 
-        # Sets the library as a shared library.
-        SHARED
+	# Sets the library as a shared library.
+	SHARED
 
-        # Provides a relative path to your source file(s).
-        aps-jni.cpp)
+	# Provides a relative path to your source file(s).
+	aps-jni.cpp)
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
@@ -28,24 +34,21 @@ add_library( # Sets the name of the library.
 # completing its build.
 
 find_library( # Sets the name of the path variable.
-        log-lib
+	log-lib
 
-        # Specifies the name of the NDK library that
-        # you want CMake to locate.
-        log)
+	# Specifies the name of the NDK library that
+	# you want CMake to locate.
+	log)
 
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in this
 # build script, prebuilt third-party libraries, or system libraries.
 
 target_link_libraries( # Specifies the target library.
-        aps-jni
+	aps-jni
 
-        aps
-        curve25519
-        ed25519
-        playfair
-        # Links the target library to the log library
-        # included in the NDK.
-        ${log-lib})
+	aps
+	# Links the target library to the log library
+	# included in the NDK.
+	${log-lib})
 
