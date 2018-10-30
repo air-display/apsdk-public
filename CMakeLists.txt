@@ -2,6 +2,14 @@ cmake_minimum_required(VERSION 3.6)
 
 project(aps)
 
+# Include paths
+include_directories(
+    src
+    third-party
+    third-party/asio/include
+)
+
+# aps-demo
 if ((NOT DEFINED BUILD_APS_DEMO) OR (BUILD_APS_DEMO STREQUAL "") 
     OR (${BUILD_APS_DEMO} MATCHES "(FALSE|false|0|OFF)"))
     option(BUILD_APS_DEMO "Build the aps demo" OFF)
@@ -10,124 +18,12 @@ elseif(${BUILD_APS_DEMO} MATCHES "(TRUE|true|1|null|ON)")
 else()
     message(FATAL_ERROR "INVALID FLAG BUILD_APS_DEMO=" ${BUILD_APS_DEMO})
 endif()
-
-set(CMAKE_CXX_STANDARD 11)
-
-set(CXX_STANDARD_REQUIRED)
-
-add_definitions(-DASIO_STANDALONE)
-
-include_directories(
-    ./src
-    ./third-party
-    ./third-party/asio/include
-)
-
-if (WIN32)
-    add_definitions(-D_WIN32_WINNT=0x0501)
-    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-endif()
-
-set(SRC_AP
-    src/aps.h
-    src/aps.cpp
-    src/ap_server.h
-    src/ap_server.cpp
-    src/ap_config.h
-    src/ap_config.cpp
-    src/ap_handler.h
-)
-source_group("ap" FILES ${SRC_AP})
-
-set(SRC_CRYPTO
-    src/crypto/ap_crypto.h
-    src/crypto/ap_crypto.cpp
-    src/crypto/aes.c
-    src/crypto/aes.h
-)
-source_group("crypto" FILES ${SRC_CRYPTO})
-
-set(SRC_MDNS
-    src/mdns/net_service.h
-    src/mdns/net_service.cpp
-    src/mdns/net_service_impl.h
-)
-
-if (WIN32)
-    list(APPEND SRC_MDNS
-        src/mdns/dns_sd.h
-        src/mdns/Windows/net_service_impl.cpp
-    )
-elseif (APPLE)
-    list(APPEND SRC_MDNS
-        src/mdns/macOS/net_service_impl.mm
-    )
-elseif (ANDROID)
-    list(APPEND SRC_MDNS
-        src/mdns/dns_sd.h
-        src/mdns/Android/net_service_impl.cpp
-    )
-endif()
-source_group("mdns" FILES ${SRC_MDNS})
-
-set(SRC_NETWORK
-    src/network/tcp_service.h
-)
-source_group("network" FILES ${SRC_NETWORK})
-
-set(SRC_SERVICE
-    src/service/ap_airplay_service.cpp
-    src/service/ap_airplay_service.h
-    src/service/ap_airplay_service_details.h
-    src/service/ap_audio_stream_service.cpp
-    src/service/ap_audio_stream_service.h
-    src/service/ap_types.h
-    src/service/ap_video_stream_service.cpp
-    src/service/ap_video_stream_service.h
-    src/service/ap_video_stream_service_details.h
-)
-source_group("service" FILES ${SRC_SERVICE})
-
-set(SRC_UTILS
-    src/utils/logger.cpp
-    src/utils/logger.h
-    src/utils/packing.h
-    src/utils/plist.cpp
-    src/utils/plist.h
-    src/utils/utils.cpp
-    src/utils/utils.h
-)
-source_group("utils" FILES ${SRC_UTILS})
-
-add_subdirectory(third-party/curve25519)
-add_subdirectory(third-party/ed25519)
-add_subdirectory(third-party/playfair)
-
-if (ANDROID)
-    add_subdirectory(platforms/android/aps-sdk/airplay/src/main/jni)
-endif()
-
 if (BUILD_APS_DEMO)
     add_subdirectory(demo)
 endif()
 
-add_library(aps STATIC
-    ${SRC_AP}
-    ${SRC_CRYPTO}
-    ${SRC_NETWORK}
-    ${SRC_MDNS}
-    ${SRC_SERVICE}
-    ${SRC_UTILS}
-)
+# srouce 
+add_subdirectory(src)
 
-if (APPLE)
-    find_library(FOUNDATION_FX Foundation)
-
-    if (NOT FOUNDATION_FX)
-        message(FATAL_ERROR "Foundation.Framework not found")
-    endif()
-
-    target_link_libraries(aps PUBLIC
-        ${FOUNDATION_FX}
-    )
-endif()
+# third-party
+add_subdirectory(third-party)

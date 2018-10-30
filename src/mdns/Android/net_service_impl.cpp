@@ -1,5 +1,7 @@
+#include <dlfcn.h>
+#include <sys/endian.h>
 #include <utils/logger.h>
-#include "dns_sd.h"
+#include "../dns_sd.h"
 #include "../net_service_impl.h"
 
 class net_service::net_service_impl
@@ -7,8 +9,8 @@ class net_service::net_service_impl
 {
   public:
     net_service_impl(const std::string &type)
-        : type_(type)
     {
+        type_ = type;
         TXTRecordCreate(&txt_records_, 0, 0);
     }
 
@@ -19,8 +21,8 @@ class net_service::net_service_impl
 
     virtual void add_txt_record(const std::string &k, const std::string &v) override
     {
-        auto error = TXTRecordSetValue(
-            &txt_records_, k.c_str(), v.length(), v.c_str());
+        auto error = TXTRecordSetValue(&txt_records_,
+                                       k.c_str(), v.length(), v.c_str());
 
         if (error)
             LOGE() << "Failed to add TXT record:" << k << " = " << v << ": " << error;
@@ -42,7 +44,7 @@ class net_service::net_service_impl
             return true;
 
         LOGE() << "Failed to register service: " << name << ": " << error;
-        return false;
+        return true;
     }
 
     virtual void suppress() override

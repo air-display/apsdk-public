@@ -20,7 +20,6 @@ public class MainActivity extends AppCompatActivity {
         AirPlayConfig config = AirPlayConfig.defaultInstance();
         AirPlayServer airPlayServer = new AirPlayServer(getApplicationContext(), config);
 
-
         airPlayServer.start();
     }
 }

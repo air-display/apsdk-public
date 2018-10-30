@@ -1,0 +1,17 @@
+﻿  dllmain.c
+e:\sources\public\mdnsresponder\mdnswindows\dll\dllmain.c(74): warning C4013: 'free' undefined; assuming extern returning int
+e:\sources\public\mdnsresponder\mdnswindows\dll\dllmain.c(79): warning C4013: 'malloc' undefined; assuming extern returning int
+e:\sources\public\mdnsresponder\mdnswindows\dll\dllmain.c(79): warning C4312: 'type cast': conversion from 'int' to 'ENUM_SERVICE_STATUS *' of greater size
+  GenLinkedList.c
+  dnssd_ipc.c
+  dnssd_clientstub.c
+e:\sources\public\mdnsresponder\mdnsshared\dnssd_clientstub.c(70): warning C4013: '_vscprintf' undefined; assuming extern returning int
+e:\sources\public\mdnsresponder\mdnsshared\dnssd_clientstub.c(72): warning C4013: 'vsprintf' undefined; assuming extern returning int
+e:\sources\public\mdnsresponder\mdnsshared\dnssd_clientstub.c(268): warning C4244: 'initializing': conversion from 'SOCKET' to 'int', possible loss of data
+e:\sources\public\mdnsresponder\mdnsshared\dnssd_clientstub.c(1685): warning C4366: The result of the unary '&' operator may be unaligned
+e:\sources\public\mdnsresponder\mdnsshared\dnssd_clientstub.c(1749): warning C4366: The result of the unary '&' operator may be unaligned
+e:\sources\public\mdnsresponder\mdnsshared\dnssd_clientstub.c(1828): warning C4366: The result of the unary '&' operator may be unaligned
+  dnssd_clientlib.c
+  DebugServices.c
+e:\sources\public\mdnsresponder\mdnscore\mdnsembeddedapi.h(62): fatal error C1021: invalid preprocessor command 'warning'
+  Generating Code...

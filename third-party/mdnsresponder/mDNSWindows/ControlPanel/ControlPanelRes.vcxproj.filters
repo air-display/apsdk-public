@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{3c2d2227-8da1-418c-9013-d27e063a5426}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{e0d38f14-b0ae-4768-9261-59241db7a745}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;jpg;jpeg;jpe;manifest</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource_res.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\about.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="about.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\button-2k.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\button-xp.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\cold.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="hot.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\logo.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="logo.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Web.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ControlPanelRes.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

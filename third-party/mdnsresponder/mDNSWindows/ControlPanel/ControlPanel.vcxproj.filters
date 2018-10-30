@@ -1,0 +1,132 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{306ee8c6-9cf3-4e44-adfb-634c11b2bd44}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{d8712b3d-c3f1-4e0b-b71f-1a51825ef68f}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{840105d9-fabf-4019-b9ad-eb7b6ab17375}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;cnt;rtf;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+    <Filter Include="Support">
+      <UniqueIdentifier>{a0761f3e-c3c5-4bf2-8ead-83aedf69fb56}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ConfigDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ConfigPropertySheet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ControlPanelExe.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ServicesPage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RegistrationPage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\loclibrary.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BrowsingPage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Clients\ClientCommon.c">
+      <Filter>Support</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mDNSShared\DebugServices.c">
+      <Filter>Support</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Secret.c">
+      <Filter>Support</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinServices.cpp">
+      <Filter>Support</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ConfigDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ConfigPropertySheet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ControlPanelExe.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ServicesPage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RegistrationPage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\loclibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BrowsingPage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Clients\ClientCommon.h">
+      <Filter>Support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mDNSShared\CommonServices.h">
+      <Filter>Support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mDNSShared\DebugServices.h">
+      <Filter>Support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mDNSShared\dns_sd.h">
+      <Filter>Support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Secret.h">
+      <Filter>Support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinServices.h">
+      <Filter>Support</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\configurator.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\controlpanel.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\EnergySaver.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\failure.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\success.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ControlPanel.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\ControlPanel.rc2">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+</Project>
