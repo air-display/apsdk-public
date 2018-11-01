@@ -2,8 +2,6 @@
 #include <crypto/ap_crypto.h>
 #include "ap_video_stream_service.h"
 
-using namespace aps::service::details;
-
 namespace aps { namespace service { 
     ap_video_stream_session::ap_video_stream_session(asio::io_context& io_ctx, aps::ap_crypto& crypto)
         : aps::network::tcp_session_base(io_ctx)
@@ -24,8 +22,8 @@ namespace aps { namespace service {
 
     void ap_video_stream_session::post_receive_packet_header()
     {
-        memset(&(packet_.header), 0, sizeof(packet_header));
-        asio::async_read(socket_, asio::buffer(&(packet_.header), packet_header::LENGTH),
+        memset(&(packet_.header), 0, sizeof(packet_header_t));
+        asio::async_read(socket_, asio::buffer(&(packet_.header), packet_header_t::LENGTH),
             asio::bind_executor(
                 strand_,
                 std::bind(
@@ -40,11 +38,6 @@ namespace aps { namespace service {
     {
         if (!e) 
         {
-            //LOGI() << "mirror stream header received, payload type: "
-            //    << packet_.header.payload_type
-            //    << ", payload size: "
-            //    << packet_.header.payload_size;
-
             post_receive_packet_payload();
             return;
         }

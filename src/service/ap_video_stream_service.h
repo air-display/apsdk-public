@@ -1,10 +1,13 @@
 #pragma once
+#include <memory>
 #include <vector>
 #include <asio.hpp>
 #include <crypto/ap_crypto.h>
 #include <network/tcp_service.h>
 #include <utils/packing.h>
 #include "ap_video_stream_service_details.h"
+
+using namespace aps::service::video::details;
 
 namespace aps { namespace service { 
     class ap_video_stream_session
@@ -35,7 +38,7 @@ namespace aps { namespace service {
         void error_handler(const asio::error_code& e);
 
     private:
-        details::stream_packet packet_;
+        video::details::stream_packet_t packet_;
 
         aps::ap_crypto& crypto_;
     };
@@ -56,4 +59,6 @@ namespace aps { namespace service {
     private:
         aps::ap_crypto& crypto_;
     };
+
+    typedef std::shared_ptr<ap_video_stream_service> ap_video_stream_service_ptr;
 } }

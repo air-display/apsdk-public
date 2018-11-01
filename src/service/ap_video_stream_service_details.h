@@ -3,16 +3,17 @@
 #include <asio.hpp>
 #include <utils/packing.h>
 
-namespace aps { namespace service { namespace details {
-    enum payload_type
+namespace aps { namespace service { namespace video { namespace details {
+    enum payload_type_e
     {
         mirror_payload_video = 0,
         mirror_payload_codec = 1,
         mirror_payload_5 = 5,
         mirror_payload_4096 = 4096,
     };
+    typedef payload_type_e payload_type_t;
 
-    PACKED(struct packet_header
+    PACKED(struct packet_header_s
     {
         static const int LENGTH = 128;
         uint32_t payload_size;
@@ -21,6 +22,7 @@ namespace aps { namespace service { namespace details {
         uint64_t timestamp;
         uint8_t padding[128];
     });
+    typedef packet_header_s packet_header_t;
 
     //1 byte    1       version
     //1 byte    100     profile (high)
@@ -35,7 +37,7 @@ namespace aps { namespace service { namespace details {
     //1 byte    1       number of PPS
     //2 bytes   4       length of PPS
     //4 bytes   бн       Picture parameter set
-    PACKED(struct video_codec
+    PACKED(struct video_codec_s
     {
         uint8_t version;
         uint8_t profile;
@@ -51,15 +53,14 @@ namespace aps { namespace service { namespace details {
         uint16_t pps_length;
         uint8_t padding[128];
     });
+    typedef video_codec_s video_codec_t;
 
-    typedef std::vector<uint8_t> packet_payload;
+    typedef std::vector<uint8_t> packet_payload_t;
 
-    PACKED(struct stream_packet
+    PACKED(struct stream_packet_s
     {
-        packet_header header;
-        packet_payload payload;
-
-        stream_packet() {};
-        ~stream_packet() {};
+        packet_header_t header;
+        packet_payload_t payload;
     });
-} } }
+    typedef stream_packet_s stream_packet_t;
+} } } }

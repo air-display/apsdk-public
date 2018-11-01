@@ -56,6 +56,7 @@ class net_service::net_service_impl
 
 public:
     net_service_impl(const std::string& type)
+        : dns_service_(0)
     {
         type_ = type;
         dnssd_lib_.Module = ::LoadLibraryA("dnssd.dll");

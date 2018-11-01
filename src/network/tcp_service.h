@@ -69,12 +69,12 @@ namespace aps { namespace network {
     class tcp_service_base : public tcp_service
     {
     public:
-        tcp_service_base(uint16_t port = 0, bool single_client = false)
-            : port_(port)
-            , single_client_(single_client)
+        tcp_service_base(uint16_t port = 0, bool single_session = false)
+            : single_session_(single_session)
             , io_context_()
             , io_work_(io_context_)
             , acceptor_(io_context_)
+            , local_endpoint_(asio::ip::tcp::v6(), port)
             , loop_thread_(0)
         {
 
@@ -87,7 +87,7 @@ namespace aps { namespace network {
 
         virtual const uint16_t port() const override
         {
-            return port_;
+            return local_endpoint_.port();
         }
 
         virtual bool start() override
@@ -102,12 +102,11 @@ namespace aps { namespace network {
                 return false;
 
             // Create the acceptor
-            asio::ip::tcp::endpoint endpoint(asio::ip::tcp::v4(), port_);
-            acceptor_.open(endpoint.protocol());
-            acceptor_.set_option(asio::ip::tcp::acceptor::reuse_address(true));
-            acceptor_.bind(endpoint);
+            acceptor_.open(local_endpoint_.protocol());
+            acceptor_.set_option(asio::ip::v6_only(false));
+            acceptor_.bind(local_endpoint_);
             acceptor_.listen();
-            port_ = acceptor_.local_endpoint().port();
+            local_endpoint_ = acceptor_.local_endpoint();
 
             // Post the first accept operation 
             post_accept();
@@ -136,7 +135,6 @@ namespace aps { namespace network {
     protected:
         void post_accept()
         {
-
             // Create a new client session for incoming connection
             new_session_ = prepare_new_session();
 
@@ -156,7 +154,7 @@ namespace aps { namespace network {
 
                 LOGI() << "Session (" << std::hex << new_session_.get() << ") accepted and started";
 
-                if (single_client_)
+                if (single_session_)
                     return;
 
                 // Post a new accept operation 
@@ -169,11 +167,11 @@ namespace aps { namespace network {
         }
 
     private:
-        uint16_t port_;
-        bool single_client_;
+        bool single_session_;
         asio::io_context io_context_;
         asio::io_context::work io_work_;
         asio::ip::tcp::acceptor acceptor_;
+        asio::ip::tcp::endpoint local_endpoint_;
         std::shared_ptr<asio::thread> loop_thread_;
 
         tcp_session_ptr new_session_;

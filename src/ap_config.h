@@ -70,14 +70,20 @@ namespace aps {
         DECLARE_STRING_PROPERTY(name);
         DECLARE_STRING_PROPERTY(deviceID);
         DECLARE_STRING_PROPERTY(model);
-        DECLARE_STRING_PROPERTY(sourceVersion);
+        DECLARE_STRING_PROPERTY(serverVersion);
+        DECLARE_STRING_PROPERTY(macAddress);
         DECLARE_STRING_PROPERTY(pi);
         DECLARE_STRING_PROPERTY(pk);
-        DECLARE_STRING_PROPERTY(macAddress);
+
+        DECLARE_STRING_PROPERTY(audioCodecs);
+        DECLARE_STRING_PROPERTY(encryptionTypes);
+        DECLARE_STRING_PROPERTY(metadataTypes);
+        DECLARE_STRING_PROPERTY(needPassword);
+        DECLARE_STRING_PROPERTY(transmissionProtocol);
+
         DECLARE_INTEGER_PROPERTY(vv);
         DECLARE_INTEGER_PROPERTY(features);
         DECLARE_INTEGER_PROPERTY(statusFlag);
-
         DECLARE_OBJECT_PROPERTY(audio_format, ap_config_audio_format);
         DECLARE_OBJECT_PROPERTY(audio_latency, ap_config_audio_latency);
         DECLARE_OBJECT_PROPERTY(display, ap_config_display);

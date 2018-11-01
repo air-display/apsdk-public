@@ -4,8 +4,28 @@
 #include <vector>
 #include <map>
 #include <asio.hpp>
+#include <utils/packing.h>
 
 namespace aps { namespace service { namespace details {
+    /// <summary>
+    /// 
+    /// </summary>
+    enum stream_type_e {
+        audio = 96,
+        video = 110,
+    };
+    typedef stream_type_e stream_type_t;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    PACKED(struct pair_verify_header_s {
+        uint8_t is_first_frame;
+        uint8_t reserved0;
+        uint8_t reserved1;
+        uint8_t reserved2;
+    });
+    typedef pair_verify_header_s pair_verify_header_t;
 
     // RTSP line break and delimiter
     static const char* RN_LINE_BREAK = "\r\n";
@@ -31,7 +51,7 @@ namespace aps { namespace service { namespace details {
     /// <summary>
     /// 
     /// </summary>
-    enum status_type
+    enum status_type_e
     {
         ok = 200,
         bad_request = 400,
@@ -40,6 +60,7 @@ namespace aps { namespace service { namespace details {
 
         internal_error = 500,
     };
+    typedef status_type_e status_type_t;
 
     /// <summary>
     /// 
@@ -85,8 +106,13 @@ namespace aps { namespace service { namespace details {
                 << "Header:" << std::endl;
             for (auto& header : headers)
                 oss << "      " << header.first << ": " << header.second << std::endl;
-            oss << "Content:" << std::endl
-                << "      " << body.data();
+
+            oss << "Content:" << std::endl;
+            if (content_length)
+                oss << "      " << body.data();
+            else
+                oss << "       <EMPTY>";
+
             LOGD() << oss.str();
         }
     };
@@ -98,7 +124,7 @@ namespace aps { namespace service { namespace details {
     {
     public:
         std::string scheme_version;
-        status_type status_code;
+        status_type_t status_code;
         std::string status_text;
         header_map headers;
         int content_length;
@@ -107,12 +133,12 @@ namespace aps { namespace service { namespace details {
 
         explicit response(const std::string& scheme_ver)
             : scheme_version(scheme_ver)
-            , status_code(status_type::ok)
+            , status_code(status_type_t::ok)
             , status_text(status_string::ok)
             , content_length(0)
         {}
 
-        response& with_status(status_type code)
+        response& with_status(status_type_t code)
         {
             status_code = code;
             switch (code)

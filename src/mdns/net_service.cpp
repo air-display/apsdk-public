@@ -15,6 +15,11 @@ void net_service::add_txt_record(const std::string& k, const std::string& v)
     if (impl_) impl_->add_txt_record(k, v);
 }
 
+void net_service::add_txt_record(const std::string& k, const int& v)
+{
+    if (impl_) impl_->add_txt_record(k, std::to_string(v));
+}
+
 bool net_service::publish(const std::string& name, const uint16_t port)
 {
     if (impl_)

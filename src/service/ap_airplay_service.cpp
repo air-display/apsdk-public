@@ -5,12 +5,15 @@
 #include <utils/logger.h>
 #include <utils/plist.h>
 #include <utils/utils.h>
-#include "ap_types.h"
 #include "ap_video_stream_service.h"
 #include "ap_audio_stream_service.h"
 #include "ap_airplay_service.h"
 
+#ifdef _DEBUG
 #define DUMP_REQUEST(x) x.dump()
+#else
+#define DUMP_REQUEST(x) 
+#endif // _DEBUG
 
 using namespace aps::service::details;
 
@@ -213,15 +216,15 @@ namespace aps { namespace service {
                     if (!audio_stream_service_)
                     {
                         audio_stream_service_ = std::make_shared<ap_audio_stream_service>(crypto_);
-                        //audio_stream_service_->start();
+                        audio_stream_service_->start();
                     }
 
                     auto_plist audio_stream = plist_object_dict(1,
                         "streams", plist_object_array(1,
                             plist_object_dict(3,
                                 "type", plist_object_integer(type),
-                                "dataPort", plist_object_integer(audio_stream_service_->port()),
-                                "controlPort", plist_object_integer(audio_stream_service_->port())
+                                "dataPort", plist_object_integer(audio_stream_service_->data_port()),
+                                "controlPort", plist_object_integer(audio_stream_service_->control_port())
                             )
                         )
                     );
@@ -291,9 +294,16 @@ namespace aps { namespace service {
                 if (0 != plist_object_integer_get_value(timing_port_obj, &timing_port))
                     break;
 
+                if (!timing_sync_service_)
+                {
+                    timing_sync_service_ = std::make_shared<ap_timing_sync_service>(
+                        socket_.remote_endpoint().address().to_string(), timing_port);
+                    timing_sync_service_->open();
+                }
+
                 auto_plist content = plist_object_dict(2,
                     "eventPort", plist_object_integer(0),
-                    "timingPort", plist_object_integer(timing_port));
+                    "timingPort", plist_object_integer(timing_sync_service_->port()));
 
                 res.with_status(ok)
                     .with_content_type(APPLICATION_BINARY_PLIST)
@@ -320,7 +330,7 @@ namespace aps { namespace service {
             "macAddress", plist_object_string(config_.macAddress().c_str()),
             "model", plist_object_string(config_.model().c_str()),
             "name", plist_object_string(config_.name().c_str()),
-            "sourceVersion", plist_object_string(config_.sourceVersion().c_str()),
+            "sourceVersion", plist_object_string(config_.serverVersion().c_str()),
             "statusFlags", plist_object_integer(config_.statusFlag()),
             "pi", plist_object_string(config_.pi().c_str()),
             "pk", plist_object_data((uint8_t *)config_.pk().c_str(), config_.pk().length()),
@@ -371,8 +381,10 @@ namespace aps { namespace service {
     {
         DUMP_REQUEST(req);
 
+        timing_sync_service_->post_send_query();
+
         res.with_status(ok)
-            .with_header("Audio-Latency", "3750");
+            .with_header("Audio-Latency", "0");
     }
 
     void ap_airplay_session::get_parameter_handler(const details::request& req, details::response& res)
@@ -412,16 +424,27 @@ namespace aps { namespace service {
                             if (stream_type_t::video == type)
                             {
                                 // Stop video stream
-                                //if (video_stream_service_) 
-                                //{
-                                //    video_stream_service_->stop();
-                                //    video_stream_service_.reset();
-                                //}
+                                if (video_stream_service_) 
+                                {
+                                    video_stream_service_->stop();
+                                    video_stream_service_.reset();
+                                }
                             }
                             else if (stream_type_t::audio == type)
                             {
                                 // Stop audio stream
+                                if (audio_stream_service_)
+                                {
+                                    audio_stream_service_->stop();
+                                    audio_stream_service_.reset();
+                                }
 
+                                // Stop timing sync service
+                                if (timing_sync_service_)
+                                {
+                                    timing_sync_service_->close();
+                                    timing_sync_service_.reset();
+                                }
                             }
                             else
                                 LOGE() << "Unknown stream type";
@@ -705,14 +728,6 @@ namespace aps { namespace service {
 
     void ap_airplay_session::process_request()
     {
-        // Dump the request
-        //LOGD() << "<<<<< " << request_.method << " " << request_.uri << " " << request_.scheme_version;
-        //LOGD() << "Header:";
-        //for (auto& header : request_.headers)
-        //    LOGD() << "      " << header.first << ": " << header.second;
-        //LOGD() << "Content:";
-        //LOGD() << "      " << request_.body.data();
-
         response res(request_.scheme_version);
 
         request_handler_map* handler_map = 0;

@@ -17,14 +17,6 @@ namespace aps {
             , raop_net_service_("_raop._tcp")
             , airplay_tcp_service_(0)
         {
-            airplay_net_service_.add_txt_record(
-                "deviceId", config_.deviceID());
-            airplay_net_service_.add_txt_record(
-                "features", config_.features_hex_string());
-            airplay_net_service_.add_txt_record(
-                "srcvers", config_.sourceVersion());
-            airplay_net_service_.add_txt_record(
-                "model", config_.model());
         }
 
         ~implementation() {}
@@ -44,9 +36,7 @@ namespace aps {
                 return false;
             }
 
-            if (!airplay_net_service_.publish(
-                config_.name(), 
-                airplay_tcp_service_->port()))
+            if (!initialize_net_service())
             {
                 airplay_tcp_service_->stop();
                 airplay_tcp_service_.reset();
@@ -59,12 +49,75 @@ namespace aps {
         void stop()
         {
             airplay_net_service_.suppress();
+            raop_net_service_.suppress();
             
             if (airplay_tcp_service_)
             {
                 airplay_tcp_service_->stop();
                 airplay_tcp_service_.reset();
             }
+        }
+
+    protected:
+        bool initialize_net_service()
+        {
+            airplay_net_service_.add_txt_record(
+                "deviceId", config_.macAddress());
+            airplay_net_service_.add_txt_record(
+                "features", config_.features_hex_string());
+            airplay_net_service_.add_txt_record(
+                "model", config_.model());
+            airplay_net_service_.add_txt_record(
+                "srcvers", config_.serverVersion());
+            airplay_net_service_.add_txt_record(
+                "vv", config_.vv());
+            airplay_net_service_.add_txt_record(
+                "pi", config_.pi());
+            airplay_net_service_.add_txt_record(
+                "pk", config_.pk());
+
+            raop_net_service_.add_txt_record(
+                "am", config_.model());
+            raop_net_service_.add_txt_record(
+                "cn", config_.audioCodecs());
+            raop_net_service_.add_txt_record(
+                "et", config_.encryptionTypes());
+            raop_net_service_.add_txt_record(
+                "ft", config_.features_hex_string());
+            raop_net_service_.add_txt_record(
+                "md", config_.metadataTypes());
+            raop_net_service_.add_txt_record(
+                "pk", config_.pk());
+            raop_net_service_.add_txt_record(
+                "tp", config_.transmissionProtocol());
+            raop_net_service_.add_txt_record(
+                "vs", config_.serverVersion());
+            raop_net_service_.add_txt_record(
+                "vv", config_.vv());
+            raop_net_service_.add_txt_record(
+                "vn", "65537");
+            raop_net_service_.add_txt_record(
+                "da", "true");
+            raop_net_service_.add_txt_record(
+                "sf", "0x04");
+
+            if (airplay_net_service_.publish(
+                config_.name(),
+                airplay_tcp_service_->port()))
+            {
+                std::string rapo_name = config_.deviceID();
+                rapo_name += "@";
+                rapo_name += config_.name();
+
+                if (raop_net_service_.publish(
+                    rapo_name,
+                    airplay_tcp_service_->port()))
+                    return true;
+
+                airplay_net_service_.suppress();
+            }
+
+            return false;
         }
 
     private:

@@ -16,6 +16,10 @@ public:
         const std::string& k,
         const std::string& v);
 
+    void add_txt_record(
+        const std::string& k,
+        const int& v);
+
     bool publish(
         const std::string& name,
         const uint16_t port);

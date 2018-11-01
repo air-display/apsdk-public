@@ -55,15 +55,20 @@ namespace aps {
         if (!s_initialized)
         {
             s_instance.name_ = "Tencent WeCast Display";
-            s_instance.deviceID_ = "00:00:00:00:00:00";
+            s_instance.deviceID_ = "AABBCCDDEEFF";
             s_instance.model_ = "AppleTV3,2";
-            s_instance.sourceVersion_ = "220.68";
+            s_instance.serverVersion_ = "220.68";
             s_instance.pi_ = "b08f5a79-db29-4384-b456-a4784d9e6055";
             s_instance.pk_ = "99FD4299889422515FBD27949E4E1E21B2AF50A454499E3D4BE75A4E0F55FE63";
-            s_instance.macAddress_ = s_instance.deviceID_;
+            s_instance.macAddress_ = "00:00:00:00:00:00";
             s_instance.vv_ = 2;
             s_instance.features_ = 0x5A7FDFD1;
             s_instance.statusFlag_ = 68;
+            s_instance.audioCodecs_ = "0,1,2,3";
+            s_instance.encryptionTypes_ = "0,3,5";
+            s_instance.metadataTypes_ = "0,1,2";
+            s_instance.needPassword_ = "false";
+            s_instance.transmissionProtocol_ = "UDP";
 
             s_instance.display_.width(1920);
             s_instance.display_.height(1080);

@@ -5,8 +5,12 @@
 #include <map>
 #include <asio.hpp>
 #include <ap_config.h>
-#include <network/tcp_service.h>
 #include <crypto/ap_crypto.h>
+#include <network/tcp_service.h>
+#include <network/udp_service.h>
+#include "ap_audio_stream_service.h"
+#include "ap_video_stream_service.h"
+#include "ap_timing_sync_service.h"
 #include "ap_airplay_service_details.h"
 
 namespace aps { namespace service {
@@ -90,9 +94,6 @@ namespace aps { namespace service {
 
         void register_request_handlers();
 
-        // For debug
-        void dump_request(const details::request& req);
-
     private:
         aps::ap_config& config_;
 
@@ -106,9 +107,11 @@ namespace aps { namespace service {
         
         details::request_parser parser_;
 
-        aps::network::tcp_service_ptr video_stream_service_;
+        ap_video_stream_service_ptr video_stream_service_;
 
-        aps::network::tcp_service_ptr audio_stream_service_;
+        ap_audio_stream_service_ptr audio_stream_service_;
+
+        ap_timing_sync_service_ptr timing_sync_service_;
   
         request_handler_map rtsp_request_handlers_;
 

@@ -57,7 +57,9 @@ endif()
 source_group("mdns" FILES ${SRC_MDNS})
 
 set(SRC_NETWORK
+    network/rtp_types.h
     network/tcp_service.h
+    network/udp_service.h
 )
 source_group("network" FILES ${SRC_NETWORK})
 
@@ -67,10 +69,12 @@ set(SRC_SERVICE
     service/ap_airplay_service_details.h
     service/ap_audio_stream_service.cpp
     service/ap_audio_stream_service.h
-    service/ap_types.h
+    service/ap_audio_stream_service_details.h
     service/ap_video_stream_service.cpp
     service/ap_video_stream_service.h
     service/ap_video_stream_service_details.h
+    service/ap_timing_sync_service.cpp
+    service/ap_timing_sync_service.h
 )
 source_group("service" FILES ${SRC_SERVICE})
 

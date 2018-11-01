@@ -6,5 +6,7 @@
 
 const char* gmt_time_string();
 
+uint64_t get_ntp_timestamp();
+
 #endif // !UTILS_H_
 
