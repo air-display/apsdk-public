@@ -62,9 +62,9 @@ void aps::service::ap_timing_sync_service::post_send_query()
 {
     query_packet_.header.marker = 1;
     query_packet_.header.payload_type = timing_query;
-    query_packet_.original_timestamp = 0;
-    query_packet_.receive_timestamp = 0;
-    query_packet_.transmit_timestamp = get_ntp_timestamp();
+    query_packet_.original_timestamp = htonll(0);
+    query_packet_.receive_timestamp = htonll(0);
+    query_packet_.transmit_timestamp = htonll(get_ntp_timestamp());
 
     udp_socket_.async_send_to(
         asio::buffer(&query_packet_, sizeof(query_packet_)),
@@ -74,19 +74,41 @@ void aps::service::ap_timing_sync_service::post_send_query()
             this,
             std::placeholders::_1,
             std::placeholders::_2));
+
+    post_recv_reply();
 }
 
 void aps::service::ap_timing_sync_service::on_query_send(const asio::error_code& e, std::size_t bytes_transferred)
 {
-
+    if (!e)
+        LOGE() << "Failed to send timing query: " << e.message();
+    else
+        LOGI() << "Timing query packet sent successfully";
 }
 
 void aps::service::ap_timing_sync_service::post_recv_reply()
 {
-
+    udp_socket_.async_receive_from(
+        asio::buffer(&reply_packet_, sizeof(query_packet_)),
+        remote_endpoint_,
+        std::bind(
+            &ap_timing_sync_service::on_reply_recv,
+            this,
+            std::placeholders::_1,
+            std::placeholders::_2));
 }
 
 void aps::service::ap_timing_sync_service::on_reply_recv(const asio::error_code& e, std::size_t bytes_transferred)
 {
-
+    if (!e)
+        LOGE() << "Failed to send timing query: " << e.message();
+    else
+    {
+        reply_packet_.header.sequence = ntohs(reply_packet_.header.sequence);
+        reply_packet_.header.timestamp = ntohl(reply_packet_.header.timestamp);
+        reply_packet_.original_timestamp = ntohll(reply_packet_.original_timestamp);
+        reply_packet_.receive_timestamp = ntohll(reply_packet_.receive_timestamp);
+        reply_packet_.transmit_timestamp = ntohll(reply_packet_.transmit_timestamp);
+        LOGI() << "Timing reply packet received successfully";
+    }
 }

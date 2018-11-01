@@ -11,6 +11,7 @@ endif()
 add_definitions(-DASIO_STANDALONE)
 if (WIN32)
     add_definitions(-D_WIN32_WINNT=0x0501)
+    add_definitions(-DINCL_EXTRA_HTON_FUNCTIONS)
 endif()
 
 # Source files

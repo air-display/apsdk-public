@@ -1,6 +1,7 @@
 #include <chrono>
-#include <time.h>
 #include <ctime>
+#include <time.h>
+#include <string.h>
 #include "utils.h"
 
 using namespace std::chrono;

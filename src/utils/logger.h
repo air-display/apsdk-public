@@ -4,16 +4,26 @@
 
 #include <string>
 #include <iostream>
+#include <sstream>
 
 typedef enum log_level_e {
+    LL_UNKNOWN = 0,
+    LL_DEFAULT,
+    LL_VERBOSE,
     LL_DEBUG,
     LL_INFO,
     LL_WARN,
-    LL_ERROR
+    LL_ERROR,
+    LL_FATAL,
+    LL_SILENT
 } log_level;
 
 typedef struct log_config_s {
+#if defined(ANDROID)
+    bool headers = false;
+#else
     bool headers = true;
+#endif
     log_level level = LL_DEBUG;
 } log_config;
 
@@ -27,12 +37,10 @@ public:
 
     template<class T>
     logger& operator << (const T& msg) {
-        std::ios_base::fmtflags f(std::cout.flags());
-        if (msglevel >= log_config_.level) {
-            std::cout << msg;
-            opened = true;
+        if (msglevel_ >= log_config_.level) {
+            oss_ << msg;
+            opened_ = true;
         }
-        std::cout.flags(f);
         return *this;
     }
 
@@ -41,17 +49,23 @@ protected:
     {
         std::string label;
         switch (level) {
+        case LL_DEFAULT: label = "DEFAULT"; break;
+        case LL_VERBOSE: label = "VERBOSE"; break;
         case LL_DEBUG: label = "DEBUG"; break;
-        case LL_INFO:  label = "INFO "; break;
-        case LL_WARN:  label = "WARN "; break;
+        case LL_INFO: label = "INFO"; break;
+        case LL_WARN: label = "WARN"; break;
         case LL_ERROR: label = "ERROR"; break;
+        case LL_FATAL: label = "FATAL"; break;
+        case LL_SILENT: label = "SILENT"; break;
+        default: label = ""; break;
         }
         return label;
     }
 
 private:
-    log_level msglevel;
-    bool opened;
+    bool opened_;
+    log_level msglevel_;
+    std::ostringstream oss_;
 
     static log_config log_config_;
 };
