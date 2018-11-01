@@ -80,7 +80,7 @@ void aps::service::ap_timing_sync_service::post_send_query()
 
 void aps::service::ap_timing_sync_service::on_query_send(const asio::error_code& e, std::size_t bytes_transferred)
 {
-    if (!e)
+    if (e)
         LOGE() << "Failed to send timing query: " << e.message();
     else
         LOGI() << "Timing query packet sent successfully";
@@ -100,7 +100,7 @@ void aps::service::ap_timing_sync_service::post_recv_reply()
 
 void aps::service::ap_timing_sync_service::on_reply_recv(const asio::error_code& e, std::size_t bytes_transferred)
 {
-    if (!e)
+    if (e)
         LOGE() << "Failed to send timing query: " << e.message();
     else
     {
