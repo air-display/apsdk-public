@@ -6,18 +6,6 @@
 
 using namespace std::chrono;
 
-const char* gmt_time_string()
-{
-    static char date_buf[64];
-    memset(date_buf, 0, 64);
-
-    std::time_t now = std::time(0);
-    if (std::strftime(date_buf, 64, "%c GMT", std::gmtime(&now)))
-        return date_buf;
-    else
-        return 0;
-}
-
 uint64_t get_ntp_timestamp()
 {
     const uint32_t EPOCH = 2208988800ULL;         // January 1970, in NTP seconds. 
@@ -32,4 +20,16 @@ uint64_t get_ntp_timestamp()
     fraction = ((ms.count() % 1000) * NTP_SCALE_FRAC) / 1000;
 
     return (seconds << 32) | fraction;
+}
+
+const char* gmt_time_string()
+{
+    static char date_buf[64];
+    memset(date_buf, 0, 64);
+
+    std::time_t now = std::time(0);
+    if (std::strftime(date_buf, 64, "%c GMT", std::gmtime(&now)))
+        return date_buf;
+    else
+        return 0;
 }

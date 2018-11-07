@@ -8,6 +8,16 @@ namespace aps { namespace network {
     /// <summary>
     /// 
     /// </summary>
+    const int RTP_PACKET_MAX_LEN = 2048;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    const int RTP_PACKET_MIN_LEN = 12;
+
+    /// <summary>
+    /// 
+    /// </summary>
     enum rtp_payload_type_e
     {
         timing_query = 82,
@@ -58,4 +68,45 @@ namespace aps { namespace network {
         }
     });
     typedef rtp_timming_sync_packet_s rtp_timming_sync_packet_t;
+
+    PACKED(struct rtp_control_sync_packet_s
+    {
+        rtp_packet_header_t header;
+        uint64_t current_ntp_time;
+        uint32_t next_packet_time;
+
+        rtp_control_sync_packet_s()
+        {
+            current_ntp_time = 0;
+            next_packet_time = 0;
+        }
+    });
+    typedef rtp_control_sync_packet_s rtp_control_sync_packet_t;
+
+    PACKED(struct rtp_control_retransmit_packet_s
+    {
+        rtp_packet_header_t header;
+        uint16_t lost_packet_start;
+        uint16_t lost_packet_count;
+
+        rtp_control_retransmit_packet_s()
+        {
+            lost_packet_start = 0;
+            lost_packet_count = 0;
+        }
+    });
+    typedef rtp_control_retransmit_packet_s rtp_control_retransmit_packet_t;
+
+    PACKED(struct rtp_audio_data_packet_s
+    {
+        rtp_packet_header_t header;
+        uint32_t ssrc;
+        uint8_t payload[0];
+
+        rtp_audio_data_packet_s()
+        {
+            ssrc = 0;
+        }
+    });
+    typedef rtp_audio_data_packet_s rtp_audio_data_packet_t;
 } }

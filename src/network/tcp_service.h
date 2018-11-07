@@ -1,6 +1,8 @@
 #pragma once
 #include <memory>
+#include <thread>
 #include <asio.hpp>
+#include <utils/utils.h>
 #include <utils/logger.h>
 
 namespace aps { namespace network {
@@ -11,7 +13,7 @@ namespace aps { namespace network {
 
         virtual void start() = 0;
 
-        virtual void close() = 0;
+        virtual void stop() = 0;
 
         virtual asio::ip::tcp::socket& socket() = 0;
     };
@@ -47,20 +49,30 @@ namespace aps { namespace network {
 
         virtual ~tcp_session_base()
         {
+            cleanup();
         }
 
-        virtual void close()
+        virtual void start() override
         {
-            socket_.shutdown(asio::ip::tcp::socket::shutdown_both);
-
-            socket_.close();
         }
 
-        asio::ip::tcp::socket& socket()
+        virtual void stop() override
+        {
+            cleanup();
+        }
+
+        virtual asio::ip::tcp::socket& socket() override
         { 
             return socket_;
         }
 
+    protected:
+        void cleanup()
+        {
+            if (socket_.is_open())
+                socket_.shutdown(asio::socket_base::shutdown_both);
+        }
+        
     protected:
         asio::ip::tcp::socket socket_;
         asio::io_context::strand strand_;
@@ -69,20 +81,20 @@ namespace aps { namespace network {
     class tcp_service_base : public tcp_service
     {
     public:
-        tcp_service_base(uint16_t port = 0, bool single_session = false)
+        tcp_service_base(const std::string& name, uint16_t port = 0, bool single_session = false)
             : single_session_(single_session)
+            , service_name_(name)
             , io_context_()
             , io_work_(io_context_)
             , acceptor_(io_context_)
             , local_endpoint_(asio::ip::tcp::v6(), port)
-            , loop_thread_(0)
+            , worker_thread_(0)
         {
-
         }
 
         ~tcp_service_base()
         {
-            stop();
+            cleanup();
         }
 
         virtual const uint16_t port() const override
@@ -92,21 +104,9 @@ namespace aps { namespace network {
 
         virtual bool start() override
         {
-            // Create the work thread
-            // For the RTSP service single worker thread is enough
-            loop_thread_ = std::make_shared<asio::thread>(
-                std::bind<std::size_t(asio::io_service::*)()>(
-                    &asio::io_context::run, &io_context_));
-
-            if (!loop_thread_)
+            // Setup the resources 
+            if (!setup()) 
                 return false;
-
-            // Create the acceptor
-            acceptor_.open(local_endpoint_.protocol());
-            acceptor_.set_option(asio::ip::v6_only(false));
-            acceptor_.bind(local_endpoint_);
-            acceptor_.listen();
-            local_endpoint_ = acceptor_.local_endpoint();
 
             // Post the first accept operation 
             post_accept();
@@ -116,15 +116,7 @@ namespace aps { namespace network {
 
         virtual void stop() override
         {
-            acceptor_.close();
-
-            io_context_.stop();
-
-            if (loop_thread_) 
-            {
-                loop_thread_->join();
-                loop_thread_.reset();
-            }
+            cleanup();
         }
 
         virtual asio::io_context& io_context() override
@@ -154,25 +146,62 @@ namespace aps { namespace network {
 
                 LOGI() << "Session (" << std::hex << new_session_.get() << ") accepted and started";
 
-                if (single_session_)
+                if (single_session_) 
                     return;
 
                 // Post a new accept operation 
                 post_accept();
             }
             else
-            {
                 LOGE() << "Failed to accept the new session: " << e.message();
+        }
+
+    protected:
+        bool setup()
+        {
+            // Create the worker thread
+            worker_thread_ = std::make_shared<asio::thread>(
+                [&]()
+            {
+#if defined(DEBUG) || defined(_DEBUG)
+                set_current_thread_name(service_name_.c_str());
+#endif
+                io_context_.run();
+            });
+
+            if (!worker_thread_) 
+                return false;
+
+            // Create the acceptor
+            acceptor_.open(local_endpoint_.protocol());
+            acceptor_.set_option(asio::ip::v6_only(false));
+            acceptor_.bind(local_endpoint_);
+            acceptor_.listen();
+            local_endpoint_ = acceptor_.local_endpoint();
+
+            return true;
+        }
+
+        void cleanup()
+        {
+            acceptor_.cancel();
+            io_context_.stop();
+
+            if (worker_thread_)
+            {
+                worker_thread_->join();
+                worker_thread_.reset();
             }
         }
 
     private:
         bool single_session_;
+        std::string service_name_;
         asio::io_context io_context_;
         asio::io_context::work io_work_;
         asio::ip::tcp::acceptor acceptor_;
         asio::ip::tcp::endpoint local_endpoint_;
-        std::shared_ptr<asio::thread> loop_thread_;
+        std::shared_ptr<asio::thread> worker_thread_;
 
         tcp_session_ptr new_session_;
     };

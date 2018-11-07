@@ -65,7 +65,7 @@ namespace aps { namespace service {
     {
         if (!e)
         {
-            LOGI() << "mirror stream payload received, size: " << bytes_transferred;
+            LOGV() << "mirror stream payload received, size: " << bytes_transferred;
 
             process_packet();
 
@@ -82,28 +82,34 @@ namespace aps { namespace service {
         if (mirror_payload_video == packet_.header.payload_type)
         {
             // Process the video packet 
+            LOGD() << "mirror VIDEO packet: " << packet_.payload.size();
             crypto_.decrypt_video_frame(
-                packet_.payload.data(), packet_.payload.size());
+                packet_.payload.data(), 
+                packet_.payload.size());
         }
         else if (mirror_payload_codec == packet_.header.payload_type)
         {
             // Process the codec packet
+            LOGD() << "mirror CODEC packet: " << packet_.payload.size();
+
 
         }
         else if (mirror_payload_5 == packet_.header.payload_type)
         {
             // Process the 5 packet
+            LOGD() << "mirror 5 packet: " << packet_.payload.size();
 
         }
         else if (mirror_payload_4096 == packet_.header.payload_type)
         {
             // Process the 4096 packet
+            LOGD() << "mirror 4096 packet: " << packet_.payload.size();
 
         }
         else
         {
             // Unknown packet
-            LOGI() << "Unknown payload type: " << packet_.header.payload_type;
+            LOGE() << "Unknown payload type: " << packet_.header.payload_type;
         }
     }
 
@@ -146,14 +152,13 @@ namespace aps { namespace service {
     }
 
     ap_video_stream_service::ap_video_stream_service(aps::ap_crypto& crypto, uint16_t port)
-        : aps::network::tcp_service_base(port, true), crypto_(crypto)
+        : aps::network::tcp_service_base("ap_video_stream_service", port, true)
+        , crypto_(crypto)
     {
-
     }
 
     ap_video_stream_service::~ap_video_stream_service()
     {
-        
     }
 
     aps::network::tcp_session_ptr ap_video_stream_service::prepare_new_session()

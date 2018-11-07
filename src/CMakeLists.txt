@@ -10,7 +10,7 @@ endif()
 # Definitions
 add_definitions(-DASIO_STANDALONE)
 if (WIN32)
-    add_definitions(-D_WIN32_WINNT=0x0501)
+    add_definitions(-D_WIN32_WINNT=0x0600) # Windows Vista +
     add_definitions(-DINCL_EXTRA_HTON_FUNCTIONS)
 endif()
 
@@ -39,7 +39,6 @@ set(SRC_MDNS
     mdns/net_service.cpp
     mdns/net_service_impl.h
 )
-
 if (WIN32)
     list(APPEND SRC_MDNS
         mdns/dns_sd.h
@@ -88,6 +87,19 @@ set(SRC_UTILS
     utils/utils.cpp
     utils/utils.h
 )
+if (WIN32)
+    list(APPEND SRC_UTILS
+        utils/Windows/utils_impl.cpp
+    )
+elseif (APPLE)
+    list(APPEND SRC_UTILS
+        utils/macOS/utils_impl.cpp
+    )
+elseif (ANDROID)
+    list(APPEND SRC_UTILS
+        utils/Android/utils_impl.cpp
+    )
+endif()
 source_group("utils" FILES ${SRC_UTILS})
 
 # Output

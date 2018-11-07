@@ -24,7 +24,7 @@ typedef struct log_config_s {
 #else
     bool headers = true;
 #endif
-    log_level level = LL_DEBUG;
+    log_level level = LL_DEFAULT;
 } log_config;
 
 class logger {
@@ -70,9 +70,12 @@ private:
     static log_config log_config_;
 };
 
+#define LOG() logger(log_level::LL_DEFAULT)
+#define LOGV() logger(log_level::LL_VERBOSE)
 #define LOGD() logger(log_level::LL_DEBUG)
 #define LOGI() logger(log_level::LL_INFO)
 #define LOGW() logger(log_level::LL_WARN)
 #define LOGE() logger(log_level::LL_ERROR)
+#define LOGF() logger(log_level::LL_FATAL)
 
 #endif  // LOGGER_H

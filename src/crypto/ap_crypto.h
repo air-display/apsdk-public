@@ -31,7 +31,17 @@ namespace aps {
         ap_crypto();
         ~ap_crypto();
 
-        void init_client_rsa_info(
+        void init_fp_key_message(
+            uint8_t* keymsg, 
+            uint32_t len);
+
+        void fp_setup(uint8_t mode, uint8_t* content);
+
+        void fp_handshake(uint8_t* content, uint8_t* request);
+
+        void fp_decrypt(const uint8_t* key, uint8_t* out);
+
+        void init_client_aes_info(
             const uint8_t* piv, uint64_t iv_len,
             const uint8_t* pkey, uint64_t key_len);
 
@@ -50,11 +60,13 @@ namespace aps {
 
         void decrypt_video_frame(uint8_t* frame, uint64_t len);
 
+        const std::vector<uint8_t>& fp_key_message() const;
+
         const std::vector<uint8_t>& shared_secret() const;
 
-        const std::vector<uint8_t>& client_rsa_key() const;
+        const std::vector<uint8_t>& client_aes_key() const;
 
-        const std::vector<uint8_t>& client_rsa_iv() const;
+        const std::vector<uint8_t>& client_aes_iv() const;
 
         const std::vector<uint8_t>& client_ed_public_key() const;
 
@@ -65,11 +77,15 @@ namespace aps {
     private:
         server_key_chain server_;
 
+        std::vector<uint8_t> fp_key_message_;
+
         std::vector<uint8_t> shared_secret_;
 
-        std::vector<uint8_t> client_rsa_iv_;
+        std::vector<uint8_t> client_aes_iv_;
 
-        std::vector<uint8_t> client_rsa_key_;
+        std::vector<uint8_t> client_aes_key_;
+
+        std::vector<uint8_t> client_encrypted_aes_key_;
 
         std::vector<uint8_t> client_ed_public_key_;
         
@@ -77,6 +93,15 @@ namespace aps {
 
         AES_ctx pair_verify_aes_ctr_ctx;
 
-        AES_ctx video_stream_aes_ctx;
+        /// <summary>
+        /// AES-CTR
+        /// </summary>
+        AES_ctx video_stream_aes_ctr_ctx;
+
+        /// <summary>
+        /// AES-CBC
+        /// </summary>
+        AES_ctx audio_stream_aes_cbc_ctx;
+
     };
 }

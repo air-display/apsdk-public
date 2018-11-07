@@ -15,12 +15,12 @@ extern "C" {
 // ECB enables the basic ECB 16-byte block algorithm. All can be enabled simultaneously.
 
 // The #ifndef-guard allows it to be configured before #include'ing or at compile time.
-//#ifndef CBC
-//  #define CBC 1
-//#endif
-//
+#ifndef CBC
+#define CBC 1
+#endif
+
 //#ifndef ECB
-//  #define ECB 1
+//#define ECB 1
 //#endif
 
 #ifndef CTR

@@ -1,7 +1,6 @@
 #include <stdexcept>
 #include <exception>
 #include <ctime>
-#include <playfair/fair_play.h>
 #include <utils/logger.h>
 #include <utils/plist.h>
 #include <utils/utils.h>
@@ -9,10 +8,10 @@
 #include "ap_audio_stream_service.h"
 #include "ap_airplay_service.h"
 
-#ifdef _DEBUG
-#define DUMP_REQUEST(x) x.dump()
-#else
+#if defined(NDEBUG)
 #define DUMP_REQUEST(x) 
+#else
+#define DUMP_REQUEST(x) x.dump()
 #endif // _DEBUG
 
 using namespace aps::service::details;
@@ -145,9 +144,8 @@ namespace aps { namespace service {
             if (ver == 0x03)
             {
                 uint8_t mode = req.body[14];
-                std::vector<uint8_t> content;
-                uint8_t* pos = (uint8_t*)&(reply_message[mode]);
-                std::copy(pos, pos + 142, std::back_inserter(content));
+                std::vector<uint8_t> content(142, 0);
+                crypto_.fp_setup(mode, content.data());
                 res.with_status(ok)
                     .with_content_type(APPLICATION_OCTET_STREAM)
                     .with_content(content);
@@ -158,11 +156,8 @@ namespace aps { namespace service {
             uint8_t ver = req.body[4];
             if (ver == 0x03)
             {
-                std::vector<uint8_t> content;
-                uint8_t* pos = (uint8_t*)&(fp_header);
-                std::copy(pos, pos + 12, std::back_inserter(content));
-                pos = (uint8_t*)&(req.body[144]);
-                std::copy(pos, pos + 20, std::back_inserter(content));
+                std::vector<uint8_t> content(32, 0);
+                crypto_.fp_handshake(content.data(), (uint8_t*)&req.body[144]);
                 res.with_status(ok)
                     .with_content_type(APPLICATION_OCTET_STREAM)
                     .with_content(content);
@@ -285,7 +280,7 @@ namespace aps { namespace service {
                 if (0 != plist_object_data_get_value(ekey_obj, &pkey, &key_len))
                     break;
 
-                crypto_.init_client_rsa_info(piv, iv_len, pkey, key_len);
+                crypto_.init_client_aes_info(piv, iv_len, pkey, key_len);
 
                 auto timing_port_obj = plist_object_dict_get_value(data_obj, "timingPort");
                 if (PLIST_TYPE_INTEGER != plist_object_get_type(timing_port_obj))
@@ -297,7 +292,7 @@ namespace aps { namespace service {
                 if (!timing_sync_service_)
                 {
                     timing_sync_service_ = std::make_shared<ap_timing_sync_service>(
-                        socket_.remote_endpoint().address().to_string(), timing_port);
+                        socket_.remote_endpoint().address().to_string(), (uint16_t)timing_port);
                     timing_sync_service_->open();
                 }
 
@@ -516,6 +511,8 @@ namespace aps { namespace service {
 
     void ap_airplay_session::get_playback_info(const details::request& req, details::response& res)
     {
+        DUMP_REQUEST(req);
+
         res.with_status(ok);
     }
 
@@ -526,7 +523,14 @@ namespace aps { namespace service {
         res.with_status(ok);
     }
 
-    void ap_airplay_session::get_getProperty(const details::request& req, details::response& res)
+    void ap_airplay_session::post_getProperty(const details::request& req, details::response& res)
+    {
+        DUMP_REQUEST(req);
+
+        res.with_status(ok);
+    }
+
+    void ap_airplay_session::post_audioMode(const details::request& req, details::response& res)
     {
         DUMP_REQUEST(req);
 
@@ -594,7 +598,7 @@ namespace aps { namespace service {
             else
             {
                 // Invalid request head, close this session
-                close();
+                stop();
             }
         }
         else
@@ -914,11 +918,18 @@ namespace aps { namespace service {
             "PUT", "/setProperty");
 
         register_http_request_handler(
-            std::bind(&ap_airplay_session::get_getProperty,
+            std::bind(&ap_airplay_session::post_getProperty,
                 this,
                 std::placeholders::_1,
                 std::placeholders::_2),
-            "GET", "/getProperty");
+            "POST", "/getProperty");
+
+        register_http_request_handler(
+            std::bind(&ap_airplay_session::post_audioMode,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2),
+            "POST", "/audioMode");
     }
 
     void ap_airplay_session::method_not_found_handler(const details::request& req, details::response& res)
@@ -940,7 +951,7 @@ namespace aps { namespace service {
     }
 
     ap_airplay_service::ap_airplay_service(ap_config& config, uint16_t port /*= 0*/)
-        : tcp_service_base(port)
+        : tcp_service_base("ap_airplay_service", port)
         , config_(config)
     {
     }

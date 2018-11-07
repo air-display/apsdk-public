@@ -1,6 +1,8 @@
+#include <sstream>
 #include <ed25519/ed25519.h>
 #include <ed25519/sha512.h>
 #include <curve25519/curve25519-donna.h>
+#include <playfair/playfair.h>
 #include "ap_crypto.h"
 
 aps::server_key_chain::server_key_chain()
@@ -48,28 +50,56 @@ const std::vector<uint8_t>& aps::server_key_chain::curve_private_key() const
 }
 
 aps::ap_crypto::ap_crypto()
+    : fp_key_message_(164)
+    , client_aes_key_(16)
+    , client_aes_iv_(16)
+    , client_encrypted_aes_key_(64)
+    , client_curve_public_key_(32)
+    , client_ed_public_key_(32)
+    , shared_secret_(32)
 {
-    client_rsa_key_.resize(64);
-    client_rsa_iv_.resize(64);
-    client_curve_public_key_.resize(32);
-    client_ed_public_key_.resize(32);
-    shared_secret_.resize(32);
+
 }
 
 aps::ap_crypto::~ap_crypto()
 {
 }
 
-void aps::ap_crypto::init_client_rsa_info(const uint8_t* piv, uint64_t iv_len, const uint8_t* pkey, uint64_t key_len)
+void aps::ap_crypto::init_fp_key_message(uint8_t* keymsg, uint32_t len)
+{
+    if (keymsg)
+        this->fp_key_message_.assign(keymsg, keymsg + len);
+}
+
+void aps::ap_crypto::fp_setup(uint8_t mode, uint8_t* content)
+{
+    uint8_t* pos = (uint8_t*)&(reply_message[mode]);
+    memcpy(content, pos, 142);
+}
+
+void aps::ap_crypto::fp_handshake(uint8_t* content, uint8_t* request)
+{
+    uint8_t* pos = (uint8_t*)&(fp_header);
+    memcpy(content, pos, 12);
+    memcpy(content + 12, request, 20);
+}
+
+void aps::ap_crypto::fp_decrypt(const uint8_t* key, uint8_t* out)
+{
+    playfair_decrypt(fp_key_message_.data(), (uint8_t*)key, out);
+}
+
+void aps::ap_crypto::init_client_aes_info(const uint8_t* piv, uint64_t iv_len, const uint8_t* pkey, uint64_t key_len)
 {
     if (piv && iv_len)
     {
-        this->client_rsa_iv_.assign(piv, piv + iv_len);
+        this->client_aes_iv_.assign(piv, piv + iv_len);
     }
 
     if (pkey && key_len)
     {
-        this->client_rsa_key_.assign(pkey, pkey + key_len);
+        this->client_encrypted_aes_key_.assign(pkey, pkey + key_len);
+        fp_decrypt(pkey, this->client_aes_key_ .data());
     }
 }
 
@@ -176,8 +206,15 @@ bool aps::ap_crypto::verify_pair_signature(const uint8_t* p, uint64_t len)
 
 void aps::ap_crypto::init_video_stream_aes(const uint64_t video_stream_id)
 {
-    std::string key = "AirPlayStreamKey";
-    std::string iv = "AirPlayStreamIV";
+    std::ostringstream oss;
+
+    oss.str("");
+    oss << "AirPlayStreamKey" << video_stream_id;
+    std::string key = oss.str();
+
+    oss.str("");
+    oss << "AirPlayStreamIV" << video_stream_id;
+    std::string iv = oss.str();
 
     sha512_context_ sha512_context;
     std::vector<uint8_t> sha512_hash;
@@ -201,14 +238,19 @@ void aps::ap_crypto::init_video_stream_aes(const uint64_t video_stream_id)
     sha512_aes_iv.assign(sha512_hash.begin(), sha512_hash.begin() + 16);
 
     AES_init_ctx_iv(
-        &video_stream_aes_ctx,
+        &video_stream_aes_ctr_ctx,
         sha512_aes_key.data(),
         sha512_aes_iv.data());
 }
 
 void aps::ap_crypto::decrypt_video_frame(uint8_t* frame, uint64_t len)
 {
-    AES_CTR_xcrypt_buffer(&video_stream_aes_ctx, frame, (uint32_t)len);
+    AES_CTR_xcrypt_buffer(&video_stream_aes_ctr_ctx, frame, (uint32_t)len);
+}
+
+const std::vector<uint8_t>& aps::ap_crypto::fp_key_message() const
+{
+    return fp_key_message_;
 }
 
 const std::vector<uint8_t>& aps::ap_crypto::shared_secret() const
@@ -216,14 +258,14 @@ const std::vector<uint8_t>& aps::ap_crypto::shared_secret() const
     return shared_secret_;
 }
 
-const std::vector<uint8_t>& aps::ap_crypto::client_rsa_key() const
+const std::vector<uint8_t>& aps::ap_crypto::client_aes_key() const
 {
-    return client_rsa_key_;
+    return client_aes_key_;
 }
 
-const std::vector<uint8_t>& aps::ap_crypto::client_rsa_iv() const
+const std::vector<uint8_t>& aps::ap_crypto::client_aes_iv() const
 {
-    return client_rsa_iv_;
+    return client_aes_iv_;
 }
 
 const std::vector<uint8_t>& aps::ap_crypto::client_ed_public_key() const

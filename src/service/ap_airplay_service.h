@@ -42,29 +42,51 @@ namespace aps { namespace service {
     protected:
         // RTSP
         void options_handler(const details::request& req, details::response& res);
+
         void post_pair_setup_handler(const details::request& req, details::response& res);
+
         void post_pair_verify_handler(const details::request& req, details::response& res);
+
         void post_fp_setup_handler(const details::request& req, details::response& res);
+
         void setup_handler(const details::request& req, details::response& res);
+
         void get_info_handler(const details::request& req, details::response& res);
+
         void post_feedback_handler(const details::request& req, details::response& res);
+
         void record_handler(const details::request& req, details::response& res);
+
         void get_parameter_handler(const details::request& req, details::response& res);
+
         void set_parameter_handler(const details::request& req, details::response& res);
+
         void teardown_handler(const details::request& req, details::response& res);
+
         void flush_handler(const details::request& req, details::response& res);
 
         // HTTP - Video
         void get_server_info(const details::request& req, details::response& res);
+
         void post_reverse(const details::request& req, details::response& res);
+
         void post_play(const details::request& req, details::response& res);
+
         void post_scrub(const details::request& req, details::response& res);
+
         void post_rate(const details::request& req, details::response& res);
+
         void post_stop(const details::request& req, details::response& res);
+
         void post_action(const details::request& req, details::response& res);
+
         void get_playback_info(const details::request& req, details::response& res);
+
         void put_setProperty(const details::request& req, details::response& res);
-        void get_getProperty(const details::request& req, details::response& res);
+
+        void post_getProperty(const details::request& req, details::response& res);
+
+        void post_audioMode(const details::request& req, details::response& res);
 
     protected:
 
