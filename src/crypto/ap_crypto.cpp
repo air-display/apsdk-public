@@ -204,7 +204,7 @@ bool aps::ap_crypto::verify_pair_signature(const uint8_t* p, uint64_t len)
         client_ed_public_key_.data());
 }
 
-void aps::ap_crypto::init_video_stream_aes(const uint64_t video_stream_id)
+void aps::ap_crypto::init_video_stream_aes_ctr(const uint64_t video_stream_id)
 {
     std::ostringstream oss;
 
@@ -243,9 +243,25 @@ void aps::ap_crypto::init_video_stream_aes(const uint64_t video_stream_id)
         sha512_aes_iv.data());
 }
 
+void aps::ap_crypto::init_audio_stream_aes_cbc()
+{
+    std::vector<uint8_t> sha512_aes_key;
+    std::vector<uint8_t> sha512_aes_iv;
+
+    //AES_init_ctx_iv(
+    //    &audio_stream_aes_cbc_ctx,
+    //    sha512_aes_key.data(),
+    //    sha512_aes_iv.data());
+}
+
 void aps::ap_crypto::decrypt_video_frame(uint8_t* frame, uint64_t len)
 {
     AES_CTR_xcrypt_buffer(&video_stream_aes_ctr_ctx, frame, (uint32_t)len);
+}
+
+void aps::ap_crypto::decrypt_audio_data(uint8_t* data, uint64_t len)
+{
+    AES_CBC_decrypt_buffer(&audio_stream_aes_cbc_ctx, data, (uint32_t)len);
 }
 
 const std::vector<uint8_t>& aps::ap_crypto::fp_key_message() const

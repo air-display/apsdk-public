@@ -2,6 +2,7 @@
 #include <memory>
 #include <vector>
 #include <asio.hpp>
+#include <ap_handler.h>
 #include <utils/packing.h>
 #include <network/udp_service.h>
 #include <crypto/ap_crypto.h>
@@ -33,6 +34,9 @@ namespace aps { namespace service {
             const asio::error_code& e, 
             std::size_t bytes_transferred) override;
 
+    protected:
+        void handle_socket_error(const asio::error_code& e);
+
     private:
         std::vector<uint8_t> recv_buf_;
 
@@ -45,7 +49,8 @@ namespace aps { namespace service {
     {
     public:
         explicit ap_audio_stream_service(
-            aps::ap_crypto& crypto);
+            aps::ap_crypto& crypto,
+            aps::ap_handler_ptr handler = 0);
 
         ~ap_audio_stream_service();
 
@@ -79,6 +84,8 @@ namespace aps { namespace service {
             aps::network::rtp_control_retransmit_packet_t* packet);
 
     private:
+        aps::ap_handler_ptr handler_;
+
         aps::ap_crypto& crypto_;
 
         audio_udp_service data_service_;

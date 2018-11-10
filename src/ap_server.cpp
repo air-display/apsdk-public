@@ -21,12 +21,19 @@ namespace aps {
 
         ~implementation() {}
 
+        void set_handler(ap_handler_ptr hanlder)
+        {
+            ap_handler_ = hanlder;
+        }
+
         bool start()
         {
             if (airplay_tcp_service_)
                 return true;
 
-            airplay_tcp_service_ = std::make_shared<ap_airplay_service>(config_);
+            airplay_tcp_service_ = std::make_shared<ap_airplay_service>(config_, 9123);
+            airplay_tcp_service_->set_handler(ap_handler_);
+
             if (!airplay_tcp_service_)
                 return false;
 
@@ -75,6 +82,8 @@ namespace aps {
                 "pi", config_.pi());
             airplay_net_service_.add_txt_record(
                 "pk", config_.pk());
+            airplay_net_service_.add_txt_record(
+                "flags", config_.flags());
 
             raop_net_service_.add_txt_record(
                 "am", config_.model());
@@ -123,11 +132,13 @@ namespace aps {
     private:
         ap_config config_;
 
+        ap_handler_ptr ap_handler_;
+
         net_service airplay_net_service_;
 
         net_service raop_net_service_;
       
-        tcp_service_ptr airplay_tcp_service_;
+        ap_airplay_service_ptr airplay_tcp_service_;
     };
 
     ap_server::ap_server(const aps::ap_config& config)
@@ -138,6 +149,11 @@ namespace aps {
     ap_server::~ap_server()
     {
         impl_.reset();
+    }
+
+    void ap_server::set_handler(ap_handler_ptr hanlder)
+    {
+        impl_->set_handler(hanlder);
     }
 
     bool aps::ap_server::start()

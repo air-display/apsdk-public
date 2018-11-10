@@ -37,14 +37,19 @@ namespace aps { namespace service { namespace details {
     static const char* HEADER_CONTENT_TYPE = "Content-Type";
     static const char* HEADER_CONTENT_LENGTH = "Content-Length";
     static const char* HEADER_CSEQ = "CSeq";
-    static const char* HEADER_SERVER = "Server";
+    static const char* HEADER_SERVER = "Session";
+    static const char* HEADER_SESSION = "Server";
     static const char* HEADER_DATE = "Date";
     static const char* HEADER_AUDIO_JACK_STATUS = "Audio-Jack-Status";
 
     // RTSP content type
     static const char* APPLICATION_OCTET_STREAM = "application/octet-stream";
     static const char* APPLICATION_BINARY_PLIST = "application/x-apple-binary-plist";
+    static const char* APPLICATION_DMAP_TAGGED = "application/x-dmap-tagged";
+    static const char* TEXT_APPLE_PLIST_XML = "text/x-apple-plist+xml";
     static const char* TEXT_PARAMETERS = "text/parameters";
+    static const char* IMAGE_JPEG = "image/jpeg";
+    static const char* IMAGE_PNG = "image/png";
 
     typedef std::map<std::string, std::string> header_map;
 
@@ -102,16 +107,16 @@ namespace aps { namespace service { namespace details {
         {
             std::ostringstream oss;
             oss << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< " << std::endl
-                << "Request: "<< method << " " << uri << " " << scheme_version << std::endl
-                << "Header:" << std::endl;
+                << "    Request: "<< method << " " << uri << " " << scheme_version << std::endl
+                << "    Header:" << std::endl;
             for (auto& header : headers)
-                oss << "      " << header.first << ": " << header.second << std::endl;
+                oss << "        " << header.first << ": " << header.second << std::endl;
 
-            oss << "Content:" << std::endl;
-            if (content_length)
-                oss << "      " << body.data();
-            else
-                oss << "       <EMPTY>";
+            //oss << "    Content:";
+            //if (content_length)
+            //    oss.write((char*)body.data(), body.size());
+            //else
+            //    oss << "<EMPTY>";
 
             LOGD() << oss.str();
         }

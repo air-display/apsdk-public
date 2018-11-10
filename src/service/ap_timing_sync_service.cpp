@@ -5,16 +5,21 @@ using namespace std::chrono;
 using namespace aps::network;
 
 aps::service::ap_timing_sync_service::ap_timing_sync_service(
-    const std::string& server_address, 
-    const uint16_t server_port, 
-    const uint16_t self_port /*= 0*/)
-    : aps::network::udp_service_base("ap_timing_sync_service", self_port)
-    , remote_endpoint_(asio::ip::address::from_string(server_address), server_port)
+    const uint16_t port /*= 0*/)
+    : aps::network::udp_service_base("ap_timing_sync_service", port)
 {
 }
 
 aps::service::ap_timing_sync_service::~ap_timing_sync_service()
 {
+}
+
+void aps::service::ap_timing_sync_service::set_server_endpoint(
+    const asio::ip::address& addr, 
+    uint16_t port)
+{
+    remote_endpoint_.address(addr);
+    remote_endpoint_.port(port);
 }
 
 void aps::service::ap_timing_sync_service::post_send_query()
@@ -37,7 +42,7 @@ void aps::service::ap_timing_sync_service::on_send_to(
         LOGE() << "Failed to send timing query: " << e.message();
     else
     {
-        LOGI() << "Timing query packet sent successfully";
+        LOGD() << "Timing query packet sent successfully";
         post_recv_reply();
     }
 }
@@ -62,6 +67,6 @@ void aps::service::ap_timing_sync_service::on_recv_from(
         reply_packet_.original_timestamp = ntohll(reply_packet_.original_timestamp);
         reply_packet_.receive_timestamp = ntohll(reply_packet_.receive_timestamp);
         reply_packet_.transmit_timestamp = ntohll(reply_packet_.transmit_timestamp);
-        LOGI() << "Timing reply packet received successfully";
+        LOGD() << "Timing reply packet received successfully";
     }
 }

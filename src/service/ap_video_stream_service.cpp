@@ -3,16 +3,20 @@
 #include "ap_video_stream_service.h"
 
 namespace aps { namespace service { 
-    ap_video_stream_session::ap_video_stream_session(asio::io_context& io_ctx, aps::ap_crypto& crypto)
+    ap_video_stream_session::ap_video_stream_session(
+        asio::io_context& io_ctx, 
+        aps::ap_crypto& crypto,
+        aps::ap_handler_ptr handler /*= 0*/)
         : aps::network::tcp_session_base(io_ctx)
+        , handler_(handler)
         , crypto_(crypto)
     {
-        LOGI() << "ap_video_stream_session(" << std::hex << this << ") is allocating.";
+        LOGD() << "ap_video_stream_session(" << std::hex << this << ") is allocating.";
     }
 
     ap_video_stream_session::~ap_video_stream_session()
     {
-        LOGI() << "ap_video_stream_session(" << std::hex << this << ") is destroying.";
+        LOGD() << "ap_video_stream_session(" << std::hex << this << ") is destroying.";
     }
 
     void ap_video_stream_session::start()
@@ -43,7 +47,7 @@ namespace aps { namespace service {
         }
         else
         {
-            error_handler(e);
+            handle_socket_error(e);
         }
     }
 
@@ -73,7 +77,7 @@ namespace aps { namespace service {
         }
         else 
         {
-            error_handler(e);
+            handle_socket_error(e);
         }
     }
 
@@ -82,7 +86,7 @@ namespace aps { namespace service {
         if (mirror_payload_video == packet_.header.payload_type)
         {
             // Process the video packet 
-            LOGD() << "mirror VIDEO packet: " << packet_.payload.size();
+            LOGV() << "mirror VIDEO packet: " << packet_.payload.size();
             crypto_.decrypt_video_frame(
                 packet_.payload.data(), 
                 packet_.payload.size());
@@ -90,20 +94,20 @@ namespace aps { namespace service {
         else if (mirror_payload_codec == packet_.header.payload_type)
         {
             // Process the codec packet
-            LOGD() << "mirror CODEC packet: " << packet_.payload.size();
+            LOGV() << "mirror CODEC packet: " << packet_.payload.size();
 
 
         }
         else if (mirror_payload_5 == packet_.header.payload_type)
         {
             // Process the 5 packet
-            LOGD() << "mirror 5 packet: " << packet_.payload.size();
+            LOGV() << "mirror 5 packet: " << packet_.payload.size();
 
         }
         else if (mirror_payload_4096 == packet_.header.payload_type)
         {
             // Process the 4096 packet
-            LOGD() << "mirror 4096 packet: " << packet_.payload.size();
+            LOGV() << "mirror 4096 packet: " << packet_.payload.size();
 
         }
         else
@@ -113,13 +117,13 @@ namespace aps { namespace service {
         }
     }
 
-    void ap_video_stream_session::error_handler(const asio::error_code& e)
+    void ap_video_stream_session::handle_socket_error(const asio::error_code& e)
     {
-        LOGE() << "Failed to receive mirror header: [" << e.value() << "] " << e.message();
-
         switch (e.value())
         {
         case asio::error::eof:
+            return;
+
         case asio::error::connection_reset:
         case asio::error::connection_aborted:
         case asio::error::access_denied:
@@ -149,10 +153,16 @@ namespace aps { namespace service {
         case asio::error::would_block:
             break;
         }
+
+        LOGE() << "Socket error[" << e.value() << "]: " << e.message();
     }
 
-    ap_video_stream_service::ap_video_stream_service(aps::ap_crypto& crypto, uint16_t port)
+    ap_video_stream_service::ap_video_stream_service(
+        aps::ap_crypto& crypto, 
+        uint16_t port/*= 0*/, 
+        aps::ap_handler_ptr handler /*= 0*/)
         : aps::network::tcp_service_base("ap_video_stream_service", port, true)
+        , handler_(handler)
         , crypto_(crypto)
     {
     }
@@ -163,6 +173,7 @@ namespace aps { namespace service {
 
     aps::network::tcp_session_ptr ap_video_stream_service::prepare_new_session()
     {
-        return std::make_shared<ap_video_stream_session>(io_context(), crypto_);
+        return std::make_shared<ap_video_stream_session>(
+            io_context(), crypto_, handler_);
     }
  } }

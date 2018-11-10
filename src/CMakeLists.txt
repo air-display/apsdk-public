@@ -75,6 +75,8 @@ set(SRC_SERVICE
     service/ap_video_stream_service_details.h
     service/ap_timing_sync_service.cpp
     service/ap_timing_sync_service.h
+    service/ap_content_parser.cpp
+    service/ap_content_parser.h
 )
 source_group("service" FILES ${SRC_SERVICE})
 

@@ -10,9 +10,13 @@
 public: const std::string& n() const { return n##_; } \
 public: void n(const std::string& value) { n##_= value; }
 
-#define DECLARE_INTEGER_PROPERTY(n) private: std::int32_t n##_; \
+#define DECLARE_INTEGER32_PROPERTY(n) private: std::int32_t n##_; \
 public: const std::int32_t& n() const { return n##_; } \
 public: void n(const std::int32_t& value) { n##_= value; }
+
+#define DECLARE_INTEGER64_PROPERTY(n) private: std::int64_t n##_; \
+public: const std::int64_t& n() const { return n##_; } \
+public: void n(const std::int64_t& value) { n##_= value; }
 
 #define DECLARE_FLOAT_PROPERTY(n) private: std::float_t n##_; \
 public: const std::float_t& n() const { return n##_; } \
@@ -29,9 +33,9 @@ namespace aps {
         ap_config_audio_format();
         ~ap_config_audio_format();
 
-        DECLARE_INTEGER_PROPERTY(audioInputFormats);
-        DECLARE_INTEGER_PROPERTY(audioOutputFormats);
-        DECLARE_INTEGER_PROPERTY(type);
+        DECLARE_INTEGER32_PROPERTY(audioInputFormats);
+        DECLARE_INTEGER32_PROPERTY(audioOutputFormats);
+        DECLARE_INTEGER32_PROPERTY(type);
     };
 
     class ap_config_audio_latency
@@ -41,9 +45,9 @@ namespace aps {
         ~ap_config_audio_latency();
 
         DECLARE_STRING_PROPERTY(audioType);
-        DECLARE_INTEGER_PROPERTY(inputLatencyMicros);
-        DECLARE_INTEGER_PROPERTY(outputLatencyMicros);
-        DECLARE_INTEGER_PROPERTY(type);
+        DECLARE_INTEGER32_PROPERTY(inputLatencyMicros);
+        DECLARE_INTEGER32_PROPERTY(outputLatencyMicros);
+        DECLARE_INTEGER32_PROPERTY(type);
     };
     
     class ap_config_display
@@ -52,8 +56,8 @@ namespace aps {
         ap_config_display();
         ~ap_config_display();
 
-        DECLARE_INTEGER_PROPERTY(width);
-        DECLARE_INTEGER_PROPERTY(height);
+        DECLARE_INTEGER32_PROPERTY(width);
+        DECLARE_INTEGER32_PROPERTY(height);
         DECLARE_FLOAT_PROPERTY(refreshRate);
         DECLARE_STRING_PROPERTY(uuid);
     };
@@ -74,6 +78,7 @@ namespace aps {
         DECLARE_STRING_PROPERTY(macAddress);
         DECLARE_STRING_PROPERTY(pi);
         DECLARE_STRING_PROPERTY(pk);
+        DECLARE_STRING_PROPERTY(flags);
 
         DECLARE_STRING_PROPERTY(audioCodecs);
         DECLARE_STRING_PROPERTY(encryptionTypes);
@@ -81,9 +86,9 @@ namespace aps {
         DECLARE_STRING_PROPERTY(needPassword);
         DECLARE_STRING_PROPERTY(transmissionProtocol);
 
-        DECLARE_INTEGER_PROPERTY(vv);
-        DECLARE_INTEGER_PROPERTY(features);
-        DECLARE_INTEGER_PROPERTY(statusFlag);
+        DECLARE_INTEGER32_PROPERTY(vv);
+        DECLARE_INTEGER64_PROPERTY(features);
+        DECLARE_INTEGER32_PROPERTY(statusFlag);
         DECLARE_OBJECT_PROPERTY(audio_format, ap_config_audio_format);
         DECLARE_OBJECT_PROPERTY(audio_latency, ap_config_audio_latency);
         DECLARE_OBJECT_PROPERTY(display, ap_config_display);

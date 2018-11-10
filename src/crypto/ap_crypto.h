@@ -55,10 +55,14 @@ namespace aps {
 
         bool verify_pair_signature(const uint8_t* p, uint64_t len);
 
-        void init_video_stream_aes(
+        void init_video_stream_aes_ctr(
             const uint64_t video_stream_id);
 
+        void init_audio_stream_aes_cbc();
+
         void decrypt_video_frame(uint8_t* frame, uint64_t len);
+
+        void decrypt_audio_data(uint8_t* data, uint64_t len);
 
         const std::vector<uint8_t>& fp_key_message() const;
 

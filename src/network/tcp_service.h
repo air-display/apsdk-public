@@ -49,7 +49,6 @@ namespace aps { namespace network {
 
         virtual ~tcp_session_base()
         {
-            cleanup();
         }
 
         virtual void start() override
@@ -58,7 +57,6 @@ namespace aps { namespace network {
 
         virtual void stop() override
         {
-            cleanup();
         }
 
         virtual asio::ip::tcp::socket& socket() override
@@ -66,13 +64,6 @@ namespace aps { namespace network {
             return socket_;
         }
 
-    protected:
-        void cleanup()
-        {
-            if (socket_.is_open())
-                socket_.shutdown(asio::socket_base::shutdown_both);
-        }
-        
     protected:
         asio::ip::tcp::socket socket_;
         asio::io_context::strand strand_;
@@ -134,7 +125,7 @@ namespace aps { namespace network {
             acceptor_.async_accept(new_session_->socket(),
                 std::bind(&tcp_service_base::on_accept, this, std::placeholders::_1));
          
-            LOGI() << "Session (" << std::hex << new_session_.get() << ") is waiting";
+            LOGD() << "Session (" << std::hex << new_session_.get() << ") is waiting";
         }
 
         void on_accept(const asio::error_code& e)
@@ -144,7 +135,7 @@ namespace aps { namespace network {
                 // Start the new session 
                 new_session_->start();
 
-                LOGI() << "Session (" << std::hex << new_session_.get() << ") accepted and started";
+                LOGD() << "Session (" << std::hex << new_session_.get() << ") accepted and started";
 
                 if (single_session_) 
                     return;
@@ -175,6 +166,7 @@ namespace aps { namespace network {
             // Create the acceptor
             acceptor_.open(local_endpoint_.protocol());
             acceptor_.set_option(asio::ip::v6_only(false));
+            acceptor_.set_option(asio::socket_base::reuse_address(true));
             acceptor_.bind(local_endpoint_);
             acceptor_.listen();
             local_endpoint_ = acceptor_.local_endpoint();
@@ -184,7 +176,6 @@ namespace aps { namespace network {
 
         void cleanup()
         {
-            acceptor_.cancel();
             io_context_.stop();
 
             if (worker_thread_)
@@ -204,5 +195,22 @@ namespace aps { namespace network {
         std::shared_ptr<asio::thread> worker_thread_;
 
         tcp_session_ptr new_session_;
+    };
+
+    class idle_tcp_server
+    {
+    public:
+        idle_tcp_server(uint16_t port)
+        {
+
+        }
+
+        ~idle_tcp_server()
+        {
+
+        }
+
+    private:
+
     };
 } }

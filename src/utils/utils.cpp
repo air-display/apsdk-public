@@ -33,3 +33,8 @@ const char* gmt_time_string()
     else
         return 0;
 }
+
+//std::string get_value_of_key(const std::string& s)
+//{
+//
+//}

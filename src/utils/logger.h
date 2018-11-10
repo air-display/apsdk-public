@@ -6,6 +6,8 @@
 #include <iostream>
 #include <sstream>
 
+#define DEFAULT_LOG_LEVEL LL_INFO
+
 typedef enum log_level_e {
     LL_UNKNOWN = 0,
     LL_DEFAULT,
@@ -24,7 +26,7 @@ typedef struct log_config_s {
 #else
     bool headers = true;
 #endif
-    log_level level = LL_DEFAULT;
+    log_level level = DEFAULT_LOG_LEVEL;
 } log_config;
 
 class logger {

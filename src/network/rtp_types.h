@@ -101,7 +101,7 @@ namespace aps { namespace network {
     {
         rtp_packet_header_t header;
         uint32_t ssrc;
-        uint8_t payload[0];
+        uint8_t payload[];
 
         rtp_audio_data_packet_s()
         {

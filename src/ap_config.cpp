@@ -56,13 +56,14 @@ namespace aps {
         {
             s_instance.name_ = "Tencent WeCast Display";
             s_instance.deviceID_ = "AABBCCDDEEFF";
-            s_instance.model_ = "AppleTV3,2";
+            s_instance.model_ = "AppleTV3,1";
             s_instance.serverVersion_ = "220.68";
             s_instance.pi_ = "b08f5a79-db29-4384-b456-a4784d9e6055";
             s_instance.pk_ = "99FD4299889422515FBD27949E4E1E21B2AF50A454499E3D4BE75A4E0F55FE63";
-            s_instance.macAddress_ = "00:00:00:00:00:00";
+            s_instance.flags_ = "0x04";
+            s_instance.macAddress_ = "AA:BB:CC:DD:EE:FF";
             s_instance.vv_ = 2;
-            s_instance.features_ = 0x5A7FDFD1;
+            s_instance.features_ = 0x0E5A7FFFF7;
             s_instance.statusFlag_ = 68;
             s_instance.audioCodecs_ = "0,1,2,3";
             s_instance.encryptionTypes_ = "0,3,5";
@@ -100,7 +101,9 @@ namespace aps {
     const std::string ap_config::features_hex_string() const
     {
         std::ostringstream oss;
-        oss << "0x" << std::hex << features_;
+        oss << "0x" << std::hex << std::uppercase << (uint32_t)(features_ & 0xFFFFFFFF);
+        if (features_ & 0xFFFFFFFF00000000)
+            oss << ",0x" << std::hex << std::uppercase << (uint32_t)(features_ >> 32);
         return oss.str();
     }
 }

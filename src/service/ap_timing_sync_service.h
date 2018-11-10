@@ -12,9 +12,13 @@ namespace aps { namespace service {
         : public aps::network::udp_service_base
     {
     public:
-        ap_timing_sync_service(const std::string& server_address, const uint16_t server_port, const uint16_t port = 0);
+        ap_timing_sync_service(const uint16_t port = 0);
         
         ~ap_timing_sync_service();
+
+        void set_server_endpoint(
+            const asio::ip::address& addr,
+            uint16_t port);
 
         void post_send_query();
 

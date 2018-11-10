@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <ap_config.h>
+#include <ap_handler.h>
 
 namespace aps {
     class ap_server
@@ -11,6 +12,8 @@ namespace aps {
     public:
         ap_server(const aps::ap_config& config);
         ~ap_server();
+
+        void set_handler(ap_handler_ptr hanlder);
 
         bool start();
 

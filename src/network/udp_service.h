@@ -73,7 +73,6 @@ namespace aps { namespace network {
 
         virtual void close() override
         {
-            socket_.cancel();
             io_context_.stop();
 
             if (worker_thread_)

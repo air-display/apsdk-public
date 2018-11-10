@@ -5,6 +5,7 @@
 #include <map>
 #include <asio.hpp>
 #include <ap_config.h>
+#include <ap_handler.h>
 #include <crypto/ap_crypto.h>
 #include <network/tcp_service.h>
 #include <network/udp_service.h>
@@ -25,7 +26,8 @@ namespace aps { namespace service {
     public:
         explicit ap_airplay_session(
             asio::io_context& io_ctx, 
-            aps::ap_config& config);
+            aps::ap_config& config,
+            aps::ap_handler_ptr handler = 0);
 
         ~ap_airplay_session();
 
@@ -59,10 +61,15 @@ namespace aps { namespace service {
 
         void get_parameter_handler(const details::request& req, details::response& res);
 
+        void post_audioMode(const details::request& req, details::response& res);
+
+        // SDK -> APP
         void set_parameter_handler(const details::request& req, details::response& res);
 
+        // SDK -> APP
         void teardown_handler(const details::request& req, details::response& res);
 
+        // SDK -> APP
         void flush_handler(const details::request& req, details::response& res);
 
         // HTTP - Video
@@ -70,23 +77,29 @@ namespace aps { namespace service {
 
         void post_reverse(const details::request& req, details::response& res);
 
+        // SDK -> APP
         void post_play(const details::request& req, details::response& res);
 
+        // SDK -> APP
         void post_scrub(const details::request& req, details::response& res);
 
+        // SDK -> APP
         void post_rate(const details::request& req, details::response& res);
 
+        // SDK -> APP
         void post_stop(const details::request& req, details::response& res);
 
+        // SDK -> APP
         void post_action(const details::request& req, details::response& res);
 
+        // SDK -> APP
         void get_playback_info(const details::request& req, details::response& res);
 
+        // SDK -> APP
         void put_setProperty(const details::request& req, details::response& res);
 
+        // APP -> SDK
         void post_getProperty(const details::request& req, details::response& res);
-
-        void post_audioMode(const details::request& req, details::response& res);
 
     protected:
 
@@ -104,9 +117,11 @@ namespace aps { namespace service {
 
         void add_common_header(const details::request& req, details::response& res);
 
-        void error_handler(const asio::error_code& e);
+        void handle_socket_error(const asio::error_code& e);
 
         std::size_t body_completion_condition(const asio::error_code& error, std::size_t bytes_transferred);
+
+        void validate_user_agent();
 
         void process_request();
 
@@ -117,7 +132,11 @@ namespace aps { namespace service {
         void register_request_handlers();
 
     private:
+        std::string agent_version_;
+        
         aps::ap_config& config_;
+
+        aps::ap_handler_ptr handler_;
 
         aps::ap_crypto crypto_;
 
@@ -129,12 +148,12 @@ namespace aps { namespace service {
         
         details::request_parser parser_;
 
+        ap_timing_sync_service_ptr timing_sync_service_;
+
         ap_video_stream_service_ptr video_stream_service_;
 
         ap_audio_stream_service_ptr audio_stream_service_;
 
-        ap_timing_sync_service_ptr timing_sync_service_;
-  
         request_handler_map rtsp_request_handlers_;
 
         request_handler_map http_request_handlers_;
@@ -147,13 +166,17 @@ namespace aps { namespace service {
     {
     public:
         ap_airplay_service(ap_config& config, uint16_t port = 0);
+
         ~ap_airplay_service();
+
+        void set_handler(ap_handler_ptr hanlder);
 
     protected:
         virtual aps::network::tcp_session_ptr prepare_new_session() override;
 
     private:
         aps::ap_config& config_;
+        aps::ap_handler_ptr handler_;
     };
 
     typedef std::shared_ptr<ap_airplay_service> ap_airplay_service_ptr;

@@ -35,13 +35,55 @@ namespace aps { namespace service {
             recv_from_handler_(recv_buf_.data(), e, bytes_transferred);
 
         if (e)
-            LOGE() << "Failed to recv data: " << e.message();
+            handle_socket_error(e);
         else
             post_recv_from(recv_buf_, remote_endpoint_);
     }
 
-    ap_audio_stream_service::ap_audio_stream_service(aps::ap_crypto& crypto)
-        : crypto_(crypto)
+    void audio_udp_service::handle_socket_error(const asio::error_code& e)
+    {
+        switch (e.value())
+        {
+        case asio::error::eof:
+            return;
+        case asio::error::connection_reset:
+        case asio::error::connection_aborted:
+        case asio::error::access_denied:
+        case asio::error::address_family_not_supported:
+        case asio::error::address_in_use:
+        case asio::error::already_connected:
+        case asio::error::connection_refused:
+        case asio::error::bad_descriptor:
+        case asio::error::fault:
+        case asio::error::host_unreachable:
+        case asio::error::in_progress:
+        case asio::error::interrupted:
+        case asio::error::invalid_argument:
+        case asio::error::message_size:
+        case asio::error::name_too_long:
+        case asio::error::network_down:
+        case asio::error::network_reset:
+        case asio::error::network_unreachable:
+        case asio::error::no_descriptors:
+        case asio::error::no_buffer_space:
+        case asio::error::no_protocol_option:
+        case asio::error::not_connected:
+        case asio::error::not_socket:
+        case asio::error::operation_not_supported:
+        case asio::error::shut_down:
+        case asio::error::timed_out:
+        case asio::error::would_block:
+            break;
+        }
+
+        LOGE() << "Socket error[" << e.value() << "]: " << e.message();
+    }
+
+    ap_audio_stream_service::ap_audio_stream_service(
+        aps::ap_crypto& crypto,
+        aps::ap_handler_ptr handler /*= 0*/)
+        : handler_(handler)
+        , crypto_(crypto)
         , data_service_("audio_data_service")
         , control_service_("audio_control_service")
     {
@@ -58,10 +100,13 @@ namespace aps { namespace service {
                 std::placeholders::_1,
                 std::placeholders::_2,
                 std::placeholders::_3));
+
+        LOGD() << "ap_audio_stream_service (" << std::hex << this << ") is being created";
     }
 
     ap_audio_stream_service::~ap_audio_stream_service()
     {
+        LOGD() << "ap_audio_stream_service (" << std::hex << this << ") is being destroyed";
     }
 
     uint16_t ap_audio_stream_service::data_port() const
@@ -122,9 +167,11 @@ namespace aps { namespace service {
         aps::network::rtp_audio_data_packet_t* packet,
         size_t length)
     {
-        LOGD() << "audio DATA packet: " << length;
-
-
+        LOGV() << "audio DATA packet: " << length;
+        if (handler_)
+        {
+            handler_->on_audio_stream_data(packet);
+        }
     }
 
     void ap_audio_stream_service::control_handler(
@@ -158,7 +205,7 @@ namespace aps { namespace service {
     void ap_audio_stream_service::control_sync_packet(
         aps::network::rtp_control_sync_packet_t* packet)
     {
-        LOGD() << "audio CONTROL SYNC packet";
+        LOGV() << "audio CONTROL SYNC packet";
 
 
     }
@@ -166,7 +213,7 @@ namespace aps { namespace service {
     void ap_audio_stream_service::control_retransmit_packet(
         aps::network::rtp_control_retransmit_packet_t* packet)
     {
-        LOGD() << "audio CONTROL RETRANSMIT packet";
+        LOGV() << "audio CONTROL RETRANSMIT packet";
 
 
     }

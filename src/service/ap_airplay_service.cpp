@@ -4,6 +4,7 @@
 #include <utils/logger.h>
 #include <utils/plist.h>
 #include <utils/utils.h>
+#include "ap_content_parser.h"
 #include "ap_video_stream_service.h"
 #include "ap_audio_stream_service.h"
 #include "ap_airplay_service.h"
@@ -17,17 +18,31 @@
 using namespace aps::service::details;
 
 namespace aps { namespace service { 
-    ap_airplay_session::ap_airplay_session(asio::io_context& io_ctx, ap_config& config)
+    ap_airplay_session::ap_airplay_session(
+        asio::io_context& io_ctx, 
+        aps::ap_config& config,
+        aps::ap_handler_ptr hanlder)
         : tcp_session_base(io_ctx)
         , config_(config)
+        , handler_(hanlder)
     {
         register_request_handlers();
-        LOGI() << "ap_airplay_session (" << std::hex << this << ") is being created";
+
+        timing_sync_service_ = std::make_shared<ap_timing_sync_service>();
+        timing_sync_service_->open();
+
+        LOGD() << "ap_airplay_session (" << std::hex <<  this << ") is being created";
     }
 
     ap_airplay_session::~ap_airplay_session()
     {
-        LOGI() << "ap_airplay_session (" << std::hex << this << ") is being destroyed";
+        if (timing_sync_service_)
+        {
+            timing_sync_service_->close();
+            timing_sync_service_.reset();
+        }
+
+        LOGD() << "ap_airplay_session (" << std::hex << this << ") is being destroyed";
     }
 
     void ap_airplay_session::register_rtsp_request_handler(
@@ -208,10 +223,16 @@ namespace aps { namespace service {
 
                 if (stream_type_t::audio == type)
                 {
+                    crypto_.init_audio_stream_aes_cbc();
+
                     if (!audio_stream_service_)
                     {
                         audio_stream_service_ = std::make_shared<ap_audio_stream_service>(crypto_);
                         audio_stream_service_->start();
+                    }
+
+                    if (handler_) {
+                        handler_->on_audio_stream_started();
                     }
 
                     auto_plist audio_stream = plist_object_dict(1,
@@ -240,7 +261,7 @@ namespace aps { namespace service {
                     if (0 != plist_object_integer_get_value(connection_id_obj, &connection_id))
                         break;
 
-                    crypto_.init_video_stream_aes(connection_id);
+                    crypto_.init_video_stream_aes_ctr(connection_id);
 
                     if (!video_stream_service_)
                     {
@@ -248,7 +269,12 @@ namespace aps { namespace service {
                         video_stream_service_->start();
                     }
 
-                    auto_plist video_stream = plist_object_dict(1,
+                    if (handler_) {
+                        handler_->on_mirror_stream_started();
+                    }
+
+                    auto_plist video_stream = plist_object_dict(2,
+                        "eventPort", plist_object_integer(video_stream_service_->port()),
                         "streams", plist_object_array(1,
                             plist_object_dict(2,
                                 "type", plist_object_integer(type),
@@ -289,12 +315,8 @@ namespace aps { namespace service {
                 if (0 != plist_object_integer_get_value(timing_port_obj, &timing_port))
                     break;
 
-                if (!timing_sync_service_)
-                {
-                    timing_sync_service_ = std::make_shared<ap_timing_sync_service>(
-                        socket_.remote_endpoint().address().to_string(), (uint16_t)timing_port);
-                    timing_sync_service_->open();
-                }
+                timing_sync_service_->set_server_endpoint(
+                    socket_.remote_endpoint().address(), timing_port);
 
                 auto_plist content = plist_object_dict(2,
                     "eventPort", plist_object_integer(0),
@@ -391,15 +413,80 @@ namespace aps { namespace service {
             .with_content("volume: 0.000000\r\n");
     }
 
+    void ap_airplay_session::post_audioMode(const details::request& req, details::response& res)
+    {
+        DUMP_REQUEST(req);
+
+        res.with_status(ok);
+    }
+    
     void ap_airplay_session::set_parameter_handler(const details::request& req, details::response& res)
     {
         DUMP_REQUEST(req);
+        std::string content(req.body.begin(), req.body.end());
+        if (0 == req.content_type.compare(TEXT_PARAMETERS))
+        {
+            float ratio = 0;
+            float volume = 0;
+            uint64_t start = 0;
+            uint64_t current = 0;
+            uint64_t end = 0;
+
+            // volume: -11.123877
+            if (ap_content_parser::get_volume(volume, content.c_str())) {
+                if (handler_) {
+                    if (0 == volume)
+                        ratio = 100;
+                    else if (-144.0f == volume)
+                        ratio = 0;
+                    else {
+                        ratio = 100.0f * (30 + volume) / 30;
+                    }
+
+                    handler_->on_audio_set_volume(ratio, volume);
+                }
+            }
+            // progress: 1146221540/1146549156/1195701740  start/current/end
+            else if (ap_content_parser::get_progress(start, current, end, content.c_str()))
+            {
+                if (handler_) {
+                    ratio = 100.0f * (current - start) / (end - start) ;
+                    handler_->on_audio_set_progress(ratio, start, current, end);
+                }
+            }
+        }
+        else if (0 == req.content_type.compare(IMAGE_JPEG) ||
+            0 == req.content_type.compare(IMAGE_PNG))
+        {
+            // body is image data
+            if (handler_) {
+                handler_->on_audio_set_cover(
+                    req.content_type,
+                    req.body.data(),
+                    req.body.size());
+            }
+        }
+        else if (0 == req.content_type.compare(APPLICATION_DMAP_TAGGED))
+        {
+            // body is dmap data
+            if (handler_) {
+                handler_->on_audio_set_meta_data(
+                    req.body.data(),
+                    req.body.size());
+            }
+        }
+        else
+        {
+            LOGE() << "Unknown parameter type: " << req.content_type;
+        }
 
         res.with_status(ok);
     }
 
     void ap_airplay_session::teardown_handler(const details::request& req, details::response& res)
     {
+        DUMP_REQUEST(req);
+
         if (0 == req.content_type.compare(APPLICATION_BINARY_PLIST))
         {
             auto_plist data_obj = plist_object_from_bplist(req.body.data(), req.body.size());
@@ -424,6 +511,12 @@ namespace aps { namespace service {
                                     video_stream_service_->stop();
                                     video_stream_service_.reset();
                                 }
+
+                                if (handler_) {
+                                    handler_->on_mirror_stream_stopped();
+                                }
+
+                                LOGD() << "Mirroring video stream disconnected";
                             }
                             else if (stream_type_t::audio == type)
                             {
@@ -434,12 +527,11 @@ namespace aps { namespace service {
                                     audio_stream_service_.reset();
                                 }
 
-                                // Stop timing sync service
-                                if (timing_sync_service_)
-                                {
-                                    timing_sync_service_->close();
-                                    timing_sync_service_.reset();
+                                if (handler_) {
+                                    handler_->on_audio_stream_stopped();
                                 }
+                             
+                                LOGD() << "Audio stream disconnected";
                             }
                             else
                                 LOGE() << "Unknown stream type";
@@ -455,6 +547,17 @@ namespace aps { namespace service {
     void ap_airplay_session::flush_handler(const details::request& req, details::response& res)
     {
         DUMP_REQUEST(req);
+
+        auto rtp_info_header = req.headers.find("RTP-Info");
+        if (rtp_info_header != req.headers.end())
+        {
+            auto rtp_info = rtp_info_header->second;
+            if (!strncmp(rtp_info.c_str(), "seq=", 4)) {
+                uint64_t next_seq = strtol(rtp_info.c_str() + 4, 0, 10);
+                // Flush
+
+            }
+        }
 
         res.with_status(ok)
             .with_content_type(APPLICATION_BINARY_PLIST);
@@ -477,6 +580,19 @@ namespace aps { namespace service {
     void ap_airplay_session::post_play(const details::request& req, details::response& res)
     {
         DUMP_REQUEST(req);
+        // req.body:
+        //      Content-Location:URL
+        //      Start-Position: float
+        std::string content(req.body.begin(), req.body.end());
+        std::string location;
+        float start_pos = 0.0f;
+        if (ap_content_parser::get_play_parameters(location, start_pos, content.c_str()))
+        {
+            if (handler_)
+            {
+                handler_->on_video_play(location, start_pos);
+            }
+        }
 
         res.with_status(ok);
     }
@@ -484,13 +600,29 @@ namespace aps { namespace service {
     void ap_airplay_session::post_scrub(const details::request& req, details::response& res)
     {
         DUMP_REQUEST(req);
+        // /scrub?position=1298.000000
 
+        float postition = 0.0f;
+
+        if (handler_)
+        {
+            handler_->on_video_scrub(postition);
+        }
+        
         res.with_status(ok);
     }
 
     void ap_airplay_session::post_rate(const details::request& req, details::response& res)
     {
         DUMP_REQUEST(req);
+        // /rate?value=0.000000
+
+        float value = 0.0f;
+
+        if (handler_)
+        {
+            handler_->on_video_rate(value);
+        }
 
         res.with_status(ok);
     }
@@ -499,12 +631,18 @@ namespace aps { namespace service {
     {
         DUMP_REQUEST(req);
 
+         if (handler_)
+        {
+            handler_->on_video_stop();
+        }
+
         res.with_status(ok);
     }
 
     void ap_airplay_session::post_action(const details::request& req, details::response& res)
     {
         DUMP_REQUEST(req);
+        // req.body (bplist)
 
         res.with_status(ok);
     }
@@ -512,6 +650,15 @@ namespace aps { namespace service {
     void ap_airplay_session::get_playback_info(const details::request& req, details::response& res)
     {
         DUMP_REQUEST(req);
+        
+        ap_handler::playback_info_t info;
+
+        if (handler_)
+        {
+            handler_->on_acquire_playback_info(info);
+        }
+
+        // 
 
         res.with_status(ok);
     }
@@ -519,6 +666,9 @@ namespace aps { namespace service {
     void ap_airplay_session::put_setProperty(const details::request& req, details::response& res)
     {
         DUMP_REQUEST(req);
+        // /setProperty?actionAtItemEnd
+        // /setProperty?forwardEndTime
+        // /setProperty?reverseEndTime
 
         res.with_status(ok);
     }
@@ -526,13 +676,8 @@ namespace aps { namespace service {
     void ap_airplay_session::post_getProperty(const details::request& req, details::response& res)
     {
         DUMP_REQUEST(req);
-
-        res.with_status(ok);
-    }
-
-    void ap_airplay_session::post_audioMode(const details::request& req, details::response& res)
-    {
-        DUMP_REQUEST(req);
+        // GET /getProperty?playbackAccessLog 
+        // GET /getProperty?playbackErrorLog 
 
         res.with_status(ok);
     }
@@ -603,12 +748,14 @@ namespace aps { namespace service {
         }
         else
         {
-            error_handler(e);
+            handle_socket_error(e);
         }
     }
 
     void ap_airplay_session::post_receive_request_body()
     {
+        request_.body.clear();
+
         asio::async_read(socket_, in_stream_,
             std::bind(
                 &ap_airplay_session::body_completion_condition,
@@ -639,7 +786,7 @@ namespace aps { namespace service {
         }
         else
         {
-            error_handler(e);
+            handle_socket_error(e);
         }
     }
 
@@ -661,40 +808,34 @@ namespace aps { namespace service {
     {
         if (!e)
         {
-            //LOGI() << ">>>>> " << bytes_transferred << " bytes sent successfully";
+            LOGV() << ">>>>> " << bytes_transferred << " bytes sent successfully";
         }
         else
         {
-            error_handler(e);
+            handle_socket_error(e);
         }
     }
 
     void ap_airplay_session::add_common_header(const details::request& req, details::response& res)
     {
         res.with_header(HEADER_SERVER, "AirTunes/220.68")
+            .with_header(HEADER_SESSION, "CAFEBABE")
             .with_header(HEADER_DATE, gmt_time_string());
 
         if (!req.cseq.empty())
             res.with_header(HEADER_CSEQ, req.cseq);
 
         if (0 != req.method.compare("RECORD") && 0 != req.method.compare("SET_PARAMETER"))
-        {
-            res.with_header(HEADER_AUDIO_JACK_STATUS, "Connected");
-        }
+            res.with_header(HEADER_AUDIO_JACK_STATUS, "Connected; type=digital");
     }
 
-    void ap_airplay_session::error_handler(const asio::error_code& e)
+    void ap_airplay_session::handle_socket_error(const asio::error_code& e)
     {
-        LOGE() << "Failed to receive mirror header: [" << e.value() << "] " << e.message();
-
         switch (e.value())
         {
         case asio::error::eof:
+            return;
         case asio::error::connection_reset:
-        {
-            //close();
-        }
-        break;
         case asio::error::connection_aborted:
         case asio::error::access_denied:
         case asio::error::address_family_not_supported:
@@ -723,6 +864,8 @@ namespace aps { namespace service {
         case asio::error::would_block:
             break;
         }
+
+        LOGE() << "Socket error[" << e.value() << "]: " << e.message();
     }
 
     std::size_t ap_airplay_session::body_completion_condition(const asio::error_code& error, std::size_t bytes_transferred)
@@ -730,9 +873,45 @@ namespace aps { namespace service {
         return request_.content_length - in_stream_.size();
     }
 
+    void ap_airplay_session::validate_user_agent()
+    {
+        if (!agent_version_.empty())
+            return;
+        
+        auto user_agent_header = request_.headers.find("User-Agent");
+        if (user_agent_header != request_.headers.end())
+        {
+            auto user_agent = user_agent_header->second;
+            agent_version_ = user_agent.substr(user_agent.find("/") + 1);
+            int major_ver = std::stoi(agent_version_);
+            if (major_ver >= 370)
+            {
+                LOGD() << "Agent Version: " << agent_version_ << "iOS12";
+            }
+            else if (major_ver >= 350)
+            {
+                LOGD() << "Agent Version: " << agent_version_ << "iOS11";
+            }
+            else if (major_ver >= 300)
+            {
+                LOGD() << "Agent Version: " << agent_version_ << "iOS10";
+            }
+            else if (major_ver >= 230)
+            {
+                LOGD() << "Agent Version: " << agent_version_ << "iOS9";
+            }
+            else
+            {
+                LOGD() << "Agent Version: " << agent_version_ << "iOS8";
+            }
+        }
+    }
+
     void ap_airplay_session::process_request()
     {
         response res(request_.scheme_version);
+
+        validate_user_agent();
 
         request_handler_map* handler_map = 0;
         if (0 == request_.scheme_version.find("RTSP"))
@@ -854,6 +1033,13 @@ namespace aps { namespace service {
                 std::placeholders::_2),
             "FLUSH", "*");
 
+        register_rtsp_request_handler(
+            std::bind(&ap_airplay_session::post_audioMode,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2),
+            "POST", "/audioMode");
+
         register_http_request_handler(
             std::bind(&ap_airplay_session::get_server_info,
                 this,
@@ -923,18 +1109,11 @@ namespace aps { namespace service {
                 std::placeholders::_1,
                 std::placeholders::_2),
             "POST", "/getProperty");
-
-        register_http_request_handler(
-            std::bind(&ap_airplay_session::post_audioMode,
-                this,
-                std::placeholders::_1,
-                std::placeholders::_2),
-            "POST", "/audioMode");
     }
 
     void ap_airplay_session::method_not_found_handler(const details::request& req, details::response& res)
     {
-        LOGI() << "***** Method Not Allowed " << request_.method << " " << request_.uri;
+        LOGE() << "***** Method Not Allowed " << request_.method << " " << request_.uri;
 
         // Method not found
         //res.with_status(method_not_allowed);
@@ -943,7 +1122,7 @@ namespace aps { namespace service {
 
     void ap_airplay_session::path_not_found_handler(const details::request& req, details::response& res)
     {
-        LOGI() << "***** Path Not Found " << request_.method << " " << request_.uri;
+        LOGE() << "***** Path Not Found " << request_.method << " " << request_.uri;
 
         // Path not found
         //res.with_status(not_found);
@@ -960,8 +1139,13 @@ namespace aps { namespace service {
     {
     }
 
+    void ap_airplay_service::set_handler(ap_handler_ptr hanlder)
+    {
+        handler_ = hanlder;
+    }
+
     aps::network::tcp_session_ptr ap_airplay_service::prepare_new_session()
     {
-        return std::make_shared<ap_airplay_session>(io_context(), config_);
+        return std::make_shared<ap_airplay_session>(io_context(), config_, handler_);
     }
 } }
