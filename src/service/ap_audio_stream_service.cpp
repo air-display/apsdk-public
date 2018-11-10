@@ -1,221 +1,182 @@
+#include "ap_audio_stream_service.h"
+#include <crypto/ap_crypto.h>
 #include <functional>
 #include <utils/logger.h>
-#include <crypto/ap_crypto.h>
-#include "ap_audio_stream_service.h"
+
 
 using namespace aps::network;
 
-namespace aps { namespace service { 
-    audio_udp_service::audio_udp_service(const std::string& name)
-        : aps::network::udp_service_base(name)
-        , recv_buf_(aps::network::RTP_PACKET_MAX_LEN, 0)
-    {
+namespace aps {
+namespace service {
+audio_udp_service::audio_udp_service(const std::string &name)
+    : aps::network::udp_service_base(name),
+      recv_buf_(aps::network::RTP_PACKET_MAX_LEN, 0) {}
+
+audio_udp_service::~audio_udp_service() {}
+
+bool audio_udp_service::open() {
+  if (aps::network::udp_service_base::open()) {
+    post_recv_from(recv_buf_, remote_endpoint_);
+    return true;
+  }
+  return false;
+}
+
+void audio_udp_service::on_recv_from(asio::ip::udp::endpoint &remote_endpoint,
+                                     const asio::error_code &e,
+                                     std::size_t bytes_transferred) {
+  if (recv_from_handler_)
+    recv_from_handler_(recv_buf_.data(), e, bytes_transferred);
+
+  if (e)
+    handle_socket_error(e);
+  else
+    post_recv_from(recv_buf_, remote_endpoint_);
+}
+
+void audio_udp_service::handle_socket_error(const asio::error_code &e) {
+  switch (e.value()) {
+  case asio::error::eof:
+    return;
+  case asio::error::connection_reset:
+  case asio::error::connection_aborted:
+  case asio::error::access_denied:
+  case asio::error::address_family_not_supported:
+  case asio::error::address_in_use:
+  case asio::error::already_connected:
+  case asio::error::connection_refused:
+  case asio::error::bad_descriptor:
+  case asio::error::fault:
+  case asio::error::host_unreachable:
+  case asio::error::in_progress:
+  case asio::error::interrupted:
+  case asio::error::invalid_argument:
+  case asio::error::message_size:
+  case asio::error::name_too_long:
+  case asio::error::network_down:
+  case asio::error::network_reset:
+  case asio::error::network_unreachable:
+  case asio::error::no_descriptors:
+  case asio::error::no_buffer_space:
+  case asio::error::no_protocol_option:
+  case asio::error::not_connected:
+  case asio::error::not_socket:
+  case asio::error::operation_not_supported:
+  case asio::error::shut_down:
+  case asio::error::timed_out:
+  case asio::error::would_block:
+    break;
+  }
+
+  LOGE() << "Socket error[" << e.value() << "]: " << e.message();
+}
+
+ap_audio_stream_service::ap_audio_stream_service(
+    aps::ap_crypto &crypto, aps::ap_handler_ptr handler /*= 0*/)
+    : handler_(handler), crypto_(crypto), data_service_("audio_data_service"),
+      control_service_("audio_control_service") {
+  data_service_.bind_recv_handler(std::bind(
+      &ap_audio_stream_service::data_handler, this, std::placeholders::_1,
+      std::placeholders::_2, std::placeholders::_3));
+
+  control_service_.bind_recv_handler(std::bind(
+      &ap_audio_stream_service::control_handler, this, std::placeholders::_1,
+      std::placeholders::_2, std::placeholders::_3));
+
+  LOGD() << "ap_audio_stream_service (" << std::hex << this
+         << ") is being created";
+}
+
+ap_audio_stream_service::~ap_audio_stream_service() {
+  LOGD() << "ap_audio_stream_service (" << std::hex << this
+         << ") is being destroyed";
+}
+
+uint16_t ap_audio_stream_service::data_port() const {
+  return data_service_.port();
+}
+
+uint16_t ap_audio_stream_service::control_port() const {
+  return control_service_.port();
+}
+
+bool ap_audio_stream_service::start() {
+  if (!data_service_.open())
+    return false;
+
+  if (!control_service_.open()) {
+    data_service_.close();
+    return false;
+  }
+
+  return true;
+}
+
+void ap_audio_stream_service::stop() {
+  control_service_.close();
+  data_service_.close();
+}
+
+void ap_audio_stream_service::data_handler(const uint8_t *buf,
+                                           const asio::error_code &e,
+                                           std::size_t bytes_transferred) {
+  if (!e) {
+    if (bytes_transferred < aps::network::RTP_PACKET_MIN_LEN) {
+      LOGE() << "Packet too small: " << bytes_transferred;
+      return;
     }
 
-    audio_udp_service::~audio_udp_service()
-    {
+    rtp_packet_header_t *header = (rtp_packet_header_t *)buf;
+    if (header->payload_type != audio_data) {
+      LOGE() << "Invalid audio data packet: " << bytes_transferred;
+      return;
     }
 
-    bool audio_udp_service::open()
-    {
-        if (aps::network::udp_service_base::open())
-        {
-            post_recv_from(recv_buf_, remote_endpoint_);
-            return true;
-        }
-        return false;
+    audio_data_packet((rtp_audio_data_packet_t *)header, bytes_transferred);
+  }
+}
+
+void ap_audio_stream_service::audio_data_packet(
+    aps::network::rtp_audio_data_packet_t *packet, size_t length) {
+  LOGV() << "audio DATA packet: " << length;
+  if (handler_) {
+    handler_->on_audio_stream_data(packet);
+  }
+}
+
+void ap_audio_stream_service::control_handler(const uint8_t *buf,
+                                              const asio::error_code &e,
+                                              std::size_t bytes_transferred) {
+  if (!e) {
+    if (bytes_transferred < aps::network::RTP_PACKET_MIN_LEN) {
+      LOGE() << "Packet too small: " << bytes_transferred;
+      return;
     }
 
-    void audio_udp_service::on_recv_from(
-        asio::ip::udp::endpoint& remote_endpoint, 
-        const asio::error_code& e, 
-        std::size_t bytes_transferred)
-    {
-        if (recv_from_handler_)
-            recv_from_handler_(recv_buf_.data(), e, bytes_transferred);
+    LOGV() << "ap_audio_stream_service::control_handler, " << bytes_transferred;
 
-        if (e)
-            handle_socket_error(e);
-        else
-            post_recv_from(recv_buf_, remote_endpoint_);
-    }
+    rtp_packet_header_t *header = (rtp_packet_header_t *)buf;
+    if (header->payload_type == ctrl_timing_sync &&
+        bytes_transferred == sizeof(rtp_control_sync_packet_t))
+      control_sync_packet((rtp_control_sync_packet_t *)header);
+    else if (header->payload_type == ctrl_retransmit_request &&
+             bytes_transferred == sizeof(rtp_control_retransmit_packet_t))
+      control_retransmit_packet((rtp_control_retransmit_packet_t *)header);
+    else
+      LOGE() << "Unknown RTP control packet, type: " << header->payload_type
+             << " size: " << bytes_transferred;
+  }
+}
 
-    void audio_udp_service::handle_socket_error(const asio::error_code& e)
-    {
-        switch (e.value())
-        {
-        case asio::error::eof:
-            return;
-        case asio::error::connection_reset:
-        case asio::error::connection_aborted:
-        case asio::error::access_denied:
-        case asio::error::address_family_not_supported:
-        case asio::error::address_in_use:
-        case asio::error::already_connected:
-        case asio::error::connection_refused:
-        case asio::error::bad_descriptor:
-        case asio::error::fault:
-        case asio::error::host_unreachable:
-        case asio::error::in_progress:
-        case asio::error::interrupted:
-        case asio::error::invalid_argument:
-        case asio::error::message_size:
-        case asio::error::name_too_long:
-        case asio::error::network_down:
-        case asio::error::network_reset:
-        case asio::error::network_unreachable:
-        case asio::error::no_descriptors:
-        case asio::error::no_buffer_space:
-        case asio::error::no_protocol_option:
-        case asio::error::not_connected:
-        case asio::error::not_socket:
-        case asio::error::operation_not_supported:
-        case asio::error::shut_down:
-        case asio::error::timed_out:
-        case asio::error::would_block:
-            break;
-        }
+void ap_audio_stream_service::control_sync_packet(
+    aps::network::rtp_control_sync_packet_t *packet) {
+  LOGV() << "audio CONTROL SYNC packet";
+}
 
-        LOGE() << "Socket error[" << e.value() << "]: " << e.message();
-    }
+void ap_audio_stream_service::control_retransmit_packet(
+    aps::network::rtp_control_retransmit_packet_t *packet) {
+  LOGV() << "audio CONTROL RETRANSMIT packet";
+}
 
-    ap_audio_stream_service::ap_audio_stream_service(
-        aps::ap_crypto& crypto,
-        aps::ap_handler_ptr handler /*= 0*/)
-        : handler_(handler)
-        , crypto_(crypto)
-        , data_service_("audio_data_service")
-        , control_service_("audio_control_service")
-    {
-        data_service_.bind_recv_handler(
-            std::bind(
-                &ap_audio_stream_service::data_handler, this,
-                std::placeholders::_1,
-                std::placeholders::_2,
-                std::placeholders::_3));
-
-        control_service_.bind_recv_handler(
-            std::bind(
-                &ap_audio_stream_service::control_handler, this,
-                std::placeholders::_1,
-                std::placeholders::_2,
-                std::placeholders::_3));
-
-        LOGD() << "ap_audio_stream_service (" << std::hex << this << ") is being created";
-    }
-
-    ap_audio_stream_service::~ap_audio_stream_service()
-    {
-        LOGD() << "ap_audio_stream_service (" << std::hex << this << ") is being destroyed";
-    }
-
-    uint16_t ap_audio_stream_service::data_port() const
-    {
-        return data_service_.port();
-    }
-
-    uint16_t ap_audio_stream_service::control_port() const
-    {
-        return control_service_.port();
-    }
-
-    bool ap_audio_stream_service::start()
-    {
-        if (!data_service_.open())
-            return false;
-
-        if (!control_service_.open())
-        {
-            data_service_.close();
-            return false;
-        }
-
-        return true;
-    }
-
-    void ap_audio_stream_service::stop()
-    {
-        control_service_.close();
-        data_service_.close();
-    }
-
-    void ap_audio_stream_service::data_handler(
-        const uint8_t* buf,
-        const asio::error_code& e,
-        std::size_t bytes_transferred)
-    {
-        if (!e)
-        {
-            if (bytes_transferred < aps::network::RTP_PACKET_MIN_LEN)
-            {
-                LOGE() << "Packet too small: " << bytes_transferred;
-                return;
-            }
-
-            rtp_packet_header_t* header = (rtp_packet_header_t*)buf;
-            if (header->payload_type != audio_data)
-            {
-                LOGE() << "Invalid audio data packet: " << bytes_transferred;
-                return;
-            }
-
-            audio_data_packet((rtp_audio_data_packet_t*)header, bytes_transferred);
-        }
-    }
-
-    void ap_audio_stream_service::audio_data_packet(
-        aps::network::rtp_audio_data_packet_t* packet,
-        size_t length)
-    {
-        LOGV() << "audio DATA packet: " << length;
-        if (handler_)
-        {
-            handler_->on_audio_stream_data(packet);
-        }
-    }
-
-    void ap_audio_stream_service::control_handler(
-        const uint8_t* buf,
-        const asio::error_code& e,
-        std::size_t bytes_transferred)
-    {
-        if (!e)
-        {
-            if (bytes_transferred < aps::network::RTP_PACKET_MIN_LEN)
-            {
-                LOGE() << "Packet too small: " << bytes_transferred;
-                return;
-            }
-
-            LOGV() << "ap_audio_stream_service::control_handler, " << bytes_transferred;
-
-            rtp_packet_header_t* header = (rtp_packet_header_t*)buf;
-            if (header->payload_type == ctrl_timing_sync
-                && bytes_transferred == sizeof(rtp_control_sync_packet_t))
-                control_sync_packet((rtp_control_sync_packet_t*)header);
-            else if (header->payload_type == ctrl_retransmit_request
-                && bytes_transferred == sizeof(rtp_control_retransmit_packet_t))
-                control_retransmit_packet((rtp_control_retransmit_packet_t*)header);
-            else
-                LOGE() << "Unknown RTP control packet, type: " << header->payload_type
-                << " size: " << bytes_transferred;
-        }
-    }
-
-    void ap_audio_stream_service::control_sync_packet(
-        aps::network::rtp_control_sync_packet_t* packet)
-    {
-        LOGV() << "audio CONTROL SYNC packet";
-
-
-    }
-
-    void ap_audio_stream_service::control_retransmit_packet(
-        aps::network::rtp_control_retransmit_packet_t* packet)
-    {
-        LOGV() << "audio CONTROL RETRANSMIT packet";
-
-
-    }
-
-} }
+} // namespace service
+} // namespace aps
