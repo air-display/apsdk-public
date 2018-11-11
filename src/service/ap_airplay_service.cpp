@@ -20,13 +20,16 @@ using namespace aps::service::details;
 namespace aps {
 namespace service {
 ap_airplay_session::ap_airplay_session(asio::io_context &io_ctx,
-                                       aps::ap_config &config,
-                                       aps::ap_handler_ptr hanlder)
+                                       aps::ap_config_ptr &config,
+                                       aps::ap_handler_ptr &hanlder)
     : tcp_session_base(io_ctx), config_(config), handler_(hanlder) {
-  register_request_handlers();
+
+  crypto_ = std::make_shared<ap_crypto>();
 
   timing_sync_service_ = std::make_shared<ap_timing_sync_service>();
   timing_sync_service_->open();
+
+  register_request_handlers();
 
   LOGD() << "ap_airplay_session (" << std::hex << this << ") is being created";
 }
@@ -84,11 +87,11 @@ void ap_airplay_session::post_pair_setup_handler(const details::request &req,
   DUMP_REQUEST(req);
 
   if (32 == req.body.size()) {
-    crypto_.init_client_public_keys(0, 0, req.body.data(), 32);
+    crypto_->init_client_public_keys(0, 0, req.body.data(), 32);
   }
 
   res.with_status(ok)
-      .with_content(crypto_.server_keys().ed_public_key())
+      .with_content(crypto_->server_keys().ed_public_key())
       .with_content_type(APPLICATION_OCTET_STREAM);
 }
 
@@ -98,16 +101,16 @@ void ap_airplay_session::post_pair_verify_handler(const details::request &req,
 
   pair_verify_header_t *header = (pair_verify_header_t *)req.body.data();
   if (header->is_first_frame) {
-    crypto_.init_client_public_keys(
+    crypto_->init_client_public_keys(
         req.body.data() + 4, 32,       // client curve public key
         req.body.data() + 4 + 32, 32); // client ed public key
 
-    crypto_.init_pair_verify_aes();
+    crypto_->init_pair_verify_aes();
 
     std::vector<uint8_t> signature;
-    crypto_.sign_pair_signature(signature);
+    crypto_->sign_pair_signature(signature);
 
-    std::vector<uint8_t> res_data = crypto_.server_keys().curve_public_key();
+    std::vector<uint8_t> res_data = crypto_->server_keys().curve_public_key();
     std::copy(signature.begin(), signature.end(), std::back_inserter(res_data));
 
     res.with_status(ok).with_content(res_data).with_content_type(
@@ -115,7 +118,7 @@ void ap_airplay_session::post_pair_verify_handler(const details::request &req,
 
     return;
   } else {
-    if (crypto_.verify_pair_signature(req.body.data() + 4, 64)) {
+    if (crypto_->verify_pair_signature(req.body.data() + 4, 64)) {
       res.with_status(ok);
     } else {
       res.with_status(bad_request);
@@ -132,7 +135,7 @@ void ap_airplay_session::post_fp_setup_handler(const details::request &req,
     if (ver == 0x03) {
       uint8_t mode = req.body[14];
       std::vector<uint8_t> content(142, 0);
-      crypto_.fp_setup(mode, content.data());
+      crypto_->fp_setup(mode, content.data());
       res.with_status(ok)
           .with_content_type(APPLICATION_OCTET_STREAM)
           .with_content(content);
@@ -141,7 +144,7 @@ void ap_airplay_session::post_fp_setup_handler(const details::request &req,
     uint8_t ver = req.body[4];
     if (ver == 0x03) {
       std::vector<uint8_t> content(32, 0);
-      crypto_.fp_handshake(content.data(), (uint8_t *)&req.body[144]);
+      crypto_->fp_handshake(content.data(), (uint8_t *)&req.body[144]);
       res.with_status(ok)
           .with_content_type(APPLICATION_OCTET_STREAM)
           .with_content(content);
@@ -187,11 +190,11 @@ void ap_airplay_session::setup_handler(const details::request &req,
         break;
 
       if (stream_type_t::audio == type) {
-        crypto_.init_audio_stream_aes_cbc();
+        crypto_->init_audio_stream_aes_cbc();
 
         if (!audio_stream_service_) {
           audio_stream_service_ =
-              std::make_shared<ap_audio_stream_service>(crypto_);
+              std::make_shared<ap_audio_stream_service>(crypto_, handler_);
           audio_stream_service_->start();
         }
 
@@ -225,11 +228,11 @@ void ap_airplay_session::setup_handler(const details::request &req,
             plist_object_integer_get_value(connection_id_obj, &connection_id))
           break;
 
-        crypto_.init_video_stream_aes_ctr(connection_id);
+        crypto_->init_video_stream_aes_ctr(connection_id);
 
         if (!video_stream_service_) {
           video_stream_service_ =
-              std::make_shared<ap_video_stream_service>(crypto_);
+              std::make_shared<ap_video_stream_service>(crypto_, 0, handler_);
           video_stream_service_->start();
         }
 
@@ -265,7 +268,7 @@ void ap_airplay_session::setup_handler(const details::request &req,
       if (0 != plist_object_data_get_value(ekey_obj, &pkey, &key_len))
         break;
 
-      crypto_.init_client_aes_info(piv, iv_len, pkey, key_len);
+      crypto_->init_client_aes_info(piv, iv_len, pkey, key_len);
 
       auto timing_port_obj =
           plist_object_dict_get_value(data_obj, "timingPort");
@@ -300,18 +303,19 @@ void ap_airplay_session::get_info_handler(const details::request &req,
   DUMP_REQUEST(req);
 
   auto_plist info = plist_object_dict(
-      15, "deviceID", plist_object_string(config_.deviceID().c_str()),
-      "features", plist_object_integer(config_.features()), "keepAliveLowPower",
-      plist_object_integer(1), "keepAliveSendStatsAsBody",
+      15, "deviceID", plist_object_string(config_->deviceID().c_str()),
+      "features", plist_object_integer(config_->features()),
+      "keepAliveLowPower", plist_object_integer(1), "keepAliveSendStatsAsBody",
       plist_object_integer(1), "macAddress",
-      plist_object_string(config_.macAddress().c_str()), "model",
-      plist_object_string(config_.model().c_str()), "name",
-      plist_object_string(config_.name().c_str()), "sourceVersion",
-      plist_object_string(config_.serverVersion().c_str()), "statusFlags",
-      plist_object_integer(config_.statusFlag()), "pi",
-      plist_object_string(config_.pi().c_str()), "pk",
-      plist_object_data((uint8_t *)config_.pk().c_str(), config_.pk().length()),
-      "vv", plist_object_integer(config_.vv()), "audioFormats",
+      plist_object_string(config_->macAddress().c_str()), "model",
+      plist_object_string(config_->model().c_str()), "name",
+      plist_object_string(config_->name().c_str()), "sourceVersion",
+      plist_object_string(config_->serverVersion().c_str()), "statusFlags",
+      plist_object_integer(config_->statusFlag()), "pi",
+      plist_object_string(config_->pi().c_str()), "pk",
+      plist_object_data((uint8_t *)config_->pk().c_str(),
+                        config_->pk().length()),
+      "vv", plist_object_integer(config_->vv()), "audioFormats",
       plist_object_array(
           1, plist_object_dict(
                  3, "type", plist_object_integer(96), "audioInputFormats",
@@ -329,15 +333,16 @@ void ap_airplay_session::get_info_handler(const details::request &req,
           1,
           plist_object_dict(
               11, "features", plist_object_integer(14), "height",
-              plist_object_integer(config_.display().height()), "heightPixels",
-              plist_object_integer(config_.display().height()),
+              plist_object_integer(config_->display().height()), "heightPixels",
+              plist_object_integer(config_->display().height()),
               "heightPhysical", plist_object_integer(0), "width",
-              plist_object_integer(config_.display().width()), "widthPixels",
-              plist_object_integer(config_.display().width()), "widthPhysical",
+              plist_object_integer(config_->display().width()), "widthPixels",
+              plist_object_integer(config_->display().width()), "widthPhysical",
               plist_object_integer(0), "refreshRate",
-              plist_object_real(config_.display().refreshRate()), "overscanned",
-              plist_object_false(), "rotation", plist_object_true(), "uuid",
-              plist_object_string(config_.display().uuid().c_str()))));
+              plist_object_real(config_->display().refreshRate()),
+              "overscanned", plist_object_false(), "rotation",
+              plist_object_true(), "uuid",
+              plist_object_string(config_->display().uuid().c_str()))));
 
   res.with_status(ok)
       .with_content_type(APPLICATION_BINARY_PLIST)
@@ -960,12 +965,13 @@ void ap_airplay_session::path_not_found_handler(const details::request &req,
   res.with_status(ok);
 }
 
-ap_airplay_service::ap_airplay_service(ap_config &config, uint16_t port /*= 0*/)
+ap_airplay_service::ap_airplay_service(ap_config_ptr &config,
+                                       uint16_t port /*= 0*/)
     : tcp_service_base("ap_airplay_service", port), config_(config) {}
 
 ap_airplay_service::~ap_airplay_service() {}
 
-void ap_airplay_service::set_handler(ap_handler_ptr hanlder) {
+void ap_airplay_service::set_handler(ap_handler_ptr &hanlder) {
   handler_ = hanlder;
 }
 

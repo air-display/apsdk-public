@@ -57,70 +57,231 @@ public:                                                                        \
   void n(const t &value) { n##_ = value; }
 
 namespace aps {
+/// <summary>
+///
+/// </summary>
 class ap_config_audio_format {
 public:
+  /// <summary>
+  ///
+  /// </summary>
   ap_config_audio_format();
+
+  /// <summary>
+  ///
+  /// </summary>
   ~ap_config_audio_format();
 
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_INTEGER32_PROPERTY(audioInputFormats);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_INTEGER32_PROPERTY(audioOutputFormats);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_INTEGER32_PROPERTY(type);
 };
 
+/// <summary>
+///
+/// </summary>
 class ap_config_audio_latency {
 public:
+  /// <summary>
+  ///
+  /// </summary>
   ap_config_audio_latency();
+
+  /// <summary>
+  ///
+  /// </summary>
   ~ap_config_audio_latency();
 
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_STRING_PROPERTY(audioType);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_INTEGER32_PROPERTY(inputLatencyMicros);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_INTEGER32_PROPERTY(outputLatencyMicros);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_INTEGER32_PROPERTY(type);
 };
 
+/// <summary>
+///
+/// </summary>
 class ap_config_display {
 public:
+  /// <summary>
+  ///
+  /// </summary>
   ap_config_display();
+
+  /// <summary>
+  ///
+  /// </summary>
   ~ap_config_display();
 
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_INTEGER32_PROPERTY(width);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_INTEGER32_PROPERTY(height);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_FLOAT_PROPERTY(refreshRate);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_STRING_PROPERTY(uuid);
 };
 
+/// <summary>
+///
+/// </summary>
 class ap_config {
 public:
-  static ap_config &default_instance();
+  /// <summary>
+  ///
+  /// </summary>
+  static std::shared_ptr<ap_config> default_instance();
 
+  /// <summary>
+  ///
+  /// </summary>
   ap_config();
 
+  /// <summary>
+  ///
+  /// </summary>
   ~ap_config();
 
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_STRING_PROPERTY(name);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_STRING_PROPERTY(deviceID);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_STRING_PROPERTY(model);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_STRING_PROPERTY(serverVersion);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_STRING_PROPERTY(macAddress);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_STRING_PROPERTY(pi);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_STRING_PROPERTY(pk);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_STRING_PROPERTY(flags);
 
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_STRING_PROPERTY(audioCodecs);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_STRING_PROPERTY(encryptionTypes);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_STRING_PROPERTY(metadataTypes);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_STRING_PROPERTY(needPassword);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_STRING_PROPERTY(transmissionProtocol);
 
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_INTEGER32_PROPERTY(vv);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_INTEGER64_PROPERTY(features);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_INTEGER32_PROPERTY(statusFlag);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_OBJECT_PROPERTY(audio_format, ap_config_audio_format);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_OBJECT_PROPERTY(audio_latency, ap_config_audio_latency);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_OBJECT_PROPERTY(display, ap_config_display);
 
+  /// <summary>
+  ///
+  /// </summary>
   const std::string features_hex_string() const;
 };
+
+typedef std::shared_ptr<ap_config> ap_config_ptr;
 }; // namespace aps
 
 #endif // AP_CONFIG_H

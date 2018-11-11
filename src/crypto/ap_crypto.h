@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 
-
 #include "aes.h"
 
 namespace aps {
@@ -101,4 +100,6 @@ private:
   /// </summary>
   AES_ctx audio_stream_aes_cbc_ctx;
 };
+
+typedef std::shared_ptr<ap_crypto> ap_crypto_ptr;
 } // namespace aps

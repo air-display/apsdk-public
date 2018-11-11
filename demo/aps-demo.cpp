@@ -62,8 +62,8 @@ public:
     LOGI() << "on_video_play: " << location;
   }
 
-  virtual void on_video_scrub(const float postion) override {
-    LOGI() << "on_video_scrub: " << postion;
+  virtual void on_video_scrub(const float position) override {
+    LOGI() << "on_video_scrub: " << position;
   }
 
   virtual void on_video_rate(const float value) override {
@@ -83,12 +83,14 @@ ap_player::ap_player() {}
 ap_player::~ap_player() {}
 
 int main() {
+  aps::ap_server_ptr server = std::make_shared<aps::ap_server>();
   aps::ap_handler_ptr player = std::make_shared<ap_player>();
-  aps::ap_server server(aps::ap_config::default_instance());
-  server.set_handler(player);
+  aps::ap_config_ptr config = aps::ap_config::default_instance();
+  server->set_config(config);
+  server->set_handler(player);
   LOGI() << "AP Server is starting....";
-  server.start();
+  server->start();
   LOGI() << "AP Server started....";
   getchar();
-  server.stop();
+  server->stop();
 }

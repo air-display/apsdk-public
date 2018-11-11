@@ -14,7 +14,6 @@
 #include <string>
 #include <vector>
 
-
 namespace aps {
 namespace service {
 class ap_airplay_session
@@ -27,8 +26,9 @@ class ap_airplay_session
   typedef std::map<std::string, path_handler_map> request_handler_map;
 
 public:
-  explicit ap_airplay_session(asio::io_context &io_ctx, aps::ap_config &config,
-                              aps::ap_handler_ptr handler = 0);
+  explicit ap_airplay_session(asio::io_context &io_ctx,
+                              aps::ap_config_ptr &config,
+                              aps::ap_handler_ptr &handler);
 
   ~ap_airplay_session();
 
@@ -146,11 +146,11 @@ protected:
 private:
   std::string agent_version_;
 
-  aps::ap_config &config_;
+  aps::ap_config_ptr config_;
 
   aps::ap_handler_ptr handler_;
 
-  aps::ap_crypto crypto_;
+  aps::ap_crypto_ptr crypto_;
 
   asio::streambuf in_stream_;
 
@@ -175,17 +175,17 @@ typedef std::shared_ptr<ap_airplay_session> ap_airplay_session_ptr;
 
 class ap_airplay_service : public aps::network::tcp_service_base {
 public:
-  ap_airplay_service(ap_config &config, uint16_t port = 0);
+  ap_airplay_service(ap_config_ptr &config, uint16_t port = 0);
 
   ~ap_airplay_service();
 
-  void set_handler(ap_handler_ptr hanlder);
+  void set_handler(ap_handler_ptr &hanlder);
 
 protected:
   virtual aps::network::tcp_session_ptr prepare_new_session() override;
 
 private:
-  aps::ap_config &config_;
+  aps::ap_config_ptr config_;
   aps::ap_handler_ptr handler_;
 };
 

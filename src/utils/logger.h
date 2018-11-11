@@ -6,7 +6,6 @@
 #include <sstream>
 #include <string>
 
-
 #define DEFAULT_LOG_LEVEL LL_INFO
 
 typedef enum log_level_e {
@@ -24,10 +23,11 @@ typedef enum log_level_e {
 typedef struct log_config_s {
 #if defined(ANDROID)
   bool headers = false;
+  log_level level = LL_DEFAULT;
 #else
   bool headers = true;
-#endif
   log_level level = DEFAULT_LOG_LEVEL;
+#endif
 } log_config;
 
 class logger {

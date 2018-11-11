@@ -2,11 +2,10 @@
 #include <crypto/ap_crypto.h>
 #include <utils/logger.h>
 
-
 namespace aps {
 namespace service {
 ap_video_stream_session::ap_video_stream_session(
-    asio::io_context &io_ctx, aps::ap_crypto &crypto,
+    asio::io_context &io_ctx, aps::ap_crypto_ptr &crypto,
     aps::ap_handler_ptr handler /*= 0*/)
     : aps::network::tcp_session_base(io_ctx), handler_(handler),
       crypto_(crypto) {
@@ -71,7 +70,8 @@ void ap_video_stream_session::process_packet() {
   if (mirror_payload_video == packet_.header.payload_type) {
     // Process the video packet
     LOGV() << "mirror VIDEO packet: " << packet_.payload.size();
-    crypto_.decrypt_video_frame(packet_.payload.data(), packet_.payload.size());
+    crypto_->decrypt_video_frame(packet_.payload.data(),
+                                 packet_.payload.size());
   } else if (mirror_payload_codec == packet_.header.payload_type) {
     // Process the codec packet
     LOGV() << "mirror CODEC packet: " << packet_.payload.size();
@@ -125,9 +125,9 @@ void ap_video_stream_session::handle_socket_error(const asio::error_code &e) {
   LOGE() << "Socket error[" << e.value() << "]: " << e.message();
 }
 
-ap_video_stream_service::ap_video_stream_service(
-    aps::ap_crypto &crypto, uint16_t port /*= 0*/,
-    aps::ap_handler_ptr handler /*= 0*/)
+ap_video_stream_service::ap_video_stream_service(aps::ap_crypto_ptr &crypto,
+                                                 uint16_t port,
+                                                 aps::ap_handler_ptr &handler)
     : aps::network::tcp_service_base("ap_video_stream_service", port, true),
       handler_(handler), crypto_(crypto) {}
 

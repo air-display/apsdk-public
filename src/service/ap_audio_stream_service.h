@@ -9,7 +9,6 @@
 #include <utils/packing.h>
 #include <vector>
 
-
 using namespace aps::service::audio::details;
 
 namespace aps {
@@ -47,8 +46,8 @@ private:
 
 class ap_audio_stream_service {
 public:
-  explicit ap_audio_stream_service(aps::ap_crypto &crypto,
-                                   aps::ap_handler_ptr handler = 0);
+  explicit ap_audio_stream_service(aps::ap_crypto_ptr &crypto,
+                                   aps::ap_handler_ptr &handler);
 
   ~ap_audio_stream_service();
 
@@ -78,7 +77,7 @@ protected:
 private:
   aps::ap_handler_ptr handler_;
 
-  aps::ap_crypto &crypto_;
+  aps::ap_crypto_ptr crypto_;
 
   audio_udp_service data_service_;
 

@@ -7,20 +7,56 @@
 #include <memory>
 
 namespace aps {
+/// <summary>
+///
+/// </summary>
 class ap_server {
 public:
-  ap_server(const aps::ap_config &config);
+  /// <summary>
+  ///
+  /// </summary>
+  explicit ap_server();
+
+  /// <summary>
+  ///
+  /// </summary>
   ~ap_server();
 
-  void set_handler(ap_handler_ptr hanlder);
+  /// <summary>
+  ///
+  /// </summary>
+  /// <param name="config"></param>
+  void set_config(ap_config_ptr &config);
 
+  /// <summary>
+  ///
+  /// </summary>
+  /// <param name="hanlder"></param>
+  void set_handler(ap_handler_ptr &hanlder);
+
+  /// <summary>
+  ///
+  /// </summary>
+  /// <returns></returns>
   bool start();
 
+  /// <summary>
+  ///
+  /// </summary>
   void stop();
 
 private:
+  /// <summary>
+  ///
+  /// </summary>
   class implementation;
+
+  /// <summary>
+  ///
+  /// </summary>
   std::unique_ptr<implementation> impl_;
 };
+
+typedef std::shared_ptr<ap_server> ap_server_ptr;
 } // namespace aps
 #endif // AP_SERVER_H
