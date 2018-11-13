@@ -967,7 +967,10 @@ void ap_airplay_session::path_not_found_handler(const details::request &req,
 
 ap_airplay_service::ap_airplay_service(ap_config_ptr &config,
                                        uint16_t port /*= 0*/)
-    : tcp_service_base("ap_airplay_service", port), config_(config) {}
+    : tcp_service_base("ap_airplay_service", port), config_(config) {
+  bind_thread_actions(std::bind(&ap_airplay_service::on_thread_start, this),
+                      std::bind(&ap_airplay_service::on_thread_stop, this));
+}
 
 ap_airplay_service::~ap_airplay_service() {}
 
@@ -978,5 +981,18 @@ void ap_airplay_service::set_handler(ap_handler_ptr &hanlder) {
 aps::network::tcp_session_ptr ap_airplay_service::prepare_new_session() {
   return std::make_shared<ap_airplay_session>(io_context(), config_, handler_);
 }
+
+void ap_airplay_service::on_thread_start() {
+  if (handler_) {
+    handler_->on_thread_start();
+  }
+}
+
+void ap_airplay_service::on_thread_stop() {
+  if (handler_) {
+    handler_->on_thread_stop();
+  }
+}
+
 } // namespace service
 } // namespace aps

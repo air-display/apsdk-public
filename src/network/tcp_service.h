@@ -86,6 +86,11 @@ public:
 
   virtual asio::io_context &io_context() override { return io_context_; }
 
+  void bind_thread_actions(thread_actoin start, thread_actoin stop) {
+    worker_thread_start_ = start;
+    worker_thread_stop_ = stop;
+  }
+
 protected:
   void post_accept() {
     // Create a new client session for incoming connection
@@ -123,6 +128,7 @@ protected:
 #if defined(DEBUG) || defined(_DEBUG)
       set_current_thread_name(service_name_.c_str());
 #endif
+      thread_guard_t guard(worker_thread_start_, worker_thread_stop_);
       io_context_.run();
     });
 
@@ -157,6 +163,8 @@ private:
   asio::ip::tcp::acceptor acceptor_;
   asio::ip::tcp::endpoint local_endpoint_;
   std::shared_ptr<asio::thread> worker_thread_;
+  thread_actoin worker_thread_start_;
+  thread_actoin worker_thread_stop_;
 
   tcp_session_ptr new_session_;
 };

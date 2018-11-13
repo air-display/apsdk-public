@@ -1,18 +1,18 @@
 #pragma once
+#include <ap_config.h>
+#include <ap_handler.h>
+#include <crypto/ap_crypto.h>
+#include <network/tcp_service.h>
+#include <network/udp_service.h>
+#include <array>
+#include <asio.hpp>
+#include <map>
+#include <string>
+#include <vector>
 #include "ap_airplay_service_details.h"
 #include "ap_audio_stream_service.h"
 #include "ap_timing_sync_service.h"
 #include "ap_video_stream_service.h"
-#include <ap_config.h>
-#include <ap_handler.h>
-#include <array>
-#include <asio.hpp>
-#include <crypto/ap_crypto.h>
-#include <map>
-#include <network/tcp_service.h>
-#include <network/udp_service.h>
-#include <string>
-#include <vector>
 
 namespace aps {
 namespace service {
@@ -25,7 +25,7 @@ class ap_airplay_session
   typedef std::map<std::string, request_hanlder> path_handler_map;
   typedef std::map<std::string, path_handler_map> request_handler_map;
 
-public:
+ public:
   explicit ap_airplay_session(asio::io_context &io_ctx,
                               aps::ap_config_ptr &config,
                               aps::ap_handler_ptr &handler);
@@ -42,7 +42,7 @@ public:
 
   virtual void start() override;
 
-protected:
+ protected:
   // RTSP
   void options_handler(const details::request &req, details::response &res);
 
@@ -108,7 +108,7 @@ protected:
   // APP -> SDK
   void post_getProperty(const details::request &req, details::response &res);
 
-protected:
+ protected:
   void post_receive_request_head();
 
   void on_request_head_received(const asio::error_code &e,
@@ -143,7 +143,7 @@ protected:
 
   void register_request_handlers();
 
-private:
+ private:
   std::string agent_version_;
 
   aps::ap_config_ptr config_;
@@ -174,21 +174,25 @@ private:
 typedef std::shared_ptr<ap_airplay_session> ap_airplay_session_ptr;
 
 class ap_airplay_service : public aps::network::tcp_service_base {
-public:
+ public:
   ap_airplay_service(ap_config_ptr &config, uint16_t port = 0);
 
   ~ap_airplay_service();
 
   void set_handler(ap_handler_ptr &hanlder);
 
-protected:
+ protected:
   virtual aps::network::tcp_session_ptr prepare_new_session() override;
 
-private:
+  void on_thread_start();
+
+  void on_thread_stop();
+
+ private:
   aps::ap_config_ptr config_;
   aps::ap_handler_ptr handler_;
 };
 
 typedef std::shared_ptr<ap_airplay_service> ap_airplay_service_ptr;
-} // namespace service
-} // namespace aps
+}  // namespace service
+}  // namespace aps

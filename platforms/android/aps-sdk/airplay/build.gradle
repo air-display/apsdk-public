@@ -2,19 +2,18 @@ apply plugin: 'com.android.library'
 
 android {
     compileSdkVersion 28
-
-
-
     defaultConfig {
         minSdkVersion 14
-        targetSdkVersion 28
+        targetSdkVersion 25
         versionCode 1
         versionName "1.0"
-
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-
+        externalNativeBuild {
+            cmake {
+                cppFlags "-std=c++11 -fexceptions"
+            }
+        }
     }
-
     buildTypes {
         release {
             minifyEnabled false
@@ -23,14 +22,16 @@ android {
     }
     externalNativeBuild {
         cmake {
-            path file('src/main/jni/CMakeLists.txt')
+            path file('CMakeLists.txt')
         }
     }
+    productFlavors {
+    }
+    buildToolsVersion '28.0.3'
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support:appcompat-v7:28.0.0'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'

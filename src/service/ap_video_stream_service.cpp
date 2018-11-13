@@ -9,6 +9,7 @@ ap_video_stream_session::ap_video_stream_session(
     aps::ap_handler_ptr handler /*= 0*/)
     : aps::network::tcp_session_base(io_ctx), handler_(handler),
       crypto_(crypto) {
+
   LOGD() << "ap_video_stream_session(" << std::hex << this
          << ") is allocating.";
 }
@@ -134,8 +135,25 @@ ap_video_stream_service::ap_video_stream_service(aps::ap_crypto_ptr &crypto,
 ap_video_stream_service::~ap_video_stream_service() {}
 
 aps::network::tcp_session_ptr ap_video_stream_service::prepare_new_session() {
+  bind_thread_actions(
+      std::bind(&ap_video_stream_service::on_thread_start, this),
+      std::bind(&ap_video_stream_service::on_thread_stop, this));
+
   return std::make_shared<ap_video_stream_session>(io_context(), crypto_,
                                                    handler_);
 }
+
+void ap_video_stream_service::on_thread_start() {
+  if (handler_) {
+    handler_->on_thread_start();
+  }
+}
+
+void ap_video_stream_service::on_thread_stop() {
+  if (handler_) {
+    handler_->on_thread_stop();
+  }
+}
+
 } // namespace service
 } // namespace aps

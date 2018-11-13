@@ -1,34 +1,46 @@
 package com.medialab.airplay;
 
 import android.content.Context;
-import android.net.nsd.NsdManager;
-import android.net.nsd.NsdServiceInfo;
-import android.os.Build;
+import android.util.Log;
 
-public class AirPlayServer {
-    static {
-        System.loadLibrary("aps-jni");
+import com.medialab.nci.NciObject;
+
+public class AirPlayServer extends NciObject {
+    private static final String TAG = "AirPlayServer";
+
+    /**
+     * Creates the native class instance.
+     * @return the handle of the native object which is the value of the memory address.
+     *
+     */
+    @Override
+    protected long newNci() {
+        // Call JNI method
+        return nciNew();
     }
+    private native long nciNew();
 
-    private NsdManager.RegistrationListener mRegistrationListener = null;
+    /**
+     * Destroys the native class instance.
+     */
+    @Override
+    protected void deleteNci() {
+        // Call JIN method
+        nciDelete();
+    }
+    private native void nciDelete();
 
-    private Context context;
+    private native boolean nciStart();
+    private native void nciStop();
+    private native void nciSetConfig();
+    private native void nciSetHandler(AirPlayHandler handler);
 
     private AirPlayConfig config;
 
     private AirPlayHandler handler;
 
-    public AirPlayServer(Context context, AirPlayConfig config) {
-        this.context = context;
-        this.config = config;
-    }
-
-    public Context getContext() {
-        return context;
-    }
-
-    public void setContext(Context context) {
-        this.context = context;
+    public AirPlayServer(Context context) {
+        MDNSHelper.initializeContext(context);
     }
 
     public AirPlayConfig getConfig() {
@@ -37,6 +49,7 @@ public class AirPlayServer {
 
     public void setConfig(AirPlayConfig config) {
         this.config = config;
+        nciSetConfig();
     }
 
     public AirPlayHandler getHandler() {
@@ -45,46 +58,16 @@ public class AirPlayServer {
 
     public void setHandler(AirPlayHandler handler) {
         this.handler = handler;
+        nciSetHandler(handler);
     }
 
-    public native boolean start();
-
-    public native void stop();
-
-    private void acquireMdnsd() {
-        /**
-         * We use this code only for launching the mdnsd daemon process
-         * so we just register a useless service
-         */
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            NsdServiceInfo serviceInfo = new NsdServiceInfo();
-            serviceInfo.setServiceName("o");
-            serviceInfo.setServiceType("_x._tcp");
-            serviceInfo.setPort(1);
-            mRegistrationListener = new NsdManager.RegistrationListener() {
-                @Override
-                public void onServiceRegistered(NsdServiceInfo NsdServiceInfo) { }
-                @Override
-                public void onRegistrationFailed(NsdServiceInfo serviceInfo, int errorCode) { }
-                @Override
-                public void onServiceUnregistered(NsdServiceInfo arg0) { }
-                @Override
-                public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) { }
-            };
-            NsdManager nsdManager = (NsdManager) context.getSystemService(context.NSD_SERVICE);
-            nsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);
-        }
+    public boolean start() {
+        MDNSHelper.acquireMDNSDaemon();
+        return nciStart();
     }
 
-    private void releaseMdnsd() {
-        /**
-         * Release the mdnsd daemon process
-         */
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            if (null != mRegistrationListener) {
-                NsdManager nsdManager = (NsdManager) context.getSystemService(context.NSD_SERVICE);
-                nsdManager.unregisterService(mRegistrationListener);
-            }
-        }
+    public void stop() {
+        MDNSHelper.releaseMDNSDaemon();
+        nciStop();
     }
 }

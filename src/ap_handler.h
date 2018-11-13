@@ -1,8 +1,10 @@
 #ifndef AP_HANDLER_H
 #define AP_HANDLER_H
 #pragma once
+#include <stdint.h>
 #include <memory>
 #include <vector>
+#include <string>
 
 namespace aps {
 /// <summary>
@@ -93,22 +95,41 @@ public:
   /// </summary>
   virtual ~ap_handler(){};
 
-  // Mirroring
   /// <summary>
   ///
   /// </summary>
+  virtual void on_thread_start() = 0;
+
+  /// <summary>
+  /// 
+  /// </summary>
+  virtual void on_thread_stop() = 0;
+
+  // Mirroring
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <remarks>
+  /// THREAD_AIRPLAY
+  /// </remarks>
   virtual void on_mirror_stream_started() = 0;
 
   /// <summary>
   ///
   /// </summary>
-  /// <param name="data"></param>
-  virtual void on_mirror_stream_data(const void *data) = 0;
+  /// <remarks>
+  /// THREAD_AIRPLAY
+  /// </remarks>
+  virtual void on_mirror_stream_stopped() = 0;
 
   /// <summary>
   ///
   /// </summary>
-  virtual void on_mirror_stream_stopped() = 0;
+  /// <param name="data"></param>
+  /// <remarks>
+  /// THREAD_VIDEO_STREAM
+  /// </remarks>
+  virtual void on_mirror_stream_data(const void *data) = 0;
 
   // Audio
   /// <summary>
@@ -116,6 +137,9 @@ public:
   /// </summary>
   /// <param name="ratio"></param>
   /// <param name="volume"></param>
+  /// <remarks>
+  /// THREAD_AIRPLAY
+  /// </remarks>
   virtual void on_audio_set_volume(const float ratio, const float volume) = 0;
 
   /// <summary>
@@ -125,6 +149,9 @@ public:
   /// <param name="start"></param>
   /// <param name="current"></param>
   /// <param name="end"></param>
+  /// <remarks>
+  /// THREAD_AIRPLAY
+  /// </remarks>
   virtual void on_audio_set_progress(const float ratio, const uint64_t start,
                                      const uint64_t current,
                                      const uint64_t end) = 0;
@@ -135,6 +162,9 @@ public:
   /// <param name="format"></param>
   /// <param name="data"></param>
   /// <param name="length"></param>
+  /// <remarks>
+  /// THREAD_AIRPLAY
+  /// </remarks>
   virtual void on_audio_set_cover(const std::string format, const void *data,
                                   const uint32_t length) = 0;
 
@@ -143,23 +173,35 @@ public:
   /// </summary>
   /// <param name="data"></param>
   /// <param name="length"></param>
+  /// <remarks>
+  /// THREAD_AIRPLAY
+  /// </remarks>
   virtual void on_audio_set_meta_data(const void *data,
                                       const uint32_t length) = 0;
 
   /// <summary>
   ///
   /// </summary>
+  /// <remarks>
+  /// THREAD_AIRPLAY
+  /// </remarks>
   virtual void on_audio_stream_started() = 0;
 
   /// <summary>
   ///
   /// </summary>
   /// <param name="data"></param>
+  /// <remarks>
+  /// THREAD_AUDIO_STREAM
+  /// </remarks>
   virtual void on_audio_stream_data(const void *data) = 0;
 
   /// <summary>
   ///
   /// </summary>
+  /// <remarks>
+  /// THREAD_AIRPLAY
+  /// </remarks>
   virtual void on_audio_stream_stopped() = 0;
 
   // Video
@@ -168,6 +210,9 @@ public:
   /// </summary>
   /// <param name="location"></param>
   /// <param name="start_pos"></param>
+  /// <remarks>
+  /// THREAD_AIRPLAY
+  /// </remarks>
   virtual void on_video_play(const std::string &location,
                              const float start_pos) = 0;
 
@@ -175,23 +220,35 @@ public:
   ///
   /// </summary>
   /// <param name="position"></param>
+  /// <remarks>
+  /// THREAD_AIRPLAY
+  /// </remarks>
   virtual void on_video_scrub(const float position) = 0;
 
   /// <summary>
   ///
   /// </summary>
   /// <param name="value"></param>
+  /// <remarks>
+  /// THREAD_AIRPLAY
+  /// </remarks>
   virtual void on_video_rate(const float value) = 0;
 
   /// <summary>
   ///
   /// </summary>
+  /// <remarks>
+  /// THREAD_AIRPLAY
+  /// </remarks>
   virtual void on_video_stop() = 0;
 
   /// <summary>
   ///
   /// </summary>
   /// <param name="playback_info"></param>
+  /// <remarks>
+  /// THREAD_AIRPLAY
+  /// </remarks>
   virtual void on_acquire_playback_info(playback_info_t &playback_info) = 0;
 };
 

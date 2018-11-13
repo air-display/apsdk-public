@@ -2,12 +2,12 @@
 // begins and ends there.
 //
 
-#include <utils/logger.h>
+//#include <utils/logger.h>
 
-struct initializer {
-  initializer() { logger::init_logger(true, LL_DEBUG); }
-
-  ~initializer() {}
-};
-
-static initializer _init;
+//struct initializer {
+//  initializer() { logger::init_logger(true, LL_DEBUG); }
+//
+//  ~initializer() {}
+//};
+//
+//static initializer _init;

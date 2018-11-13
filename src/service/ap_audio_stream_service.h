@@ -74,6 +74,10 @@ protected:
   void control_retransmit_packet(
       aps::network::rtp_control_retransmit_packet_t *packet);
 
+    void on_thread_start();
+
+  void on_thread_stop();
+
 private:
   aps::ap_handler_ptr handler_;
 
