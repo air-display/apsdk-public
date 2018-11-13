@@ -90,7 +90,7 @@ void airplay_handler::attach_thread() {
     args.group = 0;
     JNIEnv *env = 0;
     int status = vm->AttachCurrentThread(&env, &args);
-    if (JNI_OK != 0) {
+    if (JNI_OK != status) {
       __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
                           "Failed to attach the thread");
     }
