@@ -9,9 +9,10 @@
 
 using namespace aps;
 
+class airplay_handler;
 class jni_ap_handler : public ap_handler {
- public:
-  jni_ap_handler();
+public:
+  jni_ap_handler(airplay_handler *p);
 
   virtual void on_thread_start() override;
 
@@ -51,10 +52,13 @@ class jni_ap_handler : public ap_handler {
 
   virtual void on_video_stop() override;
 
-  virtual void on_acquire_playback_info(
-      playback_info_t &playback_info) override;
+  virtual void
+  on_acquire_playback_info(playback_info_t &playback_info) override;
+
+private:
+  airplay_handler *parent;
 };
 
 typedef std::shared_ptr<jni_ap_handler> jni_ap_handler_ptr;
 
-#endif  // APS_SDK_JNI_AP_HANDLER_H
+#endif // APS_SDK_JNI_AP_HANDLER_H

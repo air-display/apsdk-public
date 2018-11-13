@@ -17,8 +17,8 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
   }
 
   nci_core::initialize(vm, env);
-  // airplay_server::initialize(vm, env);
-  // airplay_handler::initialize(vm, env);
+  airplay_server::initialize(vm, env);
+  airplay_handler::initialize(vm, env);
 
   return JNI_VERSION_1_6;
 }
