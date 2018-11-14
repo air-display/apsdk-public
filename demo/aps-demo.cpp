@@ -76,14 +76,6 @@ public:
   on_acquire_playback_info(playback_info_t &playback_info) override {
     LOGI() << "on_acquire_playback_info: ";
   }
-
-  virtual void on_thread_start() override {
-    throw std::logic_error("The method or operation is not implemented.");
-  }
-
-  virtual void on_thread_stop() override {
-    throw std::logic_error("The method or operation is not implemented.");
-  }
 };
 
 ap_player::ap_player() {}

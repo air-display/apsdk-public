@@ -3,15 +3,15 @@
 #pragma once
 #include <stdint.h>
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace aps {
 /// <summary>
 ///
 /// </summary>
 class ap_handler {
-public:
+ public:
   /// <summary>
   ///
   /// </summary>
@@ -98,16 +98,16 @@ public:
   /// <summary>
   ///
   /// </summary>
-  virtual void on_thread_start() = 0;
+  virtual void on_thread_start(){};
 
   /// <summary>
-  /// 
+  ///
   /// </summary>
-  virtual void on_thread_stop() = 0;
+  virtual void on_thread_stop(){};
 
   // Mirroring
   /// <summary>
-  /// 
+  ///
   /// </summary>
   /// <remarks>
   /// THREAD_AIRPLAY
@@ -256,5 +256,5 @@ public:
 ///
 /// </summary>
 typedef std::shared_ptr<ap_handler> ap_handler_ptr;
-} // namespace aps
-#endif // AP_HANDLER_H
+}  // namespace aps
+#endif  // AP_HANDLER_H
