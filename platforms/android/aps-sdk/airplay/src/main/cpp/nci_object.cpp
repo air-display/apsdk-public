@@ -14,6 +14,7 @@ void nci_core::initialize(JavaVM *vm, JNIEnv *env) {
   vm_ = vm;
   clz_ = env->FindClass("com/medialab/nci/NciObject");
   if (clz_) {
+    clz_ = static_cast<jclass>(env->NewGlobalRef(clz_));
     field_NicPtr_ = env->GetFieldID(clz_, "nciPtr", "J");
   }
 }

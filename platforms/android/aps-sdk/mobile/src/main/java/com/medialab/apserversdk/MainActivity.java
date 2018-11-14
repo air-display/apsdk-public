@@ -16,9 +16,9 @@ import java.nio.ByteBuffer;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
 
-    AirPlayServer airPlayServer = null;
+    private AirPlayServer airPlayServer = null;
 
-    boolean isServerStarted = false;
+    private boolean isServerStarted = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,26 +27,26 @@ public class MainActivity extends AppCompatActivity {
 
         final Button switch_btn = findViewById(R.id.server_switch);
         switch_btn.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                Button btn = (Button)v;
-                if (isServerStarted) {
-                    airPlayServer.stop();
-                    btn.setText("Start");
-                    isServerStarted = false;
-                } else {
-                    isServerStarted = airPlayServer.start();
-                    if (!isServerStarted) {
-                        Toast.makeText(
-                                getApplicationContext(),
-                                "Failed to start the server!",
-                                Toast.LENGTH_SHORT)
-                                .show();
-                    } else {
-                        btn.setText("Stop");
-                    }
-                }
-            }
-        });
+                                          public void onClick(View v) {
+                                              Button btn = (Button) v;
+                                              if (isServerStarted) {
+                                                  airPlayServer.stop();
+                                                  btn.setText("Start");
+                                                  isServerStarted = false;
+                                              } else {
+                                                  isServerStarted = airPlayServer.start();
+                                                  if (!isServerStarted) {
+                                                      Toast.makeText(
+                                                              getApplicationContext(),
+                                                              "Failed to start the server!",
+                                                              Toast.LENGTH_SHORT)
+                                                              .show();
+                                                  } else {
+                                                      btn.setText("Stop");
+                                                  }
+                                              }
+                                          }
+                                      });
 
         airPlayServer = new AirPlayServer(getApplicationContext());
         airPlayServer.setConfig(AirPlayConfig.defaultInstance());
@@ -68,12 +68,13 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void on_audio_set_volume(float ratio, float volume) {
-                Log.i(TAG, "on_audio_set_volume: ");
+                Log.i(TAG, String.format("on_audio_set_volume: ratio = %f, volume = %f", ratio, volume));
             }
 
             @Override
             public void on_audio_set_progress(float ratio, long start, long current, long end) {
-                Log.i(TAG, "on_audio_set_progress: ");
+                Log.i(TAG, String.format("on_audio_set_progress: ratio = %f, start = %l, current = %l, end = %l",
+                        ratio, start, current, end));
             }
 
             @Override
@@ -103,17 +104,17 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void on_video_play(String location, float start_pos) {
-                Log.i(TAG, "on_video_play: ");
+                Log.i(TAG, String.format("on_video_play: location = %s, start_pos = %f", location, start_pos));
             }
 
             @Override
             public void on_video_scrub(float position) {
-                Log.i(TAG, "on_video_scrub: ");
+                Log.i(TAG, String.format("on_video_scrub: position = %f", position));
             }
 
             @Override
             public void on_video_rate(float value) {
-                Log.i(TAG, "on_video_rate: ");
+                Log.i(TAG, String.format("on_video_rate: value = %f", value));
             }
 
             @Override

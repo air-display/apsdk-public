@@ -29,9 +29,9 @@ class airplay_handler : public nci_object<airplay_handler> {
   static jmethodID mid_on_acquire_playback_info_;
 
 public:
-  airplay_handler(jobject o);
-
   static void initialize(JavaVM *vm, JNIEnv *env);
+
+  airplay_handler();
 
   JNIEnv *get_JNIEnv();
 
@@ -74,7 +74,6 @@ public:
   // void on_acquire_playback_info(playback_info_t &playback_info);
 
 private:
-  jobject thiz_;
   jni_ap_handler_ptr handler_;
 };
 

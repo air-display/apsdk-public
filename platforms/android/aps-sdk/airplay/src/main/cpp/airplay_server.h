@@ -12,9 +12,9 @@ using namespace aps;
 
 class airplay_server : public nci_object<airplay_server> {
 public:
-  airplay_server(jobject o);
-
   static void initialize(JavaVM *vm, JNIEnv *env);
+
+  airplay_server();
 
   bool start();
 
@@ -25,7 +25,6 @@ public:
   void setHandler(airplay_handler *handler);
 
 private:
-  jobject thiz_;
   ap_server_ptr server_;
 };
 

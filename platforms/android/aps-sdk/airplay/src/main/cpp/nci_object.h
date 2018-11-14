@@ -28,19 +28,32 @@ template <typename T> class nci_object {
 public:
   static JavaVM *get_JavaVM() { return nci_core::get_JavaVM(); }
 
+  static T *create(JNIEnv *env, jobject o) {
+    T *p = new T();
+    if (p) {
+      p->jthis_ = env->NewGlobalRef(o);
+    }
+    return p;
+  }
+
   static T *get(JNIEnv *env, jobject o) {
     return (T *)(void *)(nci_core::get_nciPtr(env, o));
   }
-
-  static T *create(JNIEnv *env, jobject o) { return new T(o); }
 
   static void destroy(JNIEnv *env, jobject o) {
     T *p = T::get(env, o);
     if (0 == p) {
       return nci_core::throw_null_exception(env);
     }
+    jobject ref = p->jthis_;
     delete (T *)((void *)(p));
+    if (ref) {
+      env->DeleteGlobalRef(ref);
+    }
   }
+
+protected:
+    jobject jthis_;
 };
 
 #endif // APS_SDK_NCI_OBJECT_H
