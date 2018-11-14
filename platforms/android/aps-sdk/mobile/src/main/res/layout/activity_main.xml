@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <android.webkit.WebView
+    <com.dueeeke.videoplayer.player.IjkVideoView
         android:id="@+id/player_view"
         android:layout_width="match_parent"
         android:layout_marginTop="0dp"

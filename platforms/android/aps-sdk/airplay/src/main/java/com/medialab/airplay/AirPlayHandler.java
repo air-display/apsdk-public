@@ -1,5 +1,7 @@
 package com.medialab.airplay;
 
+import android.content.Context;
+
 import com.medialab.nci.NciObject;
 
 public abstract class AirPlayHandler extends NciObject implements IAirPlayHandler {
@@ -24,4 +26,14 @@ public abstract class AirPlayHandler extends NciObject implements IAirPlayHandle
         nciDelete();
     }
     private native void nciDelete();
+
+    protected Context mContext = null;
+
+    public AirPlayHandler(Context context) {
+        mContext = context;
+    }
+
+    public Context getContext() {
+        return mContext;
+    }
 }

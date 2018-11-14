@@ -1,11 +1,16 @@
 package com.medialab.apserversdk;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+
+import com.dueeeke.videocontroller.StandardVideoController;
+import com.dueeeke.videoplayer.player.IjkVideoView;
+import com.dueeeke.videoplayer.player.PlayerConfig;
 
 import com.medialab.airplay.AirPlayConfig;
 import com.medialab.airplay.AirPlayHandler;
@@ -16,9 +21,25 @@ import java.nio.ByteBuffer;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
 
+    private String videoSource = "http://183.60.23.26/vhot2hls.tc.qq.com/AzEES84h6AwFBgTWaCAQHXMt-mDV0LF8Z_7H1BuK70Hs/mp4/0/NGMDIiK9f82wz1Qnm6dwVRszHmag_FJv-5Jpqj5BWqdRR1f1rtNDcg/X3jWcGMkTcIQW3bIm7wUQKL_cPT3d5ioDZk3BEjIQ-ns_e6QjuloyWmwTeHPxVc8U60LSW3hHsb3SpQS8LlNjbQuG0ra3XYz2MVUlf5ZpuFWhi9iedZB5cf9JDlFboS99Qf2SyOVL4_Bf00_gFqWMs3fRIWov3KK/w079053moiw.mp4/w079053moiw.mp4.av.m3u8?fn=mp4&bw=64&st=0&et=0&iv=&ivfn=&ivfc=&ivt=&ivs=&ivd=&ivl=&ftype=mp4&fbw=45&type=m3u8&drm=0&sdtfrom=v3000&platform=10403&appver=6.4.0.21959";
+
     private AirPlayServer airPlayServer = null;
 
     private boolean isServerStarted = false;
+
+    private IjkVideoView videoPlayer = null;
+
+    public void startVideo(String source) {
+        videoSource = source;
+        videoPlayer.post(new Runnable() {
+            @Override
+            public void run() {
+                videoPlayer.stopPlayback();
+                videoPlayer.setUrl(videoSource);
+                videoPlayer.start();
+            }
+        });
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,9 +69,33 @@ public class MainActivity extends AppCompatActivity {
                                           }
                                       });
 
+        videoPlayer = findViewById(R.id.player_view);
+        videoPlayer.setTitle("Tencent WeCast Player");
+        videoPlayer.setVideoController(new StandardVideoController(this));
+        videoPlayer.setUrl(videoSource); //设置视频地址
+
+        PlayerConfig playerConfig = new PlayerConfig.Builder()
+                //启用边播边缓存功能
+                //.enableCache()
+                //启用重力感应自动进入/退出全屏功能
+                .autoRotate()
+                //启动硬解码，启用后可能导致视频黑屏，音画不同步
+                .enableMediaCodec()
+                //启用SurfaceView显示视频，不调用默认使用TextureView
+                .usingSurfaceView()
+                //保存播放进度
+                .savingProgress()
+                //关闭AudioFocusChange监听
+                .disableAudioFocus()
+                //循环播放当前正在播放的视频
+                .setLooping()
+                .build();
+        videoPlayer.setPlayerConfig(playerConfig);
+
         airPlayServer = new AirPlayServer(getApplicationContext());
         airPlayServer.setConfig(AirPlayConfig.defaultInstance());
-        airPlayServer.setHandler(new AirPlayHandler() {
+
+        airPlayServer.setHandler(new AirPlayHandler(this) {
             @Override
             public void on_mirror_stream_started() {
                 Log.i(TAG, "on_mirror_stream_started: ");
@@ -105,6 +150,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void on_video_play(String location, float start_pos) {
                 Log.i(TAG, String.format("on_video_play: location = %s, start_pos = %f", location, start_pos));
+                MainActivity activity = (MainActivity) getContext();
+                activity.startVideo(location);
             }
 
             @Override
