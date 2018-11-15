@@ -5,6 +5,11 @@ buildscript {
     repositories {
         google()
         jcenter()
+
+        // Tencent Private Maven repository
+        maven {
+            url "http://maven.oa.com/nexus/content/groups/androidbuild"
+        }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.2.1'
@@ -20,6 +25,11 @@ allprojects {
         google()
         jcenter()
         maven { url 'https://jitpack.io' }
+
+        // Tencent Private Maven repository
+        maven {
+            url "http://maven.oa.com/nexus/content/groups/androidbuild"
+        }
     }
 }
 

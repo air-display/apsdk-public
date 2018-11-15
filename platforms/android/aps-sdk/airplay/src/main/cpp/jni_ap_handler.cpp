@@ -109,8 +109,8 @@ void jni_ap_handler::on_video_stop() {
     parent->on_video_stop();
 }
 
-void jni_ap_handler::on_acquire_playback_info(playback_info_t &playback_info) {
+void jni_ap_handler::on_acquire_playback_info(ap_handler::playback_info_t &playback_info) {
   __android_log_write(ANDROID_LOG_INFO, LOG_TAG, "on_acquire_playback_info");
-//  if (parent)
-//    parent->on_acquire_playback_info(playback_info);
+  if (parent)
+    parent->on_acquire_playback_info(playback_info);
 }

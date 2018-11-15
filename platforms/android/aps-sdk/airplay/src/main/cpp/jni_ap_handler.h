@@ -53,7 +53,7 @@ public:
   virtual void on_video_stop() override;
 
   virtual void
-  on_acquire_playback_info(playback_info_t &playback_info) override;
+  on_acquire_playback_info(ap_handler::playback_info_t &playback_info) override;
 
 private:
   airplay_handler *parent;

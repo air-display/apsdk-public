@@ -5,6 +5,10 @@
 #include "airplay_handler.h"
 #include <nci_object.h>
 
+jclass airplay_handler::jclz_palayback_info = 0;
+
+jmethodID airplay_handler::mid_playback_info_constructor = 0;
+
 jclass airplay_handler::clz_ = 0;
 
 jmethodID airplay_handler::mid_on_mirror_stream_started_ = 0;
@@ -41,8 +45,16 @@ jmethodID airplay_handler::mid_on_acquire_playback_info_ = 0;
   mid_##name##_ = env->GetMethodID(clz_, #name, sig)
 
 void airplay_handler::initialize(JavaVM *vm, JNIEnv *env) {
+  jclz_palayback_info = env->FindClass("com/medialab/airplay/PlaybackInfo");
+  if (jclz_palayback_info) {
+    jclz_palayback_info = (jclass) env->NewGlobalRef(jclz_palayback_info);
+    mid_playback_info_constructor =
+        env->GetMethodID(jclz_palayback_info, "<init>", "()V");
+  }
+
   clz_ = env->FindClass("com/medialab/airplay/IAirPlayHandler");
   if (clz_) {
+    clz_ = (jclass) env->NewGlobalRef(clz_);
     mid_on_mirror_stream_started_ =
             env->GetMethodID(clz_, "on_mirror_stream_started", "()V");
     GET_METHOD_ID(on_mirror_stream_data, "(Ljava/nio/ByteBuffer;)V");
@@ -59,7 +71,7 @@ void airplay_handler::initialize(JavaVM *vm, JNIEnv *env) {
     GET_METHOD_ID(on_video_scrub, "(F)V");
     GET_METHOD_ID(on_video_rate, "(F)V");
     GET_METHOD_ID(on_video_stop, "()V");
-    // GET_METHOD_ID(on_acquire_playback_info, "()V");
+    GET_METHOD_ID(on_acquire_playback_info, "(Lcom/medialab/airplay/PlaybackInfo;)V");
   }
 }
 
@@ -212,9 +224,54 @@ void airplay_handler::on_video_stop() {
   }
 }
 
-// void airplay_handler::on_acquire_playback_info(playback_info_t
-// &playback_info) {
-// }
+ void airplay_handler::on_acquire_playback_info(ap_handler::playback_info_t
+ &playback_info) {
+   JNIEnv *env = get_JNIEnv();
+   if (env) {
+     if (!jclz_palayback_info || !mid_playback_info_constructor) {
+       return;
+     }
+
+     jobject object =
+         env->NewObject(jclz_palayback_info, mid_playback_info_constructor);
+     if (!object) {
+       return;
+     }
+
+     env->CallVoidMethod(jthis_, mid_on_acquire_playback_info_, object);
+
+     jfieldID field = 0;
+
+     field = env->GetFieldID(jclz_palayback_info, "uuid", "Ljava/lang/String;");
+     env->GetObjectField(object, field);
+     playback_info.uuid = "";
+
+     field = env->GetFieldID(jclz_palayback_info, "stallCount", "I");
+     playback_info.stallCount = env->GetIntField(object, field);
+
+     field = env->GetFieldID(jclz_palayback_info, "duration", "D");
+     playback_info.duration = env->GetDoubleField(object, field);
+
+     field = env->GetFieldID(jclz_palayback_info, "position", "F");
+     playback_info.position = env->GetFloatField(object, field);
+
+     field = env->GetFieldID(jclz_palayback_info, "rate", "D");
+     playback_info.rate = env->GetDoubleField(object, field);
+
+     field = env->GetFieldID(jclz_palayback_info, "readyToPlay", "Z");
+     playback_info.readyToPlay = env->GetBooleanField(object, field);
+
+     field = env->GetFieldID(jclz_palayback_info, "playbackBufferEmpty", "Z");
+     playback_info.playbackBufferEmpty = env->GetBooleanField(object, field);
+
+     field = env->GetFieldID(jclz_palayback_info, "playbackBufferFull", "Z");
+     playback_info.playbackBufferFull = env->GetBooleanField(object, field);
+
+     field = env->GetFieldID(jclz_palayback_info, "playbackLikelyToKeepUp", "Z");
+     playback_info.playbackLikelyToKeepUp = env->GetBooleanField(object, field);
+   }
+}
+
 
 jlong Java_com_medialab_airplay_AirPlayHandler_nciNew(JNIEnv *env,
                                                       jobject thiz) {

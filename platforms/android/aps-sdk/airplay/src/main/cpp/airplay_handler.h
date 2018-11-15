@@ -11,6 +11,9 @@
 using namespace aps;
 
 class airplay_handler : public nci_object<airplay_handler> {
+  static jclass jclz_palayback_info;
+  static jmethodID mid_playback_info_constructor;
+
   static jclass clz_;
   static jmethodID mid_on_mirror_stream_started_;
   static jmethodID mid_on_mirror_stream_data_;
@@ -71,7 +74,7 @@ public:
 
   void on_video_stop();
 
-  // void on_acquire_playback_info(playback_info_t &playback_info);
+   void on_acquire_playback_info(ap_handler::playback_info_t &playback_info);
 
 private:
   jni_ap_handler_ptr handler_;

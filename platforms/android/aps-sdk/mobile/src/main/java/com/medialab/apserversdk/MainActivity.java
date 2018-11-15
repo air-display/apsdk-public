@@ -1,6 +1,5 @@
 package com.medialab.apserversdk;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -15,6 +14,7 @@ import com.dueeeke.videoplayer.player.PlayerConfig;
 import com.medialab.airplay.AirPlayConfig;
 import com.medialab.airplay.AirPlayHandler;
 import com.medialab.airplay.AirPlayServer;
+import com.medialab.airplay.PlaybackInfo;
 
 import java.nio.ByteBuffer;
 
@@ -31,12 +31,20 @@ public class MainActivity extends AppCompatActivity {
 
     public void startVideo(String source) {
         videoSource = source;
-        videoPlayer.post(new Runnable() {
+        this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                videoPlayer.setUrl(videoSource);
+                videoPlayer.start();
+            }
+        });
+    }
+
+    public void stopVideo() {
+        this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 videoPlayer.stopPlayback();
-                videoPlayer.setUrl(videoSource);
-                videoPlayer.start();
             }
         });
     }
@@ -167,6 +175,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void on_video_stop() {
                 Log.i(TAG, "on_video_stop: ");
+                MainActivity activity = (MainActivity) getContext();
+                activity.stopVideo();
+            }
+
+            @Override
+            public void on_acquire_playback_info(PlaybackInfo playback_info) {
+                playback_info.duration = 54321;
+                playback_info.position = 12345;
+                playback_info.rate = 1;
             }
         });
     }
