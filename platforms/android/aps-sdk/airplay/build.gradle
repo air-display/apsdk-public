@@ -1,12 +1,19 @@
 apply plugin: 'com.android.library'
 
+ext {
+    Build_Number = "$System.env.NumberVersion"
+    if (Build_Number == "") {
+        Build_Number = "0.0.0.1"
+    }
+}
+
 android {
     compileSdkVersion 28
     defaultConfig {
         minSdkVersion 17
         targetSdkVersion 28
         versionCode 1
-        versionName "0.0.0.2"
+        versionName Build_Number
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
