@@ -2,6 +2,20 @@ cmake_minimum_required(VERSION 3.4.1)
 
 project(aps)
 
+# Flags
+set(CMAKE_CXX_STANDARD 11)
+set(CXX_STANDARD_REQUIRED)
+if (WIN32)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif()
+
+# Definitions
+add_definitions(-DASIO_STANDALONE)
+if (WIN32)
+    add_definitions(-D_WIN32_WINNT=0x0600) # Windows Vista +
+    add_definitions(-DINCL_EXTRA_HTON_FUNCTIONS)
+endif()
+
 # Include paths
 include_directories(
     src
