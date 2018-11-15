@@ -589,6 +589,8 @@ void ap_airplay_session::get_playback_info(const details::request &req,
     handler_->on_acquire_playback_info(info);
   }
 
+  // Return binary plist
+
   res.with_status(ok);
 }
 
