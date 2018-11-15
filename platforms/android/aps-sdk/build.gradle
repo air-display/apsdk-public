@@ -5,7 +5,7 @@ buildscript {
     repositories {
         // Tencent Private Maven repository
         maven {
-            url "http://maven.oa.com/nexus/content/groups/androidbuild"
+            url "http://maven.oa.com/nexus/content/groups/android"
         }
         google()
         jcenter()
@@ -23,7 +23,7 @@ allprojects {
     repositories {
         // Tencent Private Maven repository
         maven {
-            url "http://maven.oa.com/nexus/content/groups/androidbuild"
+            url "http://maven.oa.com/nexus/content/groups/android"
         }
         google()
         jcenter()
