@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-export ANDROID_NDK_HOME=$ANDROIDNDK_LINUX_R12
+export ANDROID_NDK_HOME=$ANDROIDNDK_LINUX_R16
 export JAVA_HOME=$JDK8
 export PATH=$JDK8/bin:$PATH
 export GRADLE_HOME=/data/rdm/apps/gradle/gradle-4.6
