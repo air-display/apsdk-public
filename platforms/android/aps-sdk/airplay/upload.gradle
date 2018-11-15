@@ -3,8 +3,8 @@ apply plugin: 'maven'
 ext {
     repo = "$System.env.repo"
     snapshot_repo = "$System.env.snapshot_repo"
-    user = 'RDM'
-    password = 'RDM'
+    user = 'rdm'
+    password = 'rdm'
 }
 
 uploadArchives {
