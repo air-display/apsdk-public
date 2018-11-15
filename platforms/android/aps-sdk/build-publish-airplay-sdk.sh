@@ -1,5 +1,7 @@
 #!/usr/bin/env sh
 
+export JAVA_HOME=$JDK8
+export PATH=$JDK8/bin:$PATH
 export GRADLE_HOME=/data/rdm/apps/gradle/gradle-4.6
 export PATH=$GRADLE_HOME/bin:$PATH
 
