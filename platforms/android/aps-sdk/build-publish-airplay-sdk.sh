@@ -7,6 +7,7 @@ export GRADLE_HOME=/data/rdm/apps/gradle/gradle-4.6
 export PATH=$GRADLE_HOME/bin:$PATH
 
 mkdir -p bin
+pushd $(pwd)
 cd platforms/android/aps-sdk
 echo ++++++++++++++++++++++++++ Building airplay module ++++++++++++++++++++++++++
 if [[ "$CI" = "True" ]]; then
@@ -17,6 +18,11 @@ if [[ "$CI" = "True" ]]; then
 else
     echo Current build environment is not CI system.
     ./gradlew clean :airplay:build
+fi
+
+popd
+if [ $? = 0 ]; then 
+    cp platforms/android/aps-sdk/airplay/build/outputs/aar/* bin
 fi
 
 echo Build done with error code $?
