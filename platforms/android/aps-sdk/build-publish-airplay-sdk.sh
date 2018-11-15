@@ -1,5 +1,8 @@
 #!/usr/bin/env sh
 
+export GRADLE_HOME=/data/rdm/apps/gradle/gradle-4.6
+export PATH=$GRADLE_HOME/bin:$PATH
+
 cd platforms/android/aps-sdk
 echo ++++++++++++++++++++++++++ Building airplay module ++++++++++++++++++++++++++
 if [[ "$CI" = "True" ]]; then
