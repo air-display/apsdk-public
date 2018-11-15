@@ -6,7 +6,7 @@ if "%CI%"=="True" (
     @set snapshot_repo=http://maven.oa.com/nexus/content/repositories/thirdparty-snapshots
 
    ) else (
-    @echo Current build environment is not CI system, skip uploading artifacts.
+    @echo Current build environment is not CI system.
     if not exist local-maven-repo (mkdir local-maven-repo)
     @set repo=file:///%~dp0local-maven-repo
     if not exist local-maven-snapshot-repo (mkdir local-maven-snapshot-repo)
