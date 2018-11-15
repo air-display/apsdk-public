@@ -17,3 +17,6 @@ else
     echo Current build environment is not CI system.
     ./gradlew clean :airplay:build
 fi
+
+echo Build done with error code $?
+exit $?
