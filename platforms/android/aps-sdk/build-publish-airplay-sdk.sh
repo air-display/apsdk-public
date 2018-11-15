@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
 
+cd platforms/android/aps-sdk
 echo ++++++++++++++++++++++++++ Building airplay module ++++++++++++++++++++++++++
 if [[ "$CI" = "True" ]]; then
     echo Current build environment is CI system, build and upload the artifacts to maven repository.
