@@ -14,6 +14,7 @@ if [[ "$CI" = "True" ]]; then
     echo Current build environment is CI system, build and upload the artifacts to maven repository.
     export repo=http://maven.oa.com/nexus/content/repositories/thirdparty
     export snapshot_repo=http://maven.oa.com/nexus/content/repositories/thirdparty-snapshots
+    export performUploadArchives=true
     ./gradlew clean :airplay:build :airplay:uploadArchives
 else
     echo Current build environment is not CI system.

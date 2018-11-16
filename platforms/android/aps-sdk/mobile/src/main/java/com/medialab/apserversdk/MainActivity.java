@@ -180,10 +180,12 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void on_acquire_playback_info(PlaybackInfo playback_info) {
-                playback_info.duration = 54321;
-                playback_info.position = 12345;
-                playback_info.rate = 1;
+            public PlaybackInfo get_playback_info() {
+                PlaybackInfo playbackInfo = new PlaybackInfo();
+                playbackInfo.duration = 54321;
+                playbackInfo.position = 12345;
+                playbackInfo.rate = 1;
+                return playbackInfo;
             }
         });
     }

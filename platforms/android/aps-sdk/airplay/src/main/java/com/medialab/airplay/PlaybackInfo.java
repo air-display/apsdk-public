@@ -11,7 +11,7 @@ public class PlaybackInfo {
     public boolean playbackBufferFull;
     public boolean playbackLikelyToKeepUp;
 
-    PlaybackInfo() {
+    public PlaybackInfo() {
         uuid = "";
         stallCount = 0;
         duration = 0;

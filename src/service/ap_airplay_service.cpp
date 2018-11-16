@@ -584,14 +584,34 @@ void ap_airplay_session::get_playback_info(const details::request &req,
                                            details::response &res) {
   DUMP_REQUEST(req);
 
-  ap_handler::playback_info_t info;
+  ap_handler::playback_info_t playbackinfo;
   if (handler_) {
-    handler_->on_acquire_playback_info(info);
+    handler_->on_acquire_playback_info(playbackinfo);
   }
 
   // Return binary plist
+    auto_plist info = plist_object_dict(11,
+        "uuid", plist_object_string(""),
+        "stallCount", plist_object_integer(0),
+        "duration", plist_object_real(playbackinfo.duration),
+        "position", plist_object_real(playbackinfo.position),
+        "rate", plist_object_real(playbackinfo.rate),
+        "readyToPlay", plist_object_true(),
+      "playbackBufferEmpty",
+      playbackinfo.playbackBufferEmpty ? plist_object_true()
+                                       : plist_object_false(),
+      "playbackBufferFull",
+      playbackinfo.playbackBufferFull ? plist_object_true()
+                                      : plist_object_false(),
+      "playbackLikelyToKeepUp",
+      playbackinfo.playbackLikelyToKeepUp ? plist_object_true()
+                                          : plist_object_false(),
+        "loadedTimeRanges", plist_object_array(0),
+        "seekableTimeRanges", plist_object_array(0));
 
-  res.with_status(ok);
+  res.with_status(ok)
+      .with_content_type(APPLICATION_BINARY_PLIST)
+      .with_content(info.to_bytes_array());
 }
 
 void ap_airplay_session::put_setProperty(const details::request &req,

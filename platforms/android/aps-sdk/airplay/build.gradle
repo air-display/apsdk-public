@@ -1,9 +1,9 @@
 apply plugin: 'com.android.library'
 
 ext {
-    Build_Number = "$System.env.NumberVersion"
-    if (Build_Number == "") {
-        Build_Number = "0.0.0.1"
+    VersionNumberString = "$System.env.NumberVersion"
+    if (VersionNumberString == "null" || VersionNumberString == "") {
+        VersionNumberString = "0.0.0.1"
     }
 }
 
@@ -13,7 +13,7 @@ android {
         minSdkVersion 17
         targetSdkVersion 28
         versionCode 1
-        versionName Build_Number
+        versionName VersionNumberString
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
@@ -26,6 +26,9 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            jniDebuggable true
         }
     }
     externalNativeBuild {

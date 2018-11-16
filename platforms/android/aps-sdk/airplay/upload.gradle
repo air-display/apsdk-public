@@ -1,6 +1,7 @@
 apply plugin: 'maven'
 
 ext {
+    performUploadArchives = "$System.env.performUploadArchives".toBoolean()
     repo = "$System.env.repo"
     snapshot_repo = "$System.env.snapshot_repo"
     user = 'rdm'
@@ -8,6 +9,7 @@ ext {
 }
 
 uploadArchives {
+    enabled = performUploadArchives
     repositories.mavenDeployer {
         pom {
             groupId = 'com.medialab'

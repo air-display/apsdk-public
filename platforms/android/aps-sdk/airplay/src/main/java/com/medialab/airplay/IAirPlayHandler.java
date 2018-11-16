@@ -34,5 +34,5 @@ public interface IAirPlayHandler {
 
     void on_video_stop();
 
-    void on_acquire_playback_info(PlaybackInfo playback_info);
+    PlaybackInfo get_playback_info();
 }
