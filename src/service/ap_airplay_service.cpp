@@ -302,48 +302,54 @@ void ap_airplay_session::get_info_handler(const details::request &req,
                                           details::response &res) {
   DUMP_REQUEST(req);
 
-  auto_plist info = plist_object_dict(
-      15, "deviceID", plist_object_string(config_->deviceID().c_str()),
+  // clang-format off
+  // Don't touch this!
+  auto_plist info = plist_object_dict(15,
+      "deviceID", plist_object_string(config_->deviceID().c_str()),
       "features", plist_object_integer(config_->features()),
-      "keepAliveLowPower", plist_object_integer(1), "keepAliveSendStatsAsBody",
-      plist_object_integer(1), "macAddress",
-      plist_object_string(config_->macAddress().c_str()), "model",
-      plist_object_string(config_->model().c_str()), "name",
-      plist_object_string(config_->name().c_str()), "sourceVersion",
-      plist_object_string(config_->serverVersion().c_str()), "statusFlags",
-      plist_object_integer(config_->statusFlag()), "pi",
-      plist_object_string(config_->pi().c_str()), "pk",
-      plist_object_data((uint8_t *)config_->pk().c_str(),
-                        config_->pk().length()),
-      "vv", plist_object_integer(config_->vv()), "audioFormats",
-      plist_object_array(
-          1, plist_object_dict(
-                 3, "type", plist_object_integer(96), "audioInputFormats",
-                 plist_object_integer(0x01000000), "audioOutputFormats",
-                 plist_object_integer(0x01000000))),
-      "audioLatencies",
-      plist_object_array(
-          1,
-          plist_object_dict(4, "type", plist_object_integer(96), "audioType",
-                            plist_object_string("default"),
-                            "inputLatencyMicros", plist_object_integer(3),
-                            "outputLatencyMicros", plist_object_integer(79))),
-      "displays",
-      plist_object_array(
-          1,
-          plist_object_dict(
-              11, "features", plist_object_integer(14), "height",
-              plist_object_integer(config_->display().height()), "heightPixels",
-              plist_object_integer(config_->display().height()),
-              "heightPhysical", plist_object_integer(0), "width",
-              plist_object_integer(config_->display().width()), "widthPixels",
-              plist_object_integer(config_->display().width()), "widthPhysical",
-              plist_object_integer(0), "refreshRate",
-              plist_object_real(config_->display().refreshRate()),
-              "overscanned", plist_object_false(), "rotation",
-              plist_object_true(), "uuid",
-              plist_object_string(config_->display().uuid().c_str()))));
+      "keepAliveLowPower", plist_object_integer(1), 
+      "keepAliveSendStatsAsBody", plist_object_integer(1), 
+      "macAddress", plist_object_string(config_->macAddress().c_str()), 
+      "model", plist_object_string(config_->model().c_str()), 
+      "name", plist_object_string(config_->name().c_str()), 
+      "sourceVersion", plist_object_string(config_->serverVersion().c_str()), 
+      "statusFlags", plist_object_integer(config_->statusFlag()), 
+      "pi", plist_object_string(config_->pi().c_str()), 
+      "pk", plist_object_data((uint8_t *)config_->pk().c_str(), config_->pk().length()),
+      "vv", plist_object_integer(config_->vv()), 
+      "audioFormats",
+      plist_object_array(1,
+          plist_object_dict(3, 
+              "type", plist_object_integer(96), 
+              "audioInputFormats", plist_object_integer(0x01000000),
+              "audioOutputFormats", plist_object_integer(0x01000000))),
+      "audioLatencies", plist_object_array(1,
+          plist_object_dict(4, 
+              "type", plist_object_integer(96), 
+              "audioType", plist_object_string("default"),
+              "inputLatencyMicros", plist_object_integer(3),
+              "outputLatencyMicros", plist_object_integer(79)
+          )
+      ),
+      "displays", plist_object_array(1,
+          plist_object_dict(11,
+              "features", plist_object_integer(14),
+              "height", plist_object_integer(config_->display().height()), 
+              "heightPixels", plist_object_integer(config_->display().height()),
+              "heightPhysical", plist_object_integer(0), 
+              "width", plist_object_integer(config_->display().width()), 
+              "widthPixels", plist_object_integer(config_->display().width()), 
+              "widthPhysical", plist_object_integer(0), 
+              "refreshRate", plist_object_real(config_->display().refreshRate()),
+              "overscanned", plist_object_false(), 
+              "rotation", plist_object_true(), 
+              "uuid", plist_object_string(config_->display().uuid().c_str())
+          )
+      )
+  );
 
+  // clang-format on
+  // Carry on formatting
   res.with_status(ok)
       .with_content_type(APPLICATION_BINARY_PLIST)
       .with_content(info.to_bytes_array());
@@ -588,26 +594,36 @@ void ap_airplay_session::get_playback_info(const details::request &req,
   if (handler_) {
     handler_->on_acquire_playback_info(playbackinfo);
   }
-
+  LOGI() << "PlaybackInfo duration: " << playbackinfo.duration
+         << ", position: " << playbackinfo.position;
   // Return binary plist
-    auto_plist info = plist_object_dict(11,
-        "uuid", plist_object_string(""),
-        "stallCount", plist_object_integer(0),
-        "duration", plist_object_real(playbackinfo.duration),
-        "position", plist_object_real(playbackinfo.position),
-        "rate", plist_object_real(playbackinfo.rate),
-        "readyToPlay", plist_object_true(),
-      "playbackBufferEmpty",
-      playbackinfo.playbackBufferEmpty ? plist_object_true()
-                                       : plist_object_false(),
-      "playbackBufferFull",
-      playbackinfo.playbackBufferFull ? plist_object_true()
-                                      : plist_object_false(),
-      "playbackLikelyToKeepUp",
-      playbackinfo.playbackLikelyToKeepUp ? plist_object_true()
-                                          : plist_object_false(),
-        "loadedTimeRanges", plist_object_array(0),
-        "seekableTimeRanges", plist_object_array(0));
+  // clang-format off
+  // Don't touch this!
+  auto_plist info = plist_object_dict(9,
+      //"uuid", plist_object_string(""),
+      //"stallCount", plist_object_integer(0),
+      "duration", plist_object_real(playbackinfo.duration),
+      "position", plist_object_real(playbackinfo.position),
+      "rate", plist_object_real(playbackinfo.rate),
+      "readyToPlay", plist_object_true(),
+      "playbackBufferEmpty", plist_object_true(),
+      "playbackBufferFull", plist_object_false(),
+      "playbackLikelyToKeepUp", plist_object_true(),
+      "loadedTimeRanges", plist_object_array(1, 
+          plist_object_dict(2,
+              "start", plist_object_real(0),
+              "duration", plist_object_real(playbackinfo.duration)
+          )
+      ), 
+      "seekableTimeRanges", plist_object_array(1, 
+          plist_object_dict(2,
+              "start", plist_object_real(0),
+              "duration", plist_object_real(0)
+          )
+      )
+  );
+  // clang-format on
+  // Carry on formatting
 
   res.with_status(ok)
       .with_content_type(APPLICATION_BINARY_PLIST)
@@ -617,8 +633,8 @@ void ap_airplay_session::get_playback_info(const details::request &req,
 void ap_airplay_session::put_setProperty(const details::request &req,
                                          details::response &res) {
   DUMP_REQUEST(req);
+    // /setProperty?forwardEndTime
   // /setProperty?actionAtItemEnd
-  // /setProperty?forwardEndTime
   // /setProperty?reverseEndTime
 
   res.with_status(ok);

@@ -104,6 +104,8 @@ public class MainActivity extends AppCompatActivity {
         airPlayServer.setConfig(AirPlayConfig.defaultInstance());
 
         airPlayServer.setHandler(new AirPlayHandler(this) {
+            private float pos = 0;
+
             @Override
             public void on_mirror_stream_started() {
                 Log.i(TAG, "on_mirror_stream_started: ");
@@ -160,6 +162,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(TAG, String.format("on_video_play: location = %s, start_pos = %f", location, start_pos));
                 MainActivity activity = (MainActivity) getContext();
                 activity.startVideo(location);
+                pos = start_pos;
             }
 
             @Override
@@ -182,9 +185,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public PlaybackInfo get_playback_info() {
                 PlaybackInfo playbackInfo = new PlaybackInfo();
-                playbackInfo.duration = 54321;
-                playbackInfo.position = 12345;
+                playbackInfo.duration = 600;
+                playbackInfo.position = ++pos;
                 playbackInfo.rate = 1;
+                Log.i(TAG, String.format("get_playback_info: duration = %f, position = %f", playbackInfo.duration, playbackInfo.position));
                 return playbackInfo;
             }
         });
