@@ -530,7 +530,7 @@ void ap_airplay_session::post_play(const details::request &req,
 #else
   if (0 == strcasecmp(req.content_type.c_str(), APPLICATION_BINARY_PLIST)) {
 #endif
-    // If the reques content is binary plist:
+    // If the request content is binary plist:
     //{
     //    "Content-Location" = "mlhls://localhost/master.m3u8";
     //    "Start-Position" = "0.05959678";
