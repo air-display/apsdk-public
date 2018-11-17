@@ -5,6 +5,7 @@
 #include <ctime>
 #include <exception>
 #include <stdexcept>
+#include <string.h>
 #include <utils/logger.h>
 #include <utils/plist.h>
 #include <utils/utils.h>
@@ -523,17 +524,61 @@ void ap_airplay_session::post_reverse(const details::request &req,
 void ap_airplay_session::post_play(const details::request &req,
                                    details::response &res) {
   DUMP_REQUEST(req);
-  // req.body:
-  //      Content-Location:URL
-  //      Start-Position: float
-  std::string content(req.body.begin(), req.body.end());
-  std::string location;
-  float start_pos = 0.0f;
-  if (ap_content_parser::get_play_parameters(location, start_pos,
-                                             content.c_str())) {
-    if (handler_) {
-      handler_->on_video_play(location, start_pos);
+
+#if defined(WIN32) || defined(MS_VER_)
+  if (0 == strcmpi(req.content_type.c_str(), APPLICATION_BINARY_PLIST)) {
+#else
+  if (0 == strcasecmp(req.content_type.c_str(), APPLICATION_BINARY_PLIST)) {
+#endif
+    // If the reques content is binary plist:
+    //{
+    //    "Content-Location" = "mlhls://localhost/master.m3u8";
+    //    "Start-Position" = "0.05959678";
+    //    "Start-Position-Seconds" = "57.074648";
+    //    SenderMACAddress = "4C:57:CA:46:07:FA";
+    //    authMs = 0;
+    //    bonjourMs = 0;
+    //    clientBundleID = "com.google.ios.youtube";
+    //    clientProcName = YouTube;
+    //    connectMs = 229;
+    //    infoMs = 193;
+    //    mightSupportStorePastisKeyRequests = 1;
+    //    model = "iPhone8,4";
+    //    osBuildVersion = 16B92;
+    //    playbackRestrictions = 0;
+    //    postAuthMs = 0;
+    //    rate = 1;
+    //    referenceRestrictions = 0;
+    //    secureConnectionMs = 0;
+    //    streamType = 1;
+    //    uuid = "CA558786-81DC-4F5F-BE5A-30869D597576";
+    //    volume = 1;
+    //}
+#if defined(WIN32) || defined(MS_VER_)
+  } else if (0 == strcmpi(req.content_type.c_str(), TEXT_PARAMETERS) ||
+             0 == strcmpi(req.content_type.c_str(), APPLICATION_OCTET_STREAM)) {
+#else
+  } else if (0 == strcasecmp(req.content_type.c_str(), TEXT_PARAMETERS) ||
+             0 == strcasecmp(req.content_type.c_str(),
+                             APPLICATION_OCTET_STREAM)) {
+#endif
+    // if the request content is text
+    // req.body:
+    //      Content-Location:URL
+    //      Start-Position: float
+
+    std::string content(req.body.begin(), req.body.end());
+    std::string location;
+    float start_pos = 0.0f;
+    if (ap_content_parser::get_play_parameters(location, start_pos,
+                                               content.c_str())) {
+      if (handler_) {
+        handler_->on_video_play(location, start_pos);
+      }
     }
+  } else {
+    LOGW() << "Unknown content type :" << req.content_type
+           << " for uri: " << req.uri;
   }
 
   res.with_status(ok);
@@ -598,44 +643,106 @@ void ap_airplay_session::get_playback_info(const details::request &req,
          << ", position: " << playbackinfo.position;
   // Return binary plist
   // clang-format off
-  // Don't touch this!
-  auto_plist info = plist_object_dict(9,
-      //"uuid", plist_object_string(""),
-      //"stallCount", plist_object_integer(0),
-      "duration", plist_object_real(playbackinfo.duration),
-      "position", plist_object_real(playbackinfo.position),
-      "rate", plist_object_real(playbackinfo.rate),
-      "readyToPlay", plist_object_true(),
-      "playbackBufferEmpty", plist_object_true(),
-      "playbackBufferFull", plist_object_false(),
-      "playbackLikelyToKeepUp", plist_object_true(),
-      "loadedTimeRanges", plist_object_array(1, 
-          plist_object_dict(2,
-              "start", plist_object_real(0),
-              "duration", plist_object_real(playbackinfo.duration)
-          )
-      ), 
-      "seekableTimeRanges", plist_object_array(1, 
-          plist_object_dict(2,
-              "start", plist_object_real(0),
-              "duration", plist_object_real(0)
-          )
-      )
-  );
+  // auto_plist info = plist_object_dict(10,
+  //     //"uuid", plist_object_string(""),
+  //     "stallCount", plist_object_integer(0),
+  //     "duration", plist_object_real(playbackinfo.duration),
+  //     "position", plist_object_real(playbackinfo.position),
+  //     "rate", plist_object_real(playbackinfo.rate),
+  //     "readyToPlay", plist_object_integer(1),
+  //     "playbackBufferEmpty", plist_object_integer(1),
+  //     "playbackBufferFull", plist_object_integer(0),
+  //     "playbackLikelyToKeepUp", plist_object_integer(1),
+  //     "loadedTimeRanges", plist_object_array(1, 
+  //         plist_object_dict(2,
+  //             "start", plist_object_real(0),
+  //             "duration", plist_object_real(playbackinfo.duration)
+  //         )
+  //     ), 
+  //     "seekableTimeRanges", plist_object_array(1, 
+  //         plist_object_dict(2,
+  //             "start", plist_object_real(0),
+  //             "duration", plist_object_real(0)
+  //         )
+  //     )
+  // );
   // clang-format on
-  // Carry on formatting
+  // res.with_status(ok)
+  //     .with_content_type(APPLICATION_BINARY_PLIST)
+  //     .with_content(info.to_bytes_array());
+
+  std::ostringstream oss;
+  // clang-format off
+  oss << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+         "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+         "<plist version=\"1.0\">\n"
+         "<dict>\n"
+         "\t<key>duration</key>\n"
+         "\t<real>" << playbackinfo.duration << "</real>\n"
+         "\t<key>loadedTimeRanges</key>\n"
+         "\t<array>\n"
+         "\t\t<dict>\n"
+         "\t\t\t<key>duration</key>\n"
+         "\t\t\t<real>" << playbackinfo.duration << "</real>\n"
+         "\t\t\t<key>start</key>\n"
+         "\t\t\t<real>0.0</real>\n"
+         "\t\t</dict>\n"
+         "\t</array>\n"
+         "\t<key>playbackBufferEmpty</key>\n"
+         "\t<integer>1</integer>\n"
+         "\t<key>playbackBufferFull</key>\n"
+         "\t<integer>0</integer>\n"
+         "\t<key>playbackLikelyToKeepUp</key>\n"
+         "\t<integer>1</integer>\n"
+         "\t<key>position</key>\n"
+         "\t<real>" << playbackinfo.position << "</real>\n"
+         "\t<key>rate</key>\n"
+         "\t<real>" << playbackinfo.rate << "</real>\n"
+         "\t<key>readyToPlay</key>\n"
+         "\t<integer>" << playbackinfo.readyToPlay << "</integer>\n"
+         "\t<key>seekableTimeRanges</key>\n"
+         "\t<array>\n"
+         "\t\t<dict>\n"
+         "\t\t\t<key>duration</key>\n"
+         "\t\t\t<real>0.0</real>\n"
+         "\t\t\t<key>start</key>\n"
+         "\t\t\t<real>0.0</real>\n"
+         "\t\t</dict>\n"
+         "\t</array>\n"
+         "</dict>\n"
+         "</plist>";
+  // clang-format on
 
   res.with_status(ok)
-      .with_content_type(APPLICATION_BINARY_PLIST)
-      .with_content(info.to_bytes_array());
+      .with_content_type(TEXT_APPLE_PLIST_XML)
+      .with_content(oss.str());
 }
 
 void ap_airplay_session::put_setProperty(const details::request &req,
                                          details::response &res) {
   DUMP_REQUEST(req);
+  std::string data = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                     "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" "
+                     "\"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+                     "<plist version=\"1.0\">\n"
+                     "<dict>\n"
+                     "\t<key>errorCode</key>\n"
+                     "\t<integer>0</integer>\n"
+                     "</dict>\n"
+                     "</plist>";
+
+  if (std::string::npos != req.uri.find("actionAtItemEnd")) {
+    // /setProperty?actionAtItemEnd
+    res.with_content_type(TEXT_APPLE_PLIST_XML).with_content(data);
+  } else if (std::string::npos != req.uri.find("forwardEndTime")) {
     // /setProperty?forwardEndTime
-  // /setProperty?actionAtItemEnd
-  // /setProperty?reverseEndTime
+    res.with_content_type(TEXT_APPLE_PLIST_XML).with_content(data);
+  } else if (std::string::npos != req.uri.find("reverseEndTime")) {
+    // /setProperty?reverseEndTime
+    res.with_content_type(TEXT_APPLE_PLIST_XML).with_content(data);
+  } else {
+    LOGW() << "Unknown property: " << req.uri;
+  }
 
   res.with_status(ok);
 }

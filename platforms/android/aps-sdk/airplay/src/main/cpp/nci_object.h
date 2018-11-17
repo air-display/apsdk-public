@@ -31,7 +31,7 @@ public:
   static T *create(JNIEnv *env, jobject o) {
     T *p = new T();
     if (p) {
-      p->jthis_ = env->NewGlobalRef(o);
+      p->obj_this_ = env->NewGlobalRef(o);
     }
     return p;
   }
@@ -45,7 +45,7 @@ public:
     if (0 == p) {
       return nci_core::throw_null_exception(env);
     }
-    jobject ref = p->jthis_;
+    jobject ref = p->obj_this_;
     delete (T *)((void *)(p));
     if (ref) {
       env->DeleteGlobalRef(ref);
@@ -53,7 +53,7 @@ public:
   }
 
 protected:
-    jobject jthis_;
+    jobject obj_this_;
 };
 
 #endif // APS_SDK_NCI_OBJECT_H

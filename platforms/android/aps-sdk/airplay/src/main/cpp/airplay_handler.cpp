@@ -114,21 +114,21 @@ void airplay_handler::detach_thread() {
 void airplay_handler::on_mirror_stream_started() {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    env->CallVoidMethod(jthis_, mid_on_mirror_stream_started_);
+    env->CallVoidMethod(obj_this_, mid_on_mirror_stream_started_);
   }
 }
 
 void airplay_handler::on_mirror_stream_data(const void *data) {
   //  JNIEnv *env = get_JNIEnv();
   //  if (env) {
-  //    env->CallVoidMethod(jthis_, mid_on_mirror_stream_data_);
+  //    env->CallVoidMethod(obj_this_, mid_on_mirror_stream_data_);
   //  }
 }
 
 void airplay_handler::on_mirror_stream_stopped() {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    env->CallVoidMethod(jthis_, mid_on_mirror_stream_stopped_);
+    env->CallVoidMethod(obj_this_, mid_on_mirror_stream_stopped_);
   }
 }
 
@@ -136,7 +136,7 @@ void airplay_handler::on_audio_set_volume(const float ratio,
                                           const float volume) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    env->CallVoidMethod(jthis_, mid_on_audio_set_volume_, ratio, volume);
+    env->CallVoidMethod(obj_this_, mid_on_audio_set_volume_, ratio, volume);
   }
 }
 
@@ -146,7 +146,7 @@ void airplay_handler::on_audio_set_progress(const float ratio,
                                             const uint64_t end) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    env->CallVoidMethod(jthis_, mid_on_audio_set_progress_, ratio, start,
+    env->CallVoidMethod(obj_this_, mid_on_audio_set_progress_, ratio, start,
                         current, end);
   }
 }
@@ -154,38 +154,38 @@ void airplay_handler::on_audio_set_progress(const float ratio,
 void airplay_handler::on_audio_set_cover(const std::string format,
                                          const void *data,
                                          const uint32_t length) {
-  JNIEnv *env = get_JNIEnv();
-  if (env) {
-    env->CallVoidMethod(jthis_, mid_on_audio_set_cover_);
-  }
+  //JNIEnv *env = get_JNIEnv();
+  //if (env) {
+  //  env->CallVoidMethod(obj_this_, mid_on_audio_set_cover_);
+  //}
 }
 
 void airplay_handler::on_audio_set_meta_data(const void *data,
                                              const uint32_t length) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    env->CallVoidMethod(jthis_, mid_on_audio_set_meta_data_);
+    env->CallVoidMethod(obj_this_, mid_on_audio_set_meta_data_);
   }
 }
 
 void airplay_handler::on_audio_stream_started() {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    env->CallVoidMethod(jthis_, mid_on_audio_stream_started_);
+    env->CallVoidMethod(obj_this_, mid_on_audio_stream_started_);
   }
 }
 
 void airplay_handler::on_audio_stream_data(const void *data) {
-  //  JNIEnv *env = get_JNIEnv();
-  //  if (env) {
-  //    env->CallVoidMethod(jthis_, mid_on_audio_stream_data_);
-  //  }
+  //JNIEnv *env = get_JNIEnv();
+  //if (env) {
+  //  env->CallVoidMethod(obj_this_, mid_on_audio_stream_data_);
+  //}
 }
 
 void airplay_handler::on_audio_stream_stopped() {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    env->CallVoidMethod(jthis_, mid_on_audio_stream_stopped_);
+    env->CallVoidMethod(obj_this_, mid_on_audio_stream_stopped_);
   }
 }
 
@@ -194,28 +194,28 @@ void airplay_handler::on_video_play(const std::string &location,
   JNIEnv *env = get_JNIEnv();
   if (env) {
     jstring l = env->NewStringUTF(location.c_str());
-    env->CallVoidMethod(jthis_, mid_on_video_play_, l, start_pos);
+    env->CallVoidMethod(obj_this_, mid_on_video_play_, l, start_pos);
   }
 }
 
 void airplay_handler::on_video_scrub(const float position) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    env->CallVoidMethod(jthis_, mid_on_video_scrub_, position);
+    env->CallVoidMethod(obj_this_, mid_on_video_scrub_, position);
   }
 }
 
 void airplay_handler::on_video_rate(const float value) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    env->CallVoidMethod(jthis_, mid_on_video_rate_, value);
+    env->CallVoidMethod(obj_this_, mid_on_video_rate_, value);
   }
 }
 
 void airplay_handler::on_video_stop() {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    env->CallVoidMethod(jthis_, mid_on_video_stop_);
+    env->CallVoidMethod(obj_this_, mid_on_video_stop_);
   }
 }
 
@@ -227,7 +227,7 @@ void airplay_handler::on_acquire_playback_info(
       return;
     }
 
-    jobject object = env->CallObjectMethod(jthis_, mid_get_playback_info_);
+    jobject object = env->CallObjectMethod(obj_this_, mid_get_playback_info_);
     if (object) {
       jfieldID field = 0;
       field =
