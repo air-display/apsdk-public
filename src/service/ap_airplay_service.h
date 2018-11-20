@@ -4,15 +4,16 @@
 #include <crypto/ap_crypto.h>
 #include <network/tcp_service.h>
 #include <network/udp_service.h>
+#include <service/ap_airplay_service_details.h>
+#include <service/ap_audio_stream_service.h>
+#include <service/ap_content_parser.h>
+#include <service/ap_timing_sync_service.h>
+#include <service/ap_video_stream_service.h>
 #include <array>
 #include <asio.hpp>
 #include <map>
 #include <string>
 #include <vector>
-#include "ap_airplay_service_details.h"
-#include "ap_audio_stream_service.h"
-#include "ap_timing_sync_service.h"
-#include "ap_video_stream_service.h"
 
 namespace aps {
 namespace service {
@@ -26,6 +27,17 @@ class ap_airplay_session
   typedef std::map<std::string, path_handler_map> request_handler_map;
 
  public:
+  enum service_type_e { RTSP, HTTP };
+  typedef service_type_e service_type_t;
+
+  struct request_route_s {
+    service_type_t service;
+    std::string method;
+    std::string path;
+    request_hanlder handler;
+  };
+  typedef request_route_s request_route_t;
+
   explicit ap_airplay_session(asio::io_context &io_ctx,
                               aps::ap_config_ptr &config,
                               aps::ap_handler_ptr &handler);
@@ -39,6 +51,13 @@ class ap_airplay_session
   void register_http_request_handler(request_hanlder handler,
                                      const std::string &method,
                                      const std::string &path = std::string());
+
+  void register_request_handler(service_type_t service, 
+                               request_hanlder handler,
+                               const std::string &method,
+                               const std::string &path = std::string());
+
+  void register_request_route(const request_route_t &route);
 
   virtual void start() override;
 
@@ -81,6 +100,12 @@ class ap_airplay_session
 
   // HTTP - Video
   void get_server_info(const details::request &req, details::response &res);
+
+  // void post_fp_setup_handler_http(const details::request &req,
+  //                                details::response &res);
+
+  void post_fp_setup2_handler(const details::request &req,
+                              details::response &res);
 
   void post_reverse(const details::request &req, details::response &res);
 
@@ -141,10 +166,12 @@ class ap_airplay_session
   void path_not_found_handler(const details::request &req,
                               details::response &res);
 
-  void register_request_handlers();
+  void initialize_request_handlers();
 
  private:
-  std::string agent_version_;
+  std::string agent_;
+
+  agent_version_t agent_version_;
 
   aps::ap_config_ptr config_;
 

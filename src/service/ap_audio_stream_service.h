@@ -1,11 +1,11 @@
 #pragma once
-#include "ap_audio_stream_service_details.h"
 #include <ap_handler.h>
 #include <asio.hpp>
 #include <crypto/ap_crypto.h>
 #include <memory>
-#include <network/rtp_types.h>
 #include <network/udp_service.h>
+#include <service/ap_audio_stream_service_details.h>
+#include <service/ap_types.h>
 #include <utils/packing.h>
 #include <vector>
 
@@ -63,18 +63,18 @@ protected:
   void data_handler(const uint8_t *buf, const asio::error_code &e,
                     std::size_t bytes_transferred);
 
-  void audio_data_packet(aps::network::rtp_audio_data_packet_t *packet,
+  void audio_data_packet(rtp_audio_data_packet_t *packet,
                          size_t length);
 
   void control_handler(const uint8_t *buf, const asio::error_code &e,
                        std::size_t bytes_transferred);
 
-  void control_sync_packet(aps::network::rtp_control_sync_packet_t *packet);
+  void control_sync_packet(rtp_control_sync_packet_t *packet);
 
   void control_retransmit_packet(
-      aps::network::rtp_control_retransmit_packet_t *packet);
+      rtp_control_retransmit_packet_t *packet);
 
-    void on_thread_start();
+  void on_thread_start();
 
   void on_thread_stop();
 

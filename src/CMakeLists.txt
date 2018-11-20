@@ -43,7 +43,6 @@ endif()
 source_group("mdns" FILES ${SRC_MDNS})
 
 set(SRC_NETWORK
-    network/rtp_types.h
     network/tcp_service.h
     network/udp_service.h
 )
@@ -63,6 +62,7 @@ set(SRC_SERVICE
     service/ap_timing_sync_service.h
     service/ap_content_parser.cpp
     service/ap_content_parser.h
+    service/ap_types.h
 )
 source_group("service" FILES ${SRC_SERVICE})
 

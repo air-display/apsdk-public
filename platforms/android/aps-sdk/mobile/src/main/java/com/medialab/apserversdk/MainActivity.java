@@ -128,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void on_audio_set_progress(float ratio, long start, long current, long end) {
-                Log.i(TAG, String.format("on_audio_set_progress: ratio = %f, start = %l, current = %l, end = %l",
+                Log.i(TAG, String.format("on_audio_set_progress: ratio = %f, start = %d, current = %d, end = %d",
                         ratio, start, current, end));
             }
 

@@ -16,7 +16,7 @@ public:
   }
 
   virtual void on_mirror_stream_data(const void *data) override {
-    LOGI() << "on_mirror_stream_data: " << data;
+    LOGV() << "on_mirror_stream_data: " << data;
   }
 
   virtual void on_mirror_stream_stopped() override {
@@ -50,7 +50,7 @@ public:
   }
 
   virtual void on_audio_stream_data(const void *data) override {
-    LOGI() << "on_audio_stream_data: " << data;
+    LOGV() << "on_audio_stream_data: " << data;
   }
 
   virtual void on_audio_stream_stopped() override {

@@ -78,7 +78,7 @@ public:
                               const std::string &v) override {
     if (dnssd_lib_.Module && dnssd_lib_.TXTRecordSetValue) {
       auto error = dnssd_lib_.TXTRecordSetValue(&txt_records_, k.c_str(),
-                                                v.length(), v.c_str());
+                                                (uint8_t)v.length(), v.c_str());
 
       if (error)
         LOGE() << "Failed to add TXT record:" << k << " = " << v << ": "

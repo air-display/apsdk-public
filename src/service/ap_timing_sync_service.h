@@ -2,8 +2,8 @@
 #include <asio.hpp>
 #include <crypto/ap_crypto.h>
 #include <memory>
-#include <network/rtp_types.h>
 #include <network/udp_service.h>
+#include <service/ap_types.h>
 #include <utils/packing.h>
 #include <vector>
 
@@ -34,9 +34,9 @@ protected:
 private:
   asio::ip::udp::endpoint remote_endpoint_;
 
-  aps::network::rtp_timming_sync_packet_t query_packet_;
+  rtp_timming_sync_packet_t query_packet_;
 
-  aps::network::rtp_timming_sync_packet_t reply_packet_;
+  rtp_timming_sync_packet_t reply_packet_;
 };
 
 typedef std::shared_ptr<ap_timing_sync_service> ap_timing_sync_service_ptr;

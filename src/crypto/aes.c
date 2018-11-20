@@ -1,5 +1,4 @@
 /*
-
 This is an implementation of the AES algorithm, specifically ECB, CTR and CBC mode.
 Block size can be chosen in aes.h - available choices are AES128, AES192, AES256.
 
@@ -552,7 +551,7 @@ void AES_CTR_xcrypt_buffer(struct AES_ctx* ctx, uint8_t* buf, uint32_t length)
       /* Increment Iv and handle overflow */
       for (bi = (AES_BLOCKLEN - 1); bi >= 0; --bi)
       {
-	/* inc will owerflow */
+	/* inc will overflow */
         if (ctx->Iv[bi] == 255)
 	{
           ctx->Iv[bi] = 0;

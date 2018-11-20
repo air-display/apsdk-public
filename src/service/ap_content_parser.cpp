@@ -1,5 +1,6 @@
-#include "ap_content_parser.h"
 #include <regex>
+#include <service/ap_content_parser.h>
+
 
 bool aps::ap_content_parser::get_volume_value(float &value,
                                               const char *content) {
@@ -80,4 +81,30 @@ bool aps::ap_content_parser::get_rate_value(float &rate, const char *content) {
   }
 
   return false;
+}
+
+void aps::ap_content_parser::get_user_agent_version(std::string &agent,
+                                                    agent_version_t &version,
+                                                    const char *content) {
+  static std::regex pattern(
+      "(.*)\\/([0-9]+)(?:\\.([0-9]+)(?:\\.([0-9]+)(?:\\.([0-9]+))?)?)?");
+  std::cmatch groups;
+  version = {0, 0, 0, 0};
+  if (std::regex_search(content, groups, pattern)) {
+    if (groups.size() > 1) {
+      agent = groups.str(1);
+    }
+    if (groups.size() > 2) {
+      version.major = (uint16_t)std::strtol(groups.str(2).c_str(), 0, 10);
+    }
+    if (groups.size() > 3) {
+      version.minor = (uint16_t)std::strtol(groups.str(3).c_str(), 0, 10);
+    }
+    if (groups.size() > 4) {
+      version.revision = (uint16_t)std::strtol(groups.str(4).c_str(), 0, 10);
+    }
+    if (groups.size() > 5) {
+      version.build = (uint16_t)std::strtol(groups.str(5).c_str(), 0, 10);
+    }
+  }
 }

@@ -1,7 +1,8 @@
-#include "ap_audio_stream_service.h"
 #include <crypto/ap_crypto.h>
 #include <functional>
+#include <service/ap_audio_stream_service.h>
 #include <utils/logger.h>
+
 
 using namespace aps::network;
 
@@ -9,7 +10,7 @@ namespace aps {
 namespace service {
 audio_udp_service::audio_udp_service(const std::string &name)
     : aps::network::udp_service_base(name),
-      recv_buf_(aps::network::RTP_PACKET_MAX_LEN, 0) {}
+      recv_buf_(RTP_PACKET_MAX_LEN, 0) {}
 
 audio_udp_service::~audio_udp_service() {}
 
@@ -80,7 +81,7 @@ ap_audio_stream_service::ap_audio_stream_service(aps::ap_crypto_ptr &crypto,
   data_service_.bind_thread_actions(
       std::bind(&ap_audio_stream_service::on_thread_stop, this),
       std::bind(&ap_audio_stream_service::on_thread_stop, this));
- 
+
   control_service_.bind_recv_handler(std::bind(
       &ap_audio_stream_service::control_handler, this, std::placeholders::_1,
       std::placeholders::_2, std::placeholders::_3));
@@ -126,7 +127,7 @@ void ap_audio_stream_service::data_handler(const uint8_t *buf,
                                            const asio::error_code &e,
                                            std::size_t bytes_transferred) {
   if (!e) {
-    if (bytes_transferred < aps::network::RTP_PACKET_MIN_LEN) {
+    if (bytes_transferred < RTP_PACKET_MIN_LEN) {
       LOGE() << "Packet too small: " << bytes_transferred;
       return;
     }
@@ -142,7 +143,7 @@ void ap_audio_stream_service::data_handler(const uint8_t *buf,
 }
 
 void ap_audio_stream_service::audio_data_packet(
-    aps::network::rtp_audio_data_packet_t *packet, size_t length) {
+    rtp_audio_data_packet_t *packet, size_t length) {
   LOGV() << "audio DATA packet: " << length;
   if (handler_) {
     handler_->on_audio_stream_data(packet);
@@ -153,7 +154,7 @@ void ap_audio_stream_service::control_handler(const uint8_t *buf,
                                               const asio::error_code &e,
                                               std::size_t bytes_transferred) {
   if (!e) {
-    if (bytes_transferred < aps::network::RTP_PACKET_MIN_LEN) {
+    if (bytes_transferred < RTP_PACKET_MIN_LEN) {
       LOGE() << "Packet too small: " << bytes_transferred;
       return;
     }
@@ -174,12 +175,12 @@ void ap_audio_stream_service::control_handler(const uint8_t *buf,
 }
 
 void ap_audio_stream_service::control_sync_packet(
-    aps::network::rtp_control_sync_packet_t *packet) {
+    rtp_control_sync_packet_t *packet) {
   LOGV() << "audio CONTROL SYNC packet";
 }
 
 void ap_audio_stream_service::control_retransmit_packet(
-    aps::network::rtp_control_retransmit_packet_t *packet) {
+    rtp_control_retransmit_packet_t *packet) {
   LOGV() << "audio CONTROL RETRANSMIT packet";
 }
 

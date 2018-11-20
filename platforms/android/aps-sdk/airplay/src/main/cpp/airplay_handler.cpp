@@ -162,10 +162,10 @@ void airplay_handler::on_audio_set_cover(const std::string format,
 
 void airplay_handler::on_audio_set_meta_data(const void *data,
                                              const uint32_t length) {
-  JNIEnv *env = get_JNIEnv();
-  if (env) {
-    env->CallVoidMethod(obj_this_, mid_on_audio_set_meta_data_);
-  }
+  //JNIEnv *env = get_JNIEnv();
+  //if (env) {
+  //  env->CallVoidMethod(obj_this_, mid_on_audio_set_meta_data_);
+  //}
 }
 
 void airplay_handler::on_audio_stream_started() {

@@ -17,7 +17,7 @@ uint64_t get_ntp_timestamp() {
       duration_cast<milliseconds>(system_clock::now().time_since_epoch());
 
   seconds = ms.count() / 1000 + EPOCH;
-  fraction = ((ms.count() % 1000) * NTP_SCALE_FRAC) / 1000;
+  fraction = (uint64_t)((ms.count() % 1000) * NTP_SCALE_FRAC) / 1000;
 
   return (seconds << 32) | fraction;
 }

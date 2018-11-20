@@ -3,7 +3,6 @@
 #include <utils/packing.h>
 #include <vector>
 
-
 namespace aps {
 namespace service {
 namespace video {

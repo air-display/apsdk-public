@@ -1,9 +1,10 @@
-#include "ap_airplay_service.h"
-#include "ap_audio_stream_service.h"
-#include "ap_content_parser.h"
-#include "ap_video_stream_service.h"
 #include <ctime>
 #include <exception>
+#include <service/ap_airplay_service.h>
+#include <service/ap_audio_stream_service.h>
+#include <service/ap_content_parser.h>
+#include <service/ap_types.h>
+#include <service/ap_video_stream_service.h>
 #include <stdexcept>
 #include <string.h>
 #include <utils/logger.h>
@@ -24,13 +25,12 @@ ap_airplay_session::ap_airplay_session(asio::io_context &io_ctx,
                                        aps::ap_config_ptr &config,
                                        aps::ap_handler_ptr &hanlder)
     : tcp_session_base(io_ctx), config_(config), handler_(hanlder) {
-
   crypto_ = std::make_shared<ap_crypto>();
 
   timing_sync_service_ = std::make_shared<ap_timing_sync_service>();
   timing_sync_service_->open();
 
-  register_request_handlers();
+  initialize_request_handlers();
 
   LOGD() << "ap_airplay_session (" << std::hex << this << ") is being created";
 }
@@ -69,6 +69,22 @@ void ap_airplay_session::register_http_request_handler(
   } else {
     path_map->second[path] = handler;
   }
+}
+
+void ap_airplay_session::register_request_handler(
+    service_type_t service, request_hanlder handler, const std::string &method,
+    const std::string &path /*= std::string()*/) {
+  if (RTSP == service) {
+    register_rtsp_request_handler(handler, method, path);
+  } else if (HTTP == service) {
+    register_http_request_handler(handler, method, path);
+  } else
+    return;
+}
+
+void ap_airplay_session::register_request_route(const request_route_t &route) {
+  register_request_handler(route.service, route.handler, route.method,
+                           route.path);
 }
 
 void ap_airplay_session::start() { post_receive_request_head(); }
@@ -131,29 +147,26 @@ void ap_airplay_session::post_fp_setup_handler(const details::request &req,
                                                details::response &res) {
   DUMP_REQUEST(req);
 
-  if (req.body.size() == 16) {
-    uint8_t ver = req.body[4];
-    if (ver == 0x03) {
+  fp_header_t *header = (fp_header_t *)req.body.data();
+  if (header->major_version == 0x03) {
+    if (header->phase == 0x01 && req.body.size() == 16) {
       uint8_t mode = req.body[14];
       std::vector<uint8_t> content(142, 0);
       crypto_->fp_setup(mode, content.data());
       res.with_status(ok)
           .with_content_type(APPLICATION_OCTET_STREAM)
           .with_content(content);
-    }
-  } else if (req.body.size() == 164) {
-    uint8_t ver = req.body[4];
-    if (ver == 0x03) {
+    } else if (header->phase == 0x03 && req.body.size() == 164) {
       std::vector<uint8_t> content(32, 0);
       crypto_->fp_handshake(content.data(), (uint8_t *)&req.body[144]);
       res.with_status(ok)
           .with_content_type(APPLICATION_OCTET_STREAM)
           .with_content(content);
+    } else {
+      LOGE() << "Invalid request";
+      res.with_status(bad_request);
+      return;
     }
-  } else {
-    LOGE() << "Invalid request";
-    res.with_status(bad_request);
-    return;
   }
 
   res.with_status(ok).with_content_type(APPLICATION_OCTET_STREAM);
@@ -280,7 +293,7 @@ void ap_airplay_session::setup_handler(const details::request &req,
         break;
 
       timing_sync_service_->set_server_endpoint(
-          socket_.remote_endpoint().address(), timing_port);
+          socket_.remote_endpoint().address(), (uint16_t)timing_port);
 
       auto_plist content = plist_object_dict(
           2, "eventPort", plist_object_integer(0), "timingPort",
@@ -304,7 +317,6 @@ void ap_airplay_session::get_info_handler(const details::request &req,
   DUMP_REQUEST(req);
 
   // clang-format off
-  // Don't touch this!
   auto_plist info = plist_object_dict(15,
       "deviceID", plist_object_string(config_->deviceID().c_str()),
       "features", plist_object_integer(config_->features()),
@@ -348,9 +360,8 @@ void ap_airplay_session::get_info_handler(const details::request &req,
           )
       )
   );
-
   // clang-format on
-  // Carry on formatting
+
   res.with_status(ok)
       .with_content_type(APPLICATION_BINARY_PLIST)
       .with_content(info.to_bytes_array());
@@ -510,6 +521,75 @@ void ap_airplay_session::flush_handler(const details::request &req,
 void ap_airplay_session::get_server_info(const details::request &req,
                                          details::response &res) {
   DUMP_REQUEST(req);
+  res.with_status(ok);
+  return;
+
+  // clang-format off
+  std::ostringstream oss; 
+  oss <<  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+          "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+          "<plist version=\"1.0\">\n"
+          "<dict>\n"
+          "\t<key>features</key>\n"
+          "\t<integer>" << config_->features() << "</integer>\n"
+          "\t<key>macAddress</key>\n"
+          "\t<string>" << config_->macAddress() << "</string>\n"
+          "\t<key>model</key>\n"
+          "\t<string>" << config_->model() << "</string>\n"
+          "\t<key>osBuildVersion</key>\n"
+          "\t<string>12B435</string>\n"
+          "\t<key>protovers</key>\n"
+          "\t<string>1.0</string>\n"
+          "\t<key>srcvers</key>\n"
+          "\t<string>" << config_->serverVersion() << "</string>\n"
+          "\t<key>vv</key>\n"
+          "\t<integer>" << config_->vv() << "</integer>\n"
+          "\t<key>deviceid</key>\n"
+          "\t<string>" << config_->macAddress() << "</string>\n"
+          "</dict>\n"
+          "</plist>";
+  // clang-format on
+  res.with_status(ok)
+      .with_content_type(TEXT_APPLE_PLIST_XML)
+      .with_content(oss.str());
+}
+
+// void ap_airplay_session::post_fp_setup_handler_http(const details::request
+// &req,
+//                                                    details::response &res) {
+//  DUMP_REQUEST(req);
+//
+//  if (req.body.size() == 16) {
+//    uint8_t ver = req.body[4];
+//    if (ver == 0x03) {
+//      uint8_t mode = req.body[14];
+//      std::vector<uint8_t> content(142, 0);
+//      crypto_->fp_setup(mode, content.data());
+//      res.with_status(ok)
+//          .with_content_type(APPLICATION_OCTET_STREAM)
+//          .with_content(content);
+//    }
+//  } else if (req.body.size() == 164) {
+//    uint8_t ver = req.body[4];
+//    if (ver == 0x03) {
+//      std::vector<uint8_t> content(32, 0);
+//      crypto_->fp_handshake(content.data(), (uint8_t *)&req.body[144]);
+//      res.with_status(ok)
+//          .with_content_type(APPLICATION_OCTET_STREAM)
+//          .with_content(content);
+//    }
+//  } else {
+//    LOGE() << "Invalid request";
+//    res.with_status(bad_request);
+//    return;
+//  }
+//
+//  res.with_status(ok).with_content_type(APPLICATION_OCTET_STREAM);
+//}
+
+void ap_airplay_session::post_fp_setup2_handler(const details::request &req,
+                                                details::response &res) {
+  DUMP_REQUEST(req);
 
   res.with_status(ok);
 }
@@ -526,7 +606,7 @@ void ap_airplay_session::post_play(const details::request &req,
   DUMP_REQUEST(req);
 
 #if defined(WIN32) || defined(MS_VER_)
-  if (0 == strcmpi(req.content_type.c_str(), APPLICATION_BINARY_PLIST)) {
+  if (0 == _strcmpi(req.content_type.c_str(), APPLICATION_BINARY_PLIST)) {
 #else
   if (0 == strcasecmp(req.content_type.c_str(), APPLICATION_BINARY_PLIST)) {
 #endif
@@ -555,8 +635,9 @@ void ap_airplay_session::post_play(const details::request &req,
     //    volume = 1;
     //}
 #if defined(WIN32) || defined(MS_VER_)
-  } else if (0 == strcmpi(req.content_type.c_str(), TEXT_PARAMETERS) ||
-             0 == strcmpi(req.content_type.c_str(), APPLICATION_OCTET_STREAM)) {
+  } else if (0 == _strcmpi(req.content_type.c_str(), TEXT_PARAMETERS) ||
+             0 ==
+                 _strcmpi(req.content_type.c_str(), APPLICATION_OCTET_STREAM)) {
 #else
   } else if (0 == strcasecmp(req.content_type.c_str(), TEXT_PARAMETERS) ||
              0 == strcasecmp(req.content_type.c_str(),
@@ -915,24 +996,26 @@ ap_airplay_session::body_completion_condition(const asio::error_code &error,
 }
 
 void ap_airplay_session::validate_user_agent() {
-  if (!agent_version_.empty())
+  if (!agent_.empty())
     return;
 
   auto user_agent_header = request_.headers.find("User-Agent");
   if (user_agent_header != request_.headers.end()) {
     auto user_agent = user_agent_header->second;
-    agent_version_ = user_agent.substr(user_agent.find("/") + 1);
-    int major_ver = std::stoi(agent_version_);
+    ap_content_parser::get_user_agent_version(agent_, agent_version_,
+                                              user_agent.c_str());
+
+    int major_ver = agent_version_.major;
     if (major_ver >= 370) {
-      LOGD() << "Agent Version: " << agent_version_ << "iOS12";
+      LOGD() << "Agent Version: " << agent_version_.major << "iOS12";
     } else if (major_ver >= 350) {
-      LOGD() << "Agent Version: " << agent_version_ << "iOS11";
+      LOGD() << "Agent Version: " << agent_version_.major << "iOS11";
     } else if (major_ver >= 300) {
-      LOGD() << "Agent Version: " << agent_version_ << "iOS10";
+      LOGD() << "Agent Version: " << agent_version_.major << "iOS10";
     } else if (major_ver >= 230) {
-      LOGD() << "Agent Version: " << agent_version_ << "iOS9";
+      LOGD() << "Agent Version: " << agent_version_.major << "iOS9";
     } else {
-      LOGD() << "Agent Version: " << agent_version_ << "iOS8";
+      LOGD() << "Agent Version: " << agent_version_.major << "iOS8";
     }
   }
 }
@@ -974,121 +1057,44 @@ void ap_airplay_session::process_request() {
   post_send_response(res);
 }
 
-void ap_airplay_session::register_request_handlers() {
-  register_rtsp_request_handler(std::bind(&ap_airplay_session::options_handler,
-                                          this, std::placeholders::_1,
-                                          std::placeholders::_2),
-                                "OPTIONS");
+#define RH(x)                                                                  \
+  std::bind(&ap_airplay_session::x, this, std::placeholders::_1,               \
+            std::placeholders::_2)
 
-  register_rtsp_request_handler(
-      std::bind(&ap_airplay_session::post_pair_setup_handler, this,
-                std::placeholders::_1, std::placeholders::_2),
-      "POST", "/pair-setup");
+void ap_airplay_session::initialize_request_handlers() {
+  // The request route table
+  request_route_t routes_table[] = {
+      {RTSP, "OPTIONS", "", RH(options_handler)},
+      {RTSP, "POST", "/pair-setup", RH(post_pair_setup_handler)},
+      {RTSP, "POST", "/pair-verify", RH(post_pair_verify_handler)},
+      {RTSP, "POST", "/fp-setup", RH(post_fp_setup_handler)},
+      {RTSP, "SETUP", "*", RH(setup_handler)},
+      {RTSP, "GET", "/info", RH(get_info_handler)},
+      {RTSP, "POST", "/feedback", RH(post_feedback_handler)},
+      {RTSP, "RECORD", "*", RH(record_handler)},
+      {RTSP, "GET_PARAMETER", "*", RH(get_parameter_handler)},
+      {RTSP, "SET_PARAMETER", "*", RH(set_parameter_handler)},
+      {RTSP, "TEARDOWN", "*", RH(teardown_handler)},
+      {RTSP, "FLUSH", "*", RH(flush_handler)},
+      {RTSP, "POST", "/audioMode", RH(post_audioMode)},
+      {HTTP, "GET", "/server-info", RH(get_server_info)},
+      {HTTP, "POST", "/fp-setup", RH(post_fp_setup_handler)},
+      {HTTP, "POST", "/fp-setup2", RH(post_fp_setup2_handler)},
+      {HTTP, "POST", "/reverse", RH(post_reverse)},
+      {HTTP, "POST", "/play", RH(post_play)},
+      {HTTP, "POST", "/scrub", RH(post_scrub)},
+      {HTTP, "POST", "/rate", RH(post_rate)},
+      {HTTP, "POST", "/stop", RH(post_stop)},
+      {HTTP, "POST", "/action", RH(post_action)},
+      {HTTP, "GET", "/playback-info", RH(get_playback_info)},
+      {HTTP, "PUT", "/setProperty", RH(put_setProperty)},
+      {HTTP, "POST", "/getProperty", RH(post_getProperty)},
+  };
 
-  register_rtsp_request_handler(
-      std::bind(&ap_airplay_session::post_pair_verify_handler, this,
-                std::placeholders::_1, std::placeholders::_2),
-      "POST", "/pair-verify");
-
-  register_rtsp_request_handler(
-      std::bind(&ap_airplay_session::post_fp_setup_handler, this,
-                std::placeholders::_1, std::placeholders::_2),
-      "POST", "/fp-setup");
-
-  register_rtsp_request_handler(std::bind(&ap_airplay_session::setup_handler,
-                                          this, std::placeholders::_1,
-                                          std::placeholders::_2),
-                                "SETUP", "*");
-
-  register_rtsp_request_handler(std::bind(&ap_airplay_session::get_info_handler,
-                                          this, std::placeholders::_1,
-                                          std::placeholders::_2),
-                                "GET", "/info");
-
-  register_rtsp_request_handler(
-      std::bind(&ap_airplay_session::post_feedback_handler, this,
-                std::placeholders::_1, std::placeholders::_2),
-      "POST", "/feedback");
-
-  register_rtsp_request_handler(std::bind(&ap_airplay_session::record_handler,
-                                          this, std::placeholders::_1,
-                                          std::placeholders::_2),
-                                "RECORD", "*");
-
-  register_rtsp_request_handler(
-      std::bind(&ap_airplay_session::get_parameter_handler, this,
-                std::placeholders::_1, std::placeholders::_2),
-      "GET_PARAMETER", "*");
-
-  register_rtsp_request_handler(
-      std::bind(&ap_airplay_session::set_parameter_handler, this,
-                std::placeholders::_1, std::placeholders::_2),
-      "SET_PARAMETER", "*");
-
-  register_rtsp_request_handler(std::bind(&ap_airplay_session::teardown_handler,
-                                          this, std::placeholders::_1,
-                                          std::placeholders::_2),
-                                "TEARDOWN", "*");
-
-  register_rtsp_request_handler(std::bind(&ap_airplay_session::flush_handler,
-                                          this, std::placeholders::_1,
-                                          std::placeholders::_2),
-                                "FLUSH", "*");
-
-  register_rtsp_request_handler(std::bind(&ap_airplay_session::post_audioMode,
-                                          this, std::placeholders::_1,
-                                          std::placeholders::_2),
-                                "POST", "/audioMode");
-
-  register_http_request_handler(std::bind(&ap_airplay_session::get_server_info,
-                                          this, std::placeholders::_1,
-                                          std::placeholders::_2),
-                                "GET", "/server-info");
-
-  register_http_request_handler(std::bind(&ap_airplay_session::post_reverse,
-                                          this, std::placeholders::_1,
-                                          std::placeholders::_2),
-                                "POST", "/reverse");
-
-  register_http_request_handler(std::bind(&ap_airplay_session::post_play, this,
-                                          std::placeholders::_1,
-                                          std::placeholders::_2),
-                                "POST", "/play");
-
-  register_http_request_handler(std::bind(&ap_airplay_session::post_scrub, this,
-                                          std::placeholders::_1,
-                                          std::placeholders::_2),
-                                "POST", "/scrub");
-
-  register_http_request_handler(std::bind(&ap_airplay_session::post_rate, this,
-                                          std::placeholders::_1,
-                                          std::placeholders::_2),
-                                "POST", "/rate");
-
-  register_http_request_handler(std::bind(&ap_airplay_session::post_stop, this,
-                                          std::placeholders::_1,
-                                          std::placeholders::_2),
-                                "POST", "/stop");
-
-  register_http_request_handler(std::bind(&ap_airplay_session::post_action,
-                                          this, std::placeholders::_1,
-                                          std::placeholders::_2),
-                                "POST", "/action");
-
-  register_http_request_handler(
-      std::bind(&ap_airplay_session::get_playback_info, this,
-                std::placeholders::_1, std::placeholders::_2),
-      "GET", "/playback-info");
-
-  register_http_request_handler(std::bind(&ap_airplay_session::put_setProperty,
-                                          this, std::placeholders::_1,
-                                          std::placeholders::_2),
-                                "PUT", "/setProperty");
-
-  register_http_request_handler(std::bind(&ap_airplay_session::post_getProperty,
-                                          this, std::placeholders::_1,
-                                          std::placeholders::_2),
-                                "POST", "/getProperty");
+  // Register all the request handlers
+  for (auto route : routes_table) {
+    register_request_route(route);
+  }
 }
 
 void ap_airplay_session::method_not_found_handler(const details::request &req,
