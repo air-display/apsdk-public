@@ -1,15 +1,15 @@
-#include "utils.h"
-#include <chrono>
-#include <ctime>
+#include <utils/utils.h>
+#include <hlsparser/hlsparse.h>
 #include <string.h>
 #include <time.h>
-
+#include <chrono>
+#include <ctime>
 
 using namespace std::chrono;
 
 uint64_t get_ntp_timestamp() {
-  const uint32_t EPOCH = 2208988800ULL;        // January 1970, in NTP seconds.
-  const double NTP_SCALE_FRAC = 4294967296ULL; // NTP fractional unit.
+  const uint32_t EPOCH = 2208988800ULL;         // January 1970, in NTP seconds.
+  const double NTP_SCALE_FRAC = 4294967296ULL;  // NTP fractional unit.
   uint64_t seconds = 0;
   uint64_t fraction = 0;
 
@@ -33,7 +33,33 @@ const char *gmt_time_string() {
     return 0;
 }
 
-// std::string get_value_of_key(const std::string& s)
-//{
-//
-//}
+int compare_string_no_case(const char *str1, const char *str2) {
+#if defined(WIN32) || defined(MS_VER_)
+  return _strcmpi(str1, str2);
+#else
+  return strcasecmp(str1, str2);
+#endif
+}
+
+std::string get_best_quality_stream_uri(const char *data, uint32_t length) {
+  HLSCode r = hlsparse_global_init();
+  master_t master_playlist;
+  r = hlsparse_master_init(&master_playlist);
+  r = hlsparse_master(data, length, &master_playlist);
+  stream_inf_list_t *best_quality_stream = 0;
+  stream_inf_list_t *stream_inf = &master_playlist.stream_infs;
+  while (stream_inf) {
+    if (!best_quality_stream) {
+      best_quality_stream = stream_inf;
+    } else if (stream_inf->data->bandwidth >
+               best_quality_stream->data->bandwidth) {
+      best_quality_stream = stream_inf;
+    }
+    stream_inf = stream_inf->next;
+  }
+  if (best_quality_stream) {
+    return best_quality_stream->data->uri;
+  }
+
+  return std::string();
+}

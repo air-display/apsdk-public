@@ -59,4 +59,8 @@ struct thread_guard_s {
 };
 typedef thread_guard_s thread_guard_t;
 
+int compare_string_no_case(const char *str1, const char *str2);
+
+std::string get_best_quality_stream_uri(const char *data, uint32_t length);
+
 #endif  // !UTILS_H_

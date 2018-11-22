@@ -40,7 +40,8 @@ class ap_airplay_session
 
   explicit ap_airplay_session(asio::io_context &io_ctx,
                               aps::ap_config_ptr &config,
-                              aps::ap_handler_ptr &handler);
+                              aps::ap_handler_ptr &handler,
+                              aps::network::tcp_service_weak_ptr service);
 
   ~ap_airplay_session();
 
@@ -52,12 +53,13 @@ class ap_airplay_session
                                      const std::string &method,
                                      const std::string &path = std::string());
 
-  void register_request_handler(service_type_t service, 
-                               request_hanlder handler,
-                               const std::string &method,
-                               const std::string &path = std::string());
+  void register_request_handler(service_type_t service, request_hanlder handler,
+                                const std::string &method,
+                                const std::string &path = std::string());
 
   void register_request_route(const request_route_t &route);
+
+  void send_request(const details::request& req);
 
   virtual void start() override;
 
@@ -100,9 +102,6 @@ class ap_airplay_session
 
   // HTTP - Video
   void get_server_info(const details::request &req, details::response &res);
-
-  // void post_fp_setup_handler_http(const details::request &req,
-  //                                details::response &res);
 
   void post_fp_setup2_handler(const details::request &req,
                               details::response &res);
@@ -169,7 +168,13 @@ class ap_airplay_session
   void initialize_request_handlers();
 
  private:
+  bool is_reversed_;
+
   std::string agent_;
+
+  std::string playback_uuid_;
+
+  std::string apple_session_id_;
 
   agent_version_t agent_version_;
 
@@ -196,11 +201,15 @@ class ap_airplay_session
   request_handler_map rtsp_request_handlers_;
 
   request_handler_map http_request_handlers_;
+
+  aps::network::tcp_service_weak_ptr service_;
 };
 
 typedef std::shared_ptr<ap_airplay_session> ap_airplay_session_ptr;
+typedef std::weak_ptr<ap_airplay_session> ap_airplay_session_weak_ptr;
 
-class ap_airplay_service : public aps::network::tcp_service_base {
+class ap_airplay_service : public aps::network::tcp_service_base,
+      public std::enable_shared_from_this<ap_airplay_service> {
  public:
   ap_airplay_service(ap_config_ptr &config, uint16_t port = 0);
 
@@ -217,7 +226,27 @@ class ap_airplay_service : public aps::network::tcp_service_base {
 
  private:
   aps::ap_config_ptr config_;
+
   aps::ap_handler_ptr handler_;
+};
+
+class ap_event_sesions {
+  typedef std::map<std::string, ap_airplay_session_weak_ptr> event_session_map;
+
+ public:
+  static ap_event_sesions &instance();
+
+  void insert(const std::string &id, ap_airplay_session_weak_ptr p);
+  void remove(const std::string &id);
+  ap_airplay_session_weak_ptr get(const std::string &id);
+
+ protected:
+  ap_event_sesions();
+  ~ap_event_sesions();
+
+private :
+  event_session_map even_session_map_;
+  std::mutex mtx_;
 };
 
 typedef std::shared_ptr<ap_airplay_service> ap_airplay_service_ptr;

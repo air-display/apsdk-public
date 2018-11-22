@@ -28,7 +28,6 @@ public:
   virtual const uint16_t port() const = 0;
 
   virtual bool start() = 0;
-  ;
 
   virtual void stop() = 0;
 
@@ -38,6 +37,8 @@ public:
 };
 
 typedef std::shared_ptr<tcp_service> tcp_service_ptr;
+typedef std::weak_ptr<tcp_service> tcp_service_weak_ptr;
+
 
 class tcp_session_base : public tcp_session {
 public:

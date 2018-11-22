@@ -104,6 +104,7 @@ target_link_libraries(aps PUBLIC
     curve25519
     ed25519
     playfair
+    hlsparser
 )
 
 # Dependencies

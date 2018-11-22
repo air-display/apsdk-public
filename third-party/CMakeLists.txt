@@ -43,3 +43,12 @@ file(GLOB_RECURSE playfair_SRC_FILES
 add_library(playfair STATIC
     ${playfair_SRC_FILES}
 )
+
+#################################################
+file(GLOB_RECURSE hlsparser_SRC_FILES
+    "./hlsparser/*.c"
+    "./hlsparser/*.h"
+)
+add_library(hlsparser STATIC
+    ${hlsparser_SRC_FILES}
+)

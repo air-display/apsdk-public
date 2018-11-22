@@ -8,6 +8,8 @@
 #include <vector>
 
 
+//#define DUMP_REQUEST_BODY 1
+
 namespace aps {
 namespace service {
 namespace details {
@@ -41,8 +43,8 @@ static const char *CHAR_COLON = ":";
 static const char *HEADER_CONTENT_TYPE = "Content-Type";
 static const char *HEADER_CONTENT_LENGTH = "Content-Length";
 static const char *HEADER_CSEQ = "CSeq";
-static const char *HEADER_SERVER = "Session";
-static const char *HEADER_SESSION = "Server";
+static const char *HEADER_SERVER = "Server";
+static const char *HEADER_SESSION = "Session";
 static const char *HEADER_DATE = "Date";
 static const char *HEADER_AUDIO_JACK_STATUS = "Audio-Jack-Status";
 
@@ -56,35 +58,44 @@ static const char *TEXT_PARAMETERS = "text/parameters";
 static const char *IMAGE_JPEG = "image/jpeg";
 static const char *IMAGE_PNG = "image/png";
 
+static const char *ERROR_STATUS_RESPONSE =
+    // clang-format off
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+    "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+    "<plist version=\"1.0\">\n"
+    "<dict>\n"
+    "\t<key>errorCode</key>\n"
+    "\t<integer>0</integer>\n"
+    "</dict>\n"
+    "</plist>";
+// clang-format on
+
+static const char *MLHLS_SCHEME = "mlhls://localhost/master.m3u8";
+static const char *NFHLS_SCHEME = "nfhls://";
+
 typedef std::map<std::string, std::string> header_map;
 
 /// <summary>
 ///
 /// </summary>
 enum status_type_e {
+  switching_protocols = 101,
   ok = 200,
   bad_request = 400,
   not_found = 404,
   method_not_allowed = 405,
-
   internal_error = 500,
 };
 typedef status_type_e status_type_t;
 
-/// <summary>
-///
-/// </summary>
-namespace status_string {
-const std::string ok = "OK";
-
-const std::string bad_request = "Bad Request";
-
-const std::string not_found = "Not Found";
-
-const std::string method_not_allowed = "Method Not Allowed";
-
-const std::string internal_error = "Internal Error";
-} // namespace status_string
+static std::map<int, const std::string> g_status_code_sting_map = {
+    {switching_protocols, "Switching Protocols"},
+    {ok, "OK"},
+    {bad_request, "Bad Request"},
+    {not_found, "Not Found"},
+    {method_not_allowed, "Method Not Allowed"},
+    {internal_error, "Internal Error"},
+};
 
 /// <summary>
 ///
@@ -100,21 +111,79 @@ public:
   header_map headers;
   std::vector<uint8_t> body;
 
-  void dump() const {
+  request() {}
+
+  request(const std::string &scheme_ver, const std::string &methot,
+          const std::string &uri)
+      : scheme_version(scheme_ver), method(methot), uri(uri),
+        content_length(0) {}
+
+  request &with_content_type(const std::string &type) {
+    content_type = type;
+    return *this;
+  }
+
+  request &with_content(const std::vector<uint8_t> data) {
+    body = data;
+    content_length = data.size();
+    return *this;
+  }
+
+  request &with_content(const uint8_t *data, int length) {
+    std::copy(data, data + length, std::back_inserter(body));
+    content_length = length;
+    return *this;
+  }
+
+  request &with_content(const std::string &data) {
+    std::copy(data.begin(), data.end(), std::back_inserter(body));
+    content_length = data.length();
+    return *this;
+  }
+
+  request &with_header(const std::string &name, const std::string &value) {
+    headers[name] = value;
+    return *this;
+  }
+
+  std::string format_to_string() const {
     std::ostringstream oss;
-    oss << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< " << std::endl
+    oss << method << CHAR_BLANK << uri << CHAR_BLANK << scheme_version
+        << RN_LINE_BREAK;
+
+    for (auto &kv : headers)
+      oss << kv.first << CHAR_COLON << CHAR_BLANK << kv.second << RN_LINE_BREAK;
+
+    oss << HEADER_CONTENT_LENGTH << CHAR_COLON << CHAR_BLANK << content_length
+        << RN_LINE_BREAK;
+
+    if (!content_type.empty())
+      oss << HEADER_CONTENT_TYPE << CHAR_COLON << CHAR_BLANK << content_type
+          << RN_LINE_BREAK;
+
+    oss << RN_LINE_BREAK;
+
+    std::copy(body.begin(), body.end(), std::ostream_iterator<uint8_t>(oss));
+
+    return oss.str();
+  }
+
+  void dump(const std::string tag) const {
+    std::ostringstream oss;
+    oss << tag << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< " << std::endl
         << "    Request: " << method << " " << uri << " " << scheme_version
         << std::endl
         << "    Header:" << std::endl;
     for (auto &header : headers)
       oss << "        " << header.first << ": " << header.second << std::endl;
 
-    // oss << "    Content:";
-    // if (content_length)
-    //    oss.write((char*)body.data(), body.size());
-    // else
-    //    oss << "<EMPTY>";
-
+#ifdef DUMP_REQUEST_BODY
+    oss << "    Content:";
+    if (content_length)
+      oss.write((char *)body.data(), body.size());
+    else
+      oss << "<EMPTY>";
+#endif
     LOGD() << oss.str();
   }
 };
@@ -134,27 +203,24 @@ public:
 
   explicit response(const std::string &scheme_ver)
       : scheme_version(scheme_ver), status_code(status_type_t::ok),
-        status_text(status_string::ok), content_length(0) {}
+        status_text("OK"), content_length(0), no_common_headers_(false) {}
+
+  response &set_no_common_headers(bool b) {
+    no_common_headers_ = b;
+    return *this;
+  }
+
+  bool no_common_headers() const { return no_common_headers_; }
 
   response &with_status(status_type_t code) {
     status_code = code;
-    switch (code) {
-    case ok:
-      status_text = status_string::ok;
-      break;
-    case bad_request:
-      status_text = status_string::bad_request;
-      break;
-    case not_found:
-      status_text = status_string::not_found;
-      break;
-    case method_not_allowed:
-      status_text = status_string::method_not_allowed;
-      break;
-    default:
-      status_code = internal_error;
-      status_text = status_string::internal_error;
+    auto code_string = g_status_code_sting_map.find(code);
+    if (code_string != g_status_code_sting_map.end()) {
+      status_text = code_string->second;
+    } else {
+      status_text = "No Description";
     }
+
     return *this;
   }
 
@@ -186,6 +252,29 @@ public:
     return *this;
   }
 
+  std::string format_to_string() const {
+    std::ostringstream oss;
+    oss << scheme_version << CHAR_BLANK << status_code << CHAR_BLANK
+        << status_text << RN_LINE_BREAK;
+
+    for (auto &kv : headers)
+      oss << kv.first << CHAR_COLON << CHAR_BLANK << kv.second << RN_LINE_BREAK;
+
+    oss << HEADER_CONTENT_LENGTH << CHAR_COLON << CHAR_BLANK << content_length
+        << RN_LINE_BREAK;
+
+    if (!content_type.empty())
+      oss << HEADER_CONTENT_TYPE << CHAR_COLON << CHAR_BLANK << content_type
+          << RN_LINE_BREAK;
+
+    oss << RN_LINE_BREAK;
+
+    std::copy(content.begin(), content.end(),
+              std::ostream_iterator<uint8_t>(oss));
+
+    return oss.str();
+  }
+
   void format_to_stream(asio::streambuf &buf) const {
     std::ostream os(&buf);
 
@@ -207,6 +296,9 @@ public:
     std::copy(content.begin(), content.end(),
               std::ostream_iterator<uint8_t>(os));
   }
+
+private:
+  bool no_common_headers_;
 };
 
 /// <summary>
