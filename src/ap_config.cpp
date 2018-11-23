@@ -46,7 +46,7 @@ ap_config_ptr ap_config::default_instance() {
   static ap_config_ptr s_instance = 0;
   if (!s_instance) {
     s_instance = std::make_shared<ap_config>();
-    s_instance->name_ = "Tencent WeCast Display";
+    s_instance->name_ = "WeCast Display";
     s_instance->deviceID_ = "AABBCCDDEEFF";
     s_instance->model_ = "AppleTV3,1";
     s_instance->serverVersion_ = "220.68";

@@ -133,14 +133,14 @@ class ap_airplay_session
   void post_getProperty(const details::request &req, details::response &res);
 
  protected:
-  void post_receive_request_head();
+  void post_receive_message_head();
 
-  void on_request_head_received(const asio::error_code &e,
+  void on_message_head_received(const asio::error_code &e,
                                 std::size_t bytes_transferred);
 
-  void post_receive_request_body();
+  void post_receive_message_content();
 
-  void on_request_body_received(const asio::error_code &e,
+  void on_message_content_received(const asio::error_code &e,
                                 std::size_t bytes_transferred);
 
   void post_send_response(const details::response &res);
@@ -158,6 +158,8 @@ class ap_airplay_session
   void validate_user_agent();
 
   void process_request();
+
+  void process_response();
 
   void method_not_found_handler(const details::request &req,
                                 details::response &res);
@@ -190,7 +192,9 @@ class ap_airplay_session
 
   details::request request_;
 
-  details::request_parser parser_;
+  details::response response_;
+
+  details::http_message_parser parser_;
 
   ap_timing_sync_service_ptr timing_sync_service_;
 

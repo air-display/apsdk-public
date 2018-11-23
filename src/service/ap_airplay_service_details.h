@@ -105,11 +105,13 @@ public:
   std::string method;
   std::string uri;
   std::string scheme_version;
-  std::string cseq;
+  header_map headers;
+  std::vector<uint8_t> content;
+
+  // These data are extracted from header
   int content_length;
   std::string content_type;
-  header_map headers;
-  std::vector<uint8_t> body;
+  std::string cseq;
 
   request() {}
 
@@ -124,19 +126,19 @@ public:
   }
 
   request &with_content(const std::vector<uint8_t> data) {
-    body = data;
+    content = data;
     content_length = data.size();
     return *this;
   }
 
   request &with_content(const uint8_t *data, int length) {
-    std::copy(data, data + length, std::back_inserter(body));
+    std::copy(data, data + length, std::back_inserter(content));
     content_length = length;
     return *this;
   }
 
   request &with_content(const std::string &data) {
-    std::copy(data.begin(), data.end(), std::back_inserter(body));
+    std::copy(data.begin(), data.end(), std::back_inserter(content));
     content_length = data.length();
     return *this;
   }
@@ -163,7 +165,7 @@ public:
 
     oss << RN_LINE_BREAK;
 
-    std::copy(body.begin(), body.end(), std::ostream_iterator<uint8_t>(oss));
+    std::copy(content.begin(), content.end(), std::ostream_iterator<uint8_t>(oss));
 
     return oss.str();
   }
@@ -180,7 +182,7 @@ public:
 #ifdef DUMP_REQUEST_BODY
     oss << "    Content:";
     if (content_length)
-      oss.write((char *)body.data(), body.size());
+      oss.write((char *)content.data(), content.size());
     else
       oss << "<EMPTY>";
 #endif
@@ -201,9 +203,18 @@ public:
   std::string content_type;
   std::vector<uint8_t> content;
 
-  explicit response(const std::string &scheme_ver)
-      : scheme_version(scheme_ver), status_code(status_type_t::ok),
-        status_text("OK"), content_length(0), no_common_headers_(false) {}
+  response()
+      : status_code(status_type_t::ok),
+        status_text("OK"),
+        content_length(0),
+        no_common_headers_(false) {}
+
+  response(const std::string &scheme_ver)
+      : scheme_version(scheme_ver),
+        status_code(status_type_t::ok),
+        status_text("OK"),
+        content_length(0),
+        no_common_headers_(false) {}
 
   response &set_no_common_headers(bool b) {
     no_common_headers_ = b;
@@ -304,20 +315,28 @@ private:
 /// <summary>
 ///
 /// </summary>
-class request_parser {
+class http_message_parser {
   /// The current state of the parser.
   enum state {
     token_start,
+
+    // for request
     token_method,
     token_uri,
+
     token_scheme_version,
+
+    // for response
+    token_status_code,
+    token_status_text,
+
     token_expecting_new_line,
     token_header_line_start,
     token_header_lws,
     token_header_name,
     token_space_before_header_value,
     token_header_value,
-    token_expecting_last_line
+    token_expecting_last_line,
   };
 
 public:
@@ -328,34 +347,50 @@ public:
   };
 
   /// Construct ready to parse the request method.
-  request_parser() : state_(token_start) {}
+  http_message_parser() : state_(token_start) {}
 
   /// Reset to initial parser state.
   void reset() { state_ = token_start; }
 
   bool parse(request &req, std::string data) {
     req.method.clear();
-    req.scheme_version.clear();
     req.uri.clear();
-    req.cseq.clear();
-    req.content_length = 0;
+    req.scheme_version.clear();
     req.headers.clear();
-    req.body.clear();
+    req.cseq.clear();
+    req.content.clear();
+    req.content_length = 0;
 
     int i = 0;
     while (i != data.length()) {
       parse_result result = consume(req, data[i++]);
-      if (parse_more != result)
-        reset();
+      if (parse_more != result) reset();
 
-      if (parse_fail == result)
-        return false;
+      if (parse_fail == result) return false;
     }
     return true;
   }
 
-private:
-  /// Handle the next character of input.
+  bool parse(response &res, std::string data) {
+    res.scheme_version.clear();
+    res.status_code = ok;
+    res.status_text.clear();
+    res.content_length = 0;
+    res.content_type.clear();
+    res.content.clear();
+
+    int i = 0;
+    while (i != data.length()) {
+      parse_result result = consume(res, data[i++]);
+      if (parse_more != result) reset();
+
+      if (parse_fail == result) return false;
+    }
+    return true;
+  }
+
+ private:
+  // Handle the next character of input.
   parse_result consume(request &req, char input) {
     switch (state_) {
     case token_start:
@@ -398,6 +433,7 @@ private:
       }
     case token_expecting_new_line:
       if (input == '\n') {
+        name_.clear();
         state_ = token_header_line_start;
         return parse_more;
       } else {
@@ -409,48 +445,22 @@ private:
         state_ = token_expecting_last_line;
         return parse_more;
       }
-      // else if (!value.empty() && (input == ' ' || input == '\t'))
-      //{
-      //    state_ = token_header_lws;
-      //    return parse_more;
-      //}
       else if (!is_char(input) || is_ctl(input) || is_tspecial(input)) {
         return parse_fail;
       } else {
-        name.clear();
-        value.clear();
-        name.push_back(input);
+        name_.push_back(input);
         state_ = token_header_name;
         return parse_more;
       }
-    // case token_header_lws:
-    //    if (input == '\r')
-    //    {
-    //        state_ = token_expecting_new_line;
-    //        return parse_more;
-    //    }
-    //    else if (input == ' ' || input == '\t')
-    //    {
-    //        return parse_more;
-    //    }
-    //    else if (!is_char(input) || is_ctl(input))
-    //    {
-    //        return parse_fail;
-    //    }
-    //    else
-    //    {
-    //        state_ = token_header_value;
-    //        name.push_back(input);
-    //        return parse_more;
-    //    }
     case token_header_name:
       if (input == ':') {
+        value_.clear();
         state_ = token_space_before_header_value;
         return parse_more;
       } else if (!is_char(input) || is_ctl(input) || is_tspecial(input)) {
         return parse_fail;
       } else {
-        name.push_back(input);
+        name_.push_back(input);
         return parse_more;
       }
     case token_space_before_header_value:
@@ -462,23 +472,23 @@ private:
       }
     case token_header_value:
       if (input == '\r') {
-        if (0 == std::strcmp(HEADER_CONTENT_LENGTH, name.c_str())) {
+        if (0 == std::strcmp(HEADER_CONTENT_LENGTH, name_.c_str())) {
           char *end = 0;
-          req.content_length = std::strtol(value.c_str(), &end, 10);
+          req.content_length = std::strtol(value_.c_str(), &end, 10);
         }
-        if (0 == std::strcmp(HEADER_CONTENT_TYPE, name.c_str())) {
-          req.content_type = value;
+        if (0 == std::strcmp(HEADER_CONTENT_TYPE, name_.c_str())) {
+          req.content_type = value_;
         }
-        if (0 == std::strcmp(HEADER_CSEQ, name.c_str())) {
-          req.cseq = value;
+        if (0 == std::strcmp(HEADER_CSEQ, name_.c_str())) {
+          req.cseq = value_;
         }
-        req.headers[name] = value;
+        req.headers[name_] = value_;
         state_ = token_expecting_new_line;
         return parse_more;
       } else if (is_ctl(input)) {
         return parse_fail;
       } else {
-        value.push_back(input);
+        value_.push_back(input);
         return parse_more;
       }
     case token_expecting_last_line:
@@ -488,6 +498,116 @@ private:
         return parse_fail;
     default:
       return parse_fail;
+    }
+  }
+
+  // Handle the next character of input.
+  parse_result consume(response &res, char input) {
+    switch (state_) {
+      case token_start:
+        if (!is_char(input) || is_ctl(input) || is_tspecial(input)) {
+          return parse_fail;
+        } else {
+          res.scheme_version.push_back(input);
+          state_ = token_scheme_version;
+          return parse_more;
+        }
+      case token_scheme_version:
+        if (input == ' ') {
+          state_ = token_status_code;
+          code_.clear();
+          return parse_more;
+        } else if (!is_char(input)) {
+          return parse_fail;
+        } else {
+          res.scheme_version.push_back(input);
+          return parse_more;
+        }
+      case token_status_code:
+        if (input == ' ') {
+          state_ = token_status_text;
+          res.status_code = (status_type_t)std::strtol(code_.c_str(), 0, 10);
+          return parse_more;
+        } else if (!is_digit(input) || is_ctl(input)) {
+          return parse_fail;
+        } else {
+          code_.push_back(input);
+          return parse_more;
+        }
+      case token_status_text:
+        if (input == '\r') {
+          state_ = token_expecting_new_line;
+          return parse_more;
+        } else if (!is_char(input)) {
+          return parse_fail;
+        } else {
+          res.status_text.push_back(input);
+          return parse_more;
+        }
+      case token_expecting_new_line:
+        if (input == '\n') {
+          name_.clear();
+          state_ = token_header_line_start;
+          return parse_more;
+        } else {
+          return parse_fail;
+        }
+      case token_header_line_start:
+        if (input == '\r') {
+          // There is no more headers
+          state_ = token_expecting_last_line;
+          return parse_more;
+        }
+        else if (!is_char(input) || is_ctl(input) || is_tspecial(input)) {
+          return parse_fail;
+        } else {
+          name_.push_back(input);
+          state_ = token_header_name;
+          return parse_more;
+        }
+      case token_header_name:
+        if (input == ':') {
+          state_ = token_space_before_header_value;
+          return parse_more;
+        } else if (!is_char(input) || is_ctl(input) || is_tspecial(input)) {
+          return parse_fail;
+        } else {
+          name_.push_back(input);
+          return parse_more;
+        }
+      case token_space_before_header_value:
+        if (input == ' ') {
+          state_ = token_header_value;
+          value_.clear();
+          return parse_more;
+        } else {
+          return parse_fail;
+        }
+      case token_header_value:
+        if (input == '\r') {
+          if (0 == std::strcmp(HEADER_CONTENT_LENGTH, name_.c_str())) {
+            char *end = 0;
+            res.content_length = std::strtol(value_.c_str(), &end, 10);
+          }
+          if (0 == std::strcmp(HEADER_CONTENT_TYPE, name_.c_str())) {
+            res.content_type = value_;
+          }
+          res.headers[name_] = value_;
+          state_ = token_expecting_new_line;
+          return parse_more;
+        } else if (is_ctl(input)) {
+          return parse_fail;
+        } else {
+          value_.push_back(input);
+          return parse_more;
+        }
+      case token_expecting_last_line:
+        if (input == '\n')
+          return parse_done;
+        else
+          return parse_fail;
+      default:
+        return parse_fail;
     }
   }
 
@@ -525,9 +645,9 @@ private:
   bool is_digit(int c) { return c >= '0' && c <= '9'; }
 
   state state_;
-
-  std::string name;
-  std::string value;
+  std::string code_;
+  std::string name_;
+  std::string value_;
 };
 } // namespace details
 } // namespace service

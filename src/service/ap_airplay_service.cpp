@@ -101,7 +101,7 @@ void ap_airplay_session::send_request(const details::request &req) {
   socket_.send(asio::buffer(data.data(), data.length()));
 }
 
-void ap_airplay_session::start() { post_receive_request_head(); }
+void ap_airplay_session::start() { post_receive_message_head(); }
 
 void ap_airplay_session::options_handler(const details::request &req,
                                          details::response &res) {
@@ -118,8 +118,8 @@ void ap_airplay_session::post_pair_setup_handler(const details::request &req,
                                                  details::response &res) {
   DUMP_REQUEST_WITH_SESSION(req);
 
-  if (32 == req.body.size()) {
-    crypto_->init_client_public_keys(0, 0, req.body.data(), 32);
+  if (32 == req.content.size()) {
+    crypto_->init_client_public_keys(0, 0, req.content.data(), 32);
   }
 
   res.with_status(ok)
@@ -131,11 +131,11 @@ void ap_airplay_session::post_pair_verify_handler(const details::request &req,
                                                   details::response &res) {
   DUMP_REQUEST_WITH_SESSION(req);
 
-  pair_verify_header_t *header = (pair_verify_header_t *)req.body.data();
+  pair_verify_header_t *header = (pair_verify_header_t *)req.content.data();
   if (header->is_first_frame) {
     crypto_->init_client_public_keys(
-        req.body.data() + 4, 32,        // client curve public key
-        req.body.data() + 4 + 32, 32);  // client ed public key
+        req.content.data() + 4, 32,        // client curve public key
+        req.content.data() + 4 + 32, 32);  // client ed public key
 
     crypto_->init_pair_verify_aes();
 
@@ -150,7 +150,7 @@ void ap_airplay_session::post_pair_verify_handler(const details::request &req,
 
     return;
   } else {
-    if (crypto_->verify_pair_signature(req.body.data() + 4, 64)) {
+    if (crypto_->verify_pair_signature(req.content.data() + 4, 64)) {
       res.with_status(ok);
     } else {
       res.with_status(bad_request);
@@ -162,18 +162,18 @@ void ap_airplay_session::post_fp_setup_handler(const details::request &req,
                                                details::response &res) {
   DUMP_REQUEST_WITH_SESSION(req);
 
-  fp_header_t *header = (fp_header_t *)req.body.data();
+  fp_header_t *header = (fp_header_t *)req.content.data();
   if (header->major_version == 0x03) {
-    if (header->phase == 0x01 && req.body.size() == 16) {
-      uint8_t mode = req.body[14];
+    if (header->phase == 0x01 && req.content.size() == 16) {
+      uint8_t mode = req.content[14];
       std::vector<uint8_t> content(142, 0);
       crypto_->fp_setup(mode, content.data());
       res.with_status(ok)
           .with_content_type(APPLICATION_OCTET_STREAM)
           .with_content(content);
-    } else if (header->phase == 0x03 && req.body.size() == 164) {
+    } else if (header->phase == 0x03 && req.content.size() == 164) {
       std::vector<uint8_t> content(32, 0);
-      crypto_->fp_handshake(content.data(), (uint8_t *)&req.body[144]);
+      crypto_->fp_handshake(content.data(), (uint8_t *)&req.content[144]);
       res.with_status(ok)
           .with_content_type(APPLICATION_OCTET_STREAM)
           .with_content(content);
@@ -195,7 +195,7 @@ void ap_airplay_session::setup_handler(const details::request &req,
     if (req.content_type.compare(APPLICATION_BINARY_PLIST)) break;
 
     auto_plist plist_obj =
-        plist_object_from_bplist(req.body.data(), req.body.size());
+        plist_object_from_bplist(req.content.data(), req.content.size());
     auto data_obj = plist_obj.get();
     if (!data_obj) break;
 
@@ -420,7 +420,7 @@ void ap_airplay_session::post_audioMode(const details::request &req,
 void ap_airplay_session::set_parameter_handler(const details::request &req,
                                                details::response &res) {
   DUMP_REQUEST_WITH_SESSION(req);
-  std::string content(req.body.begin(), req.body.end());
+  std::string content(req.content.begin(), req.content.end());
   if (0 == req.content_type.compare(TEXT_PARAMETERS)) {
     float ratio = 0;
     float volume = 0;
@@ -454,13 +454,13 @@ void ap_airplay_session::set_parameter_handler(const details::request &req,
              0 == req.content_type.compare(IMAGE_PNG)) {
     // body is image data
     if (handler_) {
-      handler_->on_audio_set_cover(req.content_type, req.body.data(),
-                                   req.body.size());
+      handler_->on_audio_set_cover(req.content_type, req.content.data(),
+                                   req.content.size());
     }
   } else if (0 == req.content_type.compare(APPLICATION_DMAP_TAGGED)) {
     // body is dmap data
     if (handler_) {
-      handler_->on_audio_set_meta_data(req.body.data(), req.body.size());
+      handler_->on_audio_set_meta_data(req.content.data(), req.content.size());
     }
   } else {
     LOGE() << "Unknown parameter type: " << req.content_type;
@@ -475,7 +475,7 @@ void ap_airplay_session::teardown_handler(const details::request &req,
 
   if (0 == req.content_type.compare(APPLICATION_BINARY_PLIST)) {
     auto_plist data_obj =
-        plist_object_from_bplist(req.body.data(), req.body.size());
+        plist_object_from_bplist(req.content.data(), req.content.size());
     if (data_obj) {
       auto streams = plist_object_dict_get_value(data_obj, "streams");
       if (streams && PLIST_TYPE_ARRAY == plist_object_get_type(streams)) {
@@ -646,7 +646,7 @@ void ap_airplay_session::post_play(const details::request &req,
     //    volume = 1;
     //}
     auto_plist data_obj =
-        plist_object_from_bplist(req.body.data(), req.body.size());
+        plist_object_from_bplist(req.content.data(), req.content.size());
     if (!data_obj) {
       res.with_status(bad_request);
       return;
@@ -685,7 +685,7 @@ void ap_airplay_session::post_play(const details::request &req,
     // req.body:
     //      Content-Location:URL
     //      Start-Position: float
-    std::string content(req.body.begin(), req.body.end());
+    std::string content(req.content.begin(), req.content.end());
     if (!ap_content_parser::get_play_parameters(location, start_pos,
                                                 content.c_str())) {
       res.with_status(bad_request);
@@ -749,10 +749,6 @@ void ap_airplay_session::post_play(const details::request &req,
     auto pp = p.lock();
     if (pp) {
       pp->send_request(fcup_request);
-
-      if (handler_) {
-        handler_->on_video_play(location, start_pos);
-      }
     }
 
   } else {
@@ -810,7 +806,7 @@ void ap_airplay_session::post_action(const details::request &req,
   // req.body (bplist)
 
   auto_plist data_obj =
-      plist_object_from_bplist(req.body.data(), req.body.size());
+      plist_object_from_bplist(req.content.data(), req.content.size());
   if (!data_obj) {
     res.with_status(bad_request);
     return;
@@ -994,61 +990,101 @@ void ap_airplay_session::post_getProperty(const details::request &req,
   res.with_status(ok);
 }
 
-void ap_airplay_session::post_receive_request_head() {
+void ap_airplay_session::post_receive_message_head() {
   asio::async_read_until(
       socket_, in_stream_, RNRN_LINE_BREAK,
       asio::bind_executor(
-          strand_, std::bind(&ap_airplay_session::on_request_head_received,
+          strand_, std::bind(&ap_airplay_session::on_message_head_received,
                              shared_from_this(), std::placeholders::_1,
                              std::placeholders::_2)));
 }
 
-void ap_airplay_session::on_request_head_received(
+void ap_airplay_session::on_message_head_received(
     const asio::error_code &e, std::size_t bytes_transferred) {
-  if (!e) {
+  // If error then return
+  if (e) {
+    handle_socket_error(e);
+    return;
+  }
+
+  std::string head_data(
+      asio::buffers_begin(in_stream_.data()),
+      asio::buffers_begin(in_stream_.data()) + bytes_transferred);
+  in_stream_.consume(bytes_transferred);
+
+  bool parse_result = false;
+  if (is_reversed_) {
     // Parse the request head
-    std::string head_data(
-        asio::buffers_begin(in_stream_.data()),
-        asio::buffers_begin(in_stream_.data()) + bytes_transferred);
-    in_stream_.consume(bytes_transferred);
+    parse_result = parser_.parse(response_, head_data);
+  } else {
+    // Parse the request head
+    parse_result = parser_.parse(request_, head_data);
+  }
+  if (!parse_result) {
+    // Invalid request head, close this session
+    LOGE() << "Invalid message (neither request nor response)";
+    stop();
+    return;
+  }
 
-    bool result = parser_.parse(request_, head_data);
-    if (result) {
-      if (request_.content_length) {
-        int body_bytes_to_read = request_.content_length - in_stream_.size();
-        if (0 == body_bytes_to_read) {
-          if (in_stream_.size()) {
-            request_.body.clear();
-            request_.body.resize(request_.content_length, 0);
+  int content_length =
+      is_reversed_ ? response_.content_length : request_.content_length;
 
-            request_.body.assign(
-                asio::buffers_begin(in_stream_.data()),
-                asio::buffers_begin(in_stream_.data()) + in_stream_.size());
-            in_stream_.consume(in_stream_.size());
-          }
-
-          process_request();
-
-          post_receive_request_head();
-        } else {
-          post_receive_request_body();
-        }
-      } else {
-        process_request();
-
-        post_receive_request_head();
-      }
+  if (content_length == 0) {
+    // This is a head only message, process and prepare to read next one
+    if (is_reversed_) {
+      process_response();
     } else {
-      // Invalid request head, close this session
-      stop();
+      process_request();
+    }
+    post_receive_message_head();
+    return;
+  }
+
+  // The message has content data to be read
+  if (content_length - in_stream_.size()) {
+    post_receive_message_content();
+    return;
+  }
+
+  if (is_reversed_) {
+    // No more data to be read just build the message
+    if (in_stream_.size()) {
+      response_.content.clear();
+      response_.content.resize(response_.content_length, 0);
+
+      response_.content.assign(
+          asio::buffers_begin(in_stream_.data()),
+          asio::buffers_begin(in_stream_.data()) + in_stream_.size());
     }
   } else {
-    handle_socket_error(e);
+    // No more data to be read just build the message
+    if (in_stream_.size()) {
+      request_.content.clear();
+      request_.content.resize(request_.content_length, 0);
+
+      request_.content.assign(
+          asio::buffers_begin(in_stream_.data()),
+          asio::buffers_begin(in_stream_.data()) + in_stream_.size());
+    }
   }
+  in_stream_.consume(in_stream_.size());
+
+  if (is_reversed_) {
+    process_response();
+  } else {
+    process_request();
+  }
+  // Prepare to read next message
+  post_receive_message_head();
 }
 
-void ap_airplay_session::post_receive_request_body() {
-  request_.body.clear();
+void ap_airplay_session::post_receive_message_content() {
+  if (is_reversed_) {
+    response_.content.clear();
+  } else {
+    request_.content.clear();
+  }
 
   asio::async_read(
       socket_, in_stream_,
@@ -1056,24 +1092,37 @@ void ap_airplay_session::post_receive_request_body() {
                 shared_from_this(), std::placeholders::_1,
                 std::placeholders::_2),
       asio::bind_executor(
-          strand_, std::bind(&ap_airplay_session::on_request_body_received,
+          strand_, std::bind(&ap_airplay_session::on_message_content_received,
                              shared_from_this(), std::placeholders::_1,
                              std::placeholders::_2)));
 }
 
-void ap_airplay_session::on_request_body_received(
+void ap_airplay_session::on_message_content_received(
     const asio::error_code &e, std::size_t bytes_transferred) {
-  if (!e) {
-    request_.body.assign(
+  if (e) {
+    handle_socket_error(e);
+    return;
+  }
+
+  if (is_reversed_) {
+    response_.content.assign(
         asio::buffers_begin(in_stream_.data()),
         asio::buffers_begin(in_stream_.data()) + in_stream_.size());
     in_stream_.consume(in_stream_.size());
 
-    process_request();
-    post_receive_request_head();
   } else {
-    handle_socket_error(e);
+    request_.content.assign(
+        asio::buffers_begin(in_stream_.data()),
+        asio::buffers_begin(in_stream_.data()) + in_stream_.size());
+    in_stream_.consume(in_stream_.size());
   }
+
+  if (is_reversed_) {
+    process_response();
+  } else {
+    process_request();
+  }
+  post_receive_message_head();
 }
 
 void ap_airplay_session::post_send_response(const details::response &res) {
@@ -1213,6 +1262,8 @@ void ap_airplay_session::process_request() {
 
   post_send_response(res);
 }
+
+void ap_airplay_session::process_response() {}
 
 #define RH(x)                                                    \
   std::bind(&ap_airplay_session::x, this, std::placeholders::_1, \
