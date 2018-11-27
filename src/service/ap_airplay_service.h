@@ -215,8 +215,6 @@ private:
   uint32_t fcup_request_id_;
 
   float start_pos_;
-
-  bool is_playing_;
 };
 
 typedef std::shared_ptr<ap_airplay_session> ap_airplay_session_ptr;

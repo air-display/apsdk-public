@@ -186,7 +186,8 @@ public class MainActivity extends AppCompatActivity {
             public PlaybackInfo get_playback_info() {
                 PlaybackInfo playbackInfo = new PlaybackInfo();
                 playbackInfo.duration = 281;
-                playbackInfo.position = ++pos;
+                pos += 1.0f;
+                playbackInfo.position = pos;
                 playbackInfo.rate = 1;
                 Log.i(TAG, String.format("get_playback_info: duration = %f, position = %f", playbackInfo.duration, playbackInfo.position));
                 return playbackInfo;

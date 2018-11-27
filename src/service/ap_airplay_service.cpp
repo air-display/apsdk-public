@@ -675,7 +675,7 @@ void ap_airplay_session::post_play(const details::request &req,
       res.with_status(bad_request);
       return;
     }
-    start_pos = p;
+    start_pos_ = p;
   } else if (0 == compare_string_no_case(req.content_type.c_str(),
                                          TEXT_PARAMETERS) ||
              0 == compare_string_no_case(req.content_type.c_str(),
