@@ -1,15 +1,17 @@
-#include <utils/utils.h>
-#include <hlsparser/hlsparse.h>
-#include <string.h>
-#include <time.h>
 #include <chrono>
 #include <ctime>
+#include <hlsparser/hlsparse.h>
+#include <regex>
+#include <string.h>
+#include <time.h>
+#include <utils/utils.h>
+
 
 using namespace std::chrono;
 
 uint64_t get_ntp_timestamp() {
-  const uint32_t EPOCH = 2208988800ULL;         // January 1970, in NTP seconds.
-  const double NTP_SCALE_FRAC = 4294967296ULL;  // NTP fractional unit.
+  const uint32_t EPOCH = 2208988800ULL;        // January 1970, in NTP seconds.
+  const double NTP_SCALE_FRAC = 4294967296ULL; // NTP fractional unit.
   uint64_t seconds = 0;
   uint64_t fraction = 0;
 
@@ -41,6 +43,20 @@ int compare_string_no_case(const char *str1, const char *str2) {
 #endif
 }
 
+bool get_youtube_url(const char *data, uint32_t length, std::string &url) {
+  static std::regex pattern("#YT-EXT-CONDENSED-URL:BASE-URI=\"(.*)\",PARAMS=");
+  std::cmatch groups;
+
+  if (std::regex_search(data, groups, pattern)) {
+    if (groups.size() > 1) {
+      url = groups.str(1);
+      return true;
+    }
+  }
+
+  return false;
+}
+
 std::string get_best_quality_stream_uri(const char *data, uint32_t length) {
   HLSCode r = hlsparse_global_init();
   master_t master_playlist;
@@ -48,7 +64,7 @@ std::string get_best_quality_stream_uri(const char *data, uint32_t length) {
   r = hlsparse_master(data, length, &master_playlist);
   stream_inf_list_t *best_quality_stream = 0;
   stream_inf_list_t *stream_inf = &master_playlist.stream_infs;
-  while (stream_inf) {
+  while (stream_inf && stream_inf->data) {
     if (!best_quality_stream) {
       best_quality_stream = stream_inf;
     } else if (stream_inf->data->bandwidth >

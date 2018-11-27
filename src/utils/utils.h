@@ -1,15 +1,18 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 #pragma once
+#include <functional>
 #include <stdint.h>
 #include <string>
-#include <functional>
+
 
 #if defined(ANDROID)
-#define ntohll(n) \
-  ((((uint64_t)ntohl((uint64_t)n)) << 32) + ntohl((uint32_t)((uint64_t)n >> 32)))
-#define htonll(n) \
-  ((((uint64_t)htonl((uint64_t)n)) << 32) + htonl((uint32_t)((uint64_t)n >> 32)))
+#define ntohll(n)                                                              \
+  ((((uint64_t)ntohl((uint64_t)n)) << 32) +                                    \
+   ntohl((uint32_t)((uint64_t)n >> 32)))
+#define htonll(n)                                                              \
+  ((((uint64_t)htonl((uint64_t)n)) << 32) +                                    \
+   htonl((uint32_t)((uint64_t)n >> 32)))
 #endif
 
 /// <summary>
@@ -41,19 +44,21 @@ void set_current_thread_name(const char *name);
 typedef std::function<void()> thread_actoin;
 
 /// <summary>
-/// 
+///
 /// </summary>
 struct thread_guard_s {
   thread_guard_s(thread_actoin start, thread_actoin stop)
       : start_(start), stop_(stop) {
-    if (start_) start_();
+    if (start_)
+      start_();
   }
 
   ~thread_guard_s() {
-    if (stop_) stop_();
+    if (stop_)
+      stop_();
   }
 
- public:
+public:
   thread_actoin start_;
   thread_actoin stop_;
 };
@@ -63,4 +68,6 @@ int compare_string_no_case(const char *str1, const char *str2);
 
 std::string get_best_quality_stream_uri(const char *data, uint32_t length);
 
-#endif  // !UTILS_H_
+bool get_youtube_url(const char *data, uint32_t length, std::string &url);
+
+#endif // !UTILS_H_

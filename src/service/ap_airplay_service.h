@@ -1,7 +1,10 @@
 #pragma once
 #include <ap_config.h>
 #include <ap_handler.h>
+#include <array>
+#include <asio.hpp>
 #include <crypto/ap_crypto.h>
+#include <map>
 #include <network/tcp_service.h>
 #include <network/udp_service.h>
 #include <service/ap_airplay_service_details.h>
@@ -9,11 +12,9 @@
 #include <service/ap_content_parser.h>
 #include <service/ap_timing_sync_service.h>
 #include <service/ap_video_stream_service.h>
-#include <array>
-#include <asio.hpp>
-#include <map>
 #include <string>
 #include <vector>
+
 
 namespace aps {
 namespace service {
@@ -26,7 +27,7 @@ class ap_airplay_session
   typedef std::map<std::string, request_hanlder> path_handler_map;
   typedef std::map<std::string, path_handler_map> request_handler_map;
 
- public:
+public:
   enum service_type_e { RTSP, HTTP };
   typedef service_type_e service_type_t;
 
@@ -59,11 +60,9 @@ class ap_airplay_session
 
   void register_request_route(const request_route_t &route);
 
-  void send_request(const details::request& req);
-
   virtual void start() override;
 
- protected:
+protected:
   // RTSP
   void options_handler(const details::request &req, details::response &res);
 
@@ -132,7 +131,7 @@ class ap_airplay_session
   // APP -> SDK
   void post_getProperty(const details::request &req, details::response &res);
 
- protected:
+protected:
   void post_receive_message_head();
 
   void on_message_head_received(const asio::error_code &e,
@@ -141,12 +140,14 @@ class ap_airplay_session
   void post_receive_message_content();
 
   void on_message_content_received(const asio::error_code &e,
-                                std::size_t bytes_transferred);
+                                   std::size_t bytes_transferred);
 
   void post_send_response(const details::response &res);
 
   void on_response_sent(const asio::error_code &e,
                         std::size_t bytes_transferred);
+
+  void send_request(const details::request &req);
 
   void add_common_header(const details::request &req, details::response &res);
 
@@ -169,7 +170,10 @@ class ap_airplay_session
 
   void initialize_request_handlers();
 
- private:
+  void send_fcup_request(int request_id, const std::string &url,
+                         const std::string &session_id);
+
+private:
   bool is_reversed_;
 
   std::string agent_;
@@ -207,28 +211,35 @@ class ap_airplay_session
   request_handler_map http_request_handlers_;
 
   aps::network::tcp_service_weak_ptr service_;
+
+  uint32_t fcup_request_id_;
+
+  float start_pos_;
+
+  bool is_playing_;
 };
 
 typedef std::shared_ptr<ap_airplay_session> ap_airplay_session_ptr;
 typedef std::weak_ptr<ap_airplay_session> ap_airplay_session_weak_ptr;
 
-class ap_airplay_service : public aps::network::tcp_service_base,
+class ap_airplay_service
+    : public aps::network::tcp_service_base,
       public std::enable_shared_from_this<ap_airplay_service> {
- public:
+public:
   ap_airplay_service(ap_config_ptr &config, uint16_t port = 0);
 
   ~ap_airplay_service();
 
   void set_handler(ap_handler_ptr &hanlder);
 
- protected:
+protected:
   virtual aps::network::tcp_session_ptr prepare_new_session() override;
 
   void on_thread_start();
 
   void on_thread_stop();
 
- private:
+private:
   aps::ap_config_ptr config_;
 
   aps::ap_handler_ptr handler_;
@@ -237,22 +248,22 @@ class ap_airplay_service : public aps::network::tcp_service_base,
 class ap_event_sesions {
   typedef std::map<std::string, ap_airplay_session_weak_ptr> event_session_map;
 
- public:
+public:
   static ap_event_sesions &instance();
 
   void insert(const std::string &id, ap_airplay_session_weak_ptr p);
   void remove(const std::string &id);
   ap_airplay_session_weak_ptr get(const std::string &id);
 
- protected:
+protected:
   ap_event_sesions();
   ~ap_event_sesions();
 
-private :
+private:
   event_session_map even_session_map_;
   std::mutex mtx_;
 };
 
 typedef std::shared_ptr<ap_airplay_service> ap_airplay_service_ptr;
-}  // namespace service
-}  // namespace aps
+} // namespace service
+} // namespace aps
