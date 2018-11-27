@@ -6,7 +6,6 @@
 #include <time.h>
 #include <utils/utils.h>
 
-
 using namespace std::chrono;
 
 uint64_t get_ntp_timestamp() {

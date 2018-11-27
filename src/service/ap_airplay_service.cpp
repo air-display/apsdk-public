@@ -11,7 +11,6 @@
 #include <utils/plist.h>
 #include <utils/utils.h>
 
-
 #if defined(NDEBUG)
 #define DUMP_REQUEST_WITH_SESSION(x)
 #else

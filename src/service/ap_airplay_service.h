@@ -15,7 +15,6 @@
 #include <string>
 #include <vector>
 
-
 namespace aps {
 namespace service {
 class ap_airplay_session

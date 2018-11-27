@@ -5,7 +5,6 @@
 #include <stdint.h>
 #include <string>
 
-
 #if defined(ANDROID)
 #define ntohll(n)                                                              \
   ((((uint64_t)ntohl((uint64_t)n)) << 32) +                                    \
