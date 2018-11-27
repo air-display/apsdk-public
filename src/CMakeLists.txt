@@ -45,7 +45,6 @@ source_group("mdns" FILES ${SRC_MDNS})
 set(SRC_NETWORK
     network/tcp_service.h
     network/udp_service.h
-    network/http_client.h
 )
 source_group("network" FILES ${SRC_NETWORK})
 
