@@ -2,6 +2,12 @@ apply plugin: 'com.android.application'
 
 android {
     signingConfigs {
+        config {
+            keyAlias 'APK-Key'
+            keyPassword '123456'
+            storePassword '123456'
+            storeFile file('C:/Users/shiontian/sheen-apk-keys-pwd-123456.JKS')
+        }
     }
     compileSdkVersion 28
     defaultConfig {
@@ -11,6 +17,9 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        ndk {
+            abiFilters 'armeabi-v7a'
+        }
     }
     buildTypes {
         release {
@@ -18,6 +27,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             debuggable true
             jniDebuggable true
+            signingConfig signingConfigs.config
         }
         debug {
             jniDebuggable true
@@ -30,12 +40,9 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation project(':airplay')
     implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
-    implementation project(':airplay')
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation 'com.github.dueeeke.dkplayer:dkplayer-java:2.5.3'
     implementation 'com.github.dueeeke.dkplayer:dkplayer-armv7a:2.5.3'
     implementation 'com.github.dueeeke.dkplayer:dkplayer-armv5:2.5.3'
@@ -43,4 +50,7 @@ dependencies {
     implementation 'com.github.dueeeke.dkplayer:dkplayer-x86:2.5.3'
     implementation 'com.github.dueeeke.dkplayer:dkplayer-x86_64:2.5.3'
     implementation 'com.github.dueeeke.dkplayer:dkplayer-ui:2.5.3'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 }

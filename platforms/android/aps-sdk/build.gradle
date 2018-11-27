@@ -7,9 +7,8 @@ buildscript {
         maven {
             url "http://maven.oa.com/nexus/content/groups/androidbuild"
         }
-        //google()
-        //jcenter()
     }
+
     dependencies {
         classpath 'com.android.tools.build:gradle:3.2.1'
         
@@ -25,9 +24,6 @@ allprojects {
         maven {
             url "http://maven.oa.com/nexus/content/groups/androidbuild"
         }
-        //google()
-        //jcenter()
-        //maven { url 'https://jitpack.io' }
     }
 }
 

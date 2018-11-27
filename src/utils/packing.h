@@ -3,10 +3,18 @@
 #pragma once
 
 #ifdef __GNUC__
-#define PACKED(class_to_pack) class_to_pack __attribute__((__packed__))
+
+#define PACKED(type_to_pack) type_to_pack __attribute__((__packed__))
+
+#define ALIGNED(type_to_align, n) type_to_pack __attribute__((aligned(n)))
+
 #else
-#define PACKED(class_to_pack)                                                  \
-  __pragma(pack(push, 1)) class_to_pack __pragma(pack(pop))
+
+#define PACKED(type_to_pack) \
+  __pragma(pack(push, 1)) type_to_pack __pragma(pack(pop))
+
+#define ALIGNED(type_to_align, n) __declspec(align(n)) type_to_align
+
 #endif
 
-#endif // PACKING_H
+#endif  // PACKING_H

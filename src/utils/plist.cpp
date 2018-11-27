@@ -25,7 +25,13 @@ typedef struct {
 } plist_dict_t;
 
 struct plist_object_s {
-  uint8_t type;
+  union {
+    uint8_t type;
+    
+    // Enforce the memory alignment to 8
+    double padding;
+  };
+
   union {
     uint8_t value_primitive;
     int64_t value_integer;
@@ -110,9 +116,9 @@ static int parse_real(const uint8_t *data, uint64_t dataidx, uint64_t length,
   assert(value);
 
   if (length == 4) {
-    *value = *((float *)&data[dataidx]);
+    memcpy(value, data + dataidx, sizeof(float));
   } else {
-    *value = *((double *)&data[dataidx]);
+    memcpy(value, data + dataidx, sizeof(double));
   }
   return (int)length;
 }
