@@ -1,14 +1,6 @@
 apply plugin: 'com.android.application'
 
 android {
-    signingConfigs {
-        config {
-            keyAlias 'APK-Key'
-            keyPassword '123456'
-            storePassword '123456'
-            storeFile file('C:/Users/shiontian/sheen-apk-keys-pwd-123456.JKS')
-        }
-    }
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.medialab.apserversdk"
@@ -27,7 +19,6 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             debuggable true
             jniDebuggable true
-            signingConfig signingConfigs.config
         }
         debug {
             jniDebuggable true
