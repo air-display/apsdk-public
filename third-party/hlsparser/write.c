@@ -11,7 +11,7 @@
 #include "write.h"
 #include "parse.h"
 
-#define PAGE_SIZE   (4096) // 4KB Page size
+#define HLSP_PAGE_SIZE   (4096) // 4KB Page size
 
 #define ADD_TAG(tag_name) \
     latest = pgprintf(latest, "#%s\n", tag_name);
@@ -325,8 +325,8 @@ page_t* create_page(page_t *page)
 {
     page_t *new_page = (page_t*)hls_malloc(sizeof(page_t));
     memset(new_page, 0, sizeof(page_t));
-    new_page->buffer = (char*)hls_malloc(PAGE_SIZE);
-    new_page->size = PAGE_SIZE;
+    new_page->buffer = (char*)hls_malloc(HLSP_PAGE_SIZE);
+    new_page->size = HLSP_PAGE_SIZE;
     new_page->cur = new_page->buffer;
     new_page->next = NULL;
 

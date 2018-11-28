@@ -3,11 +3,7 @@
 //
 #include "airplay_server.h"
 
-void airplay_server::initialize(JavaVM *vm, JNIEnv *env) {
-}
-
-airplay_server::airplay_server()
-    : nci_object<airplay_server>() {
+airplay_server::airplay_server(JNIEnv *env) : nci_object<airplay_server>() {
   server_ = std::make_shared<ap_server>();
 }
 
@@ -38,8 +34,8 @@ void airplay_server::setHandler(airplay_handler *handler) {
 
 jlong Java_com_medialab_airplay_AirPlayServer_nciNew(JNIEnv *env,
                                                      jobject thiz) {
-    airplay_server *p = airplay_server::create(env, thiz);
-    return reinterpret_cast<jlong>(p);
+  airplay_server *p = airplay_server::create(env, thiz);
+  return reinterpret_cast<jlong>(p);
 }
 
 void Java_com_medialab_airplay_AirPlayServer_nciDelete(JNIEnv *env,

@@ -9,6 +9,7 @@ set(SRC_AP
     ap_config.h
     ap_config.cpp
     ap_handler.h
+    ap_types.h
 )
 source_group("ap" FILES ${SRC_AP})
 
@@ -55,14 +56,13 @@ set(SRC_SERVICE
     service/ap_audio_stream_service.cpp
     service/ap_audio_stream_service.h
     service/ap_audio_stream_service_details.h
-    service/ap_video_stream_service.cpp
-    service/ap_video_stream_service.h
-    service/ap_video_stream_service_details.h
+    service/ap_mirror_stream_service.cpp
+    service/ap_mirror_stream_service.h
+    service/ap_mirror_stream_service_details.h
     service/ap_timing_sync_service.cpp
     service/ap_timing_sync_service.h
     service/ap_content_parser.cpp
     service/ap_content_parser.h
-    service/ap_types.h
 )
 source_group("service" FILES ${SRC_SERVICE})
 

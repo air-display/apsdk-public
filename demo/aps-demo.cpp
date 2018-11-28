@@ -15,10 +15,6 @@ public:
     LOGI() << "on_mirror_stream_started";
   }
 
-  virtual void on_mirror_stream_data(const void *data) override {
-    LOGV() << "on_mirror_stream_data: " << data;
-  }
-
   virtual void on_mirror_stream_stopped() override {
     LOGI() << "on_mirror_stream_stopped";
   }
@@ -49,10 +45,6 @@ public:
     LOGI() << "on_audio_stream_started: ";
   }
 
-  virtual void on_audio_stream_data(const void *data) override {
-    LOGV() << "on_audio_stream_data: " << data;
-  }
-
   virtual void on_audio_stream_stopped() override {
     LOGI() << "on_audio_stream_stopped";
   }
@@ -75,6 +67,31 @@ public:
   virtual void
   on_acquire_playback_info(playback_info_t &playback_info) override {
     LOGI() << "on_acquire_playback_info: ";
+  }
+
+  virtual void on_audio_stream_data(const aps::rtp_audio_data_packet_t *p,
+                                    const uint32_t payload_length) override {
+    LOGV() << "on_audio_stream_data: " << payload_length;
+  }
+
+  virtual void
+  on_audio_control_sync(const aps::rtp_control_sync_packet_t *p) override {
+    LOGV() << "on_audio_control_sync: ";
+  }
+
+  virtual void on_audio_control_retransmit(
+      const aps::rtp_control_retransmit_packet_t *p) override {
+    LOGV() << "on_audio_control_retransmit: ";
+  }
+
+  virtual void
+  on_mirror_stream_data(const aps::sms_video_data_packet_t *p) override {
+    LOGV() << "on_mirror_stream_data: ";
+  }
+
+  virtual void
+  on_mirror_stream_codec(const aps::sms_video_codec_packet_t *p) override {
+    LOGI() << "on_mirror_stream_codec: ";
   }
 };
 

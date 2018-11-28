@@ -1,15 +1,16 @@
+#include <ap_types.h>
 #include <ctime>
 #include <exception>
 #include <service/ap_airplay_service.h>
 #include <service/ap_audio_stream_service.h>
 #include <service/ap_content_parser.h>
-#include <service/ap_types.h>
-#include <service/ap_video_stream_service.h>
+#include <service/ap_mirror_stream_service.h>
 #include <stdexcept>
 #include <string.h>
 #include <utils/logger.h>
 #include <utils/plist.h>
 #include <utils/utils.h>
+
 
 #if defined(NDEBUG)
 #define DUMP_REQUEST_WITH_SESSION(x)
@@ -252,10 +253,10 @@ void ap_airplay_session::setup_handler(const details::request &req,
 
         crypto_->init_video_stream_aes_ctr(connection_id);
 
-        if (!video_stream_service_) {
-          video_stream_service_ =
-              std::make_shared<ap_video_stream_service>(crypto_, 0, handler_);
-          video_stream_service_->start();
+        if (!mirror_stream_service_) {
+          mirror_stream_service_ =
+              std::make_shared<ap_mirror_stream_service>(crypto_, 0, handler_);
+          mirror_stream_service_->start();
         }
 
         if (handler_) {
@@ -274,7 +275,7 @@ void ap_airplay_session::setup_handler(const details::request &req,
             "streams", plist_object_array(1, 
                 plist_object_dict(2, 
                     "type", plist_object_integer(type), 
-                    "dataPort", plist_object_integer(video_stream_service_->port())
+                    "dataPort", plist_object_integer(mirror_stream_service_->port())
                 )
             )
         );
@@ -487,9 +488,9 @@ void ap_airplay_session::teardown_handler(const details::request &req,
             plist_object_integer_get_value(type_obj, &type);
             if (stream_type_t::video == type) {
               // Stop video stream
-              if (video_stream_service_) {
-                video_stream_service_->stop();
-                video_stream_service_.reset();
+              if (mirror_stream_service_) {
+                mirror_stream_service_->stop();
+                mirror_stream_service_.reset();
               }
 
               if (handler_) {
@@ -804,12 +805,12 @@ void ap_airplay_session::post_action(const details::request &req,
     }
 
     std::string uri;
-    if (get_youtube_url((char *)fcup_data, data_len, uri)) {
+    if (get_youtube_url((char *)fcup_data, (uint32_t)data_len, uri)) {
       if (handler_) {
-        handler_->on_video_play(uri, start_pos_);
+        handler_->on_video_play(uri, (float)start_pos_);
       }
     } else {
-      uri = get_best_quality_stream_uri((char *)fcup_data, data_len);
+      uri = get_best_quality_stream_uri((char *)fcup_data, (uint32_t)data_len);
 
       auto it_session_id = req.headers.find("X-Apple-Session-ID");
       if (it_session_id == req.headers.end()) {
@@ -1109,11 +1110,11 @@ void ap_airplay_session::post_send_response(const details::response &res) {
 
 void ap_airplay_session::on_response_sent(const asio::error_code &e,
                                           std::size_t bytes_transferred) {
-  if (!e) {
-    LOGV() << ">>>>> " << bytes_transferred << " bytes sent successfully";
-  } else {
-    handle_socket_error(e);
+  if (e) {
+    return handle_socket_error(e);
   }
+
+  //LOGV() << ">>>>> " << bytes_transferred << " bytes sent successfully";
 }
 
 void ap_airplay_session::send_request(const details::request &req) {

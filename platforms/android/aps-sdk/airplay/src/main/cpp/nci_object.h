@@ -29,7 +29,7 @@ public:
   static JavaVM *get_JavaVM() { return nci_core::get_JavaVM(); }
 
   static T *create(JNIEnv *env, jobject o) {
-    T *p = new T();
+    T *p = new T(env);
     if (p) {
       p->obj_this_ = env->NewGlobalRef(o);
     }
@@ -53,7 +53,7 @@ public:
   }
 
 protected:
-    jobject obj_this_;
+  jobject obj_this_;
 };
 
 #endif // APS_SDK_NCI_OBJECT_H

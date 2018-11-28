@@ -11,7 +11,7 @@
 #include <service/ap_audio_stream_service.h>
 #include <service/ap_content_parser.h>
 #include <service/ap_timing_sync_service.h>
-#include <service/ap_video_stream_service.h>
+#include <service/ap_mirror_stream_service.h>
 #include <string>
 #include <vector>
 
@@ -201,7 +201,7 @@ private:
 
   ap_timing_sync_service_ptr timing_sync_service_;
 
-  ap_video_stream_service_ptr video_stream_service_;
+  ap_video_stream_service_ptr mirror_stream_service_;
 
   ap_audio_stream_service_ptr audio_stream_service_;
 
@@ -213,7 +213,7 @@ private:
 
   uint32_t fcup_request_id_;
 
-  float start_pos_;
+  double start_pos_;
 };
 
 typedef std::shared_ptr<ap_airplay_session> ap_airplay_session_ptr;

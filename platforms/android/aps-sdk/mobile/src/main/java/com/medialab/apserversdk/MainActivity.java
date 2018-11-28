@@ -14,6 +14,9 @@ import com.dueeeke.videoplayer.player.PlayerConfig;
 import com.medialab.airplay.AirPlayConfig;
 import com.medialab.airplay.AirPlayHandler;
 import com.medialab.airplay.AirPlayServer;
+import com.medialab.airplay.AudioControlRetransmit;
+import com.medialab.airplay.AudioControlSync;
+import com.medialab.airplay.MirroringVideoCodec;
 import com.medialab.airplay.PlaybackInfo;
 
 import java.nio.ByteBuffer;
@@ -112,7 +115,12 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void on_mirror_stream_data(ByteBuffer data) {
+            public void on_mirror_stream_codec(MirroringVideoCodec codec) {
+                Log.i(TAG, "on_mirror_stream_codec: ");
+            }
+
+            @Override
+            public void on_mirror_stream_data(byte[] data, long timestamp) {
                 Log.i(TAG, "on_mirror_stream_data: ");
             }
 
@@ -133,13 +141,13 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void on_audio_set_cover(String format, ByteBuffer data, long length) {
-                Log.i(TAG, "on_audio_set_cover: ");
+            public void on_audio_set_cover(String format, byte[] data) {
+                Log.i(TAG, String.format("on_audio_set_cover: format %s, length %d", format, data.length));
             }
 
             @Override
-            public void on_audio_set_meta_data(ByteBuffer data, long length) {
-                Log.i(TAG, "on_audio_set_meta_data: ");
+            public void on_audio_set_meta_data(byte[] data) {
+                Log.i(TAG, String.format("on_audio_set_meta_data: length %d", data.length));
             }
 
             @Override
@@ -148,8 +156,18 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void on_audio_stream_data(ByteBuffer data) {
+            public void on_audio_stream_data(byte[] data) {
                 Log.i(TAG, "on_audio_stream_data: ");
+            }
+
+            @Override
+            public void on_audio_control_sync(AudioControlSync sync) {
+                Log.i(TAG, "on_audio_control_sync: ");
+            }
+
+            @Override
+            public void on_audio_control_retransmit(AudioControlRetransmit retransmit) {
+                Log.i(TAG, "on_audio_control_retransmit: ");
             }
 
             @Override
@@ -189,6 +207,7 @@ public class MainActivity extends AppCompatActivity {
                 pos += 1.0f;
                 playbackInfo.position = pos;
                 playbackInfo.rate = 1;
+                playbackInfo.stallCount = 8976;
                 Log.i(TAG, String.format("get_playback_info: duration = %f, position = %f", playbackInfo.duration, playbackInfo.position));
                 return playbackInfo;
             }

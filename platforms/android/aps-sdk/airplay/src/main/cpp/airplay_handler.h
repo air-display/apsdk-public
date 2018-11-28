@@ -6,34 +6,18 @@
 #define APS_SDK_AIRPLAY_HANDLER_H
 #include <aps-jni.h>
 #include <jni_ap_handler.h>
+#include <mutex>
 #include <stdint.h>
+
 
 using namespace aps;
 
 class airplay_handler : public nci_object<airplay_handler> {
-  static jclass clz_palayback_info_;
-
+  static std::once_flag call_once_flag;
   static jclass clz_this_;
-  static jmethodID mid_on_mirror_stream_started_;
-  static jmethodID mid_on_mirror_stream_data_;
-  static jmethodID mid_on_mirror_stream_stopped_;
-  static jmethodID mid_on_audio_set_volume_;
-  static jmethodID mid_on_audio_set_progress_;
-  static jmethodID mid_on_audio_set_cover_;
-  static jmethodID mid_on_audio_set_meta_data_;
-  static jmethodID mid_on_audio_stream_started_;
-  static jmethodID mid_on_audio_stream_data_;
-  static jmethodID mid_on_audio_stream_stopped_;
-  static jmethodID mid_on_video_play_;
-  static jmethodID mid_on_video_scrub_;
-  static jmethodID mid_on_video_rate_;
-  static jmethodID mid_on_video_stop_;
-  static jmethodID mid_get_playback_info_;
 
 public:
-  static void initialize(JavaVM *vm, JNIEnv *env);
-
-  airplay_handler();
+  airplay_handler(JNIEnv *env);
 
   JNIEnv *get_JNIEnv();
 
@@ -45,7 +29,9 @@ public:
 
   void on_mirror_stream_started();
 
-  void on_mirror_stream_data(const void *data);
+  void on_mirror_stream_codec(const aps::sms_video_codec_packet_t *p);
+
+  void on_mirror_stream_data(const aps::sms_video_data_packet_t *p);
 
   void on_mirror_stream_stopped();
 
@@ -61,7 +47,13 @@ public:
 
   void on_audio_stream_started();
 
-  void on_audio_stream_data(const void *data);
+  void on_audio_stream_data(const aps::rtp_audio_data_packet_t *p,
+                            const uint32_t payload_length);
+
+  void on_audio_control_sync(const aps::rtp_control_sync_packet_t *p);
+
+  void
+  on_audio_control_retransmit(const aps::rtp_control_retransmit_packet_t *p);
 
   void on_audio_stream_stopped();
 

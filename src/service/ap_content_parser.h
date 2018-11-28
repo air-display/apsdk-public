@@ -1,11 +1,9 @@
 #pragma once
 #include <string>
 
-namespace aps
-{
+namespace aps {
 
-struct agent_version_s
-{
+struct agent_version_s {
   uint16_t major;
   uint16_t minor;
   uint16_t revision;
@@ -13,8 +11,7 @@ struct agent_version_s
 };
 typedef agent_version_s agent_version_t;
 
-namespace ap_content_parser
-{
+namespace ap_content_parser {
 
 bool get_volume_value(float &value, const char *content);
 
@@ -28,6 +25,7 @@ bool get_scrub_position(float &postion, const char *content);
 
 bool get_rate_value(float &rate, const char *content);
 
-void get_user_agent_version(std::string &agent, aps::agent_version_t &version, const char *content);
+void get_user_agent_version(std::string &agent, aps::agent_version_t &version,
+                            const char *content);
 } // namespace ap_content_parser
 } // namespace aps

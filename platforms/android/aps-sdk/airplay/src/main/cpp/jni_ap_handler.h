@@ -20,7 +20,11 @@ public:
 
   virtual void on_mirror_stream_started() override;
 
-  virtual void on_mirror_stream_data(const void *data) override;
+  virtual void
+  on_mirror_stream_codec(const aps::sms_video_codec_packet_t *p) override;
+
+  virtual void
+  on_mirror_stream_data(const aps::sms_video_data_packet_t *p) override;
 
   virtual void on_mirror_stream_stopped() override;
 
@@ -39,7 +43,14 @@ public:
 
   virtual void on_audio_stream_started() override;
 
-  virtual void on_audio_stream_data(const void *data) override;
+  virtual void on_audio_stream_data(const aps::rtp_audio_data_packet_t *p,
+                                    const uint32_t payload_length) override;
+
+  virtual void
+  on_audio_control_sync(const aps::rtp_control_sync_packet_t *p) override;
+
+  virtual void on_audio_control_retransmit(
+      const aps::rtp_control_retransmit_packet_t *p) override;
 
   virtual void on_audio_stream_stopped() override;
 

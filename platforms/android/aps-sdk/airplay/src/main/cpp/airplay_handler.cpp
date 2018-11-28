@@ -3,75 +3,29 @@
 //
 
 #include "airplay_handler.h"
+#include "jni_class_wrapper.h"
 #include <nci_object.h>
 
-jclass airplay_handler::clz_palayback_info_ = 0;
-
+std::once_flag airplay_handler::call_once_flag;
 jclass airplay_handler::clz_this_ = 0;
 
-jmethodID airplay_handler::mid_on_mirror_stream_started_ = 0;
-
-jmethodID airplay_handler::mid_on_mirror_stream_data_ = 0;
-
-jmethodID airplay_handler::mid_on_mirror_stream_stopped_ = 0;
-
-jmethodID airplay_handler::mid_on_audio_set_volume_ = 0;
-
-jmethodID airplay_handler::mid_on_audio_set_progress_ = 0;
-
-jmethodID airplay_handler::mid_on_audio_set_cover_ = 0;
-
-jmethodID airplay_handler::mid_on_audio_set_meta_data_ = 0;
-
-jmethodID airplay_handler::mid_on_audio_stream_started_;
-
-jmethodID airplay_handler::mid_on_audio_stream_data_ = 0;
-
-jmethodID airplay_handler::mid_on_audio_stream_stopped_ = 0;
-
-jmethodID airplay_handler::mid_on_video_play_ = 0;
-
-jmethodID airplay_handler::mid_on_video_scrub_ = 0;
-
-jmethodID airplay_handler::mid_on_video_rate_ = 0;
-
-jmethodID airplay_handler::mid_on_video_stop_ = 0;
-
-jmethodID airplay_handler::mid_get_playback_info_ = 0;
-
 #define GET_METHOD_ID(name, sig)                                               \
-  mid_##name##_ = env->GetMethodID(clz_this_, #name, sig)
+  static jmethodID mid = env->GetMethodID(clz_this_, #name, sig);              \
+  if (!mid)                                                                    \
+    mid = env->GetMethodID(clz_this_, #name, sig);                             \
+  ;
 
-void airplay_handler::initialize(JavaVM *vm, JNIEnv *env) {
-  clz_palayback_info_ = env->FindClass("com/medialab/airplay/PlaybackInfo");
-  if (clz_palayback_info_) {
-    clz_palayback_info_ = (jclass)env->NewGlobalRef(clz_palayback_info_);
-  }
-
-  clz_this_ = env->FindClass("com/medialab/airplay/IAirPlayHandler");
-  if (clz_this_) {
-    clz_this_ = (jclass)env->NewGlobalRef(clz_this_);
-    mid_on_mirror_stream_started_ =
-        env->GetMethodID(clz_this_, "on_mirror_stream_started", "()V");
-    GET_METHOD_ID(on_mirror_stream_data, "(Ljava/nio/ByteBuffer;)V");
-    GET_METHOD_ID(on_mirror_stream_stopped, "()V");
-    GET_METHOD_ID(on_audio_set_volume, "(FF)V");
-    GET_METHOD_ID(on_audio_set_progress, "(FJJJ)V");
-    GET_METHOD_ID(on_audio_set_cover,
-                  "(Ljava/lang/String;Ljava/nio/ByteBuffer;J)V");
-    GET_METHOD_ID(on_audio_set_meta_data, "(Ljava/nio/ByteBuffer;J)V");
-    GET_METHOD_ID(on_audio_stream_started, "()V");
-    GET_METHOD_ID(on_audio_stream_data, "(Ljava/nio/ByteBuffer;)V");
-    GET_METHOD_ID(on_audio_stream_stopped, "()V");
-    GET_METHOD_ID(on_video_play, "(Ljava/lang/String;F)V");
-    GET_METHOD_ID(on_video_scrub, "(F)V");
-    GET_METHOD_ID(on_video_rate, "(F)V");
-    GET_METHOD_ID(on_video_stop, "()V");
-    GET_METHOD_ID(get_playback_info, "()Lcom/medialab/airplay/PlaybackInfo;");
-  }
-}
-
-airplay_handler::airplay_handler() : nci_object<airplay_handler>() {
+airplay_handler::airplay_handler(JNIEnv *env) : nci_object<airplay_handler>() {
+  std::call_once(airplay_handler::call_once_flag, [=]() {
+    jclass clz = jni_class_loader::get().find_class(
+        "com/medialab/airplay/IAirPlayHandler", env);
+    if (clz)
+      airplay_handler::clz_this_ = (jclass)env->NewGlobalRef(clz);
+    else
+      __android_log_write(
+          ANDROID_LOG_ERROR, LOG_TAG,
+          "Failed to find class: com/medialab/airplay/IAirPlayHandler");
+  });
   handler_ = std::make_shared<jni_ap_handler>(this);
 }
 
@@ -114,21 +68,64 @@ void airplay_handler::detach_thread() {
 void airplay_handler::on_mirror_stream_started() {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    env->CallVoidMethod(obj_this_, mid_on_mirror_stream_started_);
+    GET_METHOD_ID(on_mirror_stream_started, "()V");
+    if (mid) {
+      env->CallVoidMethod(obj_this_, mid);
+    } else {
+      __android_log_write(
+          ANDROID_LOG_ERROR, LOG_TAG,
+          "Failed to get method id of on_mirror_stream_started");
+    }
   }
 }
 
-void airplay_handler::on_mirror_stream_data(const void *data) {
-  //  JNIEnv *env = get_JNIEnv();
-  //  if (env) {
-  //    env->CallVoidMethod(obj_this_, mid_on_mirror_stream_data_);
-  //  }
+void airplay_handler::on_mirror_stream_codec(
+    const aps::sms_video_codec_packet_t *p) {
+  JNIEnv *env = get_JNIEnv();
+  if (env) {
+    GET_METHOD_ID(on_mirror_stream_codec, "(Lcom/medialab/airplay/MirroringVideoCodec;)V");
+    if (mid) {
+      MirroringVideoCodec codec = MirroringVideoCodec::create(env);
+
+
+
+      env->CallVoidMethod(obj_this_, mid, codec.get());
+    } else {
+      __android_log_write(
+              ANDROID_LOG_ERROR, LOG_TAG,
+              "Failed to get method id of on_mirror_stream_codec");
+    }
+  }
+}
+
+void airplay_handler::on_mirror_stream_data(
+    const aps::sms_video_data_packet_t *p) {
+  JNIEnv *env = get_JNIEnv();
+  if (env) {
+    GET_METHOD_ID(on_mirror_stream_data, "([BJ)V");
+    if (mid) {
+      jbyteArray byte_array = env->NewByteArray(p->payload_size);
+      env->SetByteArrayRegion(byte_array, 0, p->payload_size, (jbyte *)(p->payload));
+      env->CallVoidMethod(obj_this_, mid, byte_array);
+      env->DeleteLocalRef(byte_array);
+    } else {
+      __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
+                          "Failed to get method id of on_mirror_stream_data");
+    }
+  }
 }
 
 void airplay_handler::on_mirror_stream_stopped() {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    env->CallVoidMethod(obj_this_, mid_on_mirror_stream_stopped_);
+    GET_METHOD_ID(on_mirror_stream_stopped, "()V");
+    if (mid) {
+      env->CallVoidMethod(obj_this_, mid);
+    } else {
+      __android_log_write(
+          ANDROID_LOG_ERROR, LOG_TAG,
+          "Failed to get method id of on_mirror_stream_stopped");
+    }
   }
 }
 
@@ -136,7 +133,13 @@ void airplay_handler::on_audio_set_volume(const float ratio,
                                           const float volume) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    env->CallVoidMethod(obj_this_, mid_on_audio_set_volume_, ratio, volume);
+    GET_METHOD_ID(on_audio_set_volume, "(FF)V");
+    if (mid) {
+      env->CallVoidMethod(obj_this_, mid, ratio, volume);
+    } else {
+      __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
+                          "Failed to get method id of on_audio_set_volume");
+    }
   }
 }
 
@@ -146,46 +149,130 @@ void airplay_handler::on_audio_set_progress(const float ratio,
                                             const uint64_t end) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    env->CallVoidMethod(obj_this_, mid_on_audio_set_progress_, ratio, start,
-                        current, end);
+    GET_METHOD_ID(on_audio_set_progress, "(FJJJ)V");
+    if (mid) {
+      env->CallVoidMethod(obj_this_, mid, ratio, start, current, end);
+    } else {
+      __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
+                          "Failed to get method id of on_audio_set_progress");
+    }
   }
 }
 
 void airplay_handler::on_audio_set_cover(const std::string format,
                                          const void *data,
                                          const uint32_t length) {
-  //JNIEnv *env = get_JNIEnv();
-  //if (env) {
-  //  env->CallVoidMethod(obj_this_, mid_on_audio_set_cover_);
-  //}
+  JNIEnv *env = get_JNIEnv();
+  if (env) {
+    GET_METHOD_ID(on_audio_set_cover, "(Ljava/lang/String;[B)V");
+    if (mid) {
+      jstring image_format = env->NewStringUTF(format.c_str());
+      jbyteArray byte_array = env->NewByteArray(length);
+      env->SetByteArrayRegion(byte_array, 0, length, (jbyte *)data);
+      env->CallVoidMethod(obj_this_, mid, image_format, byte_array);
+      env->DeleteLocalRef(byte_array);
+    } else {
+      __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
+                          "Failed to get method id of on_audio_set_cover");
+    }
+  }
 }
 
 void airplay_handler::on_audio_set_meta_data(const void *data,
                                              const uint32_t length) {
-  //JNIEnv *env = get_JNIEnv();
-  //if (env) {
-  //  env->CallVoidMethod(obj_this_, mid_on_audio_set_meta_data_);
-  //}
+  JNIEnv *env = get_JNIEnv();
+  if (env) {
+    GET_METHOD_ID(on_audio_set_meta_data, "([B)V");
+    if (mid) {
+      jbyteArray byte_array = env->NewByteArray(length);
+      env->SetByteArrayRegion(byte_array, 0, length, (jbyte *)data);
+      env->CallVoidMethod(obj_this_, mid, byte_array);
+      env->DeleteLocalRef(byte_array);
+    } else {
+      __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
+                          "Failed to get method id of on_audio_set_meta_data");
+    }
+  }
 }
 
 void airplay_handler::on_audio_stream_started() {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    env->CallVoidMethod(obj_this_, mid_on_audio_stream_started_);
+    GET_METHOD_ID(on_audio_stream_started, "()V");
+    if (mid) {
+      env->CallVoidMethod(obj_this_, mid);
+    } else {
+      __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
+                          "Failed to get method id of on_audio_stream_started");
+    }
   }
 }
 
-void airplay_handler::on_audio_stream_data(const void *data) {
-  //JNIEnv *env = get_JNIEnv();
-  //if (env) {
-  //  env->CallVoidMethod(obj_this_, mid_on_audio_stream_data_);
-  //}
+void airplay_handler::on_audio_stream_data(
+    const aps::rtp_audio_data_packet_t *p, const uint32_t payload_length) {
+  JNIEnv *env = get_JNIEnv();
+  if (env) {
+     GET_METHOD_ID(on_audio_stream_data, "([B)V");
+     if (mid) {
+       jbyteArray byte_array = env->NewByteArray(payload_length);
+       env->SetByteArrayRegion(byte_array, 0, payload_length, (jbyte *)(p->payload));
+       env->CallVoidMethod(obj_this_, mid, byte_array);
+       env->DeleteLocalRef(byte_array);
+     } else {
+       __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
+                           "Failed to get method id of on_audio_stream_data");
+     }
+  }
+}
+
+void airplay_handler::on_audio_control_sync(
+    const aps::rtp_control_sync_packet_t *p) {
+  JNIEnv *env = get_JNIEnv();
+  if (env) {
+     GET_METHOD_ID(on_audio_control_sync, "(Lcom/medialab/airplay/AudioControlSync;)V");
+    if (mid) {
+      AudioControlSync sync = AudioControlSync::create(env);
+      sync.sequence(p->sequence);
+      sync.timestamp(p->timestamp);
+      sync.currentNTPTme(p->current_ntp_time);
+      sync.nextPacketTime(p->next_packet_time);
+      env->CallVoidMethod(obj_this_, mid, sync.get());
+    } else {
+      __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
+                          "Failed to get method id of on_audio_stream_data");
+    }
+  }
+}
+
+void airplay_handler::on_audio_control_retransmit(
+    const aps::rtp_control_retransmit_packet_t *p) {
+  JNIEnv *env = get_JNIEnv();
+  if (env) {
+     GET_METHOD_ID(on_audio_control_retransmit, "(Lcom/medialab/airplay/AudioControlRetransmit;)V");
+    if (mid) {
+      AudioControlRetransmit retransmit = AudioControlRetransmit::create(env);
+      retransmit.sequence(p->sequence);
+      retransmit.timestamp(p->timestamp);
+      retransmit.lostPacketStart(p->lost_packet_start);
+      retransmit.lostPacketCount(p->lost_packet_count);
+      env->CallVoidMethod(obj_this_, mid, retransmit.get());
+    } else {
+      __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
+                          "Failed to get method id of on_audio_stream_data");
+    }
+  }
 }
 
 void airplay_handler::on_audio_stream_stopped() {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    env->CallVoidMethod(obj_this_, mid_on_audio_stream_stopped_);
+    GET_METHOD_ID(on_audio_stream_stopped, "()V");
+    if (mid) {
+      env->CallVoidMethod(obj_this_, mid);
+    } else {
+      __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
+                          "Failed to get method id of on_audio_stream_stopped");
+    }
   }
 }
 
@@ -193,29 +280,53 @@ void airplay_handler::on_video_play(const std::string &location,
                                     const float start_pos) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    jstring l = env->NewStringUTF(location.c_str());
-    env->CallVoidMethod(obj_this_, mid_on_video_play_, l, start_pos);
+    GET_METHOD_ID(on_video_play, "(Ljava/lang/String;F)V");
+    if (mid) {
+      jstring l = env->NewStringUTF(location.c_str());
+      env->CallVoidMethod(obj_this_, mid, l, start_pos);
+    } else {
+      __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
+                          "Failed to get method id of on_video_play");
+    }
   }
 }
 
 void airplay_handler::on_video_scrub(const float position) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    env->CallVoidMethod(obj_this_, mid_on_video_scrub_, position);
+    GET_METHOD_ID(on_video_scrub, "(F)V");
+    if (mid) {
+      env->CallVoidMethod(obj_this_, mid, position);
+    } else {
+      __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
+                          "Failed to get method id of on_video_scrub");
+    }
   }
 }
 
 void airplay_handler::on_video_rate(const float value) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    env->CallVoidMethod(obj_this_, mid_on_video_rate_, value);
+    GET_METHOD_ID(on_video_rate, "(F)V");
+    if (mid) {
+      env->CallVoidMethod(obj_this_, mid, value);
+    } else {
+      __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
+                          "Failed to get method id of on_video_rate");
+    }
   }
 }
 
 void airplay_handler::on_video_stop() {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    env->CallVoidMethod(obj_this_, mid_on_video_stop_);
+    GET_METHOD_ID(on_video_stop, "()V");
+    if (mid) {
+      env->CallVoidMethod(obj_this_, mid);
+    } else {
+      __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
+                          "Failed to get method id of on_video_stop");
+    }
   }
 }
 
@@ -223,43 +334,25 @@ void airplay_handler::on_acquire_playback_info(
     ap_handler::playback_info_t &playback_info) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    if (!clz_palayback_info_) {
-      return;
-    }
-
-    jobject object = env->CallObjectMethod(obj_this_, mid_get_playback_info_);
-    if (object) {
-      jfieldID field = 0;
-      field =
-          env->GetFieldID(clz_palayback_info_, "uuid", "Ljava/lang/String;");
-      env->GetObjectField(object, field);
-      playback_info.uuid = "";
-
-      field = env->GetFieldID(clz_palayback_info_, "stallCount", "I");
-      playback_info.stallCount = env->GetIntField(object, field);
-
-      field = env->GetFieldID(clz_palayback_info_, "duration", "D");
-      playback_info.duration = env->GetDoubleField(object, field);
-
-      field = env->GetFieldID(clz_palayback_info_, "position", "F");
-      playback_info.position = env->GetFloatField(object, field);
-
-      field = env->GetFieldID(clz_palayback_info_, "rate", "D");
-      playback_info.rate = env->GetDoubleField(object, field);
-
-      field = env->GetFieldID(clz_palayback_info_, "readyToPlay", "Z");
-      playback_info.readyToPlay = env->GetBooleanField(object, field);
-
-      field = env->GetFieldID(clz_palayback_info_, "playbackBufferEmpty", "Z");
-      playback_info.playbackBufferEmpty = env->GetBooleanField(object, field);
-
-      field = env->GetFieldID(clz_palayback_info_, "playbackBufferFull", "Z");
-      playback_info.playbackBufferFull = env->GetBooleanField(object, field);
-
-      field =
-          env->GetFieldID(clz_palayback_info_, "playbackLikelyToKeepUp", "Z");
-      playback_info.playbackLikelyToKeepUp =
-          env->GetBooleanField(object, field);
+    GET_METHOD_ID(get_playback_info, "()Lcom/medialab/airplay/PlaybackInfo;");
+    if (mid) {
+      jobject object = env->CallObjectMethod(obj_this_, mid);
+      if (object) {
+        PlaybackInfo playbackInfo = PlaybackInfo::attach(env, object);
+        playback_info.stallCount = (uint32_t)playbackInfo.stallCount();
+        playback_info.duration = playbackInfo.duration();
+        playback_info.position = playbackInfo.position();
+        playback_info.rate = playbackInfo.rate();
+        playback_info.readyToPlay = playbackInfo.readyToPlay();
+        playback_info.playbackBufferEmpty = playbackInfo.playbackBufferEmpty();
+        playback_info.playbackBufferFull = playbackInfo.playbackBufferFull();
+        playback_info.playbackLikelyToKeepUp =
+            playbackInfo.playbackLikelyToKeepUp();
+      }
+    } else {
+      __android_log_write(
+          ANDROID_LOG_ERROR, LOG_TAG,
+          "Failed to get method id of on_acquire_playback_info");
     }
   }
 }

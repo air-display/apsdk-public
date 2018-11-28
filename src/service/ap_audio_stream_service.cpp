@@ -3,14 +3,12 @@
 #include <service/ap_audio_stream_service.h>
 #include <utils/logger.h>
 
-
 using namespace aps::network;
 
 namespace aps {
 namespace service {
 audio_udp_service::audio_udp_service(const std::string &name)
-    : aps::network::udp_service_base(name),
-      recv_buf_(RTP_PACKET_MAX_LEN, 0) {}
+    : aps::network::udp_service_base(name), recv_buf_(RTP_PACKET_MAX_LEN, 0) {}
 
 audio_udp_service::~audio_udp_service() {}
 
@@ -79,14 +77,14 @@ ap_audio_stream_service::ap_audio_stream_service(aps::ap_crypto_ptr &crypto,
       &ap_audio_stream_service::data_handler, this, std::placeholders::_1,
       std::placeholders::_2, std::placeholders::_3));
   data_service_.bind_thread_actions(
-      std::bind(&ap_audio_stream_service::on_thread_stop, this),
+      std::bind(&ap_audio_stream_service::on_thread_start, this),
       std::bind(&ap_audio_stream_service::on_thread_stop, this));
 
   control_service_.bind_recv_handler(std::bind(
       &ap_audio_stream_service::control_handler, this, std::placeholders::_1,
       std::placeholders::_2, std::placeholders::_3));
   control_service_.bind_thread_actions(
-      std::bind(&ap_audio_stream_service::on_thread_stop, this),
+      std::bind(&ap_audio_stream_service::on_thread_start, this),
       std::bind(&ap_audio_stream_service::on_thread_stop, this));
 
   LOGD() << "ap_audio_stream_service (" << std::hex << this
@@ -133,7 +131,7 @@ void ap_audio_stream_service::data_handler(const uint8_t *buf,
     }
 
     rtp_packet_header_t *header = (rtp_packet_header_t *)buf;
-    if (header->payload_type != audio_data) {
+    if (header->payload_type != rtp_audio_data) {
       LOGE() << "Invalid audio data packet: " << bytes_transferred;
       return;
     }
@@ -142,11 +140,13 @@ void ap_audio_stream_service::data_handler(const uint8_t *buf,
   }
 }
 
-void ap_audio_stream_service::audio_data_packet(
-    rtp_audio_data_packet_t *packet, size_t length) {
+void ap_audio_stream_service::audio_data_packet(rtp_audio_data_packet_t *packet,
+                                                size_t length) {
   LOGV() << "audio DATA packet: " << length;
   if (handler_) {
-    handler_->on_audio_stream_data(packet);
+    uint32_t payload_length =
+        length - sizeof(rtp_packet_header_t) - sizeof(uint32_t);
+    handler_->on_audio_stream_data(packet, payload_length);
   }
 }
 
@@ -162,10 +162,10 @@ void ap_audio_stream_service::control_handler(const uint8_t *buf,
     LOGV() << "ap_audio_stream_service::control_handler, " << bytes_transferred;
 
     rtp_packet_header_t *header = (rtp_packet_header_t *)buf;
-    if (header->payload_type == ctrl_timing_sync &&
+    if (header->payload_type == rtp_ctrl_timing_sync &&
         bytes_transferred == sizeof(rtp_control_sync_packet_t))
       control_sync_packet((rtp_control_sync_packet_t *)header);
-    else if (header->payload_type == ctrl_retransmit_request &&
+    else if (header->payload_type == rtp_ctrl_retransmit_request &&
              bytes_transferred == sizeof(rtp_control_retransmit_packet_t))
       control_retransmit_packet((rtp_control_retransmit_packet_t *)header);
     else
@@ -177,11 +177,17 @@ void ap_audio_stream_service::control_handler(const uint8_t *buf,
 void ap_audio_stream_service::control_sync_packet(
     rtp_control_sync_packet_t *packet) {
   LOGV() << "audio CONTROL SYNC packet";
+  if (handler_) {
+    handler_->on_audio_control_sync(packet);
+  }
 }
 
 void ap_audio_stream_service::control_retransmit_packet(
     rtp_control_retransmit_packet_t *packet) {
   LOGV() << "audio CONTROL RETRANSMIT packet";
+  if (handler_) {
+    handler_->on_audio_control_retransmit(packet);
+  }
 }
 
 void ap_audio_stream_service::on_thread_start() {

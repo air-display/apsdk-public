@@ -23,10 +23,18 @@ void jni_ap_handler::on_mirror_stream_started() {
     parent->on_mirror_stream_started();
 }
 
-void jni_ap_handler::on_mirror_stream_data(const void *data) {
+void jni_ap_handler::on_mirror_stream_codec(
+    const aps::sms_video_codec_packet_t *p) {
+  __android_log_write(ANDROID_LOG_INFO, LOG_TAG, "on_mirror_stream_codec");
+  if (parent)
+    parent->on_mirror_stream_codec(p);
+}
+
+void jni_ap_handler::on_mirror_stream_data(
+    const aps::sms_video_data_packet_t *p) {
   __android_log_write(ANDROID_LOG_VERBOSE, LOG_TAG, "on_mirror_stream_data");
   if (parent)
-    parent->on_mirror_stream_data(data);
+    parent->on_mirror_stream_data(p);
 }
 
 void jni_ap_handler::on_mirror_stream_stopped() {
@@ -72,10 +80,25 @@ void jni_ap_handler::on_audio_stream_started() {
     parent->on_audio_stream_started();
 }
 
-void jni_ap_handler::on_audio_stream_data(const void *data) {
+void jni_ap_handler::on_audio_stream_data(const aps::rtp_audio_data_packet_t *p,
+                                          const uint32_t payload_length) {
   __android_log_write(ANDROID_LOG_VERBOSE, LOG_TAG, "on_audio_stream_data");
   if (parent)
-    parent->on_audio_stream_data(data);
+    parent->on_audio_stream_data(p, payload_length);
+}
+
+void jni_ap_handler::on_audio_control_sync(
+    const aps::rtp_control_sync_packet_t *p) {
+  __android_log_write(ANDROID_LOG_DEBUG, LOG_TAG, "on_audio_control_sync");
+  if (parent)
+    parent->on_audio_control_sync(p);
+}
+
+void jni_ap_handler::on_audio_control_retransmit(
+    const aps::rtp_control_retransmit_packet_t *p) {
+  __android_log_write(ANDROID_LOG_DEBUG, LOG_TAG, "on_audio_control_retransmit");
+  if (parent)
+    parent->on_audio_control_retransmit(p);
 }
 
 void jni_ap_handler::on_audio_stream_stopped() {
@@ -109,7 +132,8 @@ void jni_ap_handler::on_video_stop() {
     parent->on_video_stop();
 }
 
-void jni_ap_handler::on_acquire_playback_info(ap_handler::playback_info_t &playback_info) {
+void jni_ap_handler::on_acquire_playback_info(
+    ap_handler::playback_info_t &playback_info) {
   __android_log_write(ANDROID_LOG_INFO, LOG_TAG, "on_acquire_playback_info");
   if (parent)
     parent->on_acquire_playback_info(playback_info);

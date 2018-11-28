@@ -1,8 +1,9 @@
 #ifndef AP_HANDLER_H
 #define AP_HANDLER_H
 #pragma once
-#include <stdint.h>
+#include <ap_types.h>
 #include <memory>
+#include <stdint.h>
 #include <string>
 #include <vector>
 
@@ -11,7 +12,7 @@ namespace aps {
 ///
 /// </summary>
 class ap_handler {
- public:
+public:
   /// <summary>
   ///
   /// </summary>
@@ -87,6 +88,17 @@ class ap_handler {
     ///
     /// </summary>
     time_range_array seekableTimeRanges;
+
+    playback_info_s() {
+      stallCount = 0;
+      duration = 0;
+      position = 0;
+      rate = 0;
+      readyToPlay = false;
+      playbackBufferEmpty = false;
+      playbackBufferFull = false;
+      playbackLikelyToKeepUp = false;
+    }
   };
   typedef playback_info_s playback_info_t;
 
@@ -125,11 +137,21 @@ class ap_handler {
   /// <summary>
   ///
   /// </summary>
-  /// <param name="data"></param>
+  /// <param name="p"></param>
   /// <remarks>
   /// THREAD_VIDEO_STREAM
   /// </remarks>
-  virtual void on_mirror_stream_data(const void *data) = 0;
+  virtual void on_mirror_stream_codec(
+      const aps::sms_video_codec_packet_t *p) = 0;
+
+  /// <summary>
+  ///
+  /// </summary>
+  /// <param name="p"></param>
+  /// <remarks>
+  /// THREAD_VIDEO_STREAM
+  /// </remarks>
+  virtual void on_mirror_stream_data(const aps::sms_video_data_packet_t *p) = 0;
 
   // Audio
   /// <summary>
@@ -190,11 +212,33 @@ class ap_handler {
   /// <summary>
   ///
   /// </summary>
-  /// <param name="data"></param>
+  /// <param name="p"></param>
+  /// <param name="payload_length"></param>
   /// <remarks>
   /// THREAD_AUDIO_STREAM
   /// </remarks>
-  virtual void on_audio_stream_data(const void *data) = 0;
+  virtual void on_audio_stream_data(const aps::rtp_audio_data_packet_t *p,
+                                    const uint32_t payload_length) = 0;
+
+  /// <summary>
+  ///
+  /// </summary>
+  /// <param name="p"></param>
+  /// <remarks>
+  /// THREAD_AUDIO_STREAM
+  /// </remarks>
+  virtual void
+  on_audio_control_sync(const aps::rtp_control_sync_packet_t *p) = 0;
+
+  /// <summary>
+  ///
+  /// </summary>
+  /// <param name="p"></param>
+  /// <remarks>
+  /// THREAD_AUDIO_STREAM
+  /// </remarks>
+  virtual void on_audio_control_retransmit(
+      const aps::rtp_control_retransmit_packet_t *p) = 0;
 
   /// <summary>
   ///
@@ -256,5 +300,5 @@ class ap_handler {
 ///
 /// </summary>
 typedef std::shared_ptr<ap_handler> ap_handler_ptr;
-}  // namespace aps
-#endif  // AP_HANDLER_H
+} // namespace aps
+#endif // AP_HANDLER_H

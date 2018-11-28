@@ -3,9 +3,10 @@
 #include <dlfcn.h>
 #include <string>
 
-#include <nci_object.h>
 #include <airplay_handler.h>
 #include <airplay_server.h>
+#include <jni_class_loader.h>
+#include <nci_object.h>
 
 
 #define LOG_TAG "APS-JNI"
@@ -16,9 +17,8 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     return -1;
   }
 
-  nci_core::initialize(vm, env);
-  airplay_server::initialize(vm, env);
-  airplay_handler::initialize(vm, env);
+  jni_class_loader::get().init(vm, env);
 
+  nci_core::initialize(vm, env);
   return JNI_VERSION_1_6;
 }

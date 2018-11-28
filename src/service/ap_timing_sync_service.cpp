@@ -17,8 +17,8 @@ void aps::service::ap_timing_sync_service::set_server_endpoint(
 }
 
 void aps::service::ap_timing_sync_service::post_send_query() {
-  query_packet_.header.marker = 1;
-  query_packet_.header.payload_type = timing_query;
+  query_packet_.marker = 1;
+  query_packet_.payload_type = rtp_timing_query;
   query_packet_.original_timestamp = htonll(0);
   query_packet_.receive_timestamp = htonll(0);
   query_packet_.transmit_timestamp = htonll(get_ntp_timestamp());
@@ -49,8 +49,8 @@ void aps::service::ap_timing_sync_service::on_recv_from(
   if (e)
     LOGE() << "Failed to receive timing query: " << e.message();
   else {
-    reply_packet_.header.sequence = ntohs(reply_packet_.header.sequence);
-    reply_packet_.header.timestamp = ntohl(reply_packet_.header.timestamp);
+    reply_packet_.sequence = ntohs(reply_packet_.sequence);
+    reply_packet_.timestamp = ntohl(reply_packet_.timestamp);
     reply_packet_.original_timestamp = ntohll(reply_packet_.original_timestamp);
     reply_packet_.receive_timestamp = ntohll(reply_packet_.receive_timestamp);
     reply_packet_.transmit_timestamp = ntohll(reply_packet_.transmit_timestamp);
