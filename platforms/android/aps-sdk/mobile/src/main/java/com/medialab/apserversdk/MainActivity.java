@@ -19,8 +19,6 @@ import com.medialab.airplay.AudioControlSync;
 import com.medialab.airplay.MirroringVideoCodec;
 import com.medialab.airplay.PlaybackInfo;
 
-import java.nio.ByteBuffer;
-
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
 
@@ -121,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void on_mirror_stream_data(byte[] data, long timestamp) {
-                Log.i(TAG, "on_mirror_stream_data: ");
+                Log.i(TAG, String.format("on_mirror_stream_data: length %d, timestamp %d", data.length, timestamp));
             }
 
             @Override

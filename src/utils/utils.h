@@ -40,6 +40,16 @@ void set_current_thread_name(const char *name);
 /// <summary>
 ///
 /// </summary>
+const char *generate_mac_address();
+
+/// <summary>
+///
+/// </summary>
+std::string simplify_mac_address(const char *addr);
+
+/// <summary>
+///
+/// </summary>
 typedef std::function<void()> thread_actoin;
 
 /// <summary>

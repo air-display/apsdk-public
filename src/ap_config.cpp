@@ -1,5 +1,7 @@
 #include <ap_config.h>
+#include <algorithm>
 #include <sstream>
+#include <utils/utils.h>
 
 namespace aps {
 ap_config_audio_format::ap_config_audio_format() {
@@ -45,16 +47,19 @@ ap_config_display::~ap_config_display() {
 ap_config_ptr ap_config::default_instance() {
   static ap_config_ptr s_instance = 0;
   if (!s_instance) {
+    std::string mac_address = generate_mac_address();
+    std::string device_id = simplify_mac_address(mac_address.c_str());
+
     s_instance = std::make_shared<ap_config>();
-    s_instance->name_ = "WeCast Display";
-    s_instance->deviceID_ = "AABBCCDDEEFF";
+    s_instance->name_ = "APS Display";
+    s_instance->deviceID_ = device_id;
     s_instance->model_ = "AppleTV3,1";
     s_instance->serverVersion_ = "220.68";
     s_instance->pi_ = "b08f5a79-db29-4384-b456-a4784d9e6055";
     s_instance->pk_ =
         "99FD4299889422515FBD27949E4E1E21B2AF50A454499E3D4BE75A4E0F55FE63";
     s_instance->flags_ = "0x04";
-    s_instance->macAddress_ = "AA:BB:CC:DD:EE:FF";
+    s_instance->macAddress_ = mac_address;
     s_instance->vv_ = 2;
     s_instance->features_ = 0x0E5A7FFFF7;
     s_instance->statusFlag_ = 68;

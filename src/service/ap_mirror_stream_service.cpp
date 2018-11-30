@@ -3,7 +3,6 @@
 #include <service/ap_mirror_stream_service.h>
 #include <utils/logger.h>
 
-
 namespace aps {
 namespace service {
 ap_mirror_stream_session::ap_mirror_stream_session(
@@ -37,13 +36,14 @@ void ap_mirror_stream_session::post_receive_packet_header() {
 }
 
 void ap_mirror_stream_session::on_packet_header_received(
-    const asio::error_code &e, std::size_t bytes_transferred) {
-  if (!e) {
-    post_receive_packet_payload();
-    return;
-  } else {
+    const asio::error_code &e, std::size_t bytes_transferred) { 
+  if (e) {
     handle_socket_error(e);
+    return;
   }
+
+  // Receive payload
+  post_receive_packet_payload(); 
 }
 
 void ap_mirror_stream_session::post_receive_packet_payload() {
@@ -73,15 +73,48 @@ void ap_mirror_stream_session::process_packet() {
   if (sms_video_data == header_->payload_type) {
     // Process the video packet
     LOGV() << "mirror VIDEO packet: " << header_->payload_size;
-    crypto_->decrypt_video_frame(payload_, header_->payload_size);
+    // Parse the frame
+    sms_video_data_packet_t *p = (sms_video_data_packet_t *)header_;
+    crypto_->decrypt_video_frame(payload_, p->payload_size);
+    uint8_t *cursor = payload_;
+    uint32_t frame_size = 0;
+    frame_size <<= 8;
+    frame_size |= cursor[0];
+    frame_size <<= 8;
+    frame_size |= cursor[1];
+    frame_size <<= 8;
+    frame_size |= cursor[2];
+    frame_size <<= 8;
+    frame_size |= cursor[3];
+
     if (handler_) {
-      handler_->on_mirror_stream_data((sms_video_data_packet_t *)header_);
+      handler_->on_mirror_stream_data(p);
     }
   } else if (sms_video_codec == header_->payload_type) {
     // Process the codec packet
     LOGV() << "mirror CODEC packet: " << header_->payload_size;
+    sms_video_codec_packet_t *p = (sms_video_codec_packet_t *)header_;
+    
+    // Parse SPS
+    uint8_t *cursor = p->start;
+    for (int i = 0; i < p->sps_count; i++) {
+      uint16_t sps_length = *(uint16_t *)cursor;
+      sps_length = ntohs(sps_length);
+      cursor += sizeof(uint16_t) + sps_length;
+    }
+
+    // Parse PPS
+    uint8_t pps_count = *cursor++;
+    for (int i = 0; i < pps_count; i++) {
+      uint16_t pps_length = *(uint16_t *)cursor;
+      pps_length = ntohs(pps_length);
+      cursor += sizeof(uint16_t) + pps_length;
+    }
+
+    // 00 00 00 01 [ ... SPS ... ] 00 00 00 01 [ ... PPS ... ]
+
     if (handler_) {
-      handler_->on_mirror_stream_codec((sms_video_codec_packet_t *)header_);
+      handler_->on_mirror_stream_codec(p);
     }
   } else if (sms_payload_5 == header_->payload_type) {
     // Process the 5 packet
@@ -134,20 +167,20 @@ void ap_mirror_stream_session::handle_socket_error(const asio::error_code &e) {
 }
 
 ap_mirror_stream_service::ap_mirror_stream_service(aps::ap_crypto_ptr &crypto,
-                                                 uint16_t port,
-                                                 aps::ap_handler_ptr &handler)
+                                                   uint16_t port,
+                                                   aps::ap_handler_ptr &handler)
     : aps::network::tcp_service_base("ap_video_stream_service", port, true),
-      handler_(handler), crypto_(crypto) {}
+      handler_(handler), crypto_(crypto) {
+  bind_thread_actions(
+      std::bind(&ap_mirror_stream_service::on_thread_start, this),
+      std::bind(&ap_mirror_stream_service::on_thread_stop, this));
+}
 
 ap_mirror_stream_service::~ap_mirror_stream_service() {}
 
 aps::network::tcp_session_ptr ap_mirror_stream_service::prepare_new_session() {
-  bind_thread_actions(
-      std::bind(&ap_mirror_stream_service::on_thread_start, this),
-      std::bind(&ap_mirror_stream_service::on_thread_stop, this));
-
   return std::make_shared<ap_mirror_stream_session>(io_context(), crypto_,
-                                                   handler_);
+                                                    handler_);
 }
 
 void ap_mirror_stream_service::on_thread_start() {

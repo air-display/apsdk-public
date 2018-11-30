@@ -159,7 +159,8 @@ bool aps::ap_crypto::verify_pair_signature(const uint8_t *p, uint64_t len) {
                         client_ed_public_key_.data());
 }
 
-void aps::ap_crypto::init_video_stream_aes_ctr(const uint64_t video_stream_id) {
+void aps::ap_crypto::init_video_stream_aes_ctr(const uint64_t video_stream_id,
+                                               const agent_version_t version) {
   std::ostringstream oss;
 
   oss.str("");
@@ -173,26 +174,38 @@ void aps::ap_crypto::init_video_stream_aes_ctr(const uint64_t video_stream_id) {
   sha512_context_ sha512_context;
   std::vector<uint8_t> sha512_hash;
 
+  std::vector<uint8_t> sha512_secret;
+  if (version.major < 230.0f) {
+    sha512_secret.assign(client_aes_key_.begin(), client_aes_key_.begin() + 16);     
+  } else {
+    sha512_hash.resize(64, 0);
+    sha512_init(&sha512_context);
+    sha512_update(&sha512_context, (uint8_t *)client_aes_key_.data(), 16);
+    sha512_update(&sha512_context, shared_secret_.data(), 32);
+    sha512_final(&sha512_context, sha512_hash.data());
+    sha512_secret.assign(sha512_hash.begin(), sha512_hash.begin() + 16);  
+  }
+
   sha512_hash.resize(64, 0);
   sha512_init(&sha512_context);
   sha512_update(&sha512_context, (uint8_t *)key.data(), key.length());
-  sha512_update(&sha512_context, shared_secret_.data(), 16);
+  sha512_update(&sha512_context, sha512_secret.data(), 16);
   sha512_final(&sha512_context, sha512_hash.data());
 
-  std::vector<uint8_t> sha512_aes_key;
-  sha512_aes_key.assign(sha512_hash.begin(), sha512_hash.begin() + 16);
+  std::vector<uint8_t> aes_ctr_key;
+  aes_ctr_key.assign(sha512_hash.begin(), sha512_hash.begin() + 16);
 
   sha512_hash.resize(64, 0);
   sha512_init(&sha512_context);
   sha512_update(&sha512_context, (uint8_t *)iv.data(), iv.length());
-  sha512_update(&sha512_context, shared_secret_.data(), 16);
+  sha512_update(&sha512_context, sha512_secret.data(), 16);
   sha512_final(&sha512_context, sha512_hash.data());
 
-  std::vector<uint8_t> sha512_aes_iv;
-  sha512_aes_iv.assign(sha512_hash.begin(), sha512_hash.begin() + 16);
+  std::vector<uint8_t> aes_ctr_iv;
+  aes_ctr_iv.assign(sha512_hash.begin(), sha512_hash.begin() + 16);
 
-  AES_init_ctx_iv(&video_stream_aes_ctr_ctx, sha512_aes_key.data(),
-                  sha512_aes_iv.data());
+  AES_init_ctx_iv(&video_stream_aes_ctr_ctx, aes_ctr_key.data(),
+                  aes_ctr_iv.data());
 }
 
 void aps::ap_crypto::init_audio_stream_aes_cbc() {

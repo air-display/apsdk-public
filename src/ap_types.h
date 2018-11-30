@@ -4,6 +4,17 @@
 #include <utils/packing.h>
 
 namespace aps {
+  /// <summary>
+  /// 
+  /// </summary>
+struct agent_version_s {
+  uint16_t major;
+  uint16_t minor;
+  uint16_t revision;
+  uint16_t build;
+};
+typedef agent_version_s agent_version_t;
+
 /// <summary>
 ///
 /// </summary>
@@ -125,15 +136,22 @@ PACKED(struct sms_video_codec_packet_s
          uint8_t profile;
          uint8_t compatibility;
          uint8_t level;
-         uint8_t reserved0 : 6;
          uint8_t nallength : 2;
-         uint8_t reserved1 : 3;
+         uint8_t reserved0 : 6;
          uint8_t sps_count : 5;
-         uint16_t sps_length;
-         uint8_t reserved2[16];
-         uint8_t pps_count;
-         uint16_t pps_length;
-         uint8_t padding[128];
+         uint8_t reserved1 : 3;
+         uint8_t start[];
+
+         //struct {
+         //  uint16_t sps_length;
+         //  // spsNALUnit size = sps_length;
+         //}[sps_count];
+
+         //uint8_t pps_count;
+         //struct {
+         //  uint16_t pps_length;
+         //  // ppsNALUnit size = pps_length;
+         //}[pps_count];
        });
 typedef sms_video_codec_packet_s sms_video_codec_packet_t;
 

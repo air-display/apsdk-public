@@ -9,11 +9,9 @@
 #include <mutex>
 #include <stdint.h>
 
-
 using namespace aps;
 
 class airplay_handler : public nci_object<airplay_handler> {
-  static std::once_flag call_once_flag;
   static jclass clz_this_;
 
 public:

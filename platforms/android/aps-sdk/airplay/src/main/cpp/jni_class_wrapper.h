@@ -9,12 +9,13 @@
 #include <jni_class_loader.h>
 #include <mutex>
 
-typedef int Int;
-typedef short Short;
-typedef long Long;
-typedef double Double;
-typedef float Float;
-typedef bool Boolean;
+typedef jint Int;
+typedef jshort Short;
+typedef jlong Long;
+typedef jdouble Double;
+typedef jfloat Float;
+typedef jboolean Boolean;
+typedef jbyte Byte;
 
 #define WRAPPER_CLASS_BEGIN(c, p)                                              \
   class c {                                                                    \
@@ -37,9 +38,10 @@ typedef bool Boolean;
       if (c::clz_) {                                                           \
         if (!c::constructor_) {                                                \
           c::constructor_ = env->GetMethodID(c::clz_, "<init>", "()V");        \
-        } else {                                                               \
-          __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,                      \
-                              "Failed to find constructor of class:" p);       \
+          if (!c::constructor_) {                                              \
+            __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,                    \
+                                "Failed to find constructor of class:" p);     \
+          }                                                                    \
         }                                                                      \
       }                                                                        \
     }                                                                          \
@@ -108,7 +110,13 @@ WRAPPER_CLASS_END(AudioControlRetransmit)
 
 
 WRAPPER_CLASS_BEGIN(MirroringVideoCodec, "com/medialab/airplay/MirroringVideoCodec")
-
+  FIELD(version, Byte, B);
+  FIELD(profile, Byte, B);
+  FIELD(compatibility, Byte, B);
+  FIELD(level, Byte, B);
+  FIELD(NALLength, Byte, B);
+  FIELD(spsCount, Byte, B);
+  FIELD(ppsCount, Byte, B);
 WRAPPER_CLASS_END(MirroringVideoCodec)
 
 // clang-format on

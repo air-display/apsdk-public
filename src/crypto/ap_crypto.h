@@ -4,11 +4,12 @@
 #include <string>
 #include <vector>
 
+#include <ap_types.h>
 #include "aes.h"
 
 namespace aps {
 class server_key_chain {
-public:
+ public:
   server_key_chain();
   ~server_key_chain();
 
@@ -17,7 +18,7 @@ public:
   const std::vector<uint8_t> &curve_public_key() const;
   const std::vector<uint8_t> &curve_private_key() const;
 
-private:
+ private:
   std::vector<uint8_t> ed_public_key_;
   std::vector<uint8_t> ed_private_key_;
   std::vector<uint8_t> curve_public_key_;
@@ -25,7 +26,7 @@ private:
 };
 
 class ap_crypto {
-public:
+ public:
   ap_crypto();
   ~ap_crypto();
 
@@ -49,7 +50,8 @@ public:
 
   bool verify_pair_signature(const uint8_t *p, uint64_t len);
 
-  void init_video_stream_aes_ctr(const uint64_t video_stream_id);
+  void init_video_stream_aes_ctr(const uint64_t video_stream_id, 
+                                 const agent_version_t version);
 
   void init_audio_stream_aes_cbc();
 
@@ -71,7 +73,7 @@ public:
 
   const server_key_chain &server_keys() const;
 
-private:
+ private:
   server_key_chain server_;
 
   std::vector<uint8_t> fp_key_message_;
@@ -102,4 +104,4 @@ private:
 };
 
 typedef std::shared_ptr<ap_crypto> ap_crypto_ptr;
-} // namespace aps
+}  // namespace aps

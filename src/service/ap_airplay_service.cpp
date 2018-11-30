@@ -164,6 +164,10 @@ void ap_airplay_session::post_fp_setup_handler(const details::request &req,
           .with_content_type(APPLICATION_OCTET_STREAM)
           .with_content(content);
     } else if (header->phase == 0x03 && req.content.size() == 164) {
+      // Init fp key message
+      crypto_->init_fp_key_message((uint8_t *)req.content.data(), 164);
+
+      // Process the hand shake request 
       std::vector<uint8_t> content(32, 0);
       crypto_->fp_handshake(content.data(), (uint8_t *)&req.content[144]);
       res.with_status(ok)
@@ -251,7 +255,7 @@ void ap_airplay_session::setup_handler(const details::request &req,
             plist_object_integer_get_value(connection_id_obj, &connection_id))
           break;
 
-        crypto_->init_video_stream_aes_ctr(connection_id);
+        crypto_->init_video_stream_aes_ctr(connection_id, agent_version_);
 
         if (!mirror_stream_service_) {
           mirror_stream_service_ =

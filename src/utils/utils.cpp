@@ -34,6 +34,26 @@ const char *gmt_time_string() {
     return 0;
 }
 
+const char *generate_mac_address() {
+  uint64_t ts =
+      duration_cast<milliseconds>(system_clock::now().time_since_epoch())
+          .count();
+
+  static char buffer[32];
+  memset(buffer, 0, 32);
+  std::sprintf(buffer, "%02X:%02X:%02X:%02X:%02X:%02X",
+               (uint8_t)((ts >> 0) & 0xff), (uint8_t)((ts >> 8) & 0xff),
+               (uint8_t)((ts >> 16) & 0xff), (uint8_t)((ts >> 24) & 0xff),
+               (uint8_t)((ts >> 32) & 0xff), (uint8_t)((ts >> 40) & 0xff));
+  return buffer;
+}
+
+std::string simplify_mac_address(const char *addr) {
+  static std::regex patter(":");
+  std::string mac = addr;
+  return std::regex_replace(mac, patter, "");
+}
+
 int compare_string_no_case(const char *str1, const char *str2) {
 #if defined(WIN32) || defined(MS_VER_)
   return _strcmpi(str1, str2);

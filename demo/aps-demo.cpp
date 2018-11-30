@@ -99,7 +99,31 @@ ap_player::ap_player() {}
 
 ap_player::~ap_player() {}
 
+#include <crypto/aes.h>
+
 int main() {
+  
+  unsigned char *key = (unsigned char *)"0123456789012345";
+  unsigned char *iv = (unsigned char *)"0123456789012345";
+
+  char *plaintext = "The quick brown fox jumps over the lazy dog";
+  
+  int len = strlen(plaintext);
+
+  char buf[512];
+
+  AES_ctx ctx;
+  AES_init_ctx_iv(&ctx, key, iv);
+
+  memcpy(buf, plaintext, len);
+  AES_CTR_xcrypt_buffer(&ctx, (uint8_t *)buf, len);
+
+
+  AES_CTR_xcrypt_buffer(&ctx, (uint8_t *)buf, len);
+
+
+  return 0;
+
   aps::ap_server_ptr server = std::make_shared<aps::ap_server>();
   aps::ap_handler_ptr player = std::make_shared<ap_player>();
   aps::ap_config_ptr config = aps::ap_config::default_instance();
@@ -110,4 +134,5 @@ int main() {
   LOGI() << "AP Server started....";
   getchar();
   server->stop();
+  return 0;
 }

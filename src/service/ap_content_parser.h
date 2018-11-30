@@ -1,15 +1,8 @@
 #pragma once
 #include <string>
+#include <ap_types.h>
 
 namespace aps {
-
-struct agent_version_s {
-  uint16_t major;
-  uint16_t minor;
-  uint16_t revision;
-  uint16_t build;
-};
-typedef agent_version_s agent_version_t;
 
 namespace ap_content_parser {
 
