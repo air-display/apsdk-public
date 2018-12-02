@@ -90,7 +90,9 @@ class ap_crypto {
   std::vector<uint8_t> client_curve_public_key_;
 
   ap_aes_ctr128 pair_verify_aes_ctr_;
+
   ap_aes_ctr128 mirror_stream_aes_ctr_;
+  
   ap_aes_cbc128 audio_stream_aes_cbc_;
 };
 

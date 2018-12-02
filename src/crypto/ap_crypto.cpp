@@ -202,8 +202,6 @@ void aps::ap_crypto::init_video_stream_aes_ctr(const uint64_t video_stream_id,
 }
 
 void aps::ap_crypto::init_audio_stream_aes_cbc() {
-  audio_stream_aes_cbc_.set_key_iv(client_aes_key_.data(),
-                                   client_aes_iv_.data());
 }
 
 void aps::ap_crypto::decrypt_video_frame(uint8_t *frame, uint32_t len) {
@@ -211,6 +209,8 @@ void aps::ap_crypto::decrypt_video_frame(uint8_t *frame, uint32_t len) {
 }
 
 void aps::ap_crypto::decrypt_audio_data(uint8_t *data, uint32_t len) {
+  audio_stream_aes_cbc_.set_de_key_iv(client_aes_key_.data(),
+                                      client_aes_iv_.data());
   audio_stream_aes_cbc_.decrypt_buffer(data, len);
 }
 
