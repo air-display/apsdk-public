@@ -8,7 +8,6 @@
 #include <jni_class_loader.h>
 #include <nci_object.h>
 
-
 #define LOG_TAG "APS-JNI"
 
 jint JNI_OnLoad(JavaVM *vm, void *reserved) {

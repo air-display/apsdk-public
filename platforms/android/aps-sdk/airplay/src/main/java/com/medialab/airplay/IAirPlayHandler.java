@@ -1,6 +1,14 @@
 package com.medialab.airplay;
 
+import android.print.PrinterId;
+
 public interface IAirPlayHandler {
+    //
+    static final int PCM = 0;
+    static final int ALAC = 1;
+    static final int AAC = 2;
+    static final int AACELD = 3;
+
     // Mirroring
     void on_mirror_stream_started();
 
@@ -19,13 +27,13 @@ public interface IAirPlayHandler {
 
     void on_audio_set_meta_data(byte[] data);
 
-    void on_audio_stream_started();
+    void on_audio_stream_started(int format);
 
     void on_audio_stream_data(byte[] data);
 
-    void on_audio_control_sync(AudioControlSync sync);
+    // void on_audio_control_sync(AudioControlSync sync);
 
-    void on_audio_control_retransmit(AudioControlRetransmit retransmit);
+    // void on_audio_control_retransmit(AudioControlRetransmit retransmit);
 
     void on_audio_stream_stopped();
 

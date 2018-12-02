@@ -22,15 +22,16 @@ public abstract class NciObject {
     private long nciPtr;
 
     /**
-     * Creates the NCI resource.
-     * The class should implement this method to call the JNI method for constructing the NCI object.
+     * Creates the NCI resource. The class should implement this method to call the
+     * JNI method for constructing the NCI object.
+     *
      * @return
      */
     abstract protected long newNci();
 
     /**
-     * Destroys the NCI resources.
-     * The class should implement this method to call the JNI method for destroying the NCI object.
+     * Destroys the NCI resources. The class should implement this method to call
+     * the JNI method for destroying the NCI object.
      */
     abstract protected void deleteNci();
 
@@ -43,6 +44,7 @@ public abstract class NciObject {
 
     /**
      * Finalizes the NCI resource.
+     *
      * @throws Throwable
      */
     @Override

@@ -3,6 +3,7 @@
 #include <service/ap_audio_stream_service.h>
 #include <utils/logger.h>
 
+
 using namespace aps::network;
 
 namespace aps {
@@ -146,6 +147,7 @@ void ap_audio_stream_service::audio_data_packet(rtp_audio_data_packet_t *packet,
   if (handler_) {
     uint32_t payload_length =
         length - sizeof(rtp_packet_header_t) - sizeof(uint32_t);
+    crypto_->decrypt_audio_data(packet->payload, payload_length);
     handler_->on_audio_stream_data(packet, payload_length);
   }
 }
@@ -163,31 +165,28 @@ void ap_audio_stream_service::control_handler(const uint8_t *buf,
 
     rtp_packet_header_t *header = (rtp_packet_header_t *)buf;
     if (header->payload_type == rtp_ctrl_timing_sync &&
-        bytes_transferred == sizeof(rtp_control_sync_packet_t))
+        bytes_transferred == sizeof(rtp_control_sync_packet_t)) {
       control_sync_packet((rtp_control_sync_packet_t *)header);
-    else if (header->payload_type == rtp_ctrl_retransmit_request &&
-             bytes_transferred == sizeof(rtp_control_retransmit_packet_t))
-      control_retransmit_packet((rtp_control_retransmit_packet_t *)header);
-    else
+    } else if (header->payload_type == rtp_ctrl_retransmit_reply &&
+               bytes_transferred ==
+                   sizeof(rtp_control_retransmit_reply_packet_t)) {
+      control_retransmit_packet(
+          (rtp_control_retransmit_reply_packet_t *)header);
+    } else {
       LOGE() << "Unknown RTP control packet, type: " << header->payload_type
              << " size: " << bytes_transferred;
+    }
   }
 }
 
 void ap_audio_stream_service::control_sync_packet(
     rtp_control_sync_packet_t *packet) {
   LOGV() << "audio CONTROL SYNC packet";
-  if (handler_) {
-    handler_->on_audio_control_sync(packet);
-  }
 }
 
 void ap_audio_stream_service::control_retransmit_packet(
-    rtp_control_retransmit_packet_t *packet) {
+    rtp_control_retransmit_reply_packet_t *packet) {
   LOGV() << "audio CONTROL RETRANSMIT packet";
-  if (handler_) {
-    handler_->on_audio_control_retransmit(packet);
-  }
 }
 
 void ap_audio_stream_service::on_thread_start() {

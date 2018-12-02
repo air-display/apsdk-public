@@ -16,8 +16,8 @@ source_group("ap" FILES ${SRC_AP})
 set(SRC_CRYPTO
     crypto/ap_crypto.h
     crypto/ap_crypto.cpp
-    crypto/aes.c
-    crypto/aes.h
+    crypto/ap_aes.cpp
+    crypto/ap_aes.h
 )
 source_group("crypto" FILES ${SRC_CRYPTO})
 
@@ -103,8 +103,9 @@ add_library(aps STATIC
 target_link_libraries(aps PUBLIC
     curve25519
     ed25519
-    playfair
     hlsparser
+    opensslaes
+    playfair
 )
 
 # Dependencies

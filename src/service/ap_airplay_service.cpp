@@ -163,13 +163,13 @@ void ap_airplay_session::post_fp_setup_handler(const details::request &req,
       res.with_status(ok)
           .with_content_type(APPLICATION_OCTET_STREAM)
           .with_content(content);
+    } else if (header->phase == 0x02) {
+      LOGE() << "Unsupported FP phase.";
     } else if (header->phase == 0x03 && req.content.size() == 164) {
-      // Init fp key message
-      crypto_->init_fp_key_message((uint8_t *)req.content.data(), 164);
-
-      // Process the hand shake request 
+      // Process the hand shake request
       std::vector<uint8_t> content(32, 0);
-      crypto_->fp_handshake(content.data(), (uint8_t *)&req.content[144]);
+      crypto_->fp_handshake(content.data(), req.content.data(),
+                            req.content.size());
       res.with_status(ok)
           .with_content_type(APPLICATION_OCTET_STREAM)
           .with_content(content);
@@ -215,6 +215,18 @@ void ap_airplay_session::setup_handler(const details::request &req,
         break;
 
       if (stream_type_t::audio == type) {
+        //{
+        //  streams = ({
+        //    audioFormat = 262144;
+        //    audioMode = default;
+        //    controlPort = 54956;
+        //    ct = 2;
+        //    latencyMax = 88200;
+        //    latencyMin = 11025;
+        //    spf = 352;
+        //    type = 96;
+        //  });
+        //}
         crypto_->init_audio_stream_aes_cbc();
 
         if (!audio_stream_service_) {
@@ -223,8 +235,30 @@ void ap_airplay_session::setup_handler(const details::request &req,
           audio_stream_service_->start();
         }
 
+        auto format_obj =
+            plist_object_dict_get_value(stream_obj, "audioFormat");
+        if (!format_obj ||
+            PLIST_TYPE_INTEGER != plist_object_get_type(format_obj))
+          break;
+
+        int64_t format_value = 0;
+        if (0 != plist_object_integer_get_value(format_obj, &format_value))
+          break;
+
+        int format = 0;
+        if (format_value == alac)
+          format = 1;
+        else if (format_value == aac_main)
+          format = 2;
+        else if (format_value == aac_eld)
+          format = 3;
+        else {
+          LOGE() << "Unsupported audio format " << format_value;
+          break;
+        }
+
         if (handler_) {
-          handler_->on_audio_stream_started();
+          handler_->on_audio_stream_started((audio_data_format_t)format);
         }
 
         // clang-format off
@@ -245,6 +279,19 @@ void ap_airplay_session::setup_handler(const details::request &req,
 
         return;
       } else if (stream_type_t::video == type) {
+        //{ 
+        //  streams = [{
+        //    type = 110;
+        //    streamConnectionID = 3873339193950750702;
+        //    timestampInfo = [
+        //      { name = SubSu; },
+        //      { name = BePxT; }, 
+        //      { name = AfPxT; },
+        //      { name = BefEn; },
+        //      { name = EmEnc; }
+        //    ];
+        //  }];
+        //}
         auto connection_id_obj =
             plist_object_dict_get_value(stream_obj, "streamConnectionID");
         if (PLIST_TYPE_INTEGER != plist_object_get_type(connection_id_obj))
@@ -293,6 +340,25 @@ void ap_airplay_session::setup_handler(const details::request &req,
       } else
         break;
     } else {
+      //{
+      //  deviceID = "4C:57:CA:46:07:FC";
+      //  diagnosticsAndUsage = 1;
+      //  eiv = <5e830184 fea012b8 3bbd456d b761f798>;
+      //  ekey = <data>;
+      //  et = 32;
+      //  internalBuild = 1;
+      //  isScreenMirroringSession = 1;
+      //  macAddress = "4C:57:CA:46:07:FA";
+      //  model = "iPhone8,4";
+      //  name = "hr\U7684 iPhone";
+      //  osBuildVersion = 16B92;
+      //  osName = "iPhone OS";
+      //  osVersion = "12.1";
+      //  sessionUUID = "42CD0A19-2E4B-4355-BED6-575FA83A60DA";
+      //  sourceVersion = "373.9.1";
+      //  timingPort = 63254;
+      //  timingProtocol = NTP;
+      //}
       const uint8_t *piv = 0;
       uint64_t iv_len = 0;
       auto eiv_obj = plist_object_dict_get_value(data_obj, "eiv");
@@ -363,8 +429,8 @@ void ap_airplay_session::get_info_handler(const details::request &req,
           plist_object_dict(4, 
               "type", plist_object_integer(96), 
               "audioType", plist_object_string("default"),
-              "inputLatencyMicros", plist_object_integer(3),
-              "outputLatencyMicros", plist_object_integer(79)
+              "inputLatencyMicros", plist_object_integer(0),
+              "outputLatencyMicros", plist_object_integer(0)
           )
       ),
       "displays", plist_object_array(1,
@@ -377,7 +443,7 @@ void ap_airplay_session::get_info_handler(const details::request &req,
               "widthPixels", plist_object_integer(config_->display().width()), 
               "widthPhysical", plist_object_integer(0), 
               "refreshRate", plist_object_real(config_->display().refreshRate()),
-              "overscanned", plist_object_false(), 
+              "overscanned", plist_object_true(), 
               "rotation", plist_object_true(), 
               "uuid", plist_object_string(config_->display().uuid().c_str())
           )
@@ -1118,7 +1184,7 @@ void ap_airplay_session::on_response_sent(const asio::error_code &e,
     return handle_socket_error(e);
   }
 
-  //LOGV() << ">>>>> " << bytes_transferred << " bytes sent successfully";
+  // LOGV() << ">>>>> " << bytes_transferred << " bytes sent successfully";
 }
 
 void ap_airplay_session::send_request(const details::request &req) {
@@ -1128,8 +1194,8 @@ void ap_airplay_session::send_request(const details::request &req) {
 
 void ap_airplay_session::add_common_header(const details::request &req,
                                            details::response &res) {
-  res.with_header(HEADER_SERVER, "AirTunes/220.68")
-      .with_header(HEADER_SESSION, "CAFEBABE");
+  static std::string ver = "AirTunes/" + config_->serverVersion();
+  res.with_header(HEADER_SERVER, ver).with_header(HEADER_SESSION, "CAFEBABE");
 
   if (!req.cseq.empty())
     res.with_header(HEADER_CSEQ, req.cseq);

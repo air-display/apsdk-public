@@ -12,7 +12,6 @@
 #include <jni.h>
 #include <nci_object.h>
 
-
 #define LOG_TAG "APS-JNI"
 
 extern "C" {

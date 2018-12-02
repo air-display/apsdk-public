@@ -7,7 +7,7 @@
 #include "../src/utils/logger.h"
 
 class ap_player : public aps::ap_handler {
-public:
+ public:
   ap_player();
   ~ap_player();
 
@@ -41,7 +41,7 @@ public:
     LOGI() << "on_audio_set_meta_data: " << data;
   }
 
-  virtual void on_audio_stream_started() override {
+  virtual void on_audio_stream_started(const aps::audio_data_format_t format) override {
     LOGI() << "on_audio_stream_started: ";
   }
 
@@ -64,8 +64,8 @@ public:
 
   virtual void on_video_stop() override { LOGI() << "on_video_stop: "; }
 
-  virtual void
-  on_acquire_playback_info(playback_info_t &playback_info) override {
+  virtual void on_acquire_playback_info(
+      playback_info_t &playback_info) override {
     LOGI() << "on_acquire_playback_info: ";
   }
 
@@ -74,23 +74,23 @@ public:
     LOGV() << "on_audio_stream_data: " << payload_length;
   }
 
-  virtual void
-  on_audio_control_sync(const aps::rtp_control_sync_packet_t *p) override {
-    LOGV() << "on_audio_control_sync: ";
+  virtual void on_mirror_stream_data(
+      const aps::sms_video_data_packet_t *p) override {
+    uint8_t *cursor = (uint8_t *)(p->payload);
+    uint32_t frame_size = 0;
+    frame_size <<= 8;
+    frame_size |= cursor[0];
+    frame_size <<= 8;
+    frame_size |= cursor[1];
+    frame_size <<= 8;
+    frame_size |= cursor[2];
+    frame_size <<= 8;
+    frame_size |= cursor[3];
+    LOGD() << "on_mirror_stream_data, frame size: " << frame_size;
   }
 
-  virtual void on_audio_control_retransmit(
-      const aps::rtp_control_retransmit_packet_t *p) override {
-    LOGV() << "on_audio_control_retransmit: ";
-  }
-
-  virtual void
-  on_mirror_stream_data(const aps::sms_video_data_packet_t *p) override {
-    LOGV() << "on_mirror_stream_data: ";
-  }
-
-  virtual void
-  on_mirror_stream_codec(const aps::sms_video_codec_packet_t *p) override {
+  virtual void on_mirror_stream_codec(
+      const aps::sms_video_codec_packet_t *p) override {
     LOGI() << "on_mirror_stream_codec: ";
   }
 };
@@ -99,31 +99,7 @@ ap_player::ap_player() {}
 
 ap_player::~ap_player() {}
 
-#include <crypto/aes.h>
-
 int main() {
-  
-  unsigned char *key = (unsigned char *)"0123456789012345";
-  unsigned char *iv = (unsigned char *)"0123456789012345";
-
-  char *plaintext = "The quick brown fox jumps over the lazy dog";
-  
-  int len = strlen(plaintext);
-
-  char buf[512];
-
-  AES_ctx ctx;
-  AES_init_ctx_iv(&ctx, key, iv);
-
-  memcpy(buf, plaintext, len);
-  AES_CTR_xcrypt_buffer(&ctx, (uint8_t *)buf, len);
-
-
-  AES_CTR_xcrypt_buffer(&ctx, (uint8_t *)buf, len);
-
-
-  return 0;
-
   aps::ap_server_ptr server = std::make_shared<aps::ap_server>();
   aps::ap_handler_ptr player = std::make_shared<ap_player>();
   aps::ap_config_ptr config = aps::ap_config::default_instance();

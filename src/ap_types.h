@@ -4,9 +4,9 @@
 #include <utils/packing.h>
 
 namespace aps {
-  /// <summary>
-  /// 
-  /// </summary>
+/// <summary>
+///
+/// </summary>
 struct agent_version_s {
   uint16_t major;
   uint16_t minor;
@@ -19,16 +19,30 @@ typedef agent_version_s agent_version_t;
 ///
 /// </summary>
 enum rtp_payload_type_e {
+  // from timing sync port
   rtp_timing_query = 82,
   rtp_timing_reply = 83,
 
+  // from control port
   rtp_ctrl_timing_sync = 84,
-  rtp_ctrl_retransmit_request = 85,
+  rtp_ctrl_retransmit_request = 85, // s -> c
   rtp_ctrl_retransmit_reply = 86,
 
+  // from data port
   rtp_audio_data = 96,
 };
 typedef rtp_payload_type_e rtp_payload_type_t;
+
+/// <summary>
+///
+/// </summary>
+enum audio_data_format_e {
+  audio_format_pcm = 0,
+  audio_format_alac = 1,
+  audio_format_aac = 2,
+  audio_format_aac_eld = 3
+};
+typedef audio_data_format_e audio_data_format_t;
 
 /// <summary>
 ///
@@ -50,19 +64,14 @@ PACKED(struct rtp_packet_header_s {
 });
 typedef rtp_packet_header_s rtp_packet_header_t;
 
-PACKED(struct rtp_timming_sync_packet_s
+PACKED(struct rtp_audio_data_packet_s
        : public rtp_packet_header_t {
-         uint64_t original_timestamp;
-         uint64_t receive_timestamp;
-         uint64_t transmit_timestamp;
+         uint32_t ssrc;
+         uint8_t payload[];
 
-         rtp_timming_sync_packet_s() : rtp_packet_header_t() {
-           original_timestamp = 0;
-           receive_timestamp = 0;
-           transmit_timestamp = 0;
-         }
+         rtp_audio_data_packet_s() : rtp_packet_header_t() { ssrc = 0; }
        });
-typedef rtp_timming_sync_packet_s rtp_timming_sync_packet_t;
+typedef rtp_audio_data_packet_s rtp_audio_data_packet_t;
 
 PACKED(struct rtp_control_sync_packet_s
        : public rtp_packet_header_t {
@@ -76,26 +85,49 @@ PACKED(struct rtp_control_sync_packet_s
        });
 typedef rtp_control_sync_packet_s rtp_control_sync_packet_t;
 
-PACKED(struct rtp_control_retransmit_packet_s
+PACKED(struct rtp_control_retransmit_request_packet_s
        : public rtp_packet_header_t {
          uint16_t lost_packet_start;
          uint16_t lost_packet_count;
 
-         rtp_control_retransmit_packet_s() : rtp_packet_header_t() {
+         rtp_control_retransmit_request_packet_s() : rtp_packet_header_t() {
            lost_packet_start = 0;
            lost_packet_count = 0;
          }
        });
-typedef rtp_control_retransmit_packet_s rtp_control_retransmit_packet_t;
+typedef rtp_control_retransmit_request_packet_s
+    rtp_control_retransmit_request_packet_t;
 
-PACKED(struct rtp_audio_data_packet_s
+PACKED(struct rtp_control_retransmit_reply_packet_s {
+  uint8_t csrc_count : 4;   /* CSRC count */
+  uint8_t extension : 1;    /* header extension flag */
+  uint8_t padding : 1;      /* padding flag */
+  uint8_t version : 2;      /* protocol version */
+  uint8_t payload_type : 7; /* payload type */
+  uint8_t marker : 1;       /* marker bit */
+  uint16_t sequence;        /* sequence number */
+  rtp_audio_data_packet_t data_packet;
+
+  rtp_control_retransmit_reply_packet_s() : data_packet() {
+    memset(this, 0, sizeof(rtp_control_retransmit_reply_packet_s));
+  }
+});
+typedef rtp_control_retransmit_reply_packet_s
+    rtp_control_retransmit_reply_packet_t;
+
+PACKED(struct rtp_timming_sync_packet_s
        : public rtp_packet_header_t {
-         uint32_t ssrc;
-         uint8_t payload[];
+         uint64_t original_timestamp;
+         uint64_t receive_timestamp;
+         uint64_t transmit_timestamp;
 
-         rtp_audio_data_packet_s() : rtp_packet_header_t() { ssrc = 0; }
+         rtp_timming_sync_packet_s() : rtp_packet_header_t() {
+           original_timestamp = 0;
+           receive_timestamp = 0;
+           transmit_timestamp = 0;
+         }
        });
-typedef rtp_audio_data_packet_s rtp_audio_data_packet_t;
+typedef rtp_timming_sync_packet_s rtp_timming_sync_packet_t;
 
 enum sms_payload_type_e {
   sms_video_data = 0,
@@ -142,13 +174,13 @@ PACKED(struct sms_video_codec_packet_s
          uint8_t reserved1 : 3;
          uint8_t start[];
 
-         //struct {
+         // struct {
          //  uint16_t sps_length;
          //  // spsNALUnit size = sps_length;
          //}[sps_count];
 
-         //uint8_t pps_count;
-         //struct {
+         // uint8_t pps_count;
+         // struct {
          //  uint16_t pps_length;
          //  // ppsNALUnit size = pps_length;
          //}[pps_count];
@@ -167,4 +199,4 @@ PACKED(struct sms_video_4096_packet_s
        : public sms_packet_header_t { uint8_t payload[]; });
 typedef sms_video_4096_packet_s sms_video_4096_packet_t;
 
-}  // namespace aps
+} // namespace aps

@@ -106,7 +106,7 @@ void airplay_handler::on_mirror_stream_data(
       jbyteArray byte_array = env->NewByteArray(p->payload_size);
       env->SetByteArrayRegion(byte_array, 0, p->payload_size,
                               (jbyte *)(p->payload));
-      env->CallVoidMethod(obj_this_, mid, byte_array);
+      env->CallVoidMethod(obj_this_, mid, byte_array, p->timestamp);
       env->DeleteLocalRef(byte_array);
     } else {
       __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
@@ -195,12 +195,13 @@ void airplay_handler::on_audio_set_meta_data(const void *data,
   }
 }
 
-void airplay_handler::on_audio_stream_started() {
+void airplay_handler::on_audio_stream_started(
+    const aps::audio_data_format_t format) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    GET_METHOD_ID(on_audio_stream_started, "()V");
+    GET_METHOD_ID(on_audio_stream_started, "(I)V");
     if (mid) {
-      env->CallVoidMethod(obj_this_, mid);
+      env->CallVoidMethod(obj_this_, mid, format);
     } else {
       __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
                           "Failed to get method id of on_audio_stream_started");
@@ -226,45 +227,45 @@ void airplay_handler::on_audio_stream_data(
   }
 }
 
-void airplay_handler::on_audio_control_sync(
-    const aps::rtp_control_sync_packet_t *p) {
-  JNIEnv *env = get_JNIEnv();
-  if (env) {
-    GET_METHOD_ID(on_audio_control_sync,
-                  "(Lcom/medialab/airplay/AudioControlSync;)V");
-    if (mid) {
-      AudioControlSync sync = AudioControlSync::create(env);
-      sync.sequence(p->sequence);
-      sync.timestamp(p->timestamp);
-      sync.currentNTPTme(p->current_ntp_time);
-      sync.nextPacketTime(p->next_packet_time);
-      env->CallVoidMethod(obj_this_, mid, sync.get());
-    } else {
-      __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
-                          "Failed to get method id of on_audio_stream_data");
-    }
-  }
-}
-
-void airplay_handler::on_audio_control_retransmit(
-    const aps::rtp_control_retransmit_packet_t *p) {
-  JNIEnv *env = get_JNIEnv();
-  if (env) {
-    GET_METHOD_ID(on_audio_control_retransmit,
-                  "(Lcom/medialab/airplay/AudioControlRetransmit;)V");
-    if (mid) {
-      AudioControlRetransmit retransmit = AudioControlRetransmit::create(env);
-      retransmit.sequence(p->sequence);
-      retransmit.timestamp(p->timestamp);
-      retransmit.lostPacketStart(p->lost_packet_start);
-      retransmit.lostPacketCount(p->lost_packet_count);
-      env->CallVoidMethod(obj_this_, mid, retransmit.get());
-    } else {
-      __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
-                          "Failed to get method id of on_audio_stream_data");
-    }
-  }
-}
+// void airplay_handler::on_audio_control_sync(
+//    const aps::rtp_control_sync_packet_t *p) {
+//  JNIEnv *env = get_JNIEnv();
+//  if (env) {
+//    GET_METHOD_ID(on_audio_control_sync,
+//                  "(Lcom/medialab/airplay/AudioControlSync;)V");
+//    if (mid) {
+//      AudioControlSync sync = AudioControlSync::create(env);
+//      sync.sequence(p->sequence);
+//      sync.timestamp(p->timestamp);
+//      sync.currentNTPTme(p->current_ntp_time);
+//      sync.nextPacketTime(p->next_packet_time);
+//      env->CallVoidMethod(obj_this_, mid, sync.get());
+//    } else {
+//      __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
+//                          "Failed to get method id of on_audio_stream_data");
+//    }
+//  }
+//}
+//
+// void airplay_handler::on_audio_control_retransmit(
+//    const aps::rtp_control_retransmit_packet_t *p) {
+//  JNIEnv *env = get_JNIEnv();
+//  if (env) {
+//    GET_METHOD_ID(on_audio_control_retransmit,
+//                  "(Lcom/medialab/airplay/AudioControlRetransmit;)V");
+//    if (mid) {
+//      AudioControlRetransmit retransmit = AudioControlRetransmit::create(env);
+//      retransmit.sequence(p->sequence);
+//      retransmit.timestamp(p->timestamp);
+//      retransmit.lostPacketStart(p->lost_packet_start);
+//      retransmit.lostPacketCount(p->lost_packet_count);
+//      env->CallVoidMethod(obj_this_, mid, retransmit.get());
+//    } else {
+//      __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
+//                          "Failed to get method id of on_audio_stream_data");
+//    }
+//  }
+//}
 
 void airplay_handler::on_audio_stream_stopped() {
   JNIEnv *env = get_JNIEnv();

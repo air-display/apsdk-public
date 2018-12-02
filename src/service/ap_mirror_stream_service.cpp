@@ -36,14 +36,14 @@ void ap_mirror_stream_session::post_receive_packet_header() {
 }
 
 void ap_mirror_stream_session::on_packet_header_received(
-    const asio::error_code &e, std::size_t bytes_transferred) { 
+    const asio::error_code &e, std::size_t bytes_transferred) {
   if (e) {
     handle_socket_error(e);
     return;
   }
 
   // Receive payload
-  post_receive_packet_payload(); 
+  post_receive_packet_payload();
 }
 
 void ap_mirror_stream_session::post_receive_packet_payload() {
@@ -70,23 +70,13 @@ void ap_mirror_stream_session::on_packet_payload_received(
 }
 
 void ap_mirror_stream_session::process_packet() {
-  if (sms_video_data == header_->payload_type) {
+  if (sms_video_data == header_->payload_type ||
+      sms_payload_4096 == header_->payload_type) {
     // Process the video packet
     LOGV() << "mirror VIDEO packet: " << header_->payload_size;
     // Parse the frame
     sms_video_data_packet_t *p = (sms_video_data_packet_t *)header_;
     crypto_->decrypt_video_frame(payload_, p->payload_size);
-    uint8_t *cursor = payload_;
-    uint32_t frame_size = 0;
-    frame_size <<= 8;
-    frame_size |= cursor[0];
-    frame_size <<= 8;
-    frame_size |= cursor[1];
-    frame_size <<= 8;
-    frame_size |= cursor[2];
-    frame_size <<= 8;
-    frame_size |= cursor[3];
-
     if (handler_) {
       handler_->on_mirror_stream_data(p);
     }
@@ -94,7 +84,7 @@ void ap_mirror_stream_session::process_packet() {
     // Process the codec packet
     LOGV() << "mirror CODEC packet: " << header_->payload_size;
     sms_video_codec_packet_t *p = (sms_video_codec_packet_t *)header_;
-    
+
     // Parse SPS
     uint8_t *cursor = p->start;
     for (int i = 0; i < p->sps_count; i++) {
@@ -111,7 +101,17 @@ void ap_mirror_stream_session::process_packet() {
       cursor += sizeof(uint16_t) + pps_length;
     }
 
-    // 00 00 00 01 [ ... SPS ... ] 00 00 00 01 [ ... PPS ... ]
+    // 00000001
+    // sps
+    // 00000001
+    // pps
+    // 00000001
+    // NALU(from 4096 type)
+    // 00000001
+    // NALU(type 0 from this point)
+    // 00000001
+    // NALU
+    // 00000001...
 
     if (handler_) {
       handler_->on_mirror_stream_codec(p);
@@ -119,9 +119,6 @@ void ap_mirror_stream_session::process_packet() {
   } else if (sms_payload_5 == header_->payload_type) {
     // Process the 5 packet
     LOGV() << "mirror 5 packet: " << header_->payload_size;
-  } else if (sms_payload_4096 == header_->payload_type) {
-    // Process the 4096 packet
-    LOGV() << "mirror 4096 packet: " << header_->payload_size;
   } else {
     // Unknown packet
     LOGE() << "Unknown payload type: " << header_->payload_type;

@@ -15,5 +15,6 @@ public class MirroringVideoCodec {
 
     public short ppsLength;
 
-    public MirroringVideoCodec() {}
+    public MirroringVideoCodec() {
+    }
 }

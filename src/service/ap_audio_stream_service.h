@@ -9,7 +9,6 @@
 #include <utils/packing.h>
 #include <vector>
 
-
 using namespace aps::service::audio::details;
 
 namespace aps {
@@ -71,7 +70,7 @@ protected:
 
   void control_sync_packet(rtp_control_sync_packet_t *packet);
 
-  void control_retransmit_packet(rtp_control_retransmit_packet_t *packet);
+  void control_retransmit_packet(rtp_control_retransmit_reply_packet_t *packet);
 
   void on_thread_start();
 

@@ -1,7 +1,8 @@
-#include <ap_config.h>
 #include <algorithm>
+#include <ap_config.h>
 #include <sstream>
 #include <utils/utils.h>
+
 
 namespace aps {
 ap_config_audio_format::ap_config_audio_format() {
@@ -53,7 +54,7 @@ ap_config_ptr ap_config::default_instance() {
     s_instance = std::make_shared<ap_config>();
     s_instance->name_ = "APS Display";
     s_instance->deviceID_ = device_id;
-    s_instance->model_ = "AppleTV3,1";
+    s_instance->model_ = "AppleTV3,2";
     s_instance->serverVersion_ = "220.68";
     s_instance->pi_ = "b08f5a79-db29-4384-b456-a4784d9e6055";
     s_instance->pk_ =
@@ -61,7 +62,8 @@ ap_config_ptr ap_config::default_instance() {
     s_instance->flags_ = "0x04";
     s_instance->macAddress_ = mac_address;
     s_instance->vv_ = 2;
-    s_instance->features_ = 0x0E5A7FFFF7;
+    s_instance->features_ =
+        0x527FFFF7; // 0x0E5A7FFFF7 with pv // 0x0E527FFFF7 w/o pv;
     s_instance->statusFlag_ = 68;
     s_instance->audioCodecs_ = "0,1,2,3";
     s_instance->encryptionTypes_ = "0,3,5";
@@ -70,7 +72,7 @@ ap_config_ptr ap_config::default_instance() {
     s_instance->transmissionProtocol_ = "UDP";
     s_instance->display_.width(1920);
     s_instance->display_.height(1080);
-    s_instance->display_.refreshRate(1.0f / 24);
+    s_instance->display_.refreshRate(60);
     s_instance->display_.uuid("e5f7a68d-7b0f-4305-984b-974f677a150b");
     s_instance->audio_latency_.type(96);
     s_instance->audio_latency_.audioType("default");

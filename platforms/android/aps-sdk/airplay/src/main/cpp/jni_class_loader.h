@@ -7,7 +7,6 @@
 #include <android/log.h>
 #include <jni.h>
 
-
 class jni_class_loader {
 public:
   static jni_class_loader &get() {
@@ -20,8 +19,8 @@ public:
     jclass class_clz = env->GetObjectClass(nci_object_clz);
 
     jclass class_loader_clz = env->FindClass("java/lang/ClassLoader");
-    jmethodID mid_get_class_loader = env->GetMethodID(class_clz, "getClassLoader",
-                                                 "()Ljava/lang/ClassLoader;");
+    jmethodID mid_get_class_loader = env->GetMethodID(
+        class_clz, "getClassLoader", "()Ljava/lang/ClassLoader;");
     class_loader_ = env->CallObjectMethod(nci_object_clz, mid_get_class_loader);
     class_loader_ = env->NewGlobalRef(class_loader_);
 

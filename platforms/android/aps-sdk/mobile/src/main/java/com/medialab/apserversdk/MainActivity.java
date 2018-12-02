@@ -14,8 +14,6 @@ import com.dueeeke.videoplayer.player.PlayerConfig;
 import com.medialab.airplay.AirPlayConfig;
 import com.medialab.airplay.AirPlayHandler;
 import com.medialab.airplay.AirPlayServer;
-import com.medialab.airplay.AudioControlRetransmit;
-import com.medialab.airplay.AudioControlSync;
 import com.medialab.airplay.MirroringVideoCodec;
 import com.medialab.airplay.PlaybackInfo;
 
@@ -149,8 +147,22 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void on_audio_stream_started() {
-                Log.i(TAG, "on_audio_stream_started: ");
+            public void on_audio_stream_started(int format) {
+                if (format == PCM) {
+                    Log.i(TAG, "on_audio_stream_started: PCM");
+
+                } else if (format == ALAC) {
+                    Log.i(TAG, "on_audio_stream_started: ALAC");
+
+                } else if (format == AAC) {
+                    Log.i(TAG, "on_audio_stream_started: AAC");
+
+                } else if (format == AACELD) {
+                    Log.i(TAG, "on_audio_stream_started: AACELD");
+
+                } else {
+                    Log.i(TAG, "on_audio_stream_started: Unknown");
+                }
             }
 
             @Override
@@ -158,15 +170,6 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(TAG, "on_audio_stream_data: ");
             }
 
-            @Override
-            public void on_audio_control_sync(AudioControlSync sync) {
-                Log.i(TAG, "on_audio_control_sync: ");
-            }
-
-            @Override
-            public void on_audio_control_retransmit(AudioControlRetransmit retransmit) {
-                Log.i(TAG, "on_audio_control_retransmit: ");
-            }
 
             @Override
             public void on_audio_stream_stopped() {

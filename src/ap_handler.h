@@ -141,8 +141,8 @@ public:
   /// <remarks>
   /// THREAD_VIDEO_STREAM
   /// </remarks>
-  virtual void on_mirror_stream_codec(
-      const aps::sms_video_codec_packet_t *p) = 0;
+  virtual void
+  on_mirror_stream_codec(const aps::sms_video_codec_packet_t *p) = 0;
 
   /// <summary>
   ///
@@ -207,7 +207,8 @@ public:
   /// <remarks>
   /// THREAD_AIRPLAY
   /// </remarks>
-  virtual void on_audio_stream_started() = 0;
+  virtual void
+  on_audio_stream_started(const aps::audio_data_format_t format) = 0;
 
   /// <summary>
   ///
@@ -219,26 +220,6 @@ public:
   /// </remarks>
   virtual void on_audio_stream_data(const aps::rtp_audio_data_packet_t *p,
                                     const uint32_t payload_length) = 0;
-
-  /// <summary>
-  ///
-  /// </summary>
-  /// <param name="p"></param>
-  /// <remarks>
-  /// THREAD_AUDIO_STREAM
-  /// </remarks>
-  virtual void
-  on_audio_control_sync(const aps::rtp_control_sync_packet_t *p) = 0;
-
-  /// <summary>
-  ///
-  /// </summary>
-  /// <param name="p"></param>
-  /// <remarks>
-  /// THREAD_AUDIO_STREAM
-  /// </remarks>
-  virtual void on_audio_control_retransmit(
-      const aps::rtp_control_retransmit_packet_t *p) = 0;
 
   /// <summary>
   ///

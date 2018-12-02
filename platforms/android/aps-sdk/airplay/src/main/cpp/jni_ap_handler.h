@@ -41,16 +41,17 @@ public:
   virtual void on_audio_set_meta_data(const void *data,
                                       const uint32_t length) override;
 
-  virtual void on_audio_stream_started() override;
+  virtual void
+  on_audio_stream_started(const aps::audio_data_format_t format) override;
 
   virtual void on_audio_stream_data(const aps::rtp_audio_data_packet_t *p,
                                     const uint32_t payload_length) override;
 
-  virtual void
-  on_audio_control_sync(const aps::rtp_control_sync_packet_t *p) override;
+  // virtual void on_audio_control_sync(const aps::rtp_control_sync_packet_t *p)
+  // override;
 
-  virtual void on_audio_control_retransmit(
-      const aps::rtp_control_retransmit_packet_t *p) override;
+  // virtual void on_audio_control_retransmit(const
+  // aps::rtp_control_retransmit_packet_t *p) override;
 
   virtual void on_audio_stream_stopped() override;
 

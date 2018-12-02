@@ -74,10 +74,11 @@ void jni_ap_handler::on_audio_set_meta_data(const void *data,
     parent->on_audio_set_meta_data(data, length);
 }
 
-void jni_ap_handler::on_audio_stream_started() {
+void jni_ap_handler::on_audio_stream_started(
+    const aps::audio_data_format_t format) {
   __android_log_write(ANDROID_LOG_INFO, LOG_TAG, "on_audio_stream_started");
   if (parent)
-    parent->on_audio_stream_started();
+    parent->on_audio_stream_started(format);
 }
 
 void jni_ap_handler::on_audio_stream_data(const aps::rtp_audio_data_packet_t *p,
@@ -87,19 +88,19 @@ void jni_ap_handler::on_audio_stream_data(const aps::rtp_audio_data_packet_t *p,
     parent->on_audio_stream_data(p, payload_length);
 }
 
-void jni_ap_handler::on_audio_control_sync(
-    const aps::rtp_control_sync_packet_t *p) {
-  __android_log_write(ANDROID_LOG_DEBUG, LOG_TAG, "on_audio_control_sync");
-  if (parent)
-    parent->on_audio_control_sync(p);
-}
+// void jni_ap_handler::on_audio_control_sync(
+//    const aps::rtp_control_sync_packet_t *p) {
+//  __android_log_write(ANDROID_LOG_DEBUG, LOG_TAG, "on_audio_control_sync");
+//  if (parent)
+//    parent->on_audio_control_sync(p);
+//}
 
-void jni_ap_handler::on_audio_control_retransmit(
-    const aps::rtp_control_retransmit_packet_t *p) {
-  __android_log_write(ANDROID_LOG_DEBUG, LOG_TAG, "on_audio_control_retransmit");
-  if (parent)
-    parent->on_audio_control_retransmit(p);
-}
+// void jni_ap_handler::on_audio_control_retransmit(
+//    const aps::rtp_control_retransmit_packet_t *p) {
+//  __android_log_write(ANDROID_LOG_DEBUG, LOG_TAG,
+//  "on_audio_control_retransmit"); if (parent)
+//    parent->on_audio_control_retransmit(p);
+//}
 
 void jni_ap_handler::on_audio_stream_stopped() {
   __android_log_write(ANDROID_LOG_INFO, LOG_TAG, "on_audio_stream_stopped");

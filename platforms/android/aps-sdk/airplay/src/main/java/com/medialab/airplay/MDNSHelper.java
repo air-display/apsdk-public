@@ -24,6 +24,7 @@ final class MDNSHelper {
 
     /**
      * Initializes the application context.
+     *
      * @param context
      */
     static public void initializeContext(Context context) {
@@ -53,13 +54,20 @@ final class MDNSHelper {
             serviceInfo.setPort(1);
             mRegistrationListener = new NsdManager.RegistrationListener() {
                 @Override
-                public void onServiceRegistered(NsdServiceInfo NsdServiceInfo) { }
+                public void onServiceRegistered(NsdServiceInfo NsdServiceInfo) {
+                }
+
                 @Override
-                public void onRegistrationFailed(NsdServiceInfo serviceInfo, int errorCode) { }
+                public void onRegistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
+                }
+
                 @Override
-                public void onServiceUnregistered(NsdServiceInfo arg0) { }
+                public void onServiceUnregistered(NsdServiceInfo arg0) {
+                }
+
                 @Override
-                public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) { }
+                public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
+                }
             };
             NsdManager nsdManager = (NsdManager) mContext.getSystemService(mContext.NSD_SERVICE);
             nsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);

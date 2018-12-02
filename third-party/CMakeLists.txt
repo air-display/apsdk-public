@@ -52,3 +52,12 @@ file(GLOB_RECURSE hlsparser_SRC_FILES
 add_library(hlsparser STATIC
     ${hlsparser_SRC_FILES}
 )
+
+#################################################
+file(GLOB_RECURSE opensslaes_SRC_FILES
+    "./opensslaes/*.c"
+    "./opensslaes/*.h"
+)
+add_library(opensslaes STATIC
+    ${opensslaes_SRC_FILES}
+)
