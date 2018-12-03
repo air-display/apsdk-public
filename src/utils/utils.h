@@ -1,18 +1,61 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 #pragma once
-#include <functional>
 #include <stdint.h>
+#include <functional>
 #include <string>
+#include <asio.hpp>
 
 #if defined(ANDROID)
-#define ntohll(n)                                                              \
-  ((((uint64_t)ntohl((uint64_t)n)) << 32) +                                    \
+#define ntohll(n)                           \
+  ((((uint64_t)ntohl((uint64_t)n)) << 32) + \
    ntohl((uint32_t)((uint64_t)n >> 32)))
-#define htonll(n)                                                              \
-  ((((uint64_t)htonl((uint64_t)n)) << 32) +                                    \
+
+#define htonll(n)                           \
+  ((((uint64_t)htonl((uint64_t)n)) << 32) + \
    htonl((uint32_t)((uint64_t)n >> 32)))
 #endif
+
+inline float _ntohf(float f) {
+  union {
+    float f;
+    uint32_t u;
+  } value;
+
+  value.f = f;
+  value.u = ntohl(value.u);
+  return value.f;
+}
+
+inline float _htonf(float f) {
+  union {
+    float f;
+    uint32_t u;
+  } value;
+  value.f = f;
+  value.u = htonl(value.u);
+  return value.f;
+}
+
+inline double _ntohd(double d) {
+  union {
+    double d;
+    uint64_t u;
+  } value;
+  value.d = d;
+  value.u = ntohll(value.u);
+  return value.d;
+}
+
+inline double _htond(double d) {
+  union {
+    double d;
+    uint64_t u;
+  } value;
+  value.d = d;
+  value.u = htonll(value.u);
+  return value.d;
+}
 
 /// <summary>
 ///
@@ -58,16 +101,14 @@ typedef std::function<void()> thread_actoin;
 struct thread_guard_s {
   thread_guard_s(thread_actoin start, thread_actoin stop)
       : start_(start), stop_(stop) {
-    if (start_)
-      start_();
+    if (start_) start_();
   }
 
   ~thread_guard_s() {
-    if (stop_)
-      stop_();
+    if (stop_) stop_();
   }
 
-public:
+ public:
   thread_actoin start_;
   thread_actoin stop_;
 };
@@ -79,4 +120,4 @@ std::string get_best_quality_stream_uri(const char *data, uint32_t length);
 
 bool get_youtube_url(const char *data, uint32_t length, std::string &url);
 
-#endif // !UTILS_H_
+#endif  // !UTILS_H_

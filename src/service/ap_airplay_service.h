@@ -213,7 +213,7 @@ private:
 
   uint32_t fcup_request_id_;
 
-  double start_pos_;
+  float start_pos_;
 };
 
 typedef std::shared_ptr<ap_airplay_session> ap_airplay_session_ptr;

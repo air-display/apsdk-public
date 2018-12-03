@@ -5,16 +5,7 @@
     android:id="@+id/linearLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
-
-    <com.dueeeke.videoplayer.player.IjkVideoView
-        android:id="@+id/player_view"
-        android:layout_width="match_parent"
-        android:layout_marginTop="0dp"
-        android:layout_marginBottom="0dp"
-        app:layout_constraintBottom_toTopOf="@+id/server_switch"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_height="0dp" />
+    tools:context=".APSMainActivity">
 
     <Button
         android:id="@+id/server_switch"
