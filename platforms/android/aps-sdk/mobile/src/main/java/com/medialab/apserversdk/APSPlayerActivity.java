@@ -79,6 +79,8 @@ import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.util.ErrorMessageProvider;
 import com.google.android.exoplayer2.util.EventLogger;
 import com.google.android.exoplayer2.util.Util;
+import com.medialab.airplay.PlaybackInfo;
+
 import java.lang.reflect.Constructor;
 import java.net.CookieHandler;
 import java.net.CookieManager;
@@ -154,6 +156,8 @@ public class APSPlayerActivity extends Activity
     private AdsLoader adsLoader;
     private Uri loadedAdTagUri;
     private ViewGroup adUiViewGroup;
+
+    private APSDemoApplication.IPlayerClient playerClient;
 
     // Activity lifecycle
 
@@ -465,6 +469,40 @@ public class APSPlayerActivity extends Activity
             } else {
                 releaseAdsLoader();
             }
+
+            playerClient = new APSDemoApplication.IPlayerClient() {
+                private SimpleExoPlayer player = APSPlayerActivity.this.player;
+
+                @Override
+                public void stop() {
+                    player.stop();
+                }
+
+                @Override
+                public void setScrub(float position) {
+                    player.seekTo(startWindow, (long) position);
+                }
+
+                @Override
+                public void setRate(float rate) {
+                    if (rate == 0) {
+                        player.setPlayWhenReady(false);
+                    } else {
+                        player.setPlayWhenReady(true);
+                    }
+                }
+
+                @Override
+                public PlaybackInfo getPlaybackInfo() {
+                    PlaybackInfo playbackInfo = new PlaybackInfo();
+                    playbackInfo.duration = player.getDuration();
+                    playbackInfo.position = player.getCurrentPosition();
+                    playbackInfo.rate = player.getPlaybackState();
+                    playbackInfo.stallCount = 0;
+                    return playbackInfo;
+                }
+            };
+            ((APSDemoApplication)getApplication()).setPlayerClient(playerClient);
         }
         boolean haveStartPosition = startWindow != C.INDEX_UNSET;
         if (haveStartPosition) {
@@ -537,6 +575,9 @@ public class APSPlayerActivity extends Activity
             player = null;
             mediaSource = null;
             trackSelector = null;
+
+            playerClient = null;
+            ((APSDemoApplication)getApplication()).setPlayerClient(null);
         }
         releaseMediaDrm();
     }
