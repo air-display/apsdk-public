@@ -30,10 +30,11 @@ public class AirPlayServer extends NciObject {
     }
     private native void nciDelete();
 
+    private native void nciSetConfig(AirPlayConfig config);
+    private native void nciSetHandler(AirPlayHandler handler);
     private native boolean nciStart();
     private native void nciStop();
-    private native void nciSetConfig();
-    private native void nciSetHandler(AirPlayHandler handler);
+    private native short nciGetServicePort();
 
     private AirPlayConfig config;
 
@@ -49,7 +50,7 @@ public class AirPlayServer extends NciObject {
 
     public void setConfig(AirPlayConfig config) {
         this.config = config;
-        nciSetConfig();
+        nciSetConfig(config);
     }
 
     public AirPlayHandler getHandler() {
@@ -69,5 +70,9 @@ public class AirPlayServer extends NciObject {
     public void stop() {
         MDNSHelper.releaseMDNSDaemon();
         nciStop();
+    }
+
+    public short getServicePort() {
+        return nciGetServicePort();
     }
 }

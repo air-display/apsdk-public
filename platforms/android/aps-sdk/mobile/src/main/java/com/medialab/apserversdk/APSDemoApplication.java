@@ -90,6 +90,8 @@ public class APSDemoApplication extends Application {
     public void startAirPlayServer() {
         if (null != airplayServer) {
             airplayServer.start();
+            short port = airplayServer.getServicePort();
+            Log.i(TAG, String.format("startAirPlayServer: AirPlay service started on port %d", port));
         }
     }
 
@@ -164,8 +166,12 @@ public class APSDemoApplication extends Application {
 
     private void createAirPlayServer() {
         if (airplayServer == null) {
+            AirPlayConfig config = AirPlayConfig.defaultInstance();
+            config.setName("Test Airplay Server");
+            config.getDisplay().setWidth(1920);
+            config.getDisplay().setHeight(1280);
             airplayServer = new AirPlayServer(getApplicationContext());
-            airplayServer.setConfig(AirPlayConfig.defaultInstance());
+            airplayServer.setConfig(config);
         }
 
         airplayServer.setHandler(new AirPlayHandler(this) {

@@ -1,19 +1,19 @@
 #include "ap_server.h"
-#include <ctime>
-#include <memory>
 #include "ap_config.h"
 #include "mdns/net_service.h"
 #include "service/ap_airplay_service.h"
+#include <ctime>
+#include <memory>
+
 
 using namespace aps::service;
 using namespace aps::network;
 
 namespace aps {
 class ap_server::implementation {
- public:
+public:
   implementation()
-      : airplay_net_service_("_airplay._tcp"),
-        raop_net_service_("_raop._tcp"),
+      : airplay_net_service_("_airplay._tcp"), raop_net_service_("_raop._tcp"),
         airplay_tcp_service_(0) {}
 
   ~implementation() {}
@@ -23,13 +23,15 @@ class ap_server::implementation {
   void set_handler(ap_handler_ptr hanlder) { ap_handler_ = hanlder; }
 
   bool start() {
-    if (airplay_tcp_service_) return true;
+    if (airplay_tcp_service_)
+      return true;
 
     airplay_tcp_service_ =
         std::make_shared<ap_airplay_service>(ap_config_, 9123);
     airplay_tcp_service_->set_handler(ap_handler_);
 
-    if (!airplay_tcp_service_) return false;
+    if (!airplay_tcp_service_)
+      return false;
 
     if (!airplay_tcp_service_->start()) {
       airplay_tcp_service_.reset();
@@ -55,7 +57,14 @@ class ap_server::implementation {
     }
   }
 
- protected:
+  short get_service_port() {
+    if (airplay_tcp_service_) {
+      return airplay_tcp_service_->port();
+    }
+    return -1;
+  }
+
+protected:
   bool initialize_net_service() {
     airplay_net_service_.add_txt_record("deviceId", ap_config_->macAddress());
     airplay_net_service_.add_txt_record("features",
@@ -102,7 +111,7 @@ class ap_server::implementation {
     return false;
   }
 
- private:
+private:
   ap_config_ptr ap_config_;
 
   ap_handler_ptr ap_handler_;
@@ -127,4 +136,6 @@ void ap_server::set_handler(ap_handler_ptr &hanlder) {
 bool aps::ap_server::start() { return impl_->start(); }
 
 void ap_server::stop() { impl_->stop(); }
-}  // namespace aps
+
+short ap_server::get_service_port() { return impl_->get_service_port(); }
+} // namespace aps

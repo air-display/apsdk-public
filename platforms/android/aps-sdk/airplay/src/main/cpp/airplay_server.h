@@ -7,6 +7,7 @@
 #include <airplay_config.h>
 #include <airplay_handler.h>
 #include <aps-jni.h>
+#include "jni_class_wrapper.h"
 
 using namespace aps;
 
@@ -18,9 +19,11 @@ public:
 
   void stop();
 
-  void setConfig();
+  void setConfig(ap_config_ptr config);
 
   void setHandler(airplay_handler *handler);
+
+  short getServicePort();
 
 private:
   ap_server_ptr server_;
@@ -40,10 +43,13 @@ JNIEXPORT void JNICALL
 Java_com_medialab_airplay_AirPlayServer_nciStop(JNIEnv *env, jobject thiz);
 
 JNIEXPORT void JNICALL
-Java_com_medialab_airplay_AirPlayServer_nciSetConfig(JNIEnv *env, jobject thiz);
+Java_com_medialab_airplay_AirPlayServer_nciSetConfig(JNIEnv *env, jobject thiz, jobject config);
 
 JNIEXPORT void JNICALL Java_com_medialab_airplay_AirPlayServer_nciSetHandler(
     JNIEnv *env, jobject thiz, jobject handler);
+
+JNIEXPORT short JNICALL Java_com_medialab_airplay_AirPlayServer_nciGetServicePort(JNIEnv *env,
+                                                                jobject thiz);
 }
 
 #endif // APS_SDK_AIRPLAY_SERVER_H

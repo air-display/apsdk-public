@@ -18,18 +18,24 @@ void airplay_server::stop() {
     server_->stop();
 }
 
-void airplay_server::setConfig() {
-  ap_config_ptr config = ap_config::default_instance();
+void airplay_server::setConfig(ap_config_ptr config) {
   if (server_) {
     server_->set_config(config);
   }
 }
 
 void airplay_server::setHandler(airplay_handler *handler) {
+    if (server_) {
+        ap_handler_ptr h = handler->get_ap_handler();
+        server_->set_handler(h);
+    }
+}
+
+short airplay_server::getServicePort() {
   if (server_) {
-    ap_handler_ptr h = handler->get_ap_handler();
-    server_->set_handler(h);
+    return server_->get_service_port();
   }
+  return -1;
 }
 
 jlong Java_com_medialab_airplay_AirPlayServer_nciNew(JNIEnv *env,
@@ -54,8 +60,29 @@ void Java_com_medialab_airplay_AirPlayServer_nciStop(JNIEnv *env,
 }
 
 void Java_com_medialab_airplay_AirPlayServer_nciSetConfig(JNIEnv *env,
-                                                          jobject thiz) {
-  airplay_server::get(env, thiz)->setConfig();
+                                                          jobject thiz,
+                                                          jobject config) {
+  AirPlayConfig airPlayConfig = AirPlayConfig::attach(env, config);
+
+  ap_config_ptr config_ = ap_config::default_instance();
+  const char *v = 0;
+
+  jstring name = (jstring)airPlayConfig.name();
+  v = env->GetStringUTFChars(name, 0);
+  config_->name(v);
+  env->ReleaseStringUTFChars(name, v);
+
+  jstring deviceId = (jstring)airPlayConfig.deviceID();
+  v = env->GetStringUTFChars(deviceId, 0);
+  config_->deviceID(v);
+  env->ReleaseStringUTFChars(deviceId, v);
+
+  jstring macAddress = (jstring)airPlayConfig.macAddress();
+  v = env->GetStringUTFChars(macAddress, 0);
+  config_->macAddress(v);
+  env->ReleaseStringUTFChars(macAddress, v);
+
+  airplay_server::get(env, thiz)->setConfig(config_);
 }
 
 void Java_com_medialab_airplay_AirPlayServer_nciSetHandler(JNIEnv *env,
@@ -65,4 +92,9 @@ void Java_com_medialab_airplay_AirPlayServer_nciSetHandler(JNIEnv *env,
   if (nci_airplay_ahdnler_) {
     airplay_server::get(env, thiz)->setHandler(nci_airplay_ahdnler_);
   }
+}
+
+short Java_com_medialab_airplay_AirPlayServer_nciGetServicePort(JNIEnv *env,
+                                                           jobject thiz) {
+    return airplay_server::get(env, thiz)->getServicePort();
 }

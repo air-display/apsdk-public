@@ -1,39 +1,33 @@
 package com.medialab.airplay;
 
 public class AirPlayConfig {
-    private static AirPlayConfig s_instance = null;
-
     public static AirPlayConfig defaultInstance() {
-        if (s_instance == null) {
-            s_instance = new AirPlayConfig();
-            s_instance.setName("Tencent WeCast Display");
-            s_instance.setDeviceID("00:00:00:00:00:00");
-            s_instance.setModel("AppleTV3,2");
-            s_instance.setSourceVersion("220.68");
-            s_instance.setPi("b08f5a79-db29-4384-b456-a4784d9e6055");
-            s_instance.setPk("99FD4299889422515FBD27949E4E1E21B2AF50A454499E3D4BE75A4E0F55FE63");
-            s_instance.setMacAddress(s_instance.getDeviceID());
-            s_instance.setVv(2);
-            s_instance.setFeatures(0x5A7FDFD1);
-            s_instance.setStatusFlag(68);
-
-            s_instance.display.setWidth(1920);
-            s_instance.display.setHeight(1080);
-            s_instance.display.setRefreshRate(1.0f / 24);
-            s_instance.display.setUuid("e5f7a68d-7b0f-4305-984b-974f677a150b");
-
-            s_instance.audioLatency.setType(96);
-            s_instance.audioLatency.setAudioType("default");
-            s_instance.audioLatency.setInputLatencyMicros(3);
-            s_instance.audioLatency.setOutputLatencyMicros(79);
-
-            s_instance.audioFormat.setType(96);
-            s_instance.audioFormat.setAudioInputFormats(0x01000000);
-            s_instance.audioFormat.setAudioOutputFormats(0x01000000);
-        }
-
-        return s_instance;
+        AirPlayConfig instance = new AirPlayConfig();
+        instance.setName("Tencent WeCast Display");
+        instance.setMacAddress(instance.generateMacAddress());
+        instance.setDeviceID(instance.simplifyMacAddress(instance.getMacAddress()));
+        instance.setModel("AppleTV3,2");
+        instance.setSourceVersion("220.68");
+        instance.setPi("b08f5a79-db29-4384-b456-a4784d9e6055");
+        instance.setPk("99FD4299889422515FBD27949E4E1E21B2AF50A454499E3D4BE75A4E0F55FE63");
+        instance.setVv(2);
+        instance.setFeatures(0x5A7FDFD1);
+        instance.setStatusFlag(68);
+        instance.display.setWidth(1920);
+        instance.display.setHeight(1080);
+        instance.display.setRefreshRate(1.0f / 24);
+        instance.display.setUuid("e5f7a68d-7b0f-4305-984b-974f677a150b");
+        instance.audioLatency.setType(96);
+        instance.audioLatency.setAudioType("default");
+        instance.audioLatency.setInputLatencyMicros(3);
+        instance.audioLatency.setOutputLatencyMicros(79);
+        instance.audioFormat.setType(96);
+        instance.audioFormat.setAudioInputFormats(0x01000000);
+        instance.audioFormat.setAudioOutputFormats(0x01000000);
+        return instance;
     }
+
+    private static String randomMac = null;
 
     private String name;
 
@@ -73,7 +67,7 @@ public class AirPlayConfig {
         return deviceID;
     }
 
-    public void setDeviceID(String deviceID) {
+    private void setDeviceID(String deviceID) {
         this.deviceID = deviceID;
     }
 
@@ -81,7 +75,7 @@ public class AirPlayConfig {
         return model;
     }
 
-    public void setModel(String model) {
+    private void setModel(String model) {
         this.model = model;
     }
 
@@ -89,7 +83,7 @@ public class AirPlayConfig {
         return sourceVersion;
     }
 
-    public void setSourceVersion(String sourceVersion) {
+    private void setSourceVersion(String sourceVersion) {
         this.sourceVersion = sourceVersion;
     }
 
@@ -97,7 +91,7 @@ public class AirPlayConfig {
         return pi;
     }
 
-    public void setPi(String pi) {
+    private void setPi(String pi) {
         this.pi = pi;
     }
 
@@ -105,7 +99,7 @@ public class AirPlayConfig {
         return pk;
     }
 
-    public void setPk(String pk) {
+    private void setPk(String pk) {
         this.pk = pk;
     }
 
@@ -113,7 +107,7 @@ public class AirPlayConfig {
         return macAddress;
     }
 
-    public void setMacAddress(String macAddress) {
+    private void setMacAddress(String macAddress) {
         this.macAddress = macAddress;
     }
 
@@ -121,7 +115,7 @@ public class AirPlayConfig {
         return vv;
     }
 
-    public void setVv(int vv) {
+    private void setVv(int vv) {
         this.vv = vv;
     }
 
@@ -133,7 +127,7 @@ public class AirPlayConfig {
         return features;
     }
 
-    public void setFeatures(int features) {
+    private void setFeatures(int features) {
         this.features = features;
     }
 
@@ -141,7 +135,7 @@ public class AirPlayConfig {
         return statusFlag;
     }
 
-    public void setStatusFlag(int statusFlag) {
+    private void setStatusFlag(int statusFlag) {
         this.statusFlag = statusFlag;
     }
 
@@ -149,7 +143,7 @@ public class AirPlayConfig {
         return audioFormat;
     }
 
-    public void setAudioFormat(AirPlayConfigAudioFormat audioFormat) {
+    private void setAudioFormat(AirPlayConfigAudioFormat audioFormat) {
         this.audioFormat = audioFormat;
     }
 
@@ -157,7 +151,7 @@ public class AirPlayConfig {
         return audioLatency;
     }
 
-    public void setAudioLatency(AirPlayConfigAudioLatency audioLatency) {
+    private void setAudioLatency(AirPlayConfigAudioLatency audioLatency) {
         this.audioLatency = audioLatency;
     }
 
@@ -165,7 +159,24 @@ public class AirPlayConfig {
         return display;
     }
 
-    public void setDisplay(AirPlayConfigDisplay display) {
+    private void setDisplay(AirPlayConfigDisplay display) {
         this.display = display;
+    }
+
+    private String generateMacAddress() {
+        if (null != randomMac)
+            return randomMac;
+
+        long ts = System.currentTimeMillis();
+        randomMac = String.format(
+                "%02X:%02X:%02X:%02X:%02X:%02X",
+                ((ts >> 0) & 0xff), ((ts >> 8) & 0xff),
+                ((ts >> 16) & 0xff), ((ts >> 24) & 0xff),
+                ((ts >> 32) & 0xff), ((ts >> 40) & 0xff));
+        return randomMac;
+    }
+
+    private String simplifyMacAddress(String macAddress) {
+        return macAddress.replace(":", "");
     }
 }

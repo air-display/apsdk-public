@@ -45,6 +45,11 @@ public:
   /// </summary>
   void stop();
 
+  /// <summary>
+  ///
+  /// </summary>
+  short get_service_port();
+
 private:
   /// <summary>
   ///
