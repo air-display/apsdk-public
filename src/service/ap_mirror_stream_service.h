@@ -12,14 +12,15 @@ using namespace aps::service::mirror::details;
 
 namespace aps {
 namespace service {
-class ap_mirror_stream_session
-    : public aps::network::tcp_session_base,
-      public std::enable_shared_from_this<ap_mirror_stream_session> {
+class ap_mirror_stream_connection
+    : public aps::network::tcp_connection_base,
+      public std::enable_shared_from_this<ap_mirror_stream_connection> {
 public:
-  ap_mirror_stream_session(asio::io_context &io_ctx, aps::ap_crypto_ptr &crypto,
-                          aps::ap_handler_ptr handler = 0);
+  ap_mirror_stream_connection(asio::io_context &io_ctx,
+                              aps::ap_crypto_ptr &crypto,
+                              aps::ap_handler_ptr handler = 0);
 
-  ~ap_mirror_stream_session();
+  ~ap_mirror_stream_connection();
 
   virtual void start() override;
 
@@ -53,12 +54,12 @@ private:
 class ap_mirror_stream_service : public aps::network::tcp_service_base {
 public:
   explicit ap_mirror_stream_service(aps::ap_crypto_ptr &crypto, uint16_t port,
-                                   aps::ap_handler_ptr &handler);
+                                    aps::ap_handler_ptr &handler);
 
   ~ap_mirror_stream_service();
 
 protected:
-  virtual aps::network::tcp_session_ptr prepare_new_session() override;
+  virtual aps::network::tcp_connection_ptr prepare_new_connection() override;
 
   void on_thread_start();
 

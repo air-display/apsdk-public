@@ -8,9 +8,9 @@
 
 namespace aps {
 namespace network {
-class tcp_session {
+class tcp_connection {
 public:
-  virtual ~tcp_session(){};
+  virtual ~tcp_connection(){};
 
   virtual void start() = 0;
 
@@ -19,7 +19,7 @@ public:
   virtual asio::ip::tcp::socket &socket() = 0;
 };
 
-typedef std::shared_ptr<tcp_session> tcp_session_ptr;
+typedef std::shared_ptr<tcp_connection> tcp_connection_ptr;
 
 class tcp_service {
 public:
@@ -33,19 +33,19 @@ public:
 
   virtual asio::io_context &io_context() = 0;
 
-  virtual aps::network::tcp_session_ptr prepare_new_session() = 0;
+  virtual tcp_connection_ptr prepare_new_connection() = 0;
 };
 
 typedef std::shared_ptr<tcp_service> tcp_service_ptr;
 typedef std::weak_ptr<tcp_service> tcp_service_weak_ptr;
 
 
-class tcp_session_base : public tcp_session {
+class tcp_connection_base : public tcp_connection {
 public:
-  explicit tcp_session_base(asio::io_context &io_ctx)
+  explicit tcp_connection_base(asio::io_context &io_ctx)
       : socket_(io_ctx), strand_(io_ctx){};
 
-  virtual ~tcp_session_base() {}
+  virtual ~tcp_connection_base() {}
 
   virtual void start() override {}
 
@@ -95,7 +95,7 @@ public:
 protected:
   void post_accept() {
     // Create a new client session for incoming connection
-    new_session_ = prepare_new_session();
+    new_session_ = prepare_new_connection();
 
     // Perform accept operation on the new client session
     acceptor_.async_accept(
@@ -167,7 +167,7 @@ private:
   thread_actoin worker_thread_start_;
   thread_actoin worker_thread_stop_;
 
-  tcp_session_ptr new_session_;
+  tcp_connection_ptr new_session_;
 };
 
 class idle_tcp_server {

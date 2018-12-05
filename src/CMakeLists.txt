@@ -46,6 +46,10 @@ source_group("mdns" FILES ${SRC_MDNS})
 set(SRC_NETWORK
     network/tcp_service.h
     network/udp_service.h
+    network/xtxp_connection_base.cpp
+    network/xtxp_connection_base.h
+    network/xtxp_message.cpp
+    network/xtxp_message.h
 )
 source_group("network" FILES ${SRC_NETWORK})
 
@@ -56,13 +60,17 @@ set(SRC_SERVICE
     service/ap_audio_stream_service.cpp
     service/ap_audio_stream_service.h
     service/ap_audio_stream_service_details.h
+    service/ap_content_parser.cpp
+    service/ap_content_parser.h
+    service/ap_event_connection_manager.cpp
+    service/ap_event_connection_manager.h
+    service/ap_media_http_service.cpp
+    service/ap_media_http_service.h
     service/ap_mirror_stream_service.cpp
     service/ap_mirror_stream_service.h
     service/ap_mirror_stream_service_details.h
     service/ap_timing_sync_service.cpp
     service/ap_timing_sync_service.h
-    service/ap_content_parser.cpp
-    service/ap_content_parser.h
 )
 source_group("service" FILES ${SRC_SERVICE})
 

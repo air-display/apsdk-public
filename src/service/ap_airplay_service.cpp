@@ -1,35 +1,35 @@
 #include <ap_types.h>
+#include <ctime>
+#include <exception>
 #include <service/ap_airplay_service.h>
 #include <service/ap_audio_stream_service.h>
 #include <service/ap_content_parser.h>
+#include <service/ap_event_connection_manager.h>
 #include <service/ap_mirror_stream_service.h>
+#include <stdexcept>
 #include <string.h>
 #include <utils/logger.h>
 #include <utils/plist.h>
 #include <utils/utils.h>
-#include <ctime>
-#include <exception>
-#include <stdexcept>
+
 
 #if defined(NDEBUG)
-#define DUMP_REQUEST_WITH_SESSION(x)
+#define DUMP_REQUEST_WITH_CONNECTION(x)
 #else
-#define DUMP_REQUEST_WITH_SESSION(x) \
+#define DUMP_REQUEST_WITH_CONNECTION(x)                                        \
   x.dump("[" + std::to_string((long long)this) + "]")
-#endif  // _DEBUG
+#endif // _DEBUG
 
+using namespace aps::network;
 using namespace aps::service::details;
 
 namespace aps {
 namespace service {
-ap_airplay_session::ap_airplay_session(
+ap_airplay_connection::ap_airplay_connection(
     asio::io_context &io_ctx, aps::ap_config_ptr &config,
-    aps::ap_handler_ptr &hanlder, aps::network::tcp_service_weak_ptr service)
-    : tcp_session_base(io_ctx),
-      config_(config),
-      handler_(hanlder),
-      service_(service),
-      is_reversed_(false) {
+    aps::ap_handler_ptr &hanlder, tcp_service_weak_ptr service)
+    : tcp_connection_base(io_ctx), config_(config), handler_(hanlder),
+      service_(service), is_reversed_(false) {
   crypto_ = std::make_shared<ap_crypto>();
 
   timing_sync_service_ = std::make_shared<ap_timing_sync_service>();
@@ -37,24 +37,25 @@ ap_airplay_session::ap_airplay_session(
 
   initialize_request_handlers();
 
-  LOGD() << "ap_airplay_session (" << std::hex << this << ") is being created";
+  LOGD() << "ap_airplay_connection (" << std::hex << this
+         << ") is being created";
 }
 
-ap_airplay_session::~ap_airplay_session() {
+ap_airplay_connection::~ap_airplay_connection() {
   if (timing_sync_service_) {
     timing_sync_service_->close();
     timing_sync_service_.reset();
   }
 
   if (is_reversed_) {
-    ap_event_sesions::instance().remove(apple_session_id_);
+    ap_event_connection_manager::instance().remove(apple_session_id_);
   }
 
-  LOGD() << "ap_airplay_session (" << std::hex << this
+  LOGD() << "ap_airplay_connection (" << std::hex << this
          << ") is being destroyed";
 }
 
-void ap_airplay_session::register_rtsp_request_handler(
+void ap_airplay_connection::register_rtsp_request_handler(
     request_hanlder handler, const std::string &method,
     const std::string &path /*= std::string()*/) {
   auto path_map = rtsp_request_handlers_.find(method);
@@ -67,7 +68,7 @@ void ap_airplay_session::register_rtsp_request_handler(
   }
 }
 
-void ap_airplay_session::register_http_request_handler(
+void ap_airplay_connection::register_http_request_handler(
     request_hanlder handler, const std::string &method,
     const std::string &path /*= std::string()*/) {
   auto path_map = http_request_handlers_.find(method);
@@ -80,7 +81,7 @@ void ap_airplay_session::register_http_request_handler(
   }
 }
 
-void ap_airplay_session::register_request_handler(
+void ap_airplay_connection::register_request_handler(
     service_type_t service, request_hanlder handler, const std::string &method,
     const std::string &path /*= std::string()*/) {
   if (RTSP == service) {
@@ -91,27 +92,27 @@ void ap_airplay_session::register_request_handler(
     return;
 }
 
-void ap_airplay_session::register_request_route(const request_route_t &route) {
+void ap_airplay_connection::register_request_route(
+    const request_route_t &route) {
   register_request_handler(route.service, route.handler, route.method,
                            route.path);
 }
 
-void ap_airplay_session::start() { post_receive_message_head(); }
+void ap_airplay_connection::start() { post_receive_message_head(); }
 
-void ap_airplay_session::options_handler(const details::request &req,
-                                         details::response &res) {
-  DUMP_REQUEST_WITH_SESSION(req);
+void ap_airplay_connection::options_handler(const request &req,
+                                            response &res) {
+  DUMP_REQUEST_WITH_CONNECTION(req);
 
   res.with_status(ok)
-      .with_header("Public",
-                   "ANNOUNCE, SETUP, RECORD, PAUSE, FLUSH, TEARDOWN, "
-                   "OPTIONS, GET_PARAMETER, SET_PARAMETER, POST, GET")
+      .with_header("Public", "ANNOUNCE, SETUP, RECORD, PAUSE, FLUSH, TEARDOWN, "
+                             "OPTIONS, GET_PARAMETER, SET_PARAMETER, POST, GET")
       .with_content_type(APPLICATION_OCTET_STREAM);
 }
 
-void ap_airplay_session::post_pair_setup_handler(const details::request &req,
-                                                 details::response &res) {
-  DUMP_REQUEST_WITH_SESSION(req);
+void ap_airplay_connection::post_pair_setup_handler(const request &req,
+                                                    response &res) {
+  DUMP_REQUEST_WITH_CONNECTION(req);
 
   if (32 == req.content.size()) {
     crypto_->init_client_public_keys(0, 0, req.content.data(), 32);
@@ -122,15 +123,15 @@ void ap_airplay_session::post_pair_setup_handler(const details::request &req,
       .with_content_type(APPLICATION_OCTET_STREAM);
 }
 
-void ap_airplay_session::post_pair_verify_handler(const details::request &req,
-                                                  details::response &res) {
-  DUMP_REQUEST_WITH_SESSION(req);
+void ap_airplay_connection::post_pair_verify_handler(
+    const request &req, response &res) {
+  DUMP_REQUEST_WITH_CONNECTION(req);
 
   pair_verify_header_t *header = (pair_verify_header_t *)req.content.data();
   if (header->is_first_frame) {
     crypto_->init_client_public_keys(
-        req.content.data() + 4, 32,        // client curve public key
-        req.content.data() + 4 + 32, 32);  // client ed public key
+        req.content.data() + 4, 32,       // client curve public key
+        req.content.data() + 4 + 32, 32); // client ed public key
 
     crypto_->init_pair_verify_aes();
 
@@ -153,9 +154,9 @@ void ap_airplay_session::post_pair_verify_handler(const details::request &req,
   }
 }
 
-void ap_airplay_session::post_fp_setup_handler(const details::request &req,
-                                               details::response &res) {
-  DUMP_REQUEST_WITH_SESSION(req);
+void ap_airplay_connection::post_fp_setup_handler(const request &req,
+                                                  response &res) {
+  DUMP_REQUEST_WITH_CONNECTION(req);
 
   fp_header_t *header = (fp_header_t *)req.content.data();
   if (header->major_version == 0x03) {
@@ -186,21 +187,24 @@ void ap_airplay_session::post_fp_setup_handler(const details::request &req,
   res.with_status(ok).with_content_type(APPLICATION_OCTET_STREAM);
 }
 
-void ap_airplay_session::setup_handler(const details::request &req,
-                                       details::response &res) {
-  DUMP_REQUEST_WITH_SESSION(req);
+void ap_airplay_connection::setup_handler(const request &req,
+                                          response &res) {
+  DUMP_REQUEST_WITH_CONNECTION(req);
 
   do {
-    if (req.content_type.compare(APPLICATION_BINARY_PLIST)) break;
+    if (req.content_type.compare(APPLICATION_BINARY_PLIST))
+      break;
 
     auto_plist plist_obj =
         plist_object_from_bplist(req.content.data(), req.content.size());
     auto data_obj = plist_obj.get();
-    if (!data_obj) break;
+    if (!data_obj)
+      break;
 
     auto streams = plist_object_dict_get_value(data_obj, "streams");
     if (streams) {
-      if (PLIST_TYPE_ARRAY != plist_object_get_type(streams)) break;
+      if (PLIST_TYPE_ARRAY != plist_object_get_type(streams))
+        break;
 
       auto stream_obj = plist_object_array_get_value(streams, 0);
       if (!stream_obj || PLIST_TYPE_DICT != plist_object_get_type(stream_obj))
@@ -211,7 +215,8 @@ void ap_airplay_session::setup_handler(const details::request &req,
         break;
 
       int64_t type = 0;
-      if (0 != plist_object_integer_get_value(type_obj, &type)) break;
+      if (0 != plist_object_integer_get_value(type_obj, &type))
+        break;
 
       if (stream_type_t::audio == type) {
         //{
@@ -361,18 +366,21 @@ void ap_airplay_session::setup_handler(const details::request &req,
       const uint8_t *piv = 0;
       uint64_t iv_len = 0;
       auto eiv_obj = plist_object_dict_get_value(data_obj, "eiv");
-      if (0 != plist_object_data_get_value(eiv_obj, &piv, &iv_len)) break;
+      if (0 != plist_object_data_get_value(eiv_obj, &piv, &iv_len))
+        break;
 
       const uint8_t *pkey = 0;
       uint64_t key_len = 0;
       auto ekey_obj = plist_object_dict_get_value(data_obj, "ekey");
-      if (0 != plist_object_data_get_value(ekey_obj, &pkey, &key_len)) break;
+      if (0 != plist_object_data_get_value(ekey_obj, &pkey, &key_len))
+        break;
 
       crypto_->init_client_aes_info(piv, iv_len, pkey, key_len);
 
       auto timing_port_obj =
           plist_object_dict_get_value(data_obj, "timingPort");
-      if (PLIST_TYPE_INTEGER != plist_object_get_type(timing_port_obj)) break;
+      if (PLIST_TYPE_INTEGER != plist_object_get_type(timing_port_obj))
+        break;
       int64_t timing_port = 0;
       if (0 != plist_object_integer_get_value(timing_port_obj, &timing_port))
         break;
@@ -397,9 +405,9 @@ void ap_airplay_session::setup_handler(const details::request &req,
   return;
 }
 
-void ap_airplay_session::get_info_handler(const details::request &req,
-                                          details::response &res) {
-  DUMP_REQUEST_WITH_SESSION(req);
+void ap_airplay_connection::get_info_handler(const request &req,
+                                             response &res) {
+  DUMP_REQUEST_WITH_CONNECTION(req);
 
   // clang-format off
   auto_plist info = plist_object_dict(15,
@@ -452,39 +460,39 @@ void ap_airplay_session::get_info_handler(const details::request &req,
       .with_content(info.to_bytes_array());
 }
 
-void ap_airplay_session::post_feedback_handler(const details::request &req,
-                                               details::response &res) {
+void ap_airplay_connection::post_feedback_handler(const request &req,
+                                                  response &res) {
   res.with_status(ok);
 }
 
-void ap_airplay_session::record_handler(const details::request &req,
-                                        details::response &res) {
-  DUMP_REQUEST_WITH_SESSION(req);
+void ap_airplay_connection::record_handler(const request &req,
+                                           response &res) {
+  DUMP_REQUEST_WITH_CONNECTION(req);
 
   timing_sync_service_->post_send_query();
 
   res.with_status(ok).with_header("Audio-Latency", "0");
 }
 
-void ap_airplay_session::get_parameter_handler(const details::request &req,
-                                               details::response &res) {
-  DUMP_REQUEST_WITH_SESSION(req);
+void ap_airplay_connection::get_parameter_handler(const request &req,
+                                                  response &res) {
+  DUMP_REQUEST_WITH_CONNECTION(req);
 
   res.with_status(ok)
       .with_content_type(TEXT_PARAMETERS)
       .with_content("volume: 0.000000\r\n");
 }
 
-void ap_airplay_session::post_audioMode(const details::request &req,
-                                        details::response &res) {
-  DUMP_REQUEST_WITH_SESSION(req);
+void ap_airplay_connection::post_audioMode(const request &req,
+                                           response &res) {
+  DUMP_REQUEST_WITH_CONNECTION(req);
 
   res.with_status(ok);
 }
 
-void ap_airplay_session::set_parameter_handler(const details::request &req,
-                                               details::response &res) {
-  DUMP_REQUEST_WITH_SESSION(req);
+void ap_airplay_connection::set_parameter_handler(const request &req,
+                                                  response &res) {
+  DUMP_REQUEST_WITH_CONNECTION(req);
   std::string content(req.content.begin(), req.content.end());
   if (0 == req.content_type.compare(TEXT_PARAMETERS)) {
     float ratio = 0;
@@ -534,9 +542,9 @@ void ap_airplay_session::set_parameter_handler(const details::request &req,
   res.with_status(ok);
 }
 
-void ap_airplay_session::teardown_handler(const details::request &req,
-                                          details::response &res) {
-  DUMP_REQUEST_WITH_SESSION(req);
+void ap_airplay_connection::teardown_handler(const request &req,
+                                             response &res) {
+  DUMP_REQUEST_WITH_CONNECTION(req);
 
   if (0 == req.content_type.compare(APPLICATION_BINARY_PLIST)) {
     auto_plist data_obj =
@@ -587,9 +595,9 @@ void ap_airplay_session::teardown_handler(const details::request &req,
   res.with_status(ok);
 }
 
-void ap_airplay_session::flush_handler(const details::request &req,
-                                       details::response &res) {
-  DUMP_REQUEST_WITH_SESSION(req);
+void ap_airplay_connection::flush_handler(const request &req,
+                                          response &res) {
+  DUMP_REQUEST_WITH_CONNECTION(req);
 
   auto rtp_info_header = req.headers.find("RTP-Info");
   if (rtp_info_header != req.headers.end()) {
@@ -603,9 +611,9 @@ void ap_airplay_session::flush_handler(const details::request &req,
   res.with_status(ok).with_content_type(APPLICATION_BINARY_PLIST);
 }
 
-void ap_airplay_session::get_server_info(const details::request &req,
-                                         details::response &res) {
-  DUMP_REQUEST_WITH_SESSION(req);
+void ap_airplay_connection::get_server_info(const request &req,
+                                            response &res) {
+  DUMP_REQUEST_WITH_CONNECTION(req);
   res.with_status(ok);
   // return;
 
@@ -640,16 +648,16 @@ void ap_airplay_session::get_server_info(const details::request &req,
       .with_content(oss.str());
 }
 
-void ap_airplay_session::post_fp_setup2_handler(const details::request &req,
-                                                details::response &res) {
-  DUMP_REQUEST_WITH_SESSION(req);
+void ap_airplay_connection::post_fp_setup2_handler(const request &req,
+                                                   response &res) {
+  DUMP_REQUEST_WITH_CONNECTION(req);
 
   res.with_status(ok);
 }
 
-void ap_airplay_session::post_reverse(const details::request &req,
-                                      details::response &res) {
-  DUMP_REQUEST_WITH_SESSION(req);
+void ap_airplay_connection::post_reverse(const request &req,
+                                         response &res) {
+  DUMP_REQUEST_WITH_CONNECTION(req);
 
   auto purpose = req.headers.find("X-Apple-Purpose");
   if (purpose != req.headers.end()) {
@@ -671,15 +679,16 @@ void ap_airplay_session::post_reverse(const details::request &req,
     LOGD() << "Session_id: " << session_id->second;
   }
 
-  ap_event_sesions::instance().insert(session_id->second, shared_from_this());
+  ap_event_connection_manager::instance().insert(session_id->second,
+                                          shared_from_this());
   is_reversed_ = true;
 
   res.with_status(switching_protocols);
 }
 
-void ap_airplay_session::post_play(const details::request &req,
-                                   details::response &res) {
-  DUMP_REQUEST_WITH_SESSION(req);
+void ap_airplay_connection::post_play(const request &req,
+                                      response &res) {
+  DUMP_REQUEST_WITH_CONNECTION(req);
 
   std::string location;
 
@@ -784,9 +793,9 @@ void ap_airplay_session::post_play(const details::request &req,
   res.with_status(ok);
 }
 
-void ap_airplay_session::post_scrub(const details::request &req,
-                                    details::response &res) {
-  DUMP_REQUEST_WITH_SESSION(req);
+void ap_airplay_connection::post_scrub(const request &req,
+                                       response &res) {
+  DUMP_REQUEST_WITH_CONNECTION(req);
   // /scrub?position=1298.000000
   float postition = 0.0f;
   if (ap_content_parser::get_scrub_position(postition, req.uri.c_str())) {
@@ -798,9 +807,9 @@ void ap_airplay_session::post_scrub(const details::request &req,
   res.with_status(ok);
 }
 
-void ap_airplay_session::post_rate(const details::request &req,
-                                   details::response &res) {
-  DUMP_REQUEST_WITH_SESSION(req);
+void ap_airplay_connection::post_rate(const request &req,
+                                      response &res) {
+  DUMP_REQUEST_WITH_CONNECTION(req);
   // /rate?value=0.000000
   float value = 0.0f;
   if (ap_content_parser::get_rate_value(value, req.uri.c_str())) {
@@ -812,9 +821,9 @@ void ap_airplay_session::post_rate(const details::request &req,
   res.with_status(ok);
 }
 
-void ap_airplay_session::post_stop(const details::request &req,
-                                   details::response &res) {
-  DUMP_REQUEST_WITH_SESSION(req);
+void ap_airplay_connection::post_stop(const request &req,
+                                      response &res) {
+  DUMP_REQUEST_WITH_CONNECTION(req);
 
   if (handler_) {
     handler_->on_video_stop();
@@ -823,9 +832,9 @@ void ap_airplay_session::post_stop(const details::request &req,
   res.with_status(ok);
 }
 
-void ap_airplay_session::post_action(const details::request &req,
-                                     details::response &res) {
-  DUMP_REQUEST_WITH_SESSION(req);
+void ap_airplay_connection::post_action(const request &req,
+                                        response &res) {
+  DUMP_REQUEST_WITH_CONNECTION(req);
   // req.body (bplist)
 
   auto_plist data_obj =
@@ -894,9 +903,9 @@ void ap_airplay_session::post_action(const details::request &req,
   res.with_status(ok);
 }
 
-void ap_airplay_session::get_playback_info(const details::request &req,
-                                           details::response &res) {
-  DUMP_REQUEST_WITH_SESSION(req);
+void ap_airplay_connection::get_playback_info(const request &req,
+                                              response &res) {
+  DUMP_REQUEST_WITH_CONNECTION(req);
 
   ap_handler::playback_info_t playbackinfo;
   if (handler_) {
@@ -981,9 +990,9 @@ void ap_airplay_session::get_playback_info(const details::request &req,
       .with_content(oss.str());
 }
 
-void ap_airplay_session::put_setProperty(const details::request &req,
-                                         details::response &res) {
-  DUMP_REQUEST_WITH_SESSION(req);
+void ap_airplay_connection::put_setProperty(const request &req,
+                                            response &res) {
+  DUMP_REQUEST_WITH_CONNECTION(req);
 
   if (std::string::npos != req.uri.find("actionAtItemEnd")) {
     // /setProperty?actionAtItemEnd
@@ -1019,25 +1028,25 @@ void ap_airplay_session::put_setProperty(const details::request &req,
   res.with_status(ok);
 }
 
-void ap_airplay_session::post_getProperty(const details::request &req,
-                                          details::response &res) {
-  DUMP_REQUEST_WITH_SESSION(req);
+void ap_airplay_connection::post_getProperty(const request &req,
+                                             response &res) {
+  DUMP_REQUEST_WITH_CONNECTION(req);
   // GET /getProperty?playbackAccessLog
   // GET /getProperty?playbackErrorLog
 
   res.with_status(ok);
 }
 
-void ap_airplay_session::post_receive_message_head() {
+void ap_airplay_connection::post_receive_message_head() {
   asio::async_read_until(
       socket_, in_stream_, RNRN_LINE_BREAK,
       asio::bind_executor(
-          strand_, std::bind(&ap_airplay_session::on_message_head_received,
+          strand_, std::bind(&ap_airplay_connection::on_message_head_received,
                              shared_from_this(), std::placeholders::_1,
                              std::placeholders::_2)));
 }
 
-void ap_airplay_session::on_message_head_received(
+void ap_airplay_connection::on_message_head_received(
     const asio::error_code &e, std::size_t bytes_transferred) {
   // If error then return
   if (e) {
@@ -1045,9 +1054,9 @@ void ap_airplay_session::on_message_head_received(
     return;
   }
 
-  std::string head_data(
-      asio::buffers_begin(in_stream_.data()),
-      asio::buffers_begin(in_stream_.data()) + bytes_transferred);
+  std::string head_data(asio::buffers_begin(in_stream_.data()),
+                        asio::buffers_begin(in_stream_.data()) +
+                            bytes_transferred);
   in_stream_.consume(bytes_transferred);
 
   bool parse_result = false;
@@ -1091,9 +1100,9 @@ void ap_airplay_session::on_message_head_received(
       response_.content.clear();
       response_.content.resize(response_.content_length, 0);
 
-      response_.content.assign(
-          asio::buffers_begin(in_stream_.data()),
-          asio::buffers_begin(in_stream_.data()) + in_stream_.size());
+      response_.content.assign(asio::buffers_begin(in_stream_.data()),
+                               asio::buffers_begin(in_stream_.data()) +
+                                   in_stream_.size());
     }
   } else {
     // No more data to be read just build the message
@@ -1101,9 +1110,9 @@ void ap_airplay_session::on_message_head_received(
       request_.content.clear();
       request_.content.resize(request_.content_length, 0);
 
-      request_.content.assign(
-          asio::buffers_begin(in_stream_.data()),
-          asio::buffers_begin(in_stream_.data()) + in_stream_.size());
+      request_.content.assign(asio::buffers_begin(in_stream_.data()),
+                              asio::buffers_begin(in_stream_.data()) +
+                                  in_stream_.size());
     }
   }
   in_stream_.consume(in_stream_.size());
@@ -1117,7 +1126,7 @@ void ap_airplay_session::on_message_head_received(
   post_receive_message_head();
 }
 
-void ap_airplay_session::post_receive_message_content() {
+void ap_airplay_connection::post_receive_message_content() {
   if (is_reversed_) {
     response_.content.clear();
   } else {
@@ -1126,16 +1135,17 @@ void ap_airplay_session::post_receive_message_content() {
 
   asio::async_read(
       socket_, in_stream_,
-      std::bind(&ap_airplay_session::body_completion_condition,
+      std::bind(&ap_airplay_connection::body_completion_condition,
                 shared_from_this(), std::placeholders::_1,
                 std::placeholders::_2),
       asio::bind_executor(
-          strand_, std::bind(&ap_airplay_session::on_message_content_received,
-                             shared_from_this(), std::placeholders::_1,
-                             std::placeholders::_2)));
+          strand_,
+          std::bind(&ap_airplay_connection::on_message_content_received,
+                    shared_from_this(), std::placeholders::_1,
+                    std::placeholders::_2)));
 }
 
-void ap_airplay_session::on_message_content_received(
+void ap_airplay_connection::on_message_content_received(
     const asio::error_code &e, std::size_t bytes_transferred) {
   if (e) {
     handle_socket_error(e);
@@ -1143,14 +1153,14 @@ void ap_airplay_session::on_message_content_received(
   }
 
   if (is_reversed_) {
-    response_.content.assign(
-        asio::buffers_begin(in_stream_.data()),
-        asio::buffers_begin(in_stream_.data()) + in_stream_.size());
+    response_.content.assign(asio::buffers_begin(in_stream_.data()),
+                             asio::buffers_begin(in_stream_.data()) +
+                                 in_stream_.size());
     in_stream_.consume(in_stream_.size());
   } else {
-    request_.content.assign(
-        asio::buffers_begin(in_stream_.data()),
-        asio::buffers_begin(in_stream_.data()) + in_stream_.size());
+    request_.content.assign(asio::buffers_begin(in_stream_.data()),
+                            asio::buffers_begin(in_stream_.data()) +
+                                in_stream_.size());
     in_stream_.consume(in_stream_.size());
   }
 
@@ -1162,18 +1172,19 @@ void ap_airplay_session::on_message_content_received(
   post_receive_message_head();
 }
 
-void ap_airplay_session::post_send_response(const details::response &res) {
-  res.format_to_stream(out_stream_);
+void ap_airplay_connection::post_send_response(const response &res) {
+  std::ostream os(&out_stream_);
+  os << res.serialize();
   asio::async_write(
       socket_, out_stream_,
-      asio::bind_executor(
-          strand_,
-          std::bind(&ap_airplay_session::on_response_sent, shared_from_this(),
-                    std::placeholders::_1, std::placeholders::_2)));
+      asio::bind_executor(strand_,
+                          std::bind(&ap_airplay_connection::on_response_sent,
+                                    shared_from_this(), std::placeholders::_1,
+                                    std::placeholders::_2)));
 }
 
-void ap_airplay_session::on_response_sent(const asio::error_code &e,
-                                          std::size_t bytes_transferred) {
+void ap_airplay_connection::on_response_sent(const asio::error_code &e,
+                                             std::size_t bytes_transferred) {
   if (e) {
     return handle_socket_error(e);
   }
@@ -1181,67 +1192,71 @@ void ap_airplay_session::on_response_sent(const asio::error_code &e,
   // LOGV() << ">>>>> " << bytes_transferred << " bytes sent successfully";
 }
 
-void ap_airplay_session::send_request(const details::request &req) {
-  std::string data = req.format_to_string();
+void ap_airplay_connection::send_request(const request &req) {
+  std::string data = req.serialize();
   socket_.send(asio::buffer(data.data(), data.length()));
 }
 
-void ap_airplay_session::add_common_header(const details::request &req,
-                                           details::response &res) {
+void ap_airplay_connection::add_common_header(const request &req,
+                                              response &res) {
   static std::string ver = "AirTunes/" + config_->serverVersion();
   res.with_header(HEADER_SERVER, ver).with_header(HEADER_SESSION, "CAFEBABE");
 
-  if (!req.cseq.empty()) res.with_header(HEADER_CSEQ, req.cseq);
+  auto it_cseq = req.headers.find(HEADER_CSEQ);
+  if (it_cseq != req.headers.end()) {
+    res.with_header(HEADER_CSEQ, it_cseq->second);  
+  }
 
   if (0 != req.method.compare("RECORD") &&
       0 != req.method.compare("SET_PARAMETER"))
     res.with_header(HEADER_AUDIO_JACK_STATUS, "Connected; type=digital");
 }
 
-void ap_airplay_session::handle_socket_error(const asio::error_code &e) {
+void ap_airplay_connection::handle_socket_error(const asio::error_code &e) {
   switch (e.value()) {
-    case asio::error::eof:
-      return;
-    case asio::error::connection_reset:
-    case asio::error::connection_aborted:
-    case asio::error::access_denied:
-    case asio::error::address_family_not_supported:
-    case asio::error::address_in_use:
-    case asio::error::already_connected:
-    case asio::error::connection_refused:
-    case asio::error::bad_descriptor:
-    case asio::error::fault:
-    case asio::error::host_unreachable:
-    case asio::error::in_progress:
-    case asio::error::interrupted:
-    case asio::error::invalid_argument:
-    case asio::error::message_size:
-    case asio::error::name_too_long:
-    case asio::error::network_down:
-    case asio::error::network_reset:
-    case asio::error::network_unreachable:
-    case asio::error::no_descriptors:
-    case asio::error::no_buffer_space:
-    case asio::error::no_protocol_option:
-    case asio::error::not_connected:
-    case asio::error::not_socket:
-    case asio::error::operation_not_supported:
-    case asio::error::shut_down:
-    case asio::error::timed_out:
-    case asio::error::would_block:
-      break;
+  case asio::error::eof:
+    return;
+  case asio::error::connection_reset:
+  case asio::error::connection_aborted:
+  case asio::error::access_denied:
+  case asio::error::address_family_not_supported:
+  case asio::error::address_in_use:
+  case asio::error::already_connected:
+  case asio::error::connection_refused:
+  case asio::error::bad_descriptor:
+  case asio::error::fault:
+  case asio::error::host_unreachable:
+  case asio::error::in_progress:
+  case asio::error::interrupted:
+  case asio::error::invalid_argument:
+  case asio::error::message_size:
+  case asio::error::name_too_long:
+  case asio::error::network_down:
+  case asio::error::network_reset:
+  case asio::error::network_unreachable:
+  case asio::error::no_descriptors:
+  case asio::error::no_buffer_space:
+  case asio::error::no_protocol_option:
+  case asio::error::not_connected:
+  case asio::error::not_socket:
+  case asio::error::operation_not_supported:
+  case asio::error::shut_down:
+  case asio::error::timed_out:
+  case asio::error::would_block:
+    break;
   }
 
   LOGE() << "Socket error[" << e.value() << "]: " << e.message();
 }
 
-std::size_t ap_airplay_session::body_completion_condition(
+std::size_t ap_airplay_connection::body_completion_condition(
     const asio::error_code &error, std::size_t bytes_transferred) {
   return request_.content_length - in_stream_.size();
 }
 
-void ap_airplay_session::validate_user_agent() {
-  if (!agent_.empty()) return;
+void ap_airplay_connection::validate_user_agent() {
+  if (!agent_.empty())
+    return;
 
   auto user_agent_header = request_.headers.find("User-Agent");
   if (user_agent_header != request_.headers.end()) {
@@ -1264,7 +1279,7 @@ void ap_airplay_session::validate_user_agent() {
   }
 }
 
-void ap_airplay_session::process_request() {
+void ap_airplay_connection::process_request() {
   response res(request_.scheme_version);
 
   validate_user_agent();
@@ -1285,7 +1300,8 @@ void ap_airplay_session::process_request() {
     if (path_to_handler == method_to_path->second.end()) {
       std::string path = request_.uri;
       auto index = request_.uri.find('?');
-      if (std::string::npos != index) path = request_.uri.substr(0, index);
+      if (std::string::npos != index)
+        path = request_.uri.substr(0, index);
 
       path_to_handler = method_to_path->second.find(path);
     }
@@ -1298,20 +1314,18 @@ void ap_airplay_session::process_request() {
 
   res.with_header(HEADER_DATE, gmt_time_string());
 
-  if (!res.no_common_headers()) {
-    add_common_header(request_, res);
-  }
+  add_common_header(request_, res);
 
   post_send_response(res);
 }
 
-void ap_airplay_session::process_response() {}
+void ap_airplay_connection::process_response() {}
 
-#define RH(x)                                                    \
-  std::bind(&ap_airplay_session::x, this, std::placeholders::_1, \
+#define RH(x)                                                                  \
+  std::bind(&ap_airplay_connection::x, this, std::placeholders::_1,            \
             std::placeholders::_2)
 
-void ap_airplay_session::initialize_request_handlers() {
+void ap_airplay_connection::initialize_request_handlers() {
   // The request route table
   request_route_t routes_table[] = {
       {RTSP, "OPTIONS", "", RH(options_handler)},
@@ -1347,9 +1361,9 @@ void ap_airplay_session::initialize_request_handlers() {
   }
 }
 
-void ap_airplay_session::send_fcup_request(int request_id,
-                                           const std::string &url,
-                                           const std::string &session_id) {
+void ap_airplay_connection::send_fcup_request(int request_id,
+                                              const std::string &url,
+                                              const std::string &session_id) {
   std::ostringstream oss;
   // clang-format off
     oss << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -1389,15 +1403,15 @@ void ap_airplay_session::send_fcup_request(int request_id,
       .with_content_type(TEXT_APPLE_PLIST_XML)
       .with_content(oss.str());
 
-  auto p = ap_event_sesions::instance().get(session_id);
+  auto p = ap_event_connection_manager::instance().get(session_id);
   auto pp = p.lock();
   if (pp) {
     pp->send_request(fcup_request);
   }
 }
 
-void ap_airplay_session::method_not_found_handler(const details::request &req,
-                                                  details::response &res) {
+void ap_airplay_connection::method_not_found_handler(
+    const request &req, response &res) {
   LOGE() << "***** Method Not Allowed " << request_.method << " "
          << request_.uri;
 
@@ -1406,8 +1420,8 @@ void ap_airplay_session::method_not_found_handler(const details::request &req,
   res.with_status(ok);
 }
 
-void ap_airplay_session::path_not_found_handler(const details::request &req,
-                                                details::response &res) {
+void ap_airplay_connection::path_not_found_handler(const request &req,
+                                                   response &res) {
   LOGE() << "***** Path Not Found " << request_.method << " " << request_.uri;
 
   // Path not found
@@ -1428,9 +1442,9 @@ void ap_airplay_service::set_handler(ap_handler_ptr &hanlder) {
   handler_ = hanlder;
 }
 
-aps::network::tcp_session_ptr ap_airplay_service::prepare_new_session() {
-  return std::make_shared<ap_airplay_session>(io_context(), config_, handler_,
-                                              shared_from_this());
+tcp_connection_ptr ap_airplay_service::prepare_new_connection() {
+  return std::make_shared<ap_airplay_connection>(io_context(), config_,
+                                                 handler_, shared_from_this());
 }
 
 void ap_airplay_service::on_thread_start() {
@@ -1445,38 +1459,5 @@ void ap_airplay_service::on_thread_stop() {
   }
 }
 
-aps::service::ap_event_sesions &ap_event_sesions::instance() {
-  static ap_event_sesions s_instance;
-  return s_instance;
-}
-
-void ap_event_sesions::insert(const std::string &id,
-                              ap_airplay_session_weak_ptr p) {
-  std::lock_guard<std::mutex> l(mtx_);
-  even_session_map_[id] = p;
-}
-
-void ap_event_sesions::remove(const std::string &id) {
-  std::lock_guard<std::mutex> l(mtx_);
-  auto it = even_session_map_.find(id);
-  if (it != even_session_map_.end()) {
-    even_session_map_.erase(it);
-  }
-}
-
-aps::service::ap_airplay_session_weak_ptr ap_event_sesions::get(
-    const std::string &id) {
-  std::lock_guard<std::mutex> l(mtx_);
-  auto it = even_session_map_.find(id);
-  if (it != even_session_map_.end()) {
-    return it->second;
-  }
-  return ap_airplay_session_weak_ptr();
-}
-
-ap_event_sesions::ap_event_sesions() {}
-
-ap_event_sesions::~ap_event_sesions() {}
-
-}  // namespace service
-}  // namespace aps
+} // namespace service
+} // namespace aps
