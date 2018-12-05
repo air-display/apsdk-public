@@ -475,20 +475,20 @@ public class APSPlayerActivity extends Activity
 
                 @Override
                 public void stop() {
-                    player.stop();
+                    //player.stop();
                 }
 
                 @Override
                 public void setScrub(float position) {
-                    player.seekTo(startWindow, (long) position);
+                    //player.seekTo(startWindow, (long) position);
                 }
 
                 @Override
                 public void setRate(float rate) {
                     if (rate == 0) {
-                        player.setPlayWhenReady(false);
+                        //player.setPlayWhenReady(false);
                     } else {
-                        player.setPlayWhenReady(true);
+                        //player.setPlayWhenReady(true);
                     }
                 }
 

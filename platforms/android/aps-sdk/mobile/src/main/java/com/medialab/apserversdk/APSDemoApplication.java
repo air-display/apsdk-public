@@ -168,7 +168,7 @@ public class APSDemoApplication extends Application {
     private void createAirPlayServer() {
         if (airplayServer == null) {
             AirPlayConfig config = AirPlayConfig.defaultInstance();
-            config.setName("Test Airplay Server");
+            config.setName("AirplayExo");
             config.getDisplay().setWidth(1920);
             config.getDisplay().setHeight(1280);
             airplayServer = new AirPlayServer(getApplicationContext());

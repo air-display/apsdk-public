@@ -5,7 +5,6 @@
 #ifndef APS_SDK_APS_JNI_H
 #define APS_SDK_APS_JNI_H
 #include <android/log.h>
-#include <ap_config.h>
 #include <ap_handler.h>
 #include <ap_server.h>
 #include <ap_types.h>

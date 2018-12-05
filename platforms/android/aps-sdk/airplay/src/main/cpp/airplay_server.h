@@ -4,7 +4,6 @@
 
 #ifndef APS_SDK_AIRPLAY_SERVER_H
 #define APS_SDK_AIRPLAY_SERVER_H
-#include <airplay_config.h>
 #include <airplay_handler.h>
 #include <aps-jni.h>
 #include "jni_class_wrapper.h"
