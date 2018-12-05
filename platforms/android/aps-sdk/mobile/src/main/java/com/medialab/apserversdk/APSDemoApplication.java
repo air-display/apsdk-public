@@ -39,11 +39,12 @@ public class APSDemoApplication extends Application {
     private DownloadManager downloadManager;
     private APSDownloadTracker downloadTracker;
 
-    private AirPlayServer airplayServer = null;
+    private AirPlayServer airplayServer;
+
     public interface IAirPlayAcceptor {
         void preparePlayer(String location, float position);
     }
-    private IAirPlayAcceptor airplayAcceptor = null;
+    private IAirPlayAcceptor airplayAcceptor;
 
     public interface IPlayerClient {
         void stop();
@@ -51,7 +52,7 @@ public class APSDemoApplication extends Application {
         void setRate(float rate);
         PlaybackInfo getPlaybackInfo();
     }
-    private IPlayerClient playerClient = null;
+    private IPlayerClient playerClient;
 
     @Override
     public void onCreate() {

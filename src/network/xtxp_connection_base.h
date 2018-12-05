@@ -11,8 +11,9 @@
 namespace aps {
 namespace network {
 class xtxp_connection_base
-    : public tcp_connection_base,
-      public std::enable_shared_from_this<xtxp_connection_base> {
+  : public tcp_connection_base
+  , public std::enable_shared_from_this<xtxp_connection_base>
+{
 
   typedef std::function<void(const request &req, response &res)> request_hanlder;
   typedef std::map<std::string, request_hanlder> path_handler_map;
@@ -50,7 +51,17 @@ class xtxp_connection_base
 
   virtual void start() override;
 
+  void send_request(const request &req);
+
+  bool is_reversed();
+
+  void reverse();
+
   virtual void add_common_header(const request &req, response &res);
+
+  virtual void method_not_found_handler(const request &req, response &res);
+
+  virtual void path_not_found_handler(const request &req, response &res);
 
  protected:
 
@@ -69,7 +80,6 @@ class xtxp_connection_base
   void on_response_sent(const asio::error_code &e,
                         std::size_t bytes_transferred);
 
-  void send_request(const request &req);
 
   void handle_socket_error(const asio::error_code &e);
 
@@ -80,31 +90,15 @@ class xtxp_connection_base
 
   void process_response();
 
-  void method_not_found_handler(const request &req,
-                                response &res);
+protected:
 
-  void path_not_found_handler(const request &req,
-                              response &res);
-
- private:
-  bool is_reversed_;
-
-  std::string agent_;
-
-  std::string playback_uuid_;
-
-  std::string apple_session_id_;
-
-  asio::streambuf in_stream_;
-
-  asio::streambuf out_stream_;
-
+private:
   request request_;
-
   response response_;
-
+  bool is_reversed_;
+  asio::streambuf in_stream_;
+  asio::streambuf out_stream_;
   http_message_parser parser_;
-
   request_handler_map rtsp_request_handlers_;
   request_handler_map http_request_handlers_;
 };

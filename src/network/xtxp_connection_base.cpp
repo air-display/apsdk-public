@@ -4,7 +4,7 @@
 namespace aps {
 namespace network {
 xtxp_connection_base::xtxp_connection_base(asio::io_context &io_ctx)
-    : tcp_connection_base(io_ctx) {}
+    : tcp_connection_base(io_ctx), is_reversed_(false) {}
 
 xtxp_connection_base::~xtxp_connection_base() {}
 
@@ -53,6 +53,15 @@ void xtxp_connection_base::register_request_route(
 
 void xtxp_connection_base::start() { post_receive_message_head(); }
 
+void xtxp_connection_base::send_request(const request &req) {
+  std::string data = req.serialize();
+  socket_.send(asio::buffer(data.data(), data.length()));
+}
+
+bool xtxp_connection_base::is_reversed() { return is_reversed_; }
+
+void xtxp_connection_base::reverse() { is_reversed_ = true; }
+
 void xtxp_connection_base::add_common_header(const request &req,
                                              response &res) {}
 
@@ -63,6 +72,25 @@ void xtxp_connection_base::post_receive_message_head() {
           strand_, std::bind(&xtxp_connection_base::on_message_head_received,
                              shared_from_this(), std::placeholders::_1,
                              std::placeholders::_2)));
+}
+
+void xtxp_connection_base::method_not_found_handler(const request &req,
+                                                    response &res) {
+  LOGE() << "***** Method Not Allowed " << request_.method << " "
+         << request_.uri;
+
+  // Method not found
+  // res.with_status(method_not_allowed);
+  res.with_status(ok);
+}
+
+void xtxp_connection_base::path_not_found_handler(const request &req,
+                                                  response &res) {
+  LOGE() << "***** Path Not Found " << request_.method << " " << request_.uri;
+
+  // Path not found
+  // res.with_status(not_found);
+  res.with_status(ok);
 }
 
 void xtxp_connection_base::on_message_head_received(
@@ -210,11 +238,6 @@ void xtxp_connection_base::on_response_sent(const asio::error_code &e,
   // LOGV() << ">>>>> " << bytes_transferred << " bytes sent successfully";
 }
 
-void xtxp_connection_base::send_request(const request &req) {
-  std::string data = req.serialize();
-  socket_.send(asio::buffer(data.data(), data.length()));
-}
-
 void xtxp_connection_base::handle_socket_error(const asio::error_code &e) {
   switch (e.value()) {
     case asio::error::eof:
@@ -295,25 +318,6 @@ void xtxp_connection_base::process_request() {
 }
 
 void xtxp_connection_base::process_response() {}
-
-void xtxp_connection_base::method_not_found_handler(const request &req,
-                                                    response &res) {
-  LOGE() << "***** Method Not Allowed " << request_.method << " "
-         << request_.uri;
-
-  // Method not found
-  // res.with_status(method_not_allowed);
-  res.with_status(ok);
-}
-
-void xtxp_connection_base::path_not_found_handler(const request &req,
-                                                  response &res) {
-  LOGE() << "***** Path Not Found " << request_.method << " " << request_.uri;
-
-  // Path not found
-  // res.with_status(not_found);
-  res.with_status(ok);
-}
 
 }  // namespace network
 }  // namespace aps
