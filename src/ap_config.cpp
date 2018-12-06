@@ -49,7 +49,7 @@ ap_config_ptr ap_config::default_instance() {
   static ap_config_ptr s_instance = 0;
   if (!s_instance) {
     std::string mac_address = generate_mac_address();
-    std::string device_id = simplify_mac_address(mac_address.c_str());
+    std::string device_id = string_replace(mac_address.c_str(), ":", "");
 
     s_instance = std::make_shared<ap_config>();
     s_instance->name_ = "APS Display";

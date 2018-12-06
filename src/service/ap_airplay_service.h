@@ -105,7 +105,6 @@ protected:
 
 private:
   float start_pos_;
-  uint32_t fcup_request_id_;
   std::string agent_;
   std::string playback_uuid_;
   std::string apple_session_id_;

@@ -1,4 +1,5 @@
 #include <service/ap_media_http_service.h>
+#include <service/ap_media_data_store.h>
 
 namespace aps {
 namespace service {
@@ -11,9 +12,25 @@ ap_media_http_connection::ap_media_http_connection(asio::io_context &io_ctx)
 ap_media_http_connection::~ap_media_http_connection() {}
 
 void ap_media_http_connection::get_handler(const request &req, response &res) {
+  LOGW() << "req.uri " << req.uri;
   DUMP_REQUEST_WITH_CONNECTION(req);
 
-  res.with_status(ok);
+  auto data = ap_media_data_store::get().query_media_data(req.uri);
+  if (data.empty()) {
+    res.with_status(not_found);
+    return;
+  }
+
+  res.with_status(ok)
+    .with_content_type(APPLICATION_MPEGURL)
+    .with_content(data);
+}
+
+void ap_media_http_connection::add_common_header(const request &req,
+                                                 response &res) {
+  res.with_header(HEADER_DATE, gmt_time_string())
+      .with_header(HEADER_ALLOW_HEADER, HEADER_CONTENT_TYPE)
+      .with_header(HEADER_ALLOW_ORIGIN, "*");
 }
 
 #define RH(x)                                                                  \

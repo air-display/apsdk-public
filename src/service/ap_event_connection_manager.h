@@ -8,7 +8,6 @@ using namespace aps::network;
 
 namespace aps {
 namespace service {
-
 /// <summary>
 /// Represents the manager of the reversed HTTP connections.
 /// </summary>
@@ -17,7 +16,7 @@ class ap_event_connection_manager {
       event_connection_map;
 
 public:
-  static ap_event_connection_manager &instance();
+  static ap_event_connection_manager &get();
 
   void insert(const std::string &id, xtxp_connection_base_weak_ptr p);
   void remove(const std::string &id);

@@ -1,4 +1,3 @@
-#pragma once
 #include <network/xtxp_connection_base.h>
 
 namespace aps {
@@ -68,7 +67,7 @@ request_hanlder request_route_table::query_handler(const request &req,
       if (std::string::npos != index)
         path = req.uri.substr(0, index);
 
-      auto it_handler = path_handler.find(req.uri);
+      auto it_handler = path_handler.find(path);
       if (it_handler != path_handler.end()) {
         handler = it_handler->second;
         return handler;

@@ -56,8 +56,6 @@ static const char *ERROR_STATUS_RESPONSE =
     "</plist>";
 // clang-format on
 
-static const char *MLHLS_SCHEME = "mlhls://localhost/master.m3u8";
-static const char *NFHLS_SCHEME = "nfhls://";
 } // namespace details
 } // namespace service
 } // namespace aps

@@ -62,6 +62,8 @@ set(SRC_SERVICE
     service/ap_audio_stream_service_details.h
     service/ap_content_parser.cpp
     service/ap_content_parser.h
+    service/ap_media_data_store.cpp
+    service/ap_media_data_store.h
     service/ap_event_connection_manager.cpp
     service/ap_event_connection_manager.h
     service/ap_media_http_service.cpp

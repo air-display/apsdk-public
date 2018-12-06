@@ -21,7 +21,9 @@ public:
 
   void get_handler(const request &req, response &res);
 
-protected:
+  virtual void add_common_header(const request &req, response &res) override;
+
+ protected:
   void initialize_request_handlers();
 
 private:
@@ -34,12 +36,12 @@ typedef std::weak_ptr<ap_media_http_connection>
 class ap_media_http_service
     : public tcp_service_base,
       public std::enable_shared_from_this<ap_media_http_service> {
-public:
+ public:
   ap_media_http_service(ap_config_ptr &config, uint16_t port = 0);
 
   ~ap_media_http_service();
 
-protected:
+ protected:
   virtual tcp_connection_ptr prepare_new_connection() override;
 
 private:

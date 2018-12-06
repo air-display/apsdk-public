@@ -3,6 +3,7 @@
 #include <mdns/net_service.h>
 #include <service/ap_airplay_service.h>
 #include <service/ap_media_http_service.h>
+#include <service/ap_media_data_store.h>
 #include <ctime>
 #include <memory>
 
@@ -47,6 +48,7 @@ public:
     if (!ap_media_http_service_->start()) {
       LOGW() << "Failed to start media service";
     } else {
+      ap_media_data_store::get().set_store_root(ap_media_http_service_->port());
       LOGD() << "Media service running on " << ap_media_http_service_->port();
     }
 

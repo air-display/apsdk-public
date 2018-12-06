@@ -1,16 +1,17 @@
 #include <ap_types.h>
-#include <ctime>
-#include <exception>
 #include <service/ap_airplay_service.h>
 #include <service/ap_audio_stream_service.h>
 #include <service/ap_content_parser.h>
 #include <service/ap_event_connection_manager.h>
 #include <service/ap_mirror_stream_service.h>
-#include <stdexcept>
+#include <service/ap_media_data_store.h>
+#include <ctime>
+#include <exception>
 #include <string.h>
 #include <utils/logger.h>
 #include <utils/plist.h>
 #include <utils/utils.h>
+#include <stdexcept>
 
 using namespace aps::network;
 using namespace aps::service::details;
@@ -21,7 +22,9 @@ ap_airplay_connection::ap_airplay_connection(asio::io_context &io_ctx,
                                              aps::ap_config_ptr &config,
                                              aps::ap_handler_ptr &hanlder,
                                              tcp_service_weak_ptr service)
-    : xtxp_connection_base(io_ctx), config_(config), handler_(hanlder),
+    : xtxp_connection_base(io_ctx),
+      config_(config),
+      handler_(hanlder),
       service_(service) {
   crypto_ = std::make_shared<ap_crypto>();
 
@@ -41,7 +44,7 @@ ap_airplay_connection::~ap_airplay_connection() {
   }
 
   if (is_reversed()) {
-    ap_event_connection_manager::instance().remove(apple_session_id_);
+    ap_event_connection_manager::get().remove(apple_session_id_);
   }
 
   LOGD() << "ap_airplay_connection (" << std::hex << this
@@ -52,8 +55,9 @@ void ap_airplay_connection::options_handler(const request &req, response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
 
   res.with_status(ok)
-      .with_header("Public", "ANNOUNCE, SETUP, RECORD, PAUSE, FLUSH, TEARDOWN, "
-                             "OPTIONS, GET_PARAMETER, SET_PARAMETER, POST, GET")
+      .with_header("Public",
+                   "ANNOUNCE, SETUP, RECORD, PAUSE, FLUSH, TEARDOWN, "
+                   "OPTIONS, GET_PARAMETER, SET_PARAMETER, POST, GET")
       .with_content_type(APPLICATION_OCTET_STREAM);
 }
 
@@ -77,8 +81,8 @@ void ap_airplay_connection::post_pair_verify_handler(const request &req,
   pair_verify_header_t *header = (pair_verify_header_t *)req.content.data();
   if (header->is_first_frame) {
     crypto_->init_client_public_keys(
-        req.content.data() + 4, 32,       // client curve public key
-        req.content.data() + 4 + 32, 32); // client ed public key
+        req.content.data() + 4, 32,        // client curve public key
+        req.content.data() + 4 + 32, 32);  // client ed public key
 
     crypto_->init_pair_verify_aes();
 
@@ -138,19 +142,16 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
 
   do {
-    if (req.content_type.compare(APPLICATION_BINARY_PLIST))
-      break;
+    if (req.content_type.compare(APPLICATION_BINARY_PLIST)) break;
 
     auto_plist plist_obj =
         plist_object_from_bplist(req.content.data(), req.content.size());
     auto data_obj = plist_obj.get();
-    if (!data_obj)
-      break;
+    if (!data_obj) break;
 
     auto streams = plist_object_dict_get_value(data_obj, "streams");
     if (streams) {
-      if (PLIST_TYPE_ARRAY != plist_object_get_type(streams))
-        break;
+      if (PLIST_TYPE_ARRAY != plist_object_get_type(streams)) break;
 
       auto stream_obj = plist_object_array_get_value(streams, 0);
       if (!stream_obj || PLIST_TYPE_DICT != plist_object_get_type(stream_obj))
@@ -161,8 +162,7 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
         break;
 
       int64_t type = 0;
-      if (0 != plist_object_integer_get_value(type_obj, &type))
-        break;
+      if (0 != plist_object_integer_get_value(type_obj, &type)) break;
 
       if (stream_type_t::audio == type) {
         //{
@@ -312,21 +312,18 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
       const uint8_t *piv = 0;
       uint64_t iv_len = 0;
       auto eiv_obj = plist_object_dict_get_value(data_obj, "eiv");
-      if (0 != plist_object_data_get_value(eiv_obj, &piv, &iv_len))
-        break;
+      if (0 != plist_object_data_get_value(eiv_obj, &piv, &iv_len)) break;
 
       const uint8_t *pkey = 0;
       uint64_t key_len = 0;
       auto ekey_obj = plist_object_dict_get_value(data_obj, "ekey");
-      if (0 != plist_object_data_get_value(ekey_obj, &pkey, &key_len))
-        break;
+      if (0 != plist_object_data_get_value(ekey_obj, &pkey, &key_len)) break;
 
       crypto_->init_client_aes_info(piv, iv_len, pkey, key_len);
 
       auto timing_port_obj =
           plist_object_dict_get_value(data_obj, "timingPort");
-      if (PLIST_TYPE_INTEGER != plist_object_get_type(timing_port_obj))
-        break;
+      if (PLIST_TYPE_INTEGER != plist_object_get_type(timing_port_obj)) break;
       int64_t timing_port = 0;
       if (0 != plist_object_integer_get_value(timing_port_obj, &timing_port))
         break;
@@ -622,7 +619,7 @@ void ap_airplay_connection::post_reverse_handler(const request &req,
     LOGD() << "Session_id: " << session_id->second;
   }
 
-  ap_event_connection_manager::instance().insert(session_id->second,
+  ap_event_connection_manager::get().insert(session_id->second,
                                                  shared_from_this());
 
   reverse();
@@ -721,13 +718,8 @@ void ap_airplay_connection::post_play_handler(const request &req,
     return;
   }
 
-  // Build FCUP request
-  std::ostringstream oss;
-  if (0 == location.find(MLHLS_SCHEME) || 0 == location.find(NFHLS_SCHEME)) {
-    // Reset the fcup request id
-    fcup_request_id_ = 1;
-    send_fcup_request(fcup_request_id_++, location, it_session_id->second);
-  } else {
+  if (!ap_media_data_store::get().request_media_data(
+          location.c_str(), it_session_id->second.c_str())) {
     // Normal URL
     if (handler_) {
       handler_->on_video_play(location, start_pos_);
@@ -768,6 +760,8 @@ void ap_airplay_connection::post_rate_handler(const request &req,
 void ap_airplay_connection::post_stop_handler(const request &req,
                                               response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
+  
+  ap_media_data_store::get().reset();
 
   if (handler_) {
     handler_->on_video_stop();
@@ -811,6 +805,15 @@ void ap_airplay_connection::post_action_handler(const request &req,
     //  };
     //}
     auto params_dict = plist_object_dict_get_value(data_obj, "params");
+
+    auto fcup_uri_obj =
+        plist_object_dict_get_value(params_dict, "FCUP_Response_URL");
+    const char *fcup_uri = 0;
+    if (0 != plist_object_string_get_value(fcup_uri_obj, &fcup_uri)) {
+      res.with_status(bad_request);
+      return;
+    }
+
     auto fcup_data_obj =
         plist_object_dict_get_value(params_dict, "FCUP_Response_Data");
     const uint8_t *fcup_data = 0;
@@ -821,25 +824,19 @@ void ap_airplay_connection::post_action_handler(const request &req,
       return;
     }
 
-    std::string uri;
-    if (get_youtube_url((char *)fcup_data, (uint32_t)data_len, uri)) {
+    std::string fcup_content;
+    fcup_content.assign((char *)fcup_data, data_len);
+
+    auto location =
+        ap_media_data_store::get().process_media_data(fcup_uri, fcup_content);
+    if (!location.empty()) {
       if (handler_) {
-        handler_->on_video_play(uri, (float)start_pos_);
+        handler_->on_video_play(location, start_pos_);
       }
-    } else {
-      uri = get_best_quality_stream_uri((char *)fcup_data, (uint32_t)data_len);
-
-      auto it_session_id = req.headers.find("X-Apple-Session-ID");
-      if (it_session_id == req.headers.end()) {
-        res.with_status(bad_request);
-        return;
-      }
-
-      send_fcup_request(fcup_request_id_++, uri, it_session_id->second);
-
-      res.with_content_type(TEXT_APPLE_PLIST_XML)
-          .with_content(ERROR_STATUS_RESPONSE);
     }
+
+    res.with_content_type(TEXT_APPLE_PLIST_XML)
+        .with_content(ERROR_STATUS_RESPONSE);
   } else {
     LOGW() << "Unknown action type: " << type;
   }
@@ -999,8 +996,7 @@ void ap_airplay_connection::add_common_header(const request &req,
 }
 
 void ap_airplay_connection::validate_user_agent(const request &req) {
-  if (!agent_.empty())
-    return;
+  if (!agent_.empty()) return;
 
   auto user_agent_header = req.headers.find("User-Agent");
   if (user_agent_header != req.headers.end()) {
@@ -1023,8 +1019,8 @@ void ap_airplay_connection::validate_user_agent(const request &req) {
   }
 }
 
-#define RH(x)                                                                  \
-  std::bind(&ap_airplay_connection::x, this, std::placeholders::_1,            \
+#define RH(x)                                                       \
+  std::bind(&ap_airplay_connection::x, this, std::placeholders::_1, \
             std::placeholders::_2)
 
 void ap_airplay_connection::initialize_request_handlers() {
@@ -1105,7 +1101,7 @@ void ap_airplay_connection::send_fcup_request(int request_id,
       .with_content_type(TEXT_APPLE_PLIST_XML)
       .with_content(oss.str());
 
-  auto p = ap_event_connection_manager::instance().get(session_id);
+  auto p = ap_event_connection_manager::get().get(session_id);
   auto pp = p.lock();
   if (pp) {
     pp->send_request(fcup_request);
@@ -1142,5 +1138,5 @@ void ap_airplay_service::on_thread_stop() {
   }
 }
 
-} // namespace service
-} // namespace aps
+}  // namespace service
+}  // namespace aps

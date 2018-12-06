@@ -48,10 +48,10 @@ const char *generate_mac_address() {
   return buffer;
 }
 
-std::string simplify_mac_address(const char *addr) {
-  static std::regex patter(":");
-  std::string mac = addr;
-  return std::regex_replace(mac, patter, "");
+std::string string_replace(const std::string &str, const std::string &pattern,
+                           const std::string &with) {
+  std::regex p(pattern);
+  return std::regex_replace(str, p, with);
 }
 
 int compare_string_no_case(const char *str1, const char *str2) {
@@ -83,6 +83,7 @@ std::string get_best_quality_stream_uri(const char *data, uint32_t length) {
   r = hlsparse_master(data, length, &master_playlist);
   stream_inf_list_t *best_quality_stream = 0;
   stream_inf_list_t *stream_inf = &master_playlist.stream_infs;
+  return master_playlist.media.data->uri;
   while (stream_inf && stream_inf->data) {
     if (!best_quality_stream) {
       best_quality_stream = stream_inf;
