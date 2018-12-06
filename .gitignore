@@ -1,2 +1,10 @@
 /build.*
 /.vs
+/platforms/android/aps-sdk/*.project
+/platforms/android/aps-sdk/.settings/*.prefs
+/platforms/android/aps-sdk/airplay/*.classpath
+/platforms/android/aps-sdk/airplay/*.project
+/platforms/android/aps-sdk/airplay/.settings/*.prefs
+/platforms/android/aps-sdk/mobile/*.classpath
+/platforms/android/aps-sdk/mobile/*.project
+/platforms/android/aps-sdk/mobile/.settings/*.prefs
