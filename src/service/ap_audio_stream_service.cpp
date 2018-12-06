@@ -1,7 +1,8 @@
 #include <crypto/ap_crypto.h>
+#include <functional>
 #include <service/ap_audio_stream_service.h>
 #include <utils/logger.h>
-#include <functional>
+
 
 using namespace aps::network;
 
@@ -34,36 +35,36 @@ void audio_udp_service::on_recv_from(asio::ip::udp::endpoint &remote_endpoint,
 
 void audio_udp_service::handle_socket_error(const asio::error_code &e) {
   switch (e.value()) {
-    case asio::error::eof:
-      return;
-    case asio::error::connection_reset:
-    case asio::error::connection_aborted:
-    case asio::error::access_denied:
-    case asio::error::address_family_not_supported:
-    case asio::error::address_in_use:
-    case asio::error::already_connected:
-    case asio::error::connection_refused:
-    case asio::error::bad_descriptor:
-    case asio::error::fault:
-    case asio::error::host_unreachable:
-    case asio::error::in_progress:
-    case asio::error::interrupted:
-    case asio::error::invalid_argument:
-    case asio::error::message_size:
-    case asio::error::name_too_long:
-    case asio::error::network_down:
-    case asio::error::network_reset:
-    case asio::error::network_unreachable:
-    case asio::error::no_descriptors:
-    case asio::error::no_buffer_space:
-    case asio::error::no_protocol_option:
-    case asio::error::not_connected:
-    case asio::error::not_socket:
-    case asio::error::operation_not_supported:
-    case asio::error::shut_down:
-    case asio::error::timed_out:
-    case asio::error::would_block:
-      break;
+  case asio::error::eof:
+    return;
+  case asio::error::connection_reset:
+  case asio::error::connection_aborted:
+  case asio::error::access_denied:
+  case asio::error::address_family_not_supported:
+  case asio::error::address_in_use:
+  case asio::error::already_connected:
+  case asio::error::connection_refused:
+  case asio::error::bad_descriptor:
+  case asio::error::fault:
+  case asio::error::host_unreachable:
+  case asio::error::in_progress:
+  case asio::error::interrupted:
+  case asio::error::invalid_argument:
+  case asio::error::message_size:
+  case asio::error::name_too_long:
+  case asio::error::network_down:
+  case asio::error::network_reset:
+  case asio::error::network_unreachable:
+  case asio::error::no_descriptors:
+  case asio::error::no_buffer_space:
+  case asio::error::no_protocol_option:
+  case asio::error::not_connected:
+  case asio::error::not_socket:
+  case asio::error::operation_not_supported:
+  case asio::error::shut_down:
+  case asio::error::timed_out:
+  case asio::error::would_block:
+    break;
   }
 
   LOGE() << "Socket error[" << e.value() << "]: " << e.message();
@@ -71,9 +72,7 @@ void audio_udp_service::handle_socket_error(const asio::error_code &e) {
 
 ap_audio_stream_service::ap_audio_stream_service(aps::ap_crypto_ptr &crypto,
                                                  aps::ap_handler_ptr &handler)
-    : handler_(handler),
-      crypto_(crypto),
-      data_service_("audio_data_service"),
+    : handler_(handler), crypto_(crypto), data_service_("audio_data_service"),
       control_service_("audio_control_service") {
   data_service_.bind_recv_handler(std::bind(
       &ap_audio_stream_service::data_handler, this, std::placeholders::_1,
@@ -107,7 +106,8 @@ uint16_t ap_audio_stream_service::control_port() const {
 }
 
 bool ap_audio_stream_service::start() {
-  if (!data_service_.open()) return false;
+  if (!data_service_.open())
+    return false;
 
   if (!control_service_.open()) {
     data_service_.close();
@@ -204,5 +204,5 @@ void ap_audio_stream_service::on_thread_stop() {
   }
 }
 
-}  // namespace service
-}  // namespace aps
+} // namespace service
+} // namespace aps

@@ -2,6 +2,7 @@
 #include <array>
 #include <asio.hpp>
 #include <map>
+#include <mutex>
 #include <network/tcp_service.h>
 #include <network/xtxp_message.h>
 #include <string>
@@ -10,42 +11,67 @@
 
 namespace aps {
 namespace network {
-class xtxp_connection_base
-  : public tcp_connection_base
-  , public std::enable_shared_from_this<xtxp_connection_base>
-{
+/// <summary>
+///
+/// </summary>
+typedef std::function<void(const request &req, response &res)> request_hanlder;
 
-  typedef std::function<void(const request &req, response &res)> request_hanlder;
-  typedef std::map<std::string, request_hanlder> path_handler_map;
-  typedef std::map<std::string, path_handler_map> request_handler_map;
+/// <summary>
+/// path -> handler
+/// </summary>
+typedef std::map<std::string, request_hanlder> path_map;
 
- public:
-  enum service_type_e { RTSP, HTTP };
-  typedef service_type_e service_type_t;
+/// <summary>
+/// method -> path table
+/// </summary>
+typedef std::map<std::string, path_map> method_map;
 
-  struct request_route_s {
-    service_type_t service;
-    std::string method;
-    std::string path;
-    request_hanlder handler;
+/// <summary>
+///
+/// </summary>
+typedef std::map<std::string, method_map> scheme_map;
+
+struct request_route_s {
+  std::string scheme;
+  std::string method;
+  std::string path;
+  request_hanlder handler;
+};
+typedef request_route_s request_route_t;
+
+class request_route_table {
+  /// <summary>
+  ///
+  /// </summary>
+  typedef scheme_map route_table;
+
+public:
+  enum error_code {
+    BAD_VALUE,
+    UNKNOWN_SCHEME,
+    UNKNOWN_METHOD,
+    UNKNOWN_PATH,
   };
-  typedef request_route_s request_route_t;
 
+  request_route_table();
+  ~request_route_table();
+
+  void register_request_route(const request_route_t &route);
+
+  request_hanlder query_handler(const request &req, error_code &ec);
+
+private:
+  route_table route_table_;
+  std::mutex mtx_;
+};
+
+class xtxp_connection_base
+    : public tcp_connection_base,
+      public std::enable_shared_from_this<xtxp_connection_base> {
+public:
   explicit xtxp_connection_base(asio::io_context &io_ctx);
 
   ~xtxp_connection_base();
-
-  void register_rtsp_request_handler(request_hanlder handler,
-                                     const std::string &method,
-                                     const std::string &path = std::string());
-
-  void register_http_request_handler(request_hanlder handler,
-                                     const std::string &method,
-                                     const std::string &path = std::string());
-
-  void register_request_handler(service_type_t service, request_hanlder handler,
-                                const std::string &method,
-                                const std::string &path = std::string());
 
   void register_request_route(const request_route_t &route);
 
@@ -63,34 +89,29 @@ class xtxp_connection_base
 
   virtual void path_not_found_handler(const request &req, response &res);
 
- protected:
+  virtual void post_receive_message_head();
 
-  void post_receive_message_head();
+  virtual void on_message_head_received(const asio::error_code &e,
+                                        std::size_t bytes_transferred);
 
-  void on_message_head_received(const asio::error_code &e,
+  virtual void post_receive_message_content();
+
+  virtual void on_message_content_received(const asio::error_code &e,
+                                           std::size_t bytes_transferred);
+
+  virtual void post_send_response(const response &res);
+
+  virtual void on_response_sent(const asio::error_code &e,
                                 std::size_t bytes_transferred);
 
-  void post_receive_message_content();
-
-  void on_message_content_received(const asio::error_code &e,
-                                   std::size_t bytes_transferred);
-
-  void post_send_response(const response &res);
-
-  void on_response_sent(const asio::error_code &e,
-                        std::size_t bytes_transferred);
-
-
-  void handle_socket_error(const asio::error_code &e);
+  virtual void handle_socket_error(const asio::error_code &e);
 
   std::size_t body_completion_condition(const asio::error_code &error,
                                         std::size_t bytes_transferred);
 
-  void process_request();
+  virtual void process_request();
 
-  void process_response();
-
-protected:
+  virtual void process_response();
 
 private:
   request request_;
@@ -99,8 +120,7 @@ private:
   asio::streambuf in_stream_;
   asio::streambuf out_stream_;
   http_message_parser parser_;
-  request_handler_map rtsp_request_handlers_;
-  request_handler_map http_request_handlers_;
+  request_route_table route_table_;
 };
 
 typedef std::shared_ptr<xtxp_connection_base> xtxp_connection_base_ptr;

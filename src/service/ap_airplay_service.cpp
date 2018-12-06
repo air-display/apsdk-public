@@ -12,22 +12,15 @@
 #include <utils/plist.h>
 #include <utils/utils.h>
 
-
-#if defined(NDEBUG)
-#define DUMP_REQUEST_WITH_CONNECTION(x)
-#else
-#define DUMP_REQUEST_WITH_CONNECTION(x)                                        \
-  x.dump("[" + std::to_string((long long)this) + "]")
-#endif // _DEBUG
-
 using namespace aps::network;
 using namespace aps::service::details;
 
 namespace aps {
 namespace service {
-ap_airplay_connection::ap_airplay_connection(
-    asio::io_context &io_ctx, aps::ap_config_ptr &config,
-    aps::ap_handler_ptr &hanlder, tcp_service_weak_ptr service)
+ap_airplay_connection::ap_airplay_connection(asio::io_context &io_ctx,
+                                             aps::ap_config_ptr &config,
+                                             aps::ap_handler_ptr &hanlder,
+                                             tcp_service_weak_ptr service)
     : xtxp_connection_base(io_ctx), config_(config), handler_(hanlder),
       service_(service) {
   crypto_ = std::make_shared<ap_crypto>();
@@ -55,8 +48,7 @@ ap_airplay_connection::~ap_airplay_connection() {
          << ") is being destroyed";
 }
 
-void ap_airplay_connection::options_handler(const request &req,
-                                            response &res) {
+void ap_airplay_connection::options_handler(const request &req, response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
 
   res.with_status(ok)
@@ -78,8 +70,8 @@ void ap_airplay_connection::post_pair_setup_handler(const request &req,
       .with_content_type(APPLICATION_OCTET_STREAM);
 }
 
-void ap_airplay_connection::post_pair_verify_handler(
-    const request &req, response &res) {
+void ap_airplay_connection::post_pair_verify_handler(const request &req,
+                                                     response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
 
   pair_verify_header_t *header = (pair_verify_header_t *)req.content.data();
@@ -142,8 +134,7 @@ void ap_airplay_connection::post_fp_setup_handler(const request &req,
   res.with_status(ok).with_content_type(APPLICATION_OCTET_STREAM);
 }
 
-void ap_airplay_connection::setup_handler(const request &req,
-                                          response &res) {
+void ap_airplay_connection::setup_handler(const request &req, response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
 
   do {
@@ -420,8 +411,7 @@ void ap_airplay_connection::post_feedback_handler(const request &req,
   res.with_status(ok);
 }
 
-void ap_airplay_connection::record_handler(const request &req,
-                                           response &res) {
+void ap_airplay_connection::record_handler(const request &req, response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
 
   timing_sync_service_->post_send_query();
@@ -438,8 +428,7 @@ void ap_airplay_connection::get_parameter_handler(const request &req,
       .with_content("volume: 0.000000\r\n");
 }
 
-void ap_airplay_connection::post_audioMode(const request &req,
-                                           response &res) {
+void ap_airplay_connection::post_audioMode(const request &req, response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
 
   res.with_status(ok);
@@ -550,8 +539,7 @@ void ap_airplay_connection::teardown_handler(const request &req,
   res.with_status(ok);
 }
 
-void ap_airplay_connection::flush_handler(const request &req,
-                                          response &res) {
+void ap_airplay_connection::flush_handler(const request &req, response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
 
   auto rtp_info_header = req.headers.find("RTP-Info");
@@ -566,8 +554,8 @@ void ap_airplay_connection::flush_handler(const request &req,
   res.with_status(ok).with_content_type(APPLICATION_BINARY_PLIST);
 }
 
-void ap_airplay_connection::get_server_info(const request &req,
-                                            response &res) {
+void ap_airplay_connection::get_server_info_handler(const request &req,
+                                                    response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
   res.with_status(ok);
   // return;
@@ -610,8 +598,8 @@ void ap_airplay_connection::post_fp_setup2_handler(const request &req,
   res.with_status(ok);
 }
 
-void ap_airplay_connection::post_reverse(const request &req,
-                                         response &res) {
+void ap_airplay_connection::post_reverse_handler(const request &req,
+                                                 response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
 
   auto purpose = req.headers.find("X-Apple-Purpose");
@@ -635,15 +623,15 @@ void ap_airplay_connection::post_reverse(const request &req,
   }
 
   ap_event_connection_manager::instance().insert(session_id->second,
-                                          shared_from_this());
+                                                 shared_from_this());
 
   reverse();
 
   res.with_status(switching_protocols);
 }
 
-void ap_airplay_connection::post_play(const request &req,
-                                      response &res) {
+void ap_airplay_connection::post_play_handler(const request &req,
+                                              response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
 
   std::string location;
@@ -749,8 +737,8 @@ void ap_airplay_connection::post_play(const request &req,
   res.with_status(ok);
 }
 
-void ap_airplay_connection::post_scrub(const request &req,
-                                       response &res) {
+void ap_airplay_connection::post_scrub_handler(const request &req,
+                                               response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
   // /scrub?position=1298.000000
   float postition = 0.0f;
@@ -763,8 +751,8 @@ void ap_airplay_connection::post_scrub(const request &req,
   res.with_status(ok);
 }
 
-void ap_airplay_connection::post_rate(const request &req,
-                                      response &res) {
+void ap_airplay_connection::post_rate_handler(const request &req,
+                                              response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
   // /rate?value=0.000000
   float value = 0.0f;
@@ -777,8 +765,8 @@ void ap_airplay_connection::post_rate(const request &req,
   res.with_status(ok);
 }
 
-void ap_airplay_connection::post_stop(const request &req,
-                                      response &res) {
+void ap_airplay_connection::post_stop_handler(const request &req,
+                                              response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
 
   if (handler_) {
@@ -788,8 +776,8 @@ void ap_airplay_connection::post_stop(const request &req,
   res.with_status(ok);
 }
 
-void ap_airplay_connection::post_action(const request &req,
-                                        response &res) {
+void ap_airplay_connection::post_action_handler(const request &req,
+                                                response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
   // req.body (bplist)
 
@@ -859,8 +847,8 @@ void ap_airplay_connection::post_action(const request &req,
   res.with_status(ok);
 }
 
-void ap_airplay_connection::get_playback_info(const request &req,
-                                              response &res) {
+void ap_airplay_connection::get_playback_info_handler(const request &req,
+                                                      response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
 
   ap_handler::playback_info_t playbackinfo;
@@ -946,8 +934,8 @@ void ap_airplay_connection::get_playback_info(const request &req,
       .with_content(oss.str());
 }
 
-void ap_airplay_connection::put_setProperty(const request &req,
-                                            response &res) {
+void ap_airplay_connection::put_setProperty_handler(const request &req,
+                                                    response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
 
   if (std::string::npos != req.uri.find("actionAtItemEnd")) {
@@ -984,8 +972,8 @@ void ap_airplay_connection::put_setProperty(const request &req,
   res.with_status(ok);
 }
 
-void ap_airplay_connection::post_getProperty(const request &req,
-                                             response &res) {
+void ap_airplay_connection::post_getProperty_handler(const request &req,
+                                                     response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
   // GET /getProperty?playbackAccessLog
   // GET /getProperty?playbackErrorLog
@@ -995,12 +983,14 @@ void ap_airplay_connection::post_getProperty(const request &req,
 
 void ap_airplay_connection::add_common_header(const request &req,
                                               response &res) {
+  res.with_header(HEADER_DATE, gmt_time_string());
+
   static std::string ver = "AirTunes/" + config_->serverVersion();
   res.with_header(HEADER_SERVER, ver).with_header(HEADER_SESSION, "CAFEBABE");
 
   auto it_cseq = req.headers.find(HEADER_CSEQ);
   if (it_cseq != req.headers.end()) {
-    res.with_header(HEADER_CSEQ, it_cseq->second);  
+    res.with_header(HEADER_CSEQ, it_cseq->second);
   }
 
   if (0 != req.method.compare("RECORD") &&
@@ -1040,31 +1030,31 @@ void ap_airplay_connection::validate_user_agent(const request &req) {
 void ap_airplay_connection::initialize_request_handlers() {
   // The request route table
   request_route_t routes_table[] = {
-      {RTSP, "OPTIONS", "", RH(options_handler)},
-      {RTSP, "POST", "/pair-setup", RH(post_pair_setup_handler)},
-      {RTSP, "POST", "/pair-verify", RH(post_pair_verify_handler)},
-      {RTSP, "POST", "/fp-setup", RH(post_fp_setup_handler)},
-      {RTSP, "SETUP", "*", RH(setup_handler)},
-      {RTSP, "GET", "/info", RH(get_info_handler)},
-      {RTSP, "POST", "/feedback", RH(post_feedback_handler)},
-      {RTSP, "RECORD", "*", RH(record_handler)},
-      {RTSP, "GET_PARAMETER", "*", RH(get_parameter_handler)},
-      {RTSP, "SET_PARAMETER", "*", RH(set_parameter_handler)},
-      {RTSP, "TEARDOWN", "*", RH(teardown_handler)},
-      {RTSP, "FLUSH", "*", RH(flush_handler)},
-      {RTSP, "POST", "/audioMode", RH(post_audioMode)},
-      {HTTP, "GET", "/server-info", RH(get_server_info)},
-      {HTTP, "POST", "/fp-setup", RH(post_fp_setup_handler)},
-      {HTTP, "POST", "/fp-setup2", RH(post_fp_setup2_handler)},
-      {HTTP, "POST", "/reverse", RH(post_reverse)},
-      {HTTP, "POST", "/play", RH(post_play)},
-      {HTTP, "POST", "/scrub", RH(post_scrub)},
-      {HTTP, "POST", "/rate", RH(post_rate)},
-      {HTTP, "POST", "/stop", RH(post_stop)},
-      {HTTP, "POST", "/action", RH(post_action)},
-      {HTTP, "GET", "/playback-info", RH(get_playback_info)},
-      {HTTP, "PUT", "/setProperty", RH(put_setProperty)},
-      {HTTP, "POST", "/getProperty", RH(post_getProperty)},
+      {"RTSP", "OPTIONS", "", RH(options_handler)},
+      {"RTSP", "POST", "/pair-setup", RH(post_pair_setup_handler)},
+      {"RTSP", "POST", "/pair-verify", RH(post_pair_verify_handler)},
+      {"RTSP", "POST", "/fp-setup", RH(post_fp_setup_handler)},
+      {"RTSP", "SETUP", "*", RH(setup_handler)},
+      {"RTSP", "GET", "/info", RH(get_info_handler)},
+      {"RTSP", "POST", "/feedback", RH(post_feedback_handler)},
+      {"RTSP", "RECORD", "*", RH(record_handler)},
+      {"RTSP", "GET_PARAMETER", "*", RH(get_parameter_handler)},
+      {"RTSP", "SET_PARAMETER", "*", RH(set_parameter_handler)},
+      {"RTSP", "TEARDOWN", "*", RH(teardown_handler)},
+      {"RTSP", "FLUSH", "*", RH(flush_handler)},
+      {"RTSP", "POST", "/audioMode", RH(post_audioMode)},
+      {"HTTP", "GET", "/server-info", RH(get_server_info_handler)},
+      {"HTTP", "POST", "/fp-setup", RH(post_fp_setup_handler)},
+      {"HTTP", "POST", "/fp-setup2", RH(post_fp_setup2_handler)},
+      {"HTTP", "POST", "/reverse", RH(post_reverse_handler)},
+      {"HTTP", "POST", "/play", RH(post_play_handler)},
+      {"HTTP", "POST", "/scrub", RH(post_scrub_handler)},
+      {"HTTP", "POST", "/rate", RH(post_rate_handler)},
+      {"HTTP", "POST", "/stop", RH(post_stop_handler)},
+      {"HTTP", "POST", "/action", RH(post_action_handler)},
+      {"HTTP", "GET", "/playback-info", RH(get_playback_info_handler)},
+      {"HTTP", "PUT", "/setProperty", RH(put_setProperty_handler)},
+      {"HTTP", "POST", "/getProperty", RH(post_getProperty_handler)},
   };
 
   // Register all the request handlers

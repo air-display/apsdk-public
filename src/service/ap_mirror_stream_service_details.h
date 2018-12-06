@@ -11,6 +11,6 @@ namespace details {
 #define SMS_BUFFER_SIZE 1024 * 1024 * 16
 
 } // namespace details
-} // namespace video
+} // namespace mirror
 } // namespace service
 } // namespace aps

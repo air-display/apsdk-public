@@ -1,18 +1,52 @@
 #pragma once
-#include <service/ap_airplay_service.h>
+#include <ap_config.h>
+#include <array>
+#include <asio.hpp>
+#include <crypto/ap_crypto.h>
 #include <map>
 #include <memory>
+#include <network/xtxp_connection_base.h>
 #include <string>
+#include <vector>
+
+
+using namespace aps::network;
 
 namespace aps {
 namespace service {
-class ap_media_http_service {
- public:
-  ap_media_http_service();
-  ~ap_media_http_service();
+class ap_media_http_connection : public xtxp_connection_base {
+public:
+  ap_media_http_connection(asio::io_context &io_ctx);
+  ~ap_media_http_connection();
 
- private:
+  void get_handler(const request &req, response &res);
+
+protected:
+  void initialize_request_handlers();
+
+private:
 };
 
-}
-}  // namespace aps
+typedef std::shared_ptr<ap_media_http_connection> ap_media_http_connection_ptr;
+typedef std::weak_ptr<ap_media_http_connection>
+    ap_media_http_connection_weak_ptr;
+
+class ap_media_http_service
+    : public tcp_service_base,
+      public std::enable_shared_from_this<ap_media_http_service> {
+public:
+  ap_media_http_service(ap_config_ptr &config, uint16_t port = 0);
+
+  ~ap_media_http_service();
+
+protected:
+  virtual tcp_connection_ptr prepare_new_connection() override;
+
+private:
+  aps::ap_config_ptr config_;
+};
+
+typedef std::shared_ptr<ap_media_http_service> ap_media_http_service_ptr;
+
+} // namespace service
+} // namespace aps

@@ -9,35 +9,31 @@ xtxp_message::xtxp_message() {}
 
 xtxp_message::~xtxp_message() {}
 
-xtxp_message &xtxp_message::with_content_type(
-    const std::string &type) {
+xtxp_message &xtxp_message::with_content_type(const std::string &type) {
   content_type = type;
   return *this;
 }
 
-xtxp_message &xtxp_message::with_content(
-    const std::string &data) {
+xtxp_message &xtxp_message::with_content(const std::string &data) {
   std::copy(data.begin(), data.end(), std::back_inserter(content));
   content_length = data.length();
   return *this;
 }
 
-xtxp_message &xtxp_message::with_content(
-    const std::vector<uint8_t> data) {
+xtxp_message &xtxp_message::with_content(const std::vector<uint8_t> data) {
   content = data;
   content_length = data.size();
   return *this;
 }
 
-xtxp_message &xtxp_message::with_content(
-    const uint8_t *data, int length) {
+xtxp_message &xtxp_message::with_content(const uint8_t *data, int length) {
   std::copy(data, data + length, std::back_inserter(content));
   content_length = length;
   return *this;
 }
 
-xtxp_message &xtxp_message::with_header(
-    const std::string &name, const std::string &value) {
+xtxp_message &xtxp_message::with_header(const std::string &name,
+                                        const std::string &value) {
   headers[name] = value;
   return *this;
 }
@@ -61,9 +57,8 @@ std::string xtxp_message::serialize() const {
   return oss.str();
 }
 
-request::request(const std::string &scheme_ver,
-                               const std::string &methot,
-                               const std::string &uri)
+request::request(const std::string &scheme_ver, const std::string &methot,
+                 const std::string &uri)
     : xtxp_message(scheme_ver), method(methot), uri(uri) {}
 
 request::request() {}
@@ -97,15 +92,12 @@ void request::dump(const std::string tag) const {
 }
 
 response::response(const std::string &scheme_ver)
-    : xtxp_message(scheme_ver),
-      status_code(status_type_t::ok),
+    : xtxp_message(scheme_ver), status_code(status_type_t::ok),
       status_text("OK") {}
 
-response::response()
-    : status_code(status_type_t::ok), status_text("OK") {}
+response::response() : status_code(status_type_t::ok), status_text("OK") {}
 
-response &response::with_status(
-    status_type_t code) {
+response &response::with_status(status_type_t code) {
   status_code = code;
   auto code_string = g_status_code_sting_map.find(code);
   if (code_string != g_status_code_sting_map.end()) {
@@ -125,5 +117,5 @@ std::string response::serialize() const {
   return oss.str();
 }
 
-}
-}
+} // namespace network
+} // namespace aps

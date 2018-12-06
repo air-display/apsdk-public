@@ -7,7 +7,6 @@
 #include <utils/packing.h>
 #include <vector>
 
-
 namespace aps {
 namespace service {
 class ap_timing_sync_service : public aps::network::udp_service_base {

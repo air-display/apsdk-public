@@ -495,10 +495,10 @@ public class APSPlayerActivity extends Activity
                 @Override
                 public PlaybackInfo getPlaybackInfo() {
                     PlaybackInfo playbackInfo = new PlaybackInfo();
-                    playbackInfo.duration = player.getDuration();
-                    playbackInfo.position = player.getCurrentPosition();
-                    playbackInfo.rate = player.getPlaybackState();
-                    playbackInfo.stallCount = 0;
+                    //playbackInfo.duration = player.getDuration();
+                    //playbackInfo.position = player.getCurrentPosition();
+                    //playbackInfo.rate = player.getPlaybackState();
+                    //playbackInfo.stallCount = 0;
                     return playbackInfo;
                 }
             };
