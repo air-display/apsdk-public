@@ -4,6 +4,9 @@ import android.content.Context;
 
 import com.medialab.nci.NciObject;
 
+/**
+ * Represents the event handler of the AirPlay server.
+ */
 public abstract class AirPlayHandler extends NciObject implements IAirPlayHandler {
     /**
      * Creates the native class instance.

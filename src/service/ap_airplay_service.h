@@ -17,7 +17,6 @@
 #include <string>
 #include <vector>
 
-
 using namespace aps::network;
 
 namespace aps {
@@ -107,7 +106,7 @@ private:
   float start_pos_;
   std::string agent_;
   std::string playback_uuid_;
-  std::string apple_session_id_;
+  std::string session_id_;
   agent_version_t agent_version_;
   aps::ap_config_ptr config_;
   aps::ap_handler_ptr handler_;

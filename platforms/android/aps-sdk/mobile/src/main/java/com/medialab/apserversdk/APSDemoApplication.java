@@ -24,6 +24,8 @@ import com.medialab.airplay.PlaybackInfo;
 
 import java.io.File;
 
+import javax.net.ssl.HttpsURLConnection;
+
 public class APSDemoApplication extends Application {
     private static final String TAG = "APSDemoApplication";
 
@@ -58,6 +60,7 @@ public class APSDemoApplication extends Application {
     public void onCreate() {
         super.onCreate();
         userAgent = Util.getUserAgent(this, "APSDemo");
+        disableHostnameVefification();
         createAirPlayServer();
         startAirPlayServer();
     }
@@ -165,6 +168,10 @@ public class APSDemoApplication extends Application {
                 /* eventListener= */ null);
     }
 
+    private void disableHostnameVefification() {
+        HttpsURLConnection.setDefaultHostnameVerifier((s, sslSession) -> true);
+    }
+
     private void createAirPlayServer() {
         if (airplayServer == null) {
             AirPlayConfig config = AirPlayConfig.defaultInstance();
@@ -179,7 +186,7 @@ public class APSDemoApplication extends Application {
             private PlaybackInfo lastPlaybackInfo;
 
             @Override
-            public void on_mirror_stream_started() {
+            public void on_mirror_stream_started(String session) {
                 Log.i(TAG, "on_mirror_stream_started: ");
             }
 
@@ -194,33 +201,33 @@ public class APSDemoApplication extends Application {
             }
 
             @Override
-            public void on_mirror_stream_stopped() {
+            public void on_mirror_stream_stopped(String session) {
                 Log.i(TAG, "on_mirror_stream_stopped: ");
             }
 
             @Override
-            public void on_audio_set_volume(float ratio, float volume) {
+            public void on_audio_set_volume(String session, float ratio, float volume) {
                 Log.i(TAG, String.format("on_audio_set_volume: ratio = %f, volume = %f", ratio, volume));
             }
 
             @Override
-            public void on_audio_set_progress(float ratio, long start, long current, long end) {
+            public void on_audio_set_progress(String session, float ratio, long start, long current, long end) {
                 Log.i(TAG, String.format("on_audio_set_progress: ratio = %f, start = %d, current = %d, end = %d",
                         ratio, start, current, end));
             }
 
             @Override
-            public void on_audio_set_cover(String format, byte[] data) {
+            public void on_audio_set_cover(String session, String format, byte[] data) {
                 Log.i(TAG, String.format("on_audio_set_cover: format %s, length %d", format, data.length));
             }
 
             @Override
-            public void on_audio_set_meta_data(byte[] data) {
+            public void on_audio_set_meta_data(String session, byte[] data) {
                 Log.i(TAG, String.format("on_audio_set_meta_data: length %d", data.length));
             }
 
             @Override
-            public void on_audio_stream_started(int format) {
+            public void on_audio_stream_started(String session, int format) {
                 if (format == PCM) {
                     Log.i(TAG, "on_audio_stream_started: PCM");
 
@@ -244,20 +251,20 @@ public class APSDemoApplication extends Application {
             }
 
             @Override
-            public void on_audio_stream_stopped() {
+            public void on_audio_stream_stopped(String session) {
                 Log.i(TAG, "on_audio_stream_stopped: ");
             }
 
             @Override
-            public void on_video_play(String location, float start_pos) {
-                Log.i(TAG, String.format("on_video_play: location = %s, start_pos = %f", location, start_pos));
+            public void on_video_play(String session, String location, float position) {
+                Log.i(TAG, String.format("on_video_play: location = %s, start_pos = %f", location, position));
                 if (null != airplayAcceptor) {
-                    airplayAcceptor.preparePlayer(location, start_pos);
+                    airplayAcceptor.preparePlayer(location, position);
                 }
             }
 
             @Override
-            public void on_video_scrub(float position) {
+            public void on_video_scrub(String session, float position) {
                 Log.i(TAG, String.format("on_video_scrub: position = %f", position));
                 if (null != playerClient) {
                     playerClient.setScrub(position);
@@ -265,7 +272,7 @@ public class APSDemoApplication extends Application {
             }
 
             @Override
-            public void on_video_rate(float value) {
+            public void on_video_rate(String session, float value) {
                 Log.i(TAG, String.format("on_video_rate: value = %f", value));
                 if (null != playerClient) {
                     playerClient.setRate(value);
@@ -273,7 +280,7 @@ public class APSDemoApplication extends Application {
             }
 
             @Override
-            public void on_video_stop() {
+            public void on_video_stop(String session) {
                 Log.i(TAG, "on_video_stop: ");
                 if (null != playerClient) {
                     playerClient.stop();
@@ -281,7 +288,7 @@ public class APSDemoApplication extends Application {
             }
 
             @Override
-            public PlaybackInfo get_playback_info() {
+            public PlaybackInfo get_playback_info(String session) {
                 if (null != playerClient) {
                     lastPlaybackInfo = playerClient.getPlaybackInfo();
                     Log.i(TAG, String.format("get_playback_info: duration = %f, position = %f", lastPlaybackInfo.duration, lastPlaybackInfo.position));

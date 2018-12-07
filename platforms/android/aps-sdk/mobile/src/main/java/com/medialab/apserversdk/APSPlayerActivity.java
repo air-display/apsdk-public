@@ -17,12 +17,16 @@ package com.medialab.apserversdk;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.util.Pair;
 import android.view.KeyEvent;
 import android.view.View;
@@ -41,6 +45,7 @@ import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.PlaybackPreparer;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.drm.DefaultDrmSessionManager;
 import com.google.android.exoplayer2.drm.FrameworkMediaCrypto;
 import com.google.android.exoplayer2.drm.FrameworkMediaDrm;
@@ -86,7 +91,10 @@ import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
 import java.util.List;
+import java.util.PrimitiveIterator;
 import java.util.UUID;
+
+import static android.support.constraint.Constraints.TAG;
 
 /** An activity that plays media using {@link SimpleExoPlayer}. */
 public class APSPlayerActivity extends Activity
@@ -157,6 +165,13 @@ public class APSPlayerActivity extends Activity
     private Uri loadedAdTagUri;
     private ViewGroup adUiViewGroup;
 
+    private static final int PLAYER_STOP = 1;
+    private static final int PLAYER_SCRUB = 2;
+    private static final int PLAYER_RATE = 3;
+    private static final int PLAYER_PLAYBACK_INFO = 4;
+    private long durationInSeconds;
+    private long currentPositionInSeconds;
+    private Handler playerClientHander;
     private APSDemoApplication.IPlayerClient playerClient;
 
     // Activity lifecycle
@@ -470,35 +485,67 @@ public class APSPlayerActivity extends Activity
                 releaseAdsLoader();
             }
 
-            playerClient = new APSDemoApplication.IPlayerClient() {
-                private SimpleExoPlayer player = APSPlayerActivity.this.player;
+            playerClientHander = new Handler() {
+                @Override
+                public void handleMessage(Message msg) {
+                    switch (msg.what) {
+                        case PLAYER_STOP:
+                            player.setPlayWhenReady(false);
+                            break;
+                        case PLAYER_SCRUB:
+                            long pos = ((Float)msg.obj).longValue() * 1000;
+                            player.seekTo(player.getCurrentWindowIndex(), pos);
+                            break;
+                        case PLAYER_RATE:
+                            float rate = (float) msg.obj;
+                            if (rate == 0) {
+                                player.setPlayWhenReady(false);
+                            } else {
+                                player.setPlayWhenReady(true);
+                            }
+                            break;
+                        case PLAYER_PLAYBACK_INFO:
+                            durationInSeconds = player.getDuration() / 1000;
+                            currentPositionInSeconds = player.getCurrentPosition() / 1000;
+                        default:
+                            break;
+                    }
+                }
+            };
 
+            playerClient = new APSDemoApplication.IPlayerClient() {
                 @Override
                 public void stop() {
-                    //player.stop();
+                    Message msg = Message.obtain();
+                    msg.what = PLAYER_STOP;
+                    playerClientHander.sendMessage(msg);
                 }
 
                 @Override
                 public void setScrub(float position) {
-                    //player.seekTo(startWindow, (long) position);
+                    Message msg = Message.obtain();
+                    msg.what = PLAYER_SCRUB;
+                    msg.obj = position;
+                    playerClientHander.sendMessage(msg);
                 }
 
                 @Override
                 public void setRate(float rate) {
-                    if (rate == 0) {
-                        //player.setPlayWhenReady(false);
-                    } else {
-                        //player.setPlayWhenReady(true);
-                    }
+                    Message msg = Message.obtain();
+                    msg.what = PLAYER_RATE;
+                    msg.obj = rate;
+                    playerClientHander.sendMessage(msg);
                 }
 
                 @Override
                 public PlaybackInfo getPlaybackInfo() {
+                    playerClientHander.sendEmptyMessage(PLAYER_PLAYBACK_INFO);
+
                     PlaybackInfo playbackInfo = new PlaybackInfo();
-                    //playbackInfo.duration = player.getDuration();
-                    //playbackInfo.position = player.getCurrentPosition();
-                    //playbackInfo.rate = player.getPlaybackState();
-                    //playbackInfo.stallCount = 0;
+                    playbackInfo.duration = durationInSeconds;
+                    playbackInfo.position = currentPositionInSeconds;
+                    playbackInfo.rate = 1;
+                    playbackInfo.stallCount = 0;
                     return playbackInfo;
                 }
             };
@@ -736,6 +783,11 @@ public class APSPlayerActivity extends Activity
                 showControls();
             }
             updateButtonVisibilities();
+        }
+
+        @Override
+        public void onTimelineChanged(Timeline timeline, @Nullable Object manifest, @Player.TimelineChangeReason int reason) {
+            Log.w(TAG, "onTimelineChanged: ");
         }
 
         @Override

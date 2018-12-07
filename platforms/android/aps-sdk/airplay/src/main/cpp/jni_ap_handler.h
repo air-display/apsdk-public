@@ -18,7 +18,7 @@ public:
 
   virtual void on_thread_stop() override;
 
-  virtual void on_mirror_stream_started() override;
+  virtual void on_mirror_stream_started(const std::string &session) override;
 
   virtual void
   on_mirror_stream_codec(const aps::sms_video_codec_packet_t *p) override;
@@ -26,23 +26,28 @@ public:
   virtual void
   on_mirror_stream_data(const aps::sms_video_data_packet_t *p) override;
 
-  virtual void on_mirror_stream_stopped() override;
+  virtual void on_mirror_stream_stopped(const std::string &session) override;
 
-  virtual void on_audio_set_volume(const float ratio,
+  virtual void on_audio_set_volume(const std::string &session,
+                                   const float ratio,
                                    const float volume) override;
 
-  virtual void on_audio_set_progress(const float ratio, const uint64_t start,
+  virtual void on_audio_set_progress(const std::string &session,
+                                     const float ratio, const uint64_t start,
                                      const uint64_t current,
                                      const uint64_t end) override;
 
-  virtual void on_audio_set_cover(const std::string format, const void *data,
+  virtual void on_audio_set_cover(const std::string &session,
+                                  const std::string format, const void *data,
                                   const uint32_t length) override;
 
-  virtual void on_audio_set_meta_data(const void *data,
+  virtual void on_audio_set_meta_data(const std::string &session,
+                                      const void *data,
                                       const uint32_t length) override;
 
   virtual void
-  on_audio_stream_started(const aps::audio_data_format_t format) override;
+  on_audio_stream_started(const std::string &session,
+                          const aps::audio_data_format_t format) override;
 
   virtual void on_audio_stream_data(const aps::rtp_audio_data_packet_t *p,
                                     const uint32_t payload_length) override;
@@ -53,19 +58,20 @@ public:
   // virtual void on_audio_control_retransmit(const
   // aps::rtp_control_retransmit_packet_t *p) override;
 
-  virtual void on_audio_stream_stopped() override;
+  virtual void on_audio_stream_stopped(const std::string &session) override;
 
-  virtual void on_video_play(const std::string &location,
+  virtual void on_video_play(const std::string &session,
+                             const std::string &location,
                              const float start_pos) override;
 
-  virtual void on_video_scrub(const float position) override;
+  virtual void on_video_scrub(const std::string &session, const float position) override;
 
-  virtual void on_video_rate(const float value) override;
+  virtual void on_video_rate(const std::string &session, const float value) override;
 
-  virtual void on_video_stop() override;
+  virtual void on_video_stop(const std::string &session) override;
 
   virtual void
-  on_acquire_playback_info(ap_handler::playback_info_t &playback_info) override;
+  on_acquire_playback_info(const std::string &session, ap_handler::playback_info_t &playback_info) override;
 
 private:
   airplay_handler *parent;

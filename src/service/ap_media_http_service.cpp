@@ -1,5 +1,6 @@
-#include <service/ap_media_http_service.h>
 #include <service/ap_media_data_store.h>
+#include <service/ap_media_http_service.h>
+
 
 namespace aps {
 namespace service {
@@ -12,7 +13,6 @@ ap_media_http_connection::ap_media_http_connection(asio::io_context &io_ctx)
 ap_media_http_connection::~ap_media_http_connection() {}
 
 void ap_media_http_connection::get_handler(const request &req, response &res) {
-  LOGW() << "req.uri " << req.uri;
   DUMP_REQUEST_WITH_CONNECTION(req);
 
   auto data = ap_media_data_store::get().query_media_data(req.uri);
@@ -21,9 +21,7 @@ void ap_media_http_connection::get_handler(const request &req, response &res) {
     return;
   }
 
-  res.with_status(ok)
-    .with_content_type(APPLICATION_MPEGURL)
-    .with_content(data);
+  res.with_status(ok).with_content_type(APPLICATION_MPEGURL).with_content(data);
 }
 
 void ap_media_http_connection::add_common_header(const request &req,

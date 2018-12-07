@@ -1,5 +1,8 @@
 package com.medialab.airplay;
 
+/**
+ * Represents the configuration data of the AirPlay server.
+ */
 public class AirPlayConfig {
     public static AirPlayConfig defaultInstance() {
         AirPlayConfig instance = new AirPlayConfig();

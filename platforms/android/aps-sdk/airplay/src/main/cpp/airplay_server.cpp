@@ -94,7 +94,7 @@ void Java_com_medialab_airplay_AirPlayServer_nciSetHandler(JNIEnv *env,
   }
 }
 
-short Java_com_medialab_airplay_AirPlayServer_nciGetServicePort(JNIEnv *env,
+jshort Java_com_medialab_airplay_AirPlayServer_nciGetServicePort(JNIEnv *env,
                                                            jobject thiz) {
     return airplay_server::get(env, thiz)->getServicePort();
 }

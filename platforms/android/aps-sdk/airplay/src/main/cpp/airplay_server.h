@@ -47,7 +47,7 @@ Java_com_medialab_airplay_AirPlayServer_nciSetConfig(JNIEnv *env, jobject thiz, 
 JNIEXPORT void JNICALL Java_com_medialab_airplay_AirPlayServer_nciSetHandler(
     JNIEnv *env, jobject thiz, jobject handler);
 
-JNIEXPORT short JNICALL Java_com_medialab_airplay_AirPlayServer_nciGetServicePort(JNIEnv *env,
+JNIEXPORT jshort JNICALL Java_com_medialab_airplay_AirPlayServer_nciGetServicePort(JNIEnv *env,
                                                                 jobject thiz);
 }
 
