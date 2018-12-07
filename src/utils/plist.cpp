@@ -195,7 +195,7 @@ static void bplist_analyze(plist_object_t *object, uint64_t *objects,
   if (object->type == PLIST_TYPE_PRIMITIVE) {
     *bytes += 1;
   } else if (object->type == PLIST_TYPE_INTEGER) {
-    *bytes += 1 + integer_length(object->value.value_integer);
+    *bytes += 1 + (uint64_t)integer_length(object->value.value_integer);
   } else if (object->type == PLIST_TYPE_REAL) {
     *bytes += 1 + 8;
   } else if (object->type == PLIST_TYPE_DATA) {
@@ -203,21 +203,21 @@ static void bplist_analyze(plist_object_t *object, uint64_t *objects,
     if (length < 15) {
       *bytes += 1 + length;
     } else {
-      *bytes += 1 + 1 + integer_length(length) + length;
+      *bytes += 1 + 1 + (uint64_t)integer_length(length) + length;
     }
   } else if (object->type == PLIST_TYPE_STRING) {
     uint64_t length = strlen(object->value.value_string);
     if (length < 15) {
       *bytes += 1 + length;
     } else {
-      *bytes += 1 + 1 + integer_length(length) + length;
+      *bytes += 1 + 1 + (uint64_t)integer_length(length) + length;
     }
   } else if (object->type == PLIST_TYPE_ARRAY) {
     uint64_t size = object->value.value_array.size;
     if (size < 15) {
       *bytes += 1;
     } else {
-      *bytes += 1 + 1 + integer_length(size);
+      *bytes += 1 + 1 + (uint64_t)integer_length(size);
     }
     *refs += size;
     for (i = 0; i < size; i++) {
@@ -228,7 +228,7 @@ static void bplist_analyze(plist_object_t *object, uint64_t *objects,
     if (size < 15) {
       *bytes += 1;
     } else {
-      *bytes += 1 + 1 + integer_length(2 * size);
+      *bytes += 1 + 1 + (uint64_t)integer_length(2 * size);
     }
     *refs += 2 * size;
     for (i = 0; i < size; i++) {
@@ -237,7 +237,7 @@ static void bplist_analyze(plist_object_t *object, uint64_t *objects,
       if (keylen < 15) {
         *bytes += 1 + keylen;
       } else {
-        *bytes += 1 + 1 + integer_length(keylen) + keylen;
+        *bytes += 1 + 1 + (uint64_t)integer_length(keylen) + keylen;
       }
       bplist_analyze(object->value.value_dict.values[i], objects, bytes, refs);
     }
@@ -923,7 +923,8 @@ plist_object_t *plist_object_from_bplist(const uint8_t *data,
     return NULL;
   }
   for (i = 0; i < objects; i++) {
-    parse_integer(data, reftaboffset + i * offlen, offlen, &reftab[i]);
+    parse_integer(data, reftaboffset + i * (uint64_t)offlen, offlen,
+                  &reftab[i]);
   }
   object = bplist_parse_object(reftab, objects, rootid, data, datalen, reflen);
   free(reftab);

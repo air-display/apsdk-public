@@ -6,6 +6,7 @@
 
 #include "parse.h"
 #include <memory.h>
+#include <string.h>
 
 /**
  * parses an HLS master playlist src into a master_t struct

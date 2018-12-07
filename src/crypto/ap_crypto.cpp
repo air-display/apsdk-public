@@ -133,7 +133,9 @@ void aps::ap_crypto::fp_setup(const uint8_t mode, uint8_t *content) {
 
 void aps::ap_crypto::fp_handshake(uint8_t *content, const uint8_t *keymsg,
                                   const uint32_t len) {
-  if (keymsg) this->fp_key_message_.assign(keymsg, keymsg + len);
+  if (!keymsg) return;
+  
+  this->fp_key_message_.assign(keymsg, keymsg + len);
 
   uint8_t *pos = (uint8_t *)&(fp_header);
   memcpy(content, pos, 12);
