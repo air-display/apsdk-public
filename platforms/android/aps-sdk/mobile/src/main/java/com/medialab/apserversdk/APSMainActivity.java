@@ -44,6 +44,7 @@ public class APSMainActivity extends AppCompatActivity implements APSDemoApplica
     protected void onDestroy() {
         Log.d(TAG, "onDestroy: ");
         super.onDestroy();
+        ((APSDemoApplication)getApplication()).stopAirPlayServer();
     }
 
     @Override

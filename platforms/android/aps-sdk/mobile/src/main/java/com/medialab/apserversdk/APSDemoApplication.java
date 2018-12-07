@@ -1,6 +1,9 @@
 package com.medialab.apserversdk;
 
 import android.app.Application;
+import android.content.SharedPreferences;
+import android.preference.Preference;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.google.android.exoplayer2.offline.DownloadManager;
@@ -33,6 +36,8 @@ public class APSDemoApplication extends Application {
     private static final String DOWNLOAD_TRACKER_ACTION_FILE = "tracked_actions";
     private static final String DOWNLOAD_CONTENT_DIRECTORY = "downloads";
     private static final int MAX_SIMULTANEOUS_DOWNLOADS = 2;
+
+    private static final String DEVICE_UNIQUE_ID = "device_uid";
 
     protected String userAgent;
 
@@ -175,7 +180,18 @@ public class APSDemoApplication extends Application {
     private void createAirPlayServer() {
         if (airplayServer == null) {
             AirPlayConfig config = AirPlayConfig.defaultInstance();
-            config.setName("AirplayExo");
+            SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
+            if (preference.contains(DEVICE_UNIQUE_ID)) {
+                config.setMacAddress(preference.getString(DEVICE_UNIQUE_ID, config.getMacAddress()));
+            } else {
+                preference
+                        .edit()
+                        .putString(DEVICE_UNIQUE_ID, config.getMacAddress())
+                        .commit();
+
+            }
+            String name = String.format("APS[%s]", config.getDeviceID());
+            config.setName(name);
             config.getDisplay().setWidth(1920);
             config.getDisplay().setHeight(1280);
             airplayServer = new AirPlayServer(getApplicationContext());

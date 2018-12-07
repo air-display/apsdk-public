@@ -8,7 +8,6 @@ public class AirPlayConfig {
         AirPlayConfig instance = new AirPlayConfig();
         instance.setName("Tencent WeCast Display");
         instance.setMacAddress(instance.generateMacAddress());
-        instance.setDeviceID(instance.simplifyMacAddress(instance.getMacAddress()));
         instance.setModel("AppleTV3,2");
         instance.setSourceVersion("220.68");
         instance.setPi("b08f5a79-db29-4384-b456-a4784d9e6055");
@@ -33,8 +32,6 @@ public class AirPlayConfig {
     private static String randomMac = null;
 
     private String name;
-
-    private String deviceID;
 
     private String model;
 
@@ -61,105 +58,89 @@ public class AirPlayConfig {
     public String getName() {
         return name;
     }
-
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getDeviceID() {
-        return deviceID;
-    }
-
-    private void setDeviceID(String deviceID) {
-        this.deviceID = deviceID;
-    }
-
-    public String getModel() {
-        return model;
-    }
-
-    private void setModel(String model) {
-        this.model = model;
-    }
-
-    public String getSourceVersion() {
-        return sourceVersion;
-    }
-
-    private void setSourceVersion(String sourceVersion) {
-        this.sourceVersion = sourceVersion;
-    }
-
-    public String getPi() {
-        return pi;
-    }
-
-    private void setPi(String pi) {
-        this.pi = pi;
-    }
-
-    public String getPk() {
-        return pk;
-    }
-
-    private void setPk(String pk) {
-        this.pk = pk;
     }
 
     public String getMacAddress() {
         return macAddress;
     }
-
-    private void setMacAddress(String macAddress) {
+    public void setMacAddress(String macAddress) {
         this.macAddress = macAddress;
     }
 
     public int getVv() {
         return vv;
     }
-
-    private void setVv(int vv) {
-        this.vv = vv;
+    public int getFeatures() {
+        return features;
     }
-
+    public int getStatusFlag() {
+        return statusFlag;
+    }
+    public String getDeviceID() {
+        return simplifyMacAddress(macAddress);
+    }
+    public String getModel() {
+        return model;
+    }
+    public String getSourceVersion() {
+        return sourceVersion;
+    }
+    public String getPi() {
+        return pi;
+    }
+    public String getPk() {
+        return pk;
+    }
     public String getFeaturesString() {
         return Integer.toHexString(features);
     }
+    public AirPlayConfigAudioFormat getAudioFormat() {
+        return audioFormat;
+    }
+    public AirPlayConfigAudioLatency getAudioLatency() {
+        return audioLatency;
+    }
+    public AirPlayConfigDisplay getDisplay() {
+        return display;
+    }
 
-    public int getFeatures() {
-        return features;
+    ///////////////////////////////////////////////////////////////////////////////////////
+    private void setModel(String model) {
+        this.model = model;
+    }
+
+    private void setSourceVersion(String sourceVersion) {
+        this.sourceVersion = sourceVersion;
+    }
+
+    private void setPi(String pi) {
+        this.pi = pi;
+    }
+
+    private void setPk(String pk) {
+        this.pk = pk;
+    }
+
+    private void setVv(int vv) {
+        this.vv = vv;
     }
 
     private void setFeatures(int features) {
         this.features = features;
     }
 
-    public int getStatusFlag() {
-        return statusFlag;
-    }
-
     private void setStatusFlag(int statusFlag) {
         this.statusFlag = statusFlag;
-    }
-
-    public AirPlayConfigAudioFormat getAudioFormat() {
-        return audioFormat;
     }
 
     private void setAudioFormat(AirPlayConfigAudioFormat audioFormat) {
         this.audioFormat = audioFormat;
     }
 
-    public AirPlayConfigAudioLatency getAudioLatency() {
-        return audioLatency;
-    }
-
     private void setAudioLatency(AirPlayConfigAudioLatency audioLatency) {
         this.audioLatency = audioLatency;
-    }
-
-    public AirPlayConfigDisplay getDisplay() {
-        return display;
     }
 
     private void setDisplay(AirPlayConfigDisplay display) {

@@ -72,11 +72,6 @@ void Java_com_medialab_airplay_AirPlayServer_nciSetConfig(JNIEnv *env,
   config_->name(v);
   env->ReleaseStringUTFChars(name, v);
 
-  jstring deviceId = (jstring)airPlayConfig.deviceID();
-  v = env->GetStringUTFChars(deviceId, 0);
-  config_->deviceID(v);
-  env->ReleaseStringUTFChars(deviceId, v);
-
   jstring macAddress = (jstring)airPlayConfig.macAddress();
   v = env->GetStringUTFChars(macAddress, 0);
   config_->macAddress(v);

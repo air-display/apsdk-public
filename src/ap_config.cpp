@@ -49,11 +49,9 @@ ap_config_ptr ap_config::default_instance() {
   static ap_config_ptr s_instance = 0;
   if (!s_instance) {
     std::string mac_address = generate_mac_address();
-    std::string device_id = string_replace(mac_address.c_str(), ":", "");
 
     s_instance = std::make_shared<ap_config>();
     s_instance->name_ = "APS Display";
-    s_instance->deviceID_ = device_id;
     s_instance->model_ = "AppleTV3,2";
     s_instance->serverVersion_ = "220.68";
     s_instance->pi_ = "b08f5a79-db29-4384-b456-a4784d9e6055";
@@ -98,4 +96,9 @@ const std::string ap_config::features_hex_string() const {
     oss << ",0x" << std::hex << std::uppercase << (uint32_t)(features_ >> 32);
   return oss.str();
 }
+
+const std::string ap_config::deviceID() const {
+  return string_replace(macAddress_.c_str(), ":", "");
+}
+
 } // namespace aps

@@ -188,11 +188,6 @@ public:
   /// <summary>
   ///
   /// </summary>
-  DECLARE_STRING_PROPERTY(deviceID);
-
-  /// <summary>
-  ///
-  /// </summary>
   DECLARE_STRING_PROPERTY(model);
 
   /// <summary>
@@ -279,6 +274,12 @@ public:
   ///
   /// </summary>
   const std::string features_hex_string() const;
+
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <returns></returns>
+  const std::string deviceID() const;
 };
 
 typedef std::shared_ptr<ap_config> ap_config_ptr;

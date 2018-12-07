@@ -83,7 +83,7 @@ void set_current_thread_name(const char *name);
 /// <summary>
 ///
 /// </summary>
-const char *generate_mac_address();
+std::string generate_mac_address();
 
 /// <summary>
 /// 

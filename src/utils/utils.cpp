@@ -34,7 +34,7 @@ const char *gmt_time_string() {
     return 0;
 }
 
-const char *generate_mac_address() {
+std::string generate_mac_address() {
   uint64_t ts =
       duration_cast<milliseconds>(system_clock::now().time_since_epoch())
           .count();

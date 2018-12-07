@@ -114,6 +114,8 @@ int main() {
   aps::ap_server_ptr server = std::make_shared<aps::ap_server>();
   aps::ap_handler_ptr player = std::make_shared<ap_player>();
   aps::ap_config_ptr config = aps::ap_config::default_instance();
+  config->macAddress("AA:BB:CC:DD:EE:FF");
+  config->name("APS[" + config->macAddress() +"]");
   server->set_config(config);
   server->set_handler(player);
   LOGI() << "AP Server is starting....";

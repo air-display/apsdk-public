@@ -104,12 +104,6 @@ protected:
     raop_net_service_.add_txt_record("sf", "0x04");
 
     std::string airplay_service_name = ap_config_->name();
-#ifndef NDEBUG
-    std::srand(std::time(nullptr));
-    airplay_service_name += "(";
-    airplay_service_name += std::to_string(std::rand());
-    airplay_service_name += ")";
-#endif
     if (airplay_net_service_.publish(airplay_service_name,
                                      airplay_tcp_service_->port())) {
       std::string rapo_name = ap_config_->deviceID();
