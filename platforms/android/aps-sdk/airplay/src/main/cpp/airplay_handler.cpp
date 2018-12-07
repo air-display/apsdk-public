@@ -69,7 +69,7 @@ void airplay_handler::detach_thread() {
 void airplay_handler::on_mirror_stream_started(const std::string &session) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    GET_METHOD_ID(on_mirror_stream_started, "()V");
+    GET_METHOD_ID(on_mirror_stream_started, "(Ljava/lang/String;)V");
     if (mid) {
       jstring s = env->NewStringUTF(session.c_str());
       env->CallVoidMethod(obj_this_, mid, s);
@@ -119,7 +119,7 @@ void airplay_handler::on_mirror_stream_data(
 void airplay_handler::on_mirror_stream_stopped(const std::string &session) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    GET_METHOD_ID(on_mirror_stream_stopped, "()V");
+    GET_METHOD_ID(on_mirror_stream_stopped, "(Ljava/lang/String;)V");
     if (mid) {
       jstring s = env->NewStringUTF(session.c_str());
       env->CallVoidMethod(obj_this_, mid, s);
@@ -136,7 +136,7 @@ void airplay_handler::on_audio_set_volume(const std::string &session,
                                           const float volume) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    GET_METHOD_ID(on_audio_set_volume, "(FF)V");
+    GET_METHOD_ID(on_audio_set_volume, "(Ljava/lang/String;FF)V");
     if (mid) {
       jstring s = env->NewStringUTF(session.c_str());
       env->CallVoidMethod(obj_this_, mid, s, ratio, volume);
@@ -154,7 +154,7 @@ void airplay_handler::on_audio_set_progress(const std::string &session,
                                             const uint64_t end) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    GET_METHOD_ID(on_audio_set_progress, "(FJJJ)V");
+    GET_METHOD_ID(on_audio_set_progress, "(Ljava/lang/String;FJJJ)V");
     if (mid) {
       jstring s = env->NewStringUTF(session.c_str());
       env->CallVoidMethod(obj_this_, mid, s, ratio, start, current, end);
@@ -171,7 +171,7 @@ void airplay_handler::on_audio_set_cover(const std::string &session,
                                          const uint32_t length) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    GET_METHOD_ID(on_audio_set_cover, "(Ljava/lang/String;[B)V");
+    GET_METHOD_ID(on_audio_set_cover, "(Ljava/lang/String;Ljava/lang/String;[B)V");
     if (mid) {
       jstring s = env->NewStringUTF(session.c_str());
       jstring image_format = env->NewStringUTF(format.c_str());
@@ -191,7 +191,7 @@ void airplay_handler::on_audio_set_meta_data(const std::string &session,
                                              const uint32_t length) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    GET_METHOD_ID(on_audio_set_meta_data, "([B)V");
+    GET_METHOD_ID(on_audio_set_meta_data, "(Ljava/lang/String;[B)V");
     if (mid) {
       jstring s = env->NewStringUTF(session.c_str());
       jbyteArray byte_array = env->NewByteArray(length);
@@ -209,7 +209,7 @@ void airplay_handler::on_audio_stream_started(const std::string &session,
                                               const aps::audio_data_format_t format) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    GET_METHOD_ID(on_audio_stream_started, "(I)V");
+    GET_METHOD_ID(on_audio_stream_started, "(Ljava/lang/String;I)V");
     if (mid) {
       jstring s = env->NewStringUTF(session.c_str());
       env->CallVoidMethod(obj_this_, mid, s, format);
@@ -282,7 +282,7 @@ void airplay_handler::on_audio_stream_data(
 void airplay_handler::on_audio_stream_stopped(const std::string &session) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    GET_METHOD_ID(on_audio_stream_stopped, "()V");
+    GET_METHOD_ID(on_audio_stream_stopped, "(Ljava/lang/String;)V");
     if (mid) {
       jstring s = env->NewStringUTF(session.c_str());
       env->CallVoidMethod(obj_this_, mid, s);
@@ -298,7 +298,7 @@ void airplay_handler::on_video_play(const std::string &session,
                                     const float start_pos) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    GET_METHOD_ID(on_video_play, "(Ljava/lang/String;F)V");
+    GET_METHOD_ID(on_video_play, "(Ljava/lang/String;Ljava/lang/String;F)V");
     if (mid) {
       jstring s = env->NewStringUTF(session.c_str());
       jstring l = env->NewStringUTF(location.c_str());
@@ -314,7 +314,7 @@ void airplay_handler::on_video_scrub(const std::string &session,
                                      const float position) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    GET_METHOD_ID(on_video_scrub, "(F)V");
+    GET_METHOD_ID(on_video_scrub, "(Ljava/lang/String;F)V");
     if (mid) {
       jstring s = env->NewStringUTF(session.c_str());
       env->CallVoidMethod(obj_this_, mid, s, position);
@@ -329,7 +329,7 @@ void airplay_handler::on_video_rate(const std::string &session,
                                     const float value) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    GET_METHOD_ID(on_video_rate, "(F)V");
+    GET_METHOD_ID(on_video_rate, "(Ljava/lang/String;F)V");
     if (mid) {
       jstring s = env->NewStringUTF(session.c_str());
       env->CallVoidMethod(obj_this_, mid, s, value);
@@ -343,7 +343,7 @@ void airplay_handler::on_video_rate(const std::string &session,
 void airplay_handler::on_video_stop(const std::string &session) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    GET_METHOD_ID(on_video_stop, "()V");
+    GET_METHOD_ID(on_video_stop, "(Ljava/lang/String;)V");
     if (mid) {
       jstring s = env->NewStringUTF(session.c_str());
       env->CallVoidMethod(obj_this_, mid, s);
@@ -358,7 +358,7 @@ void airplay_handler::on_acquire_playback_info(const std::string &session,
                                                ap_handler::playback_info_t &playback_info) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    GET_METHOD_ID(get_playback_info, "()Lcom/medialab/airplay/PlaybackInfo;");
+    GET_METHOD_ID(get_playback_info, "(Ljava/lang/String;)Lcom/medialab/airplay/PlaybackInfo;");
     if (mid) {
       jstring s = env->NewStringUTF(session.c_str());
       jobject object = env->CallObjectMethod(obj_this_, mid, s);
