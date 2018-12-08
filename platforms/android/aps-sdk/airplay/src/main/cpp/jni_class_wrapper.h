@@ -23,7 +23,9 @@ typedef jobject Object;
   private:                                                                     \
     JNIEnv *env_;                                                              \
     jobject obj_;                                                              \
-    c(JNIEnv *env, jobject obj) : env_(env), obj_(obj) {}                      \
+    bool auto_release_;                                                        \
+    c(JNIEnv *env, jobject obj, bool auto_release)                             \
+        : env_(env), obj_(obj), auto_release_(auto_release) {}                 \
     static jclass get_class(JNIEnv *env) {                                     \
       static jclass clz_ = 0;                                                  \
       if (clz_)                                                                \
@@ -54,13 +56,15 @@ typedef jobject Object;
                                                                                \
   public:                                                                      \
     ~c() {                                                                     \
-      if (env_ && obj_)                                                        \
+      if (auto_release_ && env_ && obj_)                                       \
         env_->DeleteLocalRef(obj_);                                            \
     }                                                                          \
-    static c attach(JNIEnv *env, jobject obj) { return c(env, obj); }          \
+    static c attach(JNIEnv *env, jobject obj, bool auto_release = true) {      \
+      return c(env, obj, auto_release);                                        \
+    }                                                                          \
     static c create(JNIEnv *env) {                                             \
       jobject obj = env->NewObject(get_class(env), get_constructor(env));      \
-      return c(env, obj);                                                      \
+      return c(env, obj, true);                                                \
     }                                                                          \
     jobject get() { return obj_; }
 
@@ -78,6 +82,33 @@ public:                                                                        \
     static jfieldID fid = env_->GetFieldID(get_class(env_), #x, s);            \
     env_->Set##t##Field(obj_, fid, v);                                         \
   }
+
+class String {
+private:
+  bool auto_release_;
+  JNIEnv *env_;
+  jstring obj_;
+
+  String(JNIEnv *env, jstring obj, bool auto_release)
+      : env_(env), obj_(obj), auto_release_(auto_release) {}
+
+public:
+  jstring get() { return obj_; }
+
+  ~String() {
+    if (auto_release_ && env_ && obj_)
+      env_->DeleteLocalRef(obj_);
+  }
+
+  static String attach(JNIEnv *env, jstring obj, bool auto_release = true) {
+    return String(env, obj, auto_release);
+  }
+
+  static String fromUTF8(JNIEnv *env, const char *s) {
+    jstring obj = env->NewStringUTF(s);
+    return String(env, obj, true);
+  }
+};
 
 #define SHORT_FIELD(x) FIELD(x, Short, "S")
 #define INT_FIELD(x) FIELD(x, Int, "I")

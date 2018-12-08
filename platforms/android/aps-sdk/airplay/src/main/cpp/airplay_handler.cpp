@@ -165,10 +165,10 @@ void airplay_handler::on_audio_set_cover(const std::string format,
   if (env) {
     GET_METHOD_ID(on_audio_set_cover, "(Ljava/lang/String;[B)V");
     if (mid) {
-      jstring image_format = env->NewStringUTF(format.c_str());
+      String image_format = String::fromUTF8(env, format.c_str());
       jbyteArray byte_array = env->NewByteArray(length);
       env->SetByteArrayRegion(byte_array, 0, length, (jbyte *)data);
-      env->CallVoidMethod(obj_this_, mid, image_format, byte_array);
+      env->CallVoidMethod(obj_this_, mid, image_format.get(), byte_array);
       env->DeleteLocalRef(byte_array);
     } else {
       __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
@@ -286,9 +286,9 @@ void airplay_handler::on_video_play(const std::string &session,
   if (env) {
     GET_METHOD_ID(on_video_play, "(Ljava/lang/String;Ljava/lang/String;F)V");
     if (mid) {
-      jstring s = env->NewStringUTF(session.c_str());
-      jstring l = env->NewStringUTF(location.c_str());
-      env->CallVoidMethod(obj_this_, mid, s, l, start_pos);
+      String s = String::fromUTF8(env, session.c_str());
+      String l = String::fromUTF8(env, location.c_str());
+      env->CallVoidMethod(obj_this_, mid, s.get(), l.get(), start_pos);
     } else {
       __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
                           "Failed to get method id of on_video_play");
@@ -302,8 +302,8 @@ void airplay_handler::on_video_scrub(const std::string &session,
   if (env) {
     GET_METHOD_ID(on_video_scrub, "(Ljava/lang/String;F)V");
     if (mid) {
-      jstring s = env->NewStringUTF(session.c_str());
-      env->CallVoidMethod(obj_this_, mid, s, position);
+      String s = String::fromUTF8(env, session.c_str());
+      env->CallVoidMethod(obj_this_, mid, s.get(), position);
     } else {
       __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
                           "Failed to get method id of on_video_scrub");
@@ -317,8 +317,8 @@ void airplay_handler::on_video_rate(const std::string &session,
   if (env) {
     GET_METHOD_ID(on_video_rate, "(Ljava/lang/String;F)V");
     if (mid) {
-      jstring s = env->NewStringUTF(session.c_str());
-      env->CallVoidMethod(obj_this_, mid, s, value);
+      String s = String::fromUTF8(env, session.c_str());
+      env->CallVoidMethod(obj_this_, mid, s.get(), value);
     } else {
       __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
                           "Failed to get method id of on_video_rate");
@@ -331,8 +331,8 @@ void airplay_handler::on_video_stop(const std::string &session) {
   if (env) {
     GET_METHOD_ID(on_video_stop, "(Ljava/lang/String;)V");
     if (mid) {
-      jstring s = env->NewStringUTF(session.c_str());
-      env->CallVoidMethod(obj_this_, mid, s);
+      String s = String::fromUTF8(env, session.c_str());
+      env->CallVoidMethod(obj_this_, mid, s.get());
     } else {
       __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
                           "Failed to get method id of on_video_stop");
@@ -346,8 +346,8 @@ void airplay_handler::on_acquire_playback_info(const std::string &session,
   if (env) {
     GET_METHOD_ID(get_playback_info, "(Ljava/lang/String;)Lcom/medialab/airplay/PlaybackInfo;");
     if (mid) {
-      jstring s = env->NewStringUTF(session.c_str());
-      jobject object = env->CallObjectMethod(obj_this_, mid, s);
+      String s = String::fromUTF8(env, session.c_str());
+      jobject object = env->CallObjectMethod(obj_this_, mid, s.get());
       if (object) {
         PlaybackInfo playbackInfo = PlaybackInfo::attach(env, object);
         playback_info.stallCount = (uint32_t)playbackInfo.stallCount();

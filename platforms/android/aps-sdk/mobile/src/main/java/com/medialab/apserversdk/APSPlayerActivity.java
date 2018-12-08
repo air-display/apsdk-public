@@ -17,7 +17,6 @@ package com.medialab.apserversdk;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -26,7 +25,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.util.Pair;
 import android.view.KeyEvent;
 import android.view.View;
@@ -37,15 +35,16 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.C.ContentType;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.PlaybackPreparer;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.drm.DefaultDrmSessionManager;
 import com.google.android.exoplayer2.drm.FrameworkMediaCrypto;
 import com.google.android.exoplayer2.drm.FrameworkMediaDrm;
@@ -91,10 +90,7 @@ import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
 import java.util.List;
-import java.util.PrimitiveIterator;
 import java.util.UUID;
-
-import static android.support.constraint.Constraints.TAG;
 
 /** An activity that plays media using {@link SimpleExoPlayer}. */
 public class APSPlayerActivity extends Activity
@@ -171,7 +167,7 @@ public class APSPlayerActivity extends Activity
     private static final int PLAYER_PLAYBACK_INFO = 4;
     private long durationInSeconds;
     private long currentPositionInSeconds;
-    private Handler playerClientHander;
+    private Handler playerClientHandler;
     private APSDemoApplication.IPlayerClient playerClient;
 
     // Activity lifecycle
@@ -220,10 +216,10 @@ public class APSPlayerActivity extends Activity
             startWindow = savedInstanceState.getInt(KEY_WINDOW);
             startPosition = savedInstanceState.getLong(KEY_POSITION);
         } else {
+            startAutoPlay = true;
             trackSelectorParameters = new DefaultTrackSelector.ParametersBuilder().build();
             startWindow = getIntent().getIntExtra(START_WINDOW_INDEX, C.INDEX_UNSET);
             startPosition = (int)getIntent().getFloatExtra(START_POSITION, C.TIME_UNSET);
-            //clearStartPosition();
         }
     }
 
@@ -485,40 +481,45 @@ public class APSPlayerActivity extends Activity
                 releaseAdsLoader();
             }
 
-            playerClientHander = new Handler() {
-                @Override
-                public void handleMessage(Message msg) {
-                    switch (msg.what) {
-                        case PLAYER_STOP:
+            playerClientHandler = new Handler(msg -> {
+                switch (msg.what) {
+                    case PLAYER_STOP:
+                        // Stop and exit the activity
+                        player.setPlayWhenReady(false);
+                        APSPlayerActivity.this.finish();
+                        break;
+                    case PLAYER_SCRUB:
+                        // Seek to new position
+                        long position = ((Float) msg.obj).longValue() * 1000;
+                        player.seekTo(player.getCurrentWindowIndex(), position);
+                        break;
+                    case PLAYER_RATE:
+                        // Change the playback speed
+                        float rate = (float) msg.obj;
+                        if (rate > 0) {
+                            PlaybackParameters speed = new PlaybackParameters(rate);
+                            player.setPlaybackParameters(speed);
+                            player.setPlayWhenReady(true);
+                        } else {
+                            // If the playback speed is 0 then pause it
                             player.setPlayWhenReady(false);
-                            break;
-                        case PLAYER_SCRUB:
-                            long pos = ((Float)msg.obj).longValue() * 1000;
-                            player.seekTo(player.getCurrentWindowIndex(), pos);
-                            break;
-                        case PLAYER_RATE:
-                            float rate = (float) msg.obj;
-                            if (rate == 0) {
-                                player.setPlayWhenReady(false);
-                            } else {
-                                player.setPlayWhenReady(true);
-                            }
-                            break;
-                        case PLAYER_PLAYBACK_INFO:
-                            durationInSeconds = player.getDuration() / 1000;
-                            currentPositionInSeconds = player.getCurrentPosition() / 1000;
-                        default:
-                            break;
-                    }
+                        }
+                        break;
+                    case PLAYER_PLAYBACK_INFO:
+                        durationInSeconds = player.getDuration() / 1000;
+                        currentPositionInSeconds = player.getCurrentPosition() / 1000;
+                    default:
+                        break;
                 }
-            };
+                return false;
+            });
 
             playerClient = new APSDemoApplication.IPlayerClient() {
                 @Override
                 public void stop() {
                     Message msg = Message.obtain();
                     msg.what = PLAYER_STOP;
-                    playerClientHander.sendMessage(msg);
+                    playerClientHandler.sendMessage(msg);
                 }
 
                 @Override
@@ -526,7 +527,7 @@ public class APSPlayerActivity extends Activity
                     Message msg = Message.obtain();
                     msg.what = PLAYER_SCRUB;
                     msg.obj = position;
-                    playerClientHander.sendMessage(msg);
+                    playerClientHandler.sendMessage(msg);
                 }
 
                 @Override
@@ -534,12 +535,12 @@ public class APSPlayerActivity extends Activity
                     Message msg = Message.obtain();
                     msg.what = PLAYER_RATE;
                     msg.obj = rate;
-                    playerClientHander.sendMessage(msg);
+                    playerClientHandler.sendMessage(msg);
                 }
 
                 @Override
                 public PlaybackInfo getPlaybackInfo() {
-                    playerClientHander.sendEmptyMessage(PLAYER_PLAYBACK_INFO);
+                    playerClientHandler.sendEmptyMessage(PLAYER_PLAYBACK_INFO);
 
                     PlaybackInfo playbackInfo = new PlaybackInfo();
                     playbackInfo.duration = durationInSeconds;
@@ -555,7 +556,7 @@ public class APSPlayerActivity extends Activity
         if (haveStartPosition) {
             player.seekTo(startWindow, startPosition);
         }
-        player.prepare(mediaSource, !haveStartPosition, false);
+        player.prepare(mediaSource, !haveStartPosition, true);
         updateButtonVisibilities();
     }
 
@@ -785,10 +786,10 @@ public class APSPlayerActivity extends Activity
             updateButtonVisibilities();
         }
 
-        @Override
-        public void onTimelineChanged(Timeline timeline, @Nullable Object manifest, @Player.TimelineChangeReason int reason) {
-            Log.w(TAG, "onTimelineChanged: ");
-        }
+        //@Override
+        //public void onTimelineChanged(Timeline timeline, @Nullable Object manifest, @Player.TimelineChangeReason int reason) {
+        //    Log.w(TAG, "onTimelineChanged: ");
+        //}
 
         @Override
         public void onPositionDiscontinuity(@Player.DiscontinuityReason int reason) {
