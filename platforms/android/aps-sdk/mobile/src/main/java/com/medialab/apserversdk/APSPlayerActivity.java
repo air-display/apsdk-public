@@ -161,12 +161,11 @@ public class APSPlayerActivity extends Activity
     private Uri loadedAdTagUri;
     private ViewGroup adUiViewGroup;
 
-    private static final int PLAYER_STOP = 1;
-    private static final int PLAYER_SCRUB = 2;
-    private static final int PLAYER_RATE = 3;
-    private static final int PLAYER_PLAYBACK_INFO = 4;
+    private static final int PLAYER_SCRUB = 1;
+    private static final int PLAYER_RATE = 2;
     private long durationInSeconds;
     private long currentPositionInSeconds;
+    private boolean isPaused;
     private Handler playerClientHandler;
     private APSDemoApplication.IPlayerClient playerClient;
 
@@ -481,13 +480,18 @@ public class APSPlayerActivity extends Activity
                 releaseAdsLoader();
             }
 
+            Runnable updatePlaybackInfo = new Runnable() {
+                @Override
+                public void run() {
+                    durationInSeconds = player.getDuration() / 1000;
+                    currentPositionInSeconds = player.getCurrentPosition() / 1000;
+                    isPaused = ((!player.getPlayWhenReady()) && (Player.STATE_READY == player.getPlaybackState()));
+                    playerClientHandler.postDelayed(this, 500);
+                }
+            };
+
             playerClientHandler = new Handler(msg -> {
                 switch (msg.what) {
-                    case PLAYER_STOP:
-                        // Stop and exit the activity
-                        player.setPlayWhenReady(false);
-                        APSPlayerActivity.this.finish();
-                        break;
                     case PLAYER_SCRUB:
                         // Seek to new position
                         long position = ((Float) msg.obj).longValue() * 1000;
@@ -505,21 +509,18 @@ public class APSPlayerActivity extends Activity
                             player.setPlayWhenReady(false);
                         }
                         break;
-                    case PLAYER_PLAYBACK_INFO:
-                        durationInSeconds = player.getDuration() / 1000;
-                        currentPositionInSeconds = player.getCurrentPosition() / 1000;
                     default:
                         break;
                 }
                 return false;
             });
+            playerClientHandler.postDelayed(updatePlaybackInfo, 500);
 
             playerClient = new APSDemoApplication.IPlayerClient() {
                 @Override
                 public void stop() {
-                    Message msg = Message.obtain();
-                    msg.what = PLAYER_STOP;
-                    playerClientHandler.sendMessage(msg);
+                    playerClientHandler.removeCallbacksAndMessages(null);
+                    APSPlayerActivity.this.finish();
                 }
 
                 @Override
@@ -540,12 +541,10 @@ public class APSPlayerActivity extends Activity
 
                 @Override
                 public PlaybackInfo getPlaybackInfo() {
-                    playerClientHandler.sendEmptyMessage(PLAYER_PLAYBACK_INFO);
-
                     PlaybackInfo playbackInfo = new PlaybackInfo();
                     playbackInfo.duration = durationInSeconds;
                     playbackInfo.position = currentPositionInSeconds;
-                    playbackInfo.rate = 1;
+                    playbackInfo.rate = isPaused ? 0 : 1;
                     playbackInfo.stallCount = 0;
                     return playbackInfo;
                 }
@@ -624,6 +623,8 @@ public class APSPlayerActivity extends Activity
             mediaSource = null;
             trackSelector = null;
 
+            playerClientHandler.removeCallbacksAndMessages(null);
+            playerClientHandler = null;
             playerClient = null;
             ((APSDemoApplication)getApplication()).setPlayerClient(null);
         }

@@ -11,13 +11,10 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
         debug {
-            debuggable true
-            jniDebuggable true
+        }
+        release {
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
     buildToolsVersion '28.0.3'
@@ -30,20 +27,11 @@ android {
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation project(':airplay')
-    implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
-    implementation 'com.android.support:support-v4:28.0.0-alpha1'
-    testImplementation 'junit:junit:4.12'
+    implementation 'com.android.support:support-v4:28.0.0'
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.google.android.exoplayer:exoplayer:2.9.2'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-
-    implementation 'com.google.android.exoplayer:exoplayer:2.9.2'
-
-    //implementation 'com.github.dueeeke.dkplayer:dkplayer-java:2.5.3'
-    //implementation 'com.github.dueeeke.dkplayer:dkplayer-armv7a:2.5.3'
-    //implementation 'com.github.dueeeke.dkplayer:dkplayer-armv5:2.5.3'
-    //implementation 'com.github.dueeeke.dkplayer:dkplayer-arm64:2.5.3'
-    //implementation 'com.github.dueeeke.dkplayer:dkplayer-x86:2.5.3'
-    //implementation 'com.github.dueeeke.dkplayer:dkplayer-x86_64:2.5.3'
-    //implementation 'com.github.dueeeke.dkplayer:dkplayer-ui:2.5.3'
+    testImplementation 'junit:junit:4.12'
 }

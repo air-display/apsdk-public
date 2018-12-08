@@ -18,7 +18,10 @@ public:
       : airplay_net_service_("_airplay._tcp"), raop_net_service_("_raop._tcp"),
         airplay_tcp_service_(0), ap_media_http_service_(0) {}
 
-  ~implementation() {}
+  ~implementation() { 
+    airplay_net_service_.suppress();
+    raop_net_service_.suppress();
+  }
 
   void set_config(ap_config_ptr &config) { ap_config_ = config; }
 

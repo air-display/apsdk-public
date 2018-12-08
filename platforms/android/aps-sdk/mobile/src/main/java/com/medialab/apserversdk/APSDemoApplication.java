@@ -199,6 +199,7 @@ public class APSDemoApplication extends Application {
         }
 
         airplayServer.setHandler(new AirPlayHandler(this) {
+            private String videoSession;
             private PlaybackInfo lastPlaybackInfo;
 
             @Override
@@ -274,6 +275,7 @@ public class APSDemoApplication extends Application {
             @Override
             public void on_video_play(String session, String location, float position) {
                 Log.i(TAG, String.format("on_video_play: location = %s, start_pos = %f", location, position));
+                videoSession = session;
                 if (null != airplayAcceptor) {
                     airplayAcceptor.preparePlayer(location, position);
                 }
@@ -282,6 +284,10 @@ public class APSDemoApplication extends Application {
             @Override
             public void on_video_scrub(String session, float position) {
                 Log.i(TAG, String.format("on_video_scrub: position = %f", position));
+                if (!session.equalsIgnoreCase(videoSession)) {
+                    Log.e(TAG, "Invalid session id" + session);
+                    return;
+                }
                 if (null != playerClient) {
                     playerClient.setScrub(position);
                 }
@@ -290,6 +296,10 @@ public class APSDemoApplication extends Application {
             @Override
             public void on_video_rate(String session, float value) {
                 Log.i(TAG, String.format("on_video_rate: value = %f", value));
+                if (!session.equalsIgnoreCase(videoSession)) {
+                    Log.e(TAG, "Invalid session id" + session);
+                    return;
+                }
                 if (null != playerClient) {
                     playerClient.setRate(value);
                 }
@@ -298,6 +308,10 @@ public class APSDemoApplication extends Application {
             @Override
             public void on_video_stop(String session) {
                 Log.i(TAG, "on_video_stop: ");
+                if (!session.equalsIgnoreCase(videoSession)) {
+                    Log.e(TAG, "Invalid session id" + session);
+                    return;
+                }
                 if (null != playerClient) {
                     playerClient.stop();
                 }
@@ -305,6 +319,10 @@ public class APSDemoApplication extends Application {
 
             @Override
             public PlaybackInfo get_playback_info(String session) {
+                if (!session.equalsIgnoreCase(videoSession)) {
+                    Log.e(TAG, "Invalid session id" + session);
+                    return lastPlaybackInfo;
+                }
                 if (null != playerClient) {
                     lastPlaybackInfo = playerClient.getPlaybackInfo();
                     Log.i(TAG, String.format("get_playback_info: duration = %f, position = %f", lastPlaybackInfo.duration, lastPlaybackInfo.position));

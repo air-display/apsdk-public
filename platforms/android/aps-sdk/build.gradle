@@ -3,7 +3,7 @@
 buildscript {
     
     repositories {
-        // Tencent Private Maven repository
+        // Private Maven repository
         maven {
             url "http://maven.oa.com/nexus/content/groups/androidbuild"
         }
@@ -20,7 +20,7 @@ buildscript {
 
 allprojects {
     repositories {
-        // Tencent Private Maven repository
+        // Private Maven repository
         maven {
             url "http://maven.oa.com/nexus/content/groups/androidbuild"
         }
