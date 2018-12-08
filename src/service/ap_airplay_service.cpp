@@ -210,12 +210,7 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
         }
 
         if (handler_) {
-          auto it_session_id = req.headers.find(HEADER_SESSION);
-          if (it_session_id != req.headers.end()) {
-            session_id_ = it_session_id->second;
-          }
-          handler_->on_audio_stream_started(session_id_,
-                                            (audio_data_format_t)format);
+          handler_->on_audio_stream_started((audio_data_format_t)format);
         }
 
         // clang-format off
@@ -267,11 +262,7 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
           mirror_stream_service_->start();
         }
         if (handler_) {
-          auto it_session_id = req.headers.find(HEADER_SESSION);
-          if (it_session_id != req.headers.end()) {
-            session_id_ = it_session_id->second;
-          }
-          handler_->on_mirror_stream_started(session_id_);
+          handler_->on_mirror_stream_started();
         }
 
         uint16_t listen_port = 0;
@@ -466,7 +457,7 @@ void ap_airplay_connection::set_parameter_handler(const request &req,
           ratio = 100.0f * (30 + volume) / 30;
         }
 
-        handler_->on_audio_set_volume(session_id_, ratio, volume);
+        handler_->on_audio_set_volume(ratio, volume);
       }
     }
     // progress: 1146221540/1146549156/1195701740  start/current/end
@@ -474,21 +465,20 @@ void ap_airplay_connection::set_parameter_handler(const request &req,
                                                     content.c_str())) {
       if (handler_) {
         ratio = 100.0f * (current - start) / (end - start);
-        handler_->on_audio_set_progress(session_id_, ratio, start, current,
-                                        end);
+        handler_->on_audio_set_progress(ratio, start, current, end);
       }
     }
   } else if (0 == req.content_type.compare(IMAGE_JPEG) ||
              0 == req.content_type.compare(IMAGE_PNG)) {
     // body is image data
     if (handler_) {
-      handler_->on_audio_set_cover(session_id_, req.content_type,
+      handler_->on_audio_set_cover(req.content_type,
                                    req.content.data(), req.content.size());
     }
   } else if (0 == req.content_type.compare(APPLICATION_DMAP_TAGGED)) {
     // body is dmap data
     if (handler_) {
-      handler_->on_audio_set_meta_data(session_id_, req.content.data(),
+      handler_->on_audio_set_meta_data(req.content.data(),
                                        req.content.size());
     }
   } else {
@@ -524,7 +514,7 @@ void ap_airplay_connection::teardown_handler(const request &req,
               }
 
               if (handler_) {
-                handler_->on_mirror_stream_stopped(session_id_);
+                handler_->on_mirror_stream_stopped();
               }
 
               LOGD() << "Mirroring video stream disconnected";
@@ -536,7 +526,7 @@ void ap_airplay_connection::teardown_handler(const request &req,
               }
 
               if (handler_) {
-                handler_->on_audio_stream_stopped(session_id_);
+                handler_->on_audio_stream_stopped();
               }
 
               LOGD() << "Audio stream disconnected";
@@ -737,6 +727,10 @@ void ap_airplay_connection::post_play_handler(const request &req,
           location.c_str(), it_session_id->second.c_str())) {
     // Normal URL
     if (handler_) {
+      auto it = req.headers.find(HEADER_APPLE_SESSION_ID);
+      if (it != req.headers.end()) {
+        session_id_ = it->second;
+      }
       handler_->on_video_play(session_id_, location, start_pos_);
     }
   }
@@ -846,6 +840,10 @@ void ap_airplay_connection::post_action_handler(const request &req,
         ap_media_data_store::get().process_media_data(fcup_uri, fcup_content);
     if (!location.empty()) {
       if (handler_) {
+        auto it = req.headers.find(HEADER_APPLE_SESSION_ID);
+        if (it != req.headers.end()) {
+          session_id_ = it->second;
+        }
         handler_->on_video_play(session_id_, location, start_pos_);
       }
     }

@@ -25,34 +25,29 @@ public:
 
   void detach_thread();
 
-  void on_mirror_stream_started(const std::string &session);
+  void on_mirror_stream_started();
 
   void on_mirror_stream_codec(const aps::sms_video_codec_packet_t *p);
 
   void on_mirror_stream_data(const aps::sms_video_data_packet_t *p);
 
-  void on_mirror_stream_stopped(const std::string &session);
+  void on_mirror_stream_stopped();
 
-  void on_audio_set_volume(const std::string &session,
-                           const float ratio,
+  void on_audio_set_volume(const float ratio,
                            const float volume);
 
-  void on_audio_set_progress(const std::string &session,
-                             const float ratio,
+  void on_audio_set_progress(const float ratio,
                              const uint64_t start,
                              const uint64_t current, const uint64_t end);
 
-  void on_audio_set_cover(const std::string &session,
-                          const std::string format,
+  void on_audio_set_cover(const std::string format,
                           const void *data,
                           const uint32_t length);
 
-  void on_audio_set_meta_data(const std::string &session,
-                              const void *data,
+  void on_audio_set_meta_data(const void *data,
                               const uint32_t length);
 
-  void on_audio_stream_started(const std::string &session,
-                               const aps::audio_data_format_t format);
+  void on_audio_stream_started(const aps::audio_data_format_t format);
 
   void on_audio_stream_data(const aps::rtp_audio_data_packet_t *p,
                             const uint32_t payload_length);
@@ -63,7 +58,7 @@ public:
   //  on_audio_control_retransmit(const aps::rtp_control_retransmit_packet_t
   //  *p);
 
-  void on_audio_stream_stopped(const std::string &session);
+  void on_audio_stream_stopped();
 
   void on_video_play(const std::string &session,
                      const std::string &location,

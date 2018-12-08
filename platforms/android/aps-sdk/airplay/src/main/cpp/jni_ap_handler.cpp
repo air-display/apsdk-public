@@ -17,10 +17,10 @@ void jni_ap_handler::on_thread_stop() {
     parent->detach_thread();
 }
 
-void jni_ap_handler::on_mirror_stream_started(const std::string &session) {
+void jni_ap_handler::on_mirror_stream_started() {
   __android_log_write(ANDROID_LOG_INFO, LOG_TAG, "on_mirror_stream_started");
   if (parent)
-    parent->on_mirror_stream_started(session);
+    parent->on_mirror_stream_started();
 }
 
 void jni_ap_handler::on_mirror_stream_codec(
@@ -37,52 +37,47 @@ void jni_ap_handler::on_mirror_stream_data(
     parent->on_mirror_stream_data(p);
 }
 
-void jni_ap_handler::on_mirror_stream_stopped(const std::string &session) {
+void jni_ap_handler::on_mirror_stream_stopped() {
   __android_log_write(ANDROID_LOG_INFO, LOG_TAG, "on_mirror_stream_stopped");
   if (parent)
-    parent->on_mirror_stream_stopped(session);
+    parent->on_mirror_stream_stopped();
 }
 
-void jni_ap_handler::on_audio_set_volume(const std::string &session,
-                                         const float ratio,
+void jni_ap_handler::on_audio_set_volume(const float ratio,
                                          const float volume) {
   __android_log_write(ANDROID_LOG_INFO, LOG_TAG, "on_audio_set_volume");
   if (parent)
-    parent->on_audio_set_volume(session, ratio, volume);
+    parent->on_audio_set_volume(ratio, volume);
 }
 
-void jni_ap_handler::on_audio_set_progress(const std::string &session,
-                                           const float ratio,
+void jni_ap_handler::on_audio_set_progress(const float ratio,
                                            const uint64_t start,
                                            const uint64_t current,
                                            const uint64_t end) {
   __android_log_write(ANDROID_LOG_INFO, LOG_TAG, "on_audio_set_progress");
   if (parent)
-    parent->on_audio_set_progress(session, ratio, start, current, end);
+    parent->on_audio_set_progress(ratio, start, current, end);
 }
 
-void jni_ap_handler::on_audio_set_cover(const std::string &session,
-                                        const std::string format,
+void jni_ap_handler::on_audio_set_cover(const std::string format,
                                         const void *data,
                                         const uint32_t length) {
   __android_log_write(ANDROID_LOG_INFO, LOG_TAG, "on_audio_set_cover");
   if (parent)
-    parent->on_audio_set_cover(session, format, data, length);
+    parent->on_audio_set_cover(format, data, length);
 }
 
-void jni_ap_handler::on_audio_set_meta_data(const std::string &session,
-                                            const void *data,
+void jni_ap_handler::on_audio_set_meta_data(const void *data,
                                             const uint32_t length) {
   __android_log_write(ANDROID_LOG_INFO, LOG_TAG, "on_audio_set_meta_data");
   if (parent)
-    parent->on_audio_set_meta_data(session, data, length);
+    parent->on_audio_set_meta_data(data, length);
 }
 
-void jni_ap_handler::on_audio_stream_started(const std::string &session,
-                                             const aps::audio_data_format_t format) {
+void jni_ap_handler::on_audio_stream_started(const aps::audio_data_format_t format) {
   __android_log_write(ANDROID_LOG_INFO, LOG_TAG, "on_audio_stream_started");
   if (parent)
-    parent->on_audio_stream_started(session, format);
+    parent->on_audio_stream_started(format);
 }
 
 void jni_ap_handler::on_audio_stream_data(const aps::rtp_audio_data_packet_t *p,
@@ -106,10 +101,10 @@ void jni_ap_handler::on_audio_stream_data(const aps::rtp_audio_data_packet_t *p,
 //    parent->on_audio_control_retransmit(p);
 //}
 
-void jni_ap_handler::on_audio_stream_stopped(const std::string &session) {
+void jni_ap_handler::on_audio_stream_stopped() {
   __android_log_write(ANDROID_LOG_INFO, LOG_TAG, "on_audio_stream_stopped");
   if (parent)
-    parent->on_audio_stream_stopped(session);
+    parent->on_audio_stream_stopped();
 }
 
 void jni_ap_handler::on_video_play(const std::string &session,

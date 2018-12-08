@@ -124,7 +124,7 @@ public:
   /// <remarks>
   /// THREAD_AIRPLAY
   /// </remarks>
-  virtual void on_mirror_stream_started(const std::string &session) = 0;
+  virtual void on_mirror_stream_started() = 0;
 
   /// <summary>
   ///
@@ -132,7 +132,7 @@ public:
   /// <remarks>
   /// THREAD_AIRPLAY
   /// </remarks>
-  virtual void on_mirror_stream_stopped(const std::string &session) = 0;
+  virtual void on_mirror_stream_stopped() = 0;
 
   /// <summary>
   ///
@@ -162,8 +162,7 @@ public:
   /// <remarks>
   /// THREAD_AIRPLAY
   /// </remarks>
-  virtual void on_audio_set_volume(const std::string &session,
-                                   const float ratio, const float volume) = 0;
+  virtual void on_audio_set_volume(const float ratio, const float volume) = 0;
 
   /// <summary>
   ///
@@ -175,8 +174,7 @@ public:
   /// <remarks>
   /// THREAD_AIRPLAY
   /// </remarks>
-  virtual void on_audio_set_progress(const std::string &session,
-                                     const float ratio, const uint64_t start,
+  virtual void on_audio_set_progress(const float ratio, const uint64_t start,
                                      const uint64_t current,
                                      const uint64_t end) = 0;
 
@@ -189,8 +187,7 @@ public:
   /// <remarks>
   /// THREAD_AIRPLAY
   /// </remarks>
-  virtual void on_audio_set_cover(const std::string &session,
-                                  const std::string format, const void *data,
+  virtual void on_audio_set_cover(const std::string format, const void *data,
                                   const uint32_t length) = 0;
 
   /// <summary>
@@ -201,8 +198,7 @@ public:
   /// <remarks>
   /// THREAD_AIRPLAY
   /// </remarks>
-  virtual void on_audio_set_meta_data(const std::string &session,
-                                      const void *data,
+  virtual void on_audio_set_meta_data(const void *data,
                                       const uint32_t length) = 0;
 
   /// <summary>
@@ -212,8 +208,7 @@ public:
   /// THREAD_AIRPLAY
   /// </remarks>
   virtual void
-  on_audio_stream_started(const std::string &session,
-                          const aps::audio_data_format_t format) = 0;
+  on_audio_stream_started(const aps::audio_data_format_t format) = 0;
 
   /// <summary>
   ///
@@ -232,7 +227,7 @@ public:
   /// <remarks>
   /// THREAD_AIRPLAY
   /// </remarks>
-  virtual void on_audio_stream_stopped(const std::string &session) = 0;
+  virtual void on_audio_stream_stopped() = 0;
 
   // Video
   /// <summary>

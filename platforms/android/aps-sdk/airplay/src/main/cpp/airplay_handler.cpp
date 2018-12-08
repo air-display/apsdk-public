@@ -66,13 +66,12 @@ void airplay_handler::detach_thread() {
   }
 }
 
-void airplay_handler::on_mirror_stream_started(const std::string &session) {
+void airplay_handler::on_mirror_stream_started() {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    GET_METHOD_ID(on_mirror_stream_started, "(Ljava/lang/String;)V");
+    GET_METHOD_ID(on_mirror_stream_started, "()V");
     if (mid) {
-      jstring s = env->NewStringUTF(session.c_str());
-      env->CallVoidMethod(obj_this_, mid, s);
+      env->CallVoidMethod(obj_this_, mid);
     } else {
       __android_log_write(
           ANDROID_LOG_ERROR, LOG_TAG,
@@ -89,7 +88,6 @@ void airplay_handler::on_mirror_stream_codec(
                   "(Lcom/medialab/airplay/MirroringVideoCodec;)V");
     if (mid) {
       MirroringVideoCodec codec = MirroringVideoCodec::create(env);
-
       env->CallVoidMethod(obj_this_, mid, codec.get());
     } else {
       __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
@@ -116,13 +114,12 @@ void airplay_handler::on_mirror_stream_data(
   }
 }
 
-void airplay_handler::on_mirror_stream_stopped(const std::string &session) {
+void airplay_handler::on_mirror_stream_stopped() {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    GET_METHOD_ID(on_mirror_stream_stopped, "(Ljava/lang/String;)V");
+    GET_METHOD_ID(on_mirror_stream_stopped, "()V");
     if (mid) {
-      jstring s = env->NewStringUTF(session.c_str());
-      env->CallVoidMethod(obj_this_, mid, s);
+      env->CallVoidMethod(obj_this_, mid);
     } else {
       __android_log_write(
           ANDROID_LOG_ERROR, LOG_TAG,
@@ -131,15 +128,13 @@ void airplay_handler::on_mirror_stream_stopped(const std::string &session) {
   }
 }
 
-void airplay_handler::on_audio_set_volume(const std::string &session,
-                                          const float ratio,
+void airplay_handler::on_audio_set_volume(const float ratio,
                                           const float volume) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    GET_METHOD_ID(on_audio_set_volume, "(Ljava/lang/String;FF)V");
+    GET_METHOD_ID(on_audio_set_volume, "(FF)V");
     if (mid) {
-      jstring s = env->NewStringUTF(session.c_str());
-      env->CallVoidMethod(obj_this_, mid, s, ratio, volume);
+      env->CallVoidMethod(obj_this_, mid, ratio, volume);
     } else {
       __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
                           "Failed to get method id of on_audio_set_volume");
@@ -147,17 +142,15 @@ void airplay_handler::on_audio_set_volume(const std::string &session,
   }
 }
 
-void airplay_handler::on_audio_set_progress(const std::string &session,
-                                            const float ratio,
+void airplay_handler::on_audio_set_progress(const float ratio,
                                             const uint64_t start,
                                             const uint64_t current,
                                             const uint64_t end) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    GET_METHOD_ID(on_audio_set_progress, "(Ljava/lang/String;FJJJ)V");
+    GET_METHOD_ID(on_audio_set_progress, "(FJJJ)V");
     if (mid) {
-      jstring s = env->NewStringUTF(session.c_str());
-      env->CallVoidMethod(obj_this_, mid, s, ratio, start, current, end);
+      env->CallVoidMethod(obj_this_, mid, ratio, start, current, end);
     } else {
       __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
                           "Failed to get method id of on_audio_set_progress");
@@ -165,19 +158,17 @@ void airplay_handler::on_audio_set_progress(const std::string &session,
   }
 }
 
-void airplay_handler::on_audio_set_cover(const std::string &session,
-                                         const std::string format,
+void airplay_handler::on_audio_set_cover(const std::string format,
                                          const void *data,
                                          const uint32_t length) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    GET_METHOD_ID(on_audio_set_cover, "(Ljava/lang/String;Ljava/lang/String;[B)V");
+    GET_METHOD_ID(on_audio_set_cover, "(Ljava/lang/String;[B)V");
     if (mid) {
-      jstring s = env->NewStringUTF(session.c_str());
       jstring image_format = env->NewStringUTF(format.c_str());
       jbyteArray byte_array = env->NewByteArray(length);
       env->SetByteArrayRegion(byte_array, 0, length, (jbyte *)data);
-      env->CallVoidMethod(obj_this_, mid, s, image_format, byte_array);
+      env->CallVoidMethod(obj_this_, mid, image_format, byte_array);
       env->DeleteLocalRef(byte_array);
     } else {
       __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
@@ -186,17 +177,15 @@ void airplay_handler::on_audio_set_cover(const std::string &session,
   }
 }
 
-void airplay_handler::on_audio_set_meta_data(const std::string &session,
-                                             const void *data,
+void airplay_handler::on_audio_set_meta_data(const void *data,
                                              const uint32_t length) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    GET_METHOD_ID(on_audio_set_meta_data, "(Ljava/lang/String;[B)V");
+    GET_METHOD_ID(on_audio_set_meta_data, "([B)V");
     if (mid) {
-      jstring s = env->NewStringUTF(session.c_str());
       jbyteArray byte_array = env->NewByteArray(length);
       env->SetByteArrayRegion(byte_array, 0, length, (jbyte *)data);
-      env->CallVoidMethod(obj_this_, mid, s, byte_array);
+      env->CallVoidMethod(obj_this_, mid, byte_array);
       env->DeleteLocalRef(byte_array);
     } else {
       __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
@@ -205,14 +194,12 @@ void airplay_handler::on_audio_set_meta_data(const std::string &session,
   }
 }
 
-void airplay_handler::on_audio_stream_started(const std::string &session,
-                                              const aps::audio_data_format_t format) {
+void airplay_handler::on_audio_stream_started(const aps::audio_data_format_t format) {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    GET_METHOD_ID(on_audio_stream_started, "(Ljava/lang/String;I)V");
+    GET_METHOD_ID(on_audio_stream_started, "(I)V");
     if (mid) {
-      jstring s = env->NewStringUTF(session.c_str());
-      env->CallVoidMethod(obj_this_, mid, s, format);
+      env->CallVoidMethod(obj_this_, mid, format);
     } else {
       __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
                           "Failed to get method id of on_audio_stream_started");
@@ -279,13 +266,12 @@ void airplay_handler::on_audio_stream_data(
 //  }
 //}
 
-void airplay_handler::on_audio_stream_stopped(const std::string &session) {
+void airplay_handler::on_audio_stream_stopped() {
   JNIEnv *env = get_JNIEnv();
   if (env) {
-    GET_METHOD_ID(on_audio_stream_stopped, "(Ljava/lang/String;)V");
+    GET_METHOD_ID(on_audio_stream_stopped, "()V");
     if (mid) {
-      jstring s = env->NewStringUTF(session.c_str());
-      env->CallVoidMethod(obj_this_, mid, s);
+      env->CallVoidMethod(obj_this_, mid);
     } else {
       __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
                           "Failed to get method id of on_audio_stream_stopped");

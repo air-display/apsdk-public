@@ -11,46 +11,41 @@ class ap_player : public aps::ap_handler {
   ap_player();
   ~ap_player();
 
-  virtual void on_mirror_stream_started(const std::string &session) override {
+  virtual void on_mirror_stream_started() override {
     LOGI() << "on_mirror_stream_started";
   }
 
-  virtual void on_mirror_stream_stopped(const std::string &session) override {
+  virtual void on_mirror_stream_stopped() override {
     LOGI() << "on_mirror_stream_stopped";
   }
 
-  virtual void on_audio_set_volume(const std::string &session, const float ratio,
+  virtual void on_audio_set_volume(const float ratio,
                                    const float volume) override {
     LOGI() << "on_audio_set_volume: " << ratio << ", value: " << volume;
   }
 
-  virtual void on_audio_set_progress(
-      const std::string &session, const float ratio, const uint64_t start,
+  virtual void on_audio_set_progress(const float ratio, const uint64_t start,
                                      const uint64_t current,
                                      const uint64_t end) override {
     LOGI() << "on_audio_set_progress: " << ratio << ", start: " << start
            << ", current: " << current << ", end: " << end;
   }
 
-  virtual void on_audio_set_cover(
-      const std::string &session, const std::string format, const void *data,
+  virtual void on_audio_set_cover(const std::string format, const void *data,
                                   const uint32_t length) override {
     LOGI() << "on_audio_set_cover: " << format;
   }
 
-  virtual void on_audio_set_meta_data(
-      const std::string &session, const void *data,
+  virtual void on_audio_set_meta_data(const void *data,
                                       const uint32_t length) override {
     LOGI() << "on_audio_set_meta_data: " << data;
   }
 
-  virtual void on_audio_stream_started(
-      const std::string &session, const
-          aps::audio_data_format_t format) override {
+  virtual void on_audio_stream_started(const aps::audio_data_format_t format) override {
     LOGI() << "on_audio_stream_started: ";
   }
 
-  virtual void on_audio_stream_stopped(const std::string &session) override {
+  virtual void on_audio_stream_stopped() override {
     LOGI() << "on_audio_stream_stopped";
   }
 

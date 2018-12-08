@@ -12,6 +12,13 @@
 namespace aps {
 namespace service {
 namespace details {
+
+// Headers used in AirPlay protocol
+static const char *HEADER_CSEQ = "CSeq";
+static const char *HEADER_SESSION = "Session";
+static const char *HEADER_AUDIO_JACK_STATUS = "Audio-Jack-Status";
+static const char *HEADER_APPLE_SESSION_ID = "X-Apple-Session-ID";
+
 /// <summary>
 ///
 /// </summary>

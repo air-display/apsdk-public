@@ -202,7 +202,7 @@ public class APSDemoApplication extends Application {
             private PlaybackInfo lastPlaybackInfo;
 
             @Override
-            public void on_mirror_stream_started(String session) {
+            public void on_mirror_stream_started() {
                 Log.i(TAG, "on_mirror_stream_started: ");
             }
 
@@ -217,33 +217,33 @@ public class APSDemoApplication extends Application {
             }
 
             @Override
-            public void on_mirror_stream_stopped(String session) {
+            public void on_mirror_stream_stopped() {
                 Log.i(TAG, "on_mirror_stream_stopped: ");
             }
 
             @Override
-            public void on_audio_set_volume(String session, float ratio, float volume) {
+            public void on_audio_set_volume(float ratio, float volume) {
                 Log.i(TAG, String.format("on_audio_set_volume: ratio = %f, volume = %f", ratio, volume));
             }
 
             @Override
-            public void on_audio_set_progress(String session, float ratio, long start, long current, long end) {
+            public void on_audio_set_progress(float ratio, long start, long current, long end) {
                 Log.i(TAG, String.format("on_audio_set_progress: ratio = %f, start = %d, current = %d, end = %d",
                         ratio, start, current, end));
             }
 
             @Override
-            public void on_audio_set_cover(String session, String format, byte[] data) {
+            public void on_audio_set_cover(String format, byte[] data) {
                 Log.i(TAG, String.format("on_audio_set_cover: format %s, length %d", format, data.length));
             }
 
             @Override
-            public void on_audio_set_meta_data(String session, byte[] data) {
+            public void on_audio_set_meta_data(byte[] data) {
                 Log.i(TAG, String.format("on_audio_set_meta_data: length %d", data.length));
             }
 
             @Override
-            public void on_audio_stream_started(String session, int format) {
+            public void on_audio_stream_started(int format) {
                 if (format == PCM) {
                     Log.i(TAG, "on_audio_stream_started: PCM");
 
@@ -267,7 +267,7 @@ public class APSDemoApplication extends Application {
             }
 
             @Override
-            public void on_audio_stream_stopped(String session) {
+            public void on_audio_stream_stopped() {
                 Log.i(TAG, "on_audio_stream_stopped: ");
             }
 

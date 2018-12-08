@@ -18,13 +18,10 @@ static const char *CHAR_COLON = ":";
 // Header keys
 static const char *HEADER_CONTENT_TYPE = "Content-Type";
 static const char *HEADER_CONTENT_LENGTH = "Content-Length";
-static const char *HEADER_CSEQ = "CSeq";
 static const char *HEADER_SERVER = "Server";
-static const char *HEADER_SESSION = "Session";
 static const char *HEADER_DATE = "Date";
 static const char *HEADER_ALLOW_ORIGIN = "Access-Control-Allow-Origin";
 static const char *HEADER_ALLOW_HEADER = "Access-Control-Allow-Headers";
-static const char *HEADER_AUDIO_JACK_STATUS = "Audio-Jack-Status";
 
 // Content type
 static const char *APPLICATION_MPEGURL = "application/x-mpegURL; charset=utf-8";
