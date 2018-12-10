@@ -29,9 +29,8 @@ public interface IAirPlayHandler {
 
     /**
      * Gets called when the mirroring video data codec to be set.
-     * @param codec The mirroring video data codec.
      */
-    void on_mirror_stream_codec(MirroringVideoCodec codec);
+    void on_mirror_stream_codec(byte[] data);
 
     /**
      * Gets called when the mirroring video data is coming.

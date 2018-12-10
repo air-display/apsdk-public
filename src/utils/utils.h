@@ -5,15 +5,13 @@
 #include <functional>
 #include <string>
 #include <asio.hpp>
+#if defined(ANDROID)
+#include <endian.h>
+#endif
 
 #if defined(ANDROID)
-#define ntohll(n)                           \
-  ((((uint64_t)ntohl((uint64_t)n)) << 32) + \
-   ntohl((uint32_t)((uint64_t)n >> 32)))
-
-#define htonll(n)                           \
-  ((((uint64_t)htonl((uint64_t)n)) << 32) + \
-   htonl((uint32_t)((uint64_t)n >> 32)))
+#define ntohll(n) ntohq(n)
+#define htonll(n) htonq(n)
 #endif
 
 inline float _ntohf(float f) {

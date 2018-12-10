@@ -22,7 +22,6 @@ import com.google.android.exoplayer2.util.Util;
 import com.medialab.airplay.AirPlayConfig;
 import com.medialab.airplay.AirPlayHandler;
 import com.medialab.airplay.AirPlayServer;
-import com.medialab.airplay.MirroringVideoCodec;
 import com.medialab.airplay.PlaybackInfo;
 
 import java.io.File;
@@ -208,7 +207,7 @@ public class APSDemoApplication extends Application {
             }
 
             @Override
-            public void on_mirror_stream_codec(MirroringVideoCodec codec) {
+            public void on_mirror_stream_codec(byte[] data) {
                 Log.i(TAG, "on_mirror_stream_codec: ");
             }
 

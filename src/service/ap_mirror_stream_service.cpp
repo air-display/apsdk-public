@@ -70,11 +70,16 @@ void ap_mirror_stream_connection::on_packet_payload_received(
 }
 
 void ap_mirror_stream_connection::process_packet() {
+  // Convert the stream to 
+  // 00 00 00 01 SPS  00 00 00 01 PPS  00 00 00 01 NALU
+  // 00 00 00 01 NALU 00 00 00 01 NALU 00 00 00 01 ...
+
   if (sms_video_data == header_->payload_type ||
       sms_payload_4096 == header_->payload_type) {
     // Process the video packet
     LOGV() << "mirror VIDEO packet: " << header_->payload_size;
-    // Parse the frame
+    // Parse the packet, each packet contains 1 NALU, 
+    // replace the first 4bytes with 00 00 00 01
     sms_video_data_packet_t *p = (sms_video_data_packet_t *)header_;
     crypto_->decrypt_video_frame(payload_, p->payload_size);
     if (handler_) {
@@ -82,36 +87,26 @@ void ap_mirror_stream_connection::process_packet() {
     }
   } else if (sms_video_codec == header_->payload_type) {
     // Process the codec packet
+    // Here we need to construct two NALUs for SPS and PPS
+    // 00 00 00 01 SPS  00 00 00 01 PPS
     LOGV() << "mirror CODEC packet: " << header_->payload_size;
     sms_video_codec_packet_t *p = (sms_video_codec_packet_t *)header_;
 
-    // Parse SPS
-    uint8_t *cursor = p->start;
-    for (int i = 0; i < p->sps_count; i++) {
-      uint16_t sps_length = *(uint16_t *)cursor;
-      sps_length = ntohs(sps_length);
-      cursor += sizeof(uint16_t) + sps_length;
-    }
+    //// Parse SPS
+    //uint8_t *cursor = p->start;
+    //for (int i = 0; i < p->sps_count; i++) {
+    //  uint16_t sps_length = *(uint16_t *)cursor;
+    //  sps_length = ntohs(sps_length);
+    //  cursor += sizeof(uint16_t) + sps_length;
+    //}
 
-    // Parse PPS
-    uint8_t pps_count = *cursor++;
-    for (int i = 0; i < pps_count; i++) {
-      uint16_t pps_length = *(uint16_t *)cursor;
-      pps_length = ntohs(pps_length);
-      cursor += sizeof(uint16_t) + pps_length;
-    }
-
-    // 00000001
-    // sps
-    // 00000001
-    // pps
-    // 00000001
-    // NALU(from 4096 type)
-    // 00000001
-    // NALU(type 0 from this point)
-    // 00000001
-    // NALU
-    // 00000001...
+    //// Parse PPS
+    //uint8_t pps_count = *cursor++;
+    //for (int i = 0; i < pps_count; i++) {
+    //  uint16_t pps_length = *(uint16_t *)cursor;
+    //  pps_length = ntohs(pps_length);
+    //  cursor += sizeof(uint16_t) + pps_length;
+    //}
 
     if (handler_) {
       handler_->on_mirror_stream_codec(p);

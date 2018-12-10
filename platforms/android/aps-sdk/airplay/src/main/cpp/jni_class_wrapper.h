@@ -148,17 +148,6 @@ WRAPPER_CLASS_BEGIN(AudioControlRetransmit, "com/medialab/airplay/AudioControlRe
   SHORT_FIELD(lostPacketCount);
 WRAPPER_CLASS_END()
 
-
-WRAPPER_CLASS_BEGIN(MirroringVideoCodec, "com/medialab/airplay/MirroringVideoCodec")
-  SHORT_FIELD(version);
-  SHORT_FIELD(profile);
-  SHORT_FIELD(compatibility);
-  SHORT_FIELD(level);
-  SHORT_FIELD(NALLength);
-  SHORT_FIELD(spsCount);
-  SHORT_FIELD(ppsCount);
-WRAPPER_CLASS_END()
-
 WRAPPER_CLASS_BEGIN(AirPlayConfigDisplay, "com/medialab/airplay/AirPlayConfigDisplay")
   INT_FIELD(width);
   INT_FIELD(height);

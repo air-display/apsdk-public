@@ -5,6 +5,9 @@
 #include "airplay_handler.h"
 #include "jni_class_wrapper.h"
 #include <nci_object.h>
+#include <endian.h>
+#include <ostream>
+#include <sstream>
 
 jclass airplay_handler::clz_this_ = 0;
 
@@ -85,10 +88,37 @@ void airplay_handler::on_mirror_stream_codec(
   JNIEnv *env = get_JNIEnv();
   if (env) {
     GET_METHOD_ID(on_mirror_stream_codec,
-                  "(Lcom/medialab/airplay/MirroringVideoCodec;)V");
+                  "([B)V");
     if (mid) {
-      MirroringVideoCodec codec = MirroringVideoCodec::create(env);
-      env->CallVoidMethod(obj_this_, mid, codec.get());
+      uint32_t sc = htonl(0x01);
+      std::ostringstream oss;
+
+      // Parse SPS
+      uint8_t *cursor = (uint8_t *)p->start;
+      for (int i = 0; i < p->sps_count; i++) {
+        oss.write((char *)&sc, 0x4);
+        uint16_t sps_length = *(uint16_t *)cursor;
+        sps_length = ntohs(sps_length);
+        oss.write((char *)cursor, sps_length);
+        cursor += sizeof(uint16_t) + sps_length;
+      }
+
+      // Parse PPS
+      uint8_t pps_count = *cursor++;
+      for (int i = 0; i < pps_count; i++) {
+        oss.write((char *)&sc, 0x4);
+        uint16_t pps_length = *(uint16_t *)cursor;
+        pps_length = ntohs(pps_length);
+        oss.write((char *)cursor, pps_length);
+        cursor += sizeof(uint16_t) + pps_length;
+      }
+
+      std::string buffer = oss.str();
+      jbyteArray byte_array = env->NewByteArray(buffer.length());
+      env->SetByteArrayRegion(byte_array, 0, buffer.length(),
+                              (jbyte *)(buffer.c_str()));
+      env->CallVoidMethod(obj_this_, mid, byte_array);
+      env->DeleteLocalRef(byte_array);
     } else {
       __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
                           "Failed to get method id of on_mirror_stream_codec");
@@ -105,6 +135,8 @@ void airplay_handler::on_mirror_stream_data(
       jbyteArray byte_array = env->NewByteArray(p->payload_size);
       env->SetByteArrayRegion(byte_array, 0, p->payload_size,
                               (jbyte *)(p->payload));
+      uint32_t sc = htonl(0x01);
+      env->SetByteArrayRegion(byte_array, 0, 0x04, (jbyte *)&sc);
       env->CallVoidMethod(obj_this_, mid, byte_array, p->timestamp);
       env->DeleteLocalRef(byte_array);
     } else {
