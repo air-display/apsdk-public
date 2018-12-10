@@ -111,7 +111,7 @@ public class APSDemoApplication extends Application {
 
     /** Returns whether extension renderers should be used. */
     public boolean useExtensionRenderers() {
-        return "withExtensions".equals(BuildConfig.FLAVOR);
+        return false;
     }
 
     public DownloadManager getDownloadManager() {
@@ -186,7 +186,7 @@ public class APSDemoApplication extends Application {
                 preference
                         .edit()
                         .putString(DEVICE_UNIQUE_ID, config.getMacAddress())
-                        .commit();
+                        .apply();
 
             }
             String name = String.format("APS[%s]", config.getDeviceID());

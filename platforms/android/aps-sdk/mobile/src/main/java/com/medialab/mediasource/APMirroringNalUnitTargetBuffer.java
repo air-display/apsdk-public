@@ -8,6 +8,7 @@ import java.util.Arrays;
  * encountered in the stream.
  */
 /* package */ final class APMirroringNalUnitTargetBuffer {
+    public static final int START_CODE_LENGTH = 4;
 
     private final int targetType;
 
@@ -21,7 +22,7 @@ import java.util.Arrays;
         this.targetType = targetType;
 
         // Initialize data with a start code in the first three bytes.
-        nalData = new byte[3 + initialCapacity];
+        nalData = new byte[START_CODE_LENGTH + initialCapacity];
         nalData[2] = 1;
     }
 
@@ -50,7 +51,7 @@ import java.util.Arrays;
         isFilling = type == targetType;
         if (isFilling) {
             // Skip the three byte start code when writing data.
-            nalLength = 3;
+            nalLength = START_CODE_LENGTH;
             isCompleted = false;
         }
     }

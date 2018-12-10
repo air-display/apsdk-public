@@ -99,8 +99,9 @@ void airplay_handler::on_mirror_stream_codec(
         oss.write((char *)&sc, 0x4);
         uint16_t sps_length = *(uint16_t *)cursor;
         sps_length = ntohs(sps_length);
+        cursor += sizeof(uint16_t);
         oss.write((char *)cursor, sps_length);
-        cursor += sizeof(uint16_t) + sps_length;
+        cursor += sps_length;
       }
 
       // Parse PPS
@@ -109,8 +110,9 @@ void airplay_handler::on_mirror_stream_codec(
         oss.write((char *)&sc, 0x4);
         uint16_t pps_length = *(uint16_t *)cursor;
         pps_length = ntohs(pps_length);
+        cursor += sizeof(uint16_t);
         oss.write((char *)cursor, pps_length);
-        cursor += sizeof(uint16_t) + pps_length;
+        cursor += pps_length;
       }
 
       std::string buffer = oss.str();

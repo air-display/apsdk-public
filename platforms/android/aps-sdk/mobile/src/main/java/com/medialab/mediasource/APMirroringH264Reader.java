@@ -19,7 +19,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class APMirroringH264Reader implements ElementaryStreamReader {
-    private static final int NAL_UNIT_TYPE_SEI = 6; // Supplemental enhancement information
     private static final int NAL_UNIT_TYPE_SPS = 7; // Sequence parameter set
     private static final int NAL_UNIT_TYPE_PPS = 8; // Picture parameter set
 
@@ -27,7 +26,6 @@ public class APMirroringH264Reader implements ElementaryStreamReader {
     private final boolean detectAccessUnits;
     private final APMirroringNalUnitTargetBuffer sps;
     private final APMirroringNalUnitTargetBuffer pps;
-    private final APMirroringNalUnitTargetBuffer sei;
     private long totalBytesWritten;
     private final boolean[] prefixFlags;
 
@@ -41,9 +39,6 @@ public class APMirroringH264Reader implements ElementaryStreamReader {
     // Per packet state that gets reset at the start of each packet.
     private long pesTimeUs;
 
-    // Scratch variables to avoid allocations.
-    private final ParsableByteArray seiWrapper;
-
     /**
      * @param allowNonIdrKeyframes Whether to treat samples consisting of non-IDR I slices as
      *     synchronization samples (key-frames).
@@ -56,8 +51,6 @@ public class APMirroringH264Reader implements ElementaryStreamReader {
         prefixFlags = new boolean[3];
         sps = new APMirroringNalUnitTargetBuffer(NAL_UNIT_TYPE_SPS, 128);
         pps = new APMirroringNalUnitTargetBuffer(NAL_UNIT_TYPE_PPS, 128);
-        sei = new APMirroringNalUnitTargetBuffer(NAL_UNIT_TYPE_SEI, 128);
-        seiWrapper = new ParsableByteArray();
     }
 
     @Override
@@ -65,7 +58,6 @@ public class APMirroringH264Reader implements ElementaryStreamReader {
         NalUnitUtil.clearPrefixFlags(prefixFlags);
         sps.reset();
         pps.reset();
-        sei.reset();
         sampleReader.reset();
         totalBytesWritten = 0;
     }
@@ -122,7 +114,7 @@ public class APMirroringH264Reader implements ElementaryStreamReader {
             // Indicate the start of the next NAL unit.
             startNalUnit(absolutePosition, nalUnitType, pesTimeUs);
             // Continue scanning the data.
-            offset = nalUnitOffset + 3;
+            offset = nalUnitOffset + APMirroringNalUnitTargetBuffer.START_CODE_LENGTH;
         }
     }
 
@@ -156,8 +148,8 @@ public class APMirroringH264Reader implements ElementaryStreamReader {
                     List<byte[]> initializationData = new ArrayList<>();
                     initializationData.add(Arrays.copyOf(sps.nalData, sps.nalLength));
                     initializationData.add(Arrays.copyOf(pps.nalData, pps.nalLength));
-                    NalUnitUtil.SpsData spsData = NalUnitUtil.parseSpsNalUnit(sps.nalData, 3, sps.nalLength);
-                    NalUnitUtil.PpsData ppsData = NalUnitUtil.parsePpsNalUnit(pps.nalData, 3, pps.nalLength);
+                    NalUnitUtil.SpsData spsData = NalUnitUtil.parseSpsNalUnit(sps.nalData, APMirroringNalUnitTargetBuffer.START_CODE_LENGTH, sps.nalLength);
+                    NalUnitUtil.PpsData ppsData = NalUnitUtil.parsePpsNalUnit(pps.nalData, APMirroringNalUnitTargetBuffer.START_CODE_LENGTH, pps.nalLength);
                     output.format(
                             Format.createVideoSampleFormat(
                                     formatId,
@@ -182,11 +174,11 @@ public class APMirroringH264Reader implements ElementaryStreamReader {
                     pps.reset();
                 }
             } else if (sps.isCompleted()) {
-                NalUnitUtil.SpsData spsData = NalUnitUtil.parseSpsNalUnit(sps.nalData, 3, sps.nalLength);
+                NalUnitUtil.SpsData spsData = NalUnitUtil.parseSpsNalUnit(sps.nalData, APMirroringNalUnitTargetBuffer.START_CODE_LENGTH, sps.nalLength);
                 sampleReader.putSps(spsData);
                 sps.reset();
             } else if (pps.isCompleted()) {
-                NalUnitUtil.PpsData ppsData = NalUnitUtil.parsePpsNalUnit(pps.nalData, 3, pps.nalLength);
+                NalUnitUtil.PpsData ppsData = NalUnitUtil.parsePpsNalUnit(pps.nalData, APMirroringNalUnitTargetBuffer.START_CODE_LENGTH, pps.nalLength);
                 sampleReader.putPps(ppsData);
                 pps.reset();
             }
@@ -281,7 +273,7 @@ public class APMirroringH264Reader implements ElementaryStreamReader {
         }
 
         /**
-         * Called to pass stream data. The data passed should not include the 3 byte start code.
+         * Called to pass stream data. The data passed should not include the 4 byte start code.
          *
          * @param data Holds the data being passed.
          * @param offset The offset of the data in {@code data}.
