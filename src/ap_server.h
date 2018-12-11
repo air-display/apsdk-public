@@ -50,6 +50,11 @@ public:
   /// </summary>
   short get_service_port();
 
+  /// <summary>
+  /// 
+  /// </summary>
+  void stop_video_session();
+
 private:
   /// <summary>
   ///

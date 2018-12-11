@@ -24,6 +24,8 @@ public:
 
   short getServicePort();
 
+  void stopVideoSession();
+
 private:
   ap_server_ptr server_;
 };
@@ -49,6 +51,8 @@ JNIEXPORT void JNICALL Java_com_medialab_airplay_AirPlayServer_nciSetHandler(
 
 JNIEXPORT jshort JNICALL Java_com_medialab_airplay_AirPlayServer_nciGetServicePort(JNIEnv *env,
                                                                 jobject thiz);
+JNIEXPORT void JNICALL
+Java_com_medialab_airplay_AirPlayServer_nciStopVideoSession(JNIEnv *env, jobject thiz);
 }
 
 #endif // APS_SDK_AIRPLAY_SERVER_H

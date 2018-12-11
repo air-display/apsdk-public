@@ -38,6 +38,12 @@ short airplay_server::getServicePort() {
   return -1;
 }
 
+void airplay_server::stopVideoSession() {
+  if (server_) {
+    server_->stop_video_session();
+  }
+}
+
 jlong Java_com_medialab_airplay_AirPlayServer_nciNew(JNIEnv *env,
                                                      jobject thiz) {
   airplay_server *p = airplay_server::create(env, thiz);
@@ -92,4 +98,9 @@ void Java_com_medialab_airplay_AirPlayServer_nciSetHandler(JNIEnv *env,
 jshort Java_com_medialab_airplay_AirPlayServer_nciGetServicePort(JNIEnv *env,
                                                            jobject thiz) {
     return airplay_server::get(env, thiz)->getServicePort();
+}
+
+void
+Java_com_medialab_airplay_AirPlayServer_nciStopVideoSession(JNIEnv *env, jobject thiz) {
+  return airplay_server::get(env, thiz)->stopVideoSession();
 }

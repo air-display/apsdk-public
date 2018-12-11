@@ -37,6 +37,7 @@ public class AirPlayServer extends NciObject {
     private native boolean nciStart();
     private native void nciStop();
     private native short nciGetServicePort();
+    private native void nciStopVideoSession();
 
     private AirPlayConfig config;
     private AirPlayHandler handler;
@@ -106,5 +107,9 @@ public class AirPlayServer extends NciObject {
      */
     public short getServicePort() {
         return nciGetServicePort();
+    }
+
+    public void stopVideoSession() {
+        nciStopVideoSession();
     }
 }

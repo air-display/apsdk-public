@@ -10,7 +10,7 @@ namespace aps {
 namespace network {
 class tcp_connection {
 public:
-  virtual ~tcp_connection(){};
+  virtual ~tcp_connection() {};
 
   virtual void start() = 0;
 

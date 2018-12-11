@@ -33,7 +33,6 @@ public class APMirroringH264Reader implements ElementaryStreamReader {
     private TrackOutput output;
     private APMirroringH264Reader.SampleReader sampleReader;
 
-    // State that should not be reset on seek.
     private boolean hasOutputFormat;
 
     // Per packet state that gets reset at the start of each packet.

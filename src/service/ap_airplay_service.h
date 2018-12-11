@@ -16,6 +16,7 @@
 #include <service/ap_timing_sync_service.h>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 using namespace aps::network;
 
@@ -133,6 +134,8 @@ public:
 
   void set_handler(ap_handler_ptr &hanlder);
 
+  void stop_video_session();
+
 protected:
   virtual tcp_connection_ptr prepare_new_connection() override;
 
@@ -147,5 +150,20 @@ private:
 };
 
 typedef std::shared_ptr<ap_airplay_service> ap_airplay_service_ptr;
+
+
+class PATCH_video_session_manager
+{
+ public:
+  static PATCH_video_session_manager &get();
+  void insert_video_session(void *p, xtxp_connection_base_weak_ptr s);
+  void remove_video_session(void *p);
+  void stop_video_session();
+
+ private:
+  std::unordered_map<void *, xtxp_connection_base_weak_ptr> video_session_map_;
+  std::mutex video_session_map_mtx_;
+};
+
 } // namespace service
 } // namespace aps

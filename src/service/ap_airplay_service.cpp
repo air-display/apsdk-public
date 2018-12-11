@@ -1,18 +1,17 @@
 #include <ap_types.h>
-#include <ctime>
-#include <exception>
 #include <service/ap_airplay_service.h>
 #include <service/ap_audio_stream_service.h>
 #include <service/ap_content_parser.h>
 #include <service/ap_event_connection_manager.h>
 #include <service/ap_media_data_store.h>
 #include <service/ap_mirror_stream_service.h>
-#include <stdexcept>
 #include <string.h>
 #include <utils/logger.h>
 #include <utils/plist.h>
 #include <utils/utils.h>
-
+#include <ctime>
+#include <exception>
+#include <stdexcept>
 
 using namespace aps::network;
 using namespace aps::service::details;
@@ -23,7 +22,9 @@ ap_airplay_connection::ap_airplay_connection(asio::io_context &io_ctx,
                                              aps::ap_config_ptr &config,
                                              aps::ap_handler_ptr &hanlder,
                                              tcp_service_weak_ptr service)
-    : xtxp_connection_base(io_ctx), config_(config), handler_(hanlder),
+    : xtxp_connection_base(io_ctx),
+      config_(config),
+      handler_(hanlder),
       service_(service) {
   crypto_ = std::make_shared<ap_crypto>();
 
@@ -54,8 +55,9 @@ void ap_airplay_connection::options_handler(const request &req, response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
 
   res.with_status(ok)
-      .with_header("Public", "ANNOUNCE, SETUP, RECORD, PAUSE, FLUSH, TEARDOWN, "
-                             "OPTIONS, GET_PARAMETER, SET_PARAMETER, POST, GET")
+      .with_header("Public",
+                   "ANNOUNCE, SETUP, RECORD, PAUSE, FLUSH, TEARDOWN, "
+                   "OPTIONS, GET_PARAMETER, SET_PARAMETER, POST, GET")
       .with_content_type(APPLICATION_OCTET_STREAM);
 }
 
@@ -79,8 +81,8 @@ void ap_airplay_connection::post_pair_verify_handler(const request &req,
   pair_verify_header_t *header = (pair_verify_header_t *)req.content.data();
   if (header->is_first_frame) {
     crypto_->init_client_public_keys(
-        req.content.data() + 4, 32,       // client curve public key
-        req.content.data() + 4 + 32, 32); // client ed public key
+        req.content.data() + 4, 32,        // client curve public key
+        req.content.data() + 4 + 32, 32);  // client ed public key
 
     crypto_->init_pair_verify_aes();
 
@@ -140,19 +142,16 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
 
   do {
-    if (req.content_type.compare(APPLICATION_BINARY_PLIST))
-      break;
+    if (req.content_type.compare(APPLICATION_BINARY_PLIST)) break;
 
     auto_plist plist_obj =
         plist_object_from_bplist(req.content.data(), req.content.size());
     auto data_obj = plist_obj.get();
-    if (!data_obj)
-      break;
+    if (!data_obj) break;
 
     auto streams = plist_object_dict_get_value(data_obj, "streams");
     if (streams) {
-      if (PLIST_TYPE_ARRAY != plist_object_get_type(streams))
-        break;
+      if (PLIST_TYPE_ARRAY != plist_object_get_type(streams)) break;
 
       auto stream_obj = plist_object_array_get_value(streams, 0);
       if (!stream_obj || PLIST_TYPE_DICT != plist_object_get_type(stream_obj))
@@ -163,8 +162,7 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
         break;
 
       int64_t type = 0;
-      if (0 != plist_object_integer_get_value(type_obj, &type))
-        break;
+      if (0 != plist_object_integer_get_value(type_obj, &type)) break;
 
       if (stream_type_t::audio == type) {
         //{
@@ -313,21 +311,18 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
       const uint8_t *piv = 0;
       uint64_t iv_len = 0;
       auto eiv_obj = plist_object_dict_get_value(data_obj, "eiv");
-      if (0 != plist_object_data_get_value(eiv_obj, &piv, &iv_len))
-        break;
+      if (0 != plist_object_data_get_value(eiv_obj, &piv, &iv_len)) break;
 
       const uint8_t *pkey = 0;
       uint64_t key_len = 0;
       auto ekey_obj = plist_object_dict_get_value(data_obj, "ekey");
-      if (0 != plist_object_data_get_value(ekey_obj, &pkey, &key_len))
-        break;
+      if (0 != plist_object_data_get_value(ekey_obj, &pkey, &key_len)) break;
 
       crypto_->init_client_aes_info(piv, iv_len, pkey, key_len);
 
       auto timing_port_obj =
           plist_object_dict_get_value(data_obj, "timingPort");
-      if (PLIST_TYPE_INTEGER != plist_object_get_type(timing_port_obj))
-        break;
+      if (PLIST_TYPE_INTEGER != plist_object_get_type(timing_port_obj)) break;
       int64_t timing_port = 0;
       if (0 != plist_object_integer_get_value(timing_port_obj, &timing_port))
         break;
@@ -472,14 +467,13 @@ void ap_airplay_connection::set_parameter_handler(const request &req,
              0 == req.content_type.compare(IMAGE_PNG)) {
     // body is image data
     if (handler_) {
-      handler_->on_audio_set_cover(req.content_type,
-                                   req.content.data(), req.content.size());
+      handler_->on_audio_set_cover(req.content_type, req.content.data(),
+                                   req.content.size());
     }
   } else if (0 == req.content_type.compare(APPLICATION_DMAP_TAGGED)) {
     // body is dmap data
     if (handler_) {
-      handler_->on_audio_set_meta_data(req.content.data(),
-                                       req.content.size());
+      handler_->on_audio_set_meta_data(req.content.data(), req.content.size());
     }
   } else {
     LOGE() << "Unknown parameter type: " << req.content_type;
@@ -731,6 +725,8 @@ void ap_airplay_connection::post_play_handler(const request &req,
       if (it != req.headers.end()) {
         session_id_ = it->second;
       }
+      PATCH_video_session_manager::get().insert_video_session(
+          this, shared_from_this());
       handler_->on_video_play(session_id_, location, start_pos_);
     }
   }
@@ -773,6 +769,7 @@ void ap_airplay_connection::post_stop_handler(const request &req,
   ap_media_data_store::get().reset();
 
   if (handler_) {
+    PATCH_video_session_manager::get().remove_video_session(this);
     handler_->on_video_stop(session_id_);
   }
 
@@ -1009,8 +1006,7 @@ void ap_airplay_connection::add_common_header(const request &req,
 }
 
 void ap_airplay_connection::validate_user_agent(const request &req) {
-  if (!agent_.empty())
-    return;
+  if (!agent_.empty()) return;
 
   auto user_agent_header = req.headers.find("User-Agent");
   if (user_agent_header != req.headers.end()) {
@@ -1033,8 +1029,8 @@ void ap_airplay_connection::validate_user_agent(const request &req) {
   }
 }
 
-#define RH(x)                                                                  \
-  std::bind(&ap_airplay_connection::x, this, std::placeholders::_1,            \
+#define RH(x)                                                       \
+  std::bind(&ap_airplay_connection::x, this, std::placeholders::_1, \
             std::placeholders::_2)
 
 void ap_airplay_connection::initialize_request_handlers() {
@@ -1135,6 +1131,10 @@ void ap_airplay_service::set_handler(ap_handler_ptr &hanlder) {
   handler_ = hanlder;
 }
 
+void ap_airplay_service::stop_video_session() {
+  PATCH_video_session_manager::get().stop_video_session();
+}
+
 tcp_connection_ptr ap_airplay_service::prepare_new_connection() {
   return std::make_shared<ap_airplay_connection>(io_context(), config_,
                                                  handler_, shared_from_this());
@@ -1152,5 +1152,39 @@ void ap_airplay_service::on_thread_stop() {
   }
 }
 
-} // namespace service
-} // namespace aps
+aps::service::PATCH_video_session_manager &PATCH_video_session_manager::get() {
+  static PATCH_video_session_manager s;
+  return s;
+}
+
+void PATCH_video_session_manager::insert_video_session(
+    void *p, xtxp_connection_base_weak_ptr s) {
+  std::lock_guard<std::mutex> l(video_session_map_mtx_);
+  video_session_map_[p] = s;
+}
+
+void PATCH_video_session_manager::remove_video_session(void *p) {
+  std::lock_guard<std::mutex> l(video_session_map_mtx_);
+  auto s = video_session_map_.find(p);
+  if (s != video_session_map_.end()) {
+    auto sp = s->second.lock();
+    if (sp) {
+      sp->stop();
+    }
+    video_session_map_.erase(s);
+  }
+}
+
+void PATCH_video_session_manager::stop_video_session() {
+  std::lock_guard<std::mutex> l(video_session_map_mtx_);
+  for (auto s : video_session_map_) {
+    auto p = s.second.lock();
+    if (p) {
+      p->stop();
+    }
+  }
+  video_session_map_.clear();
+}
+
+}  // namespace service
+}  // namespace aps

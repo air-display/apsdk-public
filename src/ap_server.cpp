@@ -81,6 +81,12 @@ public:
     return -1;
   }
 
+  void stop_video_session() {
+    if (airplay_tcp_service_) {
+      return airplay_tcp_service_->stop_video_session();
+    }
+  }
+
 protected:
   bool initialize_net_service() {
     airplay_net_service_.add_txt_record("deviceId", ap_config_->macAddress());
@@ -151,4 +157,7 @@ bool aps::ap_server::start() { return impl_->start(); }
 void ap_server::stop() { impl_->stop(); }
 
 short ap_server::get_service_port() { return impl_->get_service_port(); }
+
+void ap_server::stop_video_session() { return impl_->stop_video_session(); }
+
 } // namespace aps

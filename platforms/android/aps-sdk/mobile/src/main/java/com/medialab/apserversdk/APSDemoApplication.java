@@ -25,6 +25,8 @@ import com.medialab.airplay.AirPlayServer;
 import com.medialab.airplay.PlaybackInfo;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.PipedOutputStream;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -200,25 +202,42 @@ public class APSDemoApplication extends Application {
         airplayServer.setHandler(new AirPlayHandler(this) {
             private String videoSession;
             private PlaybackInfo lastPlaybackInfo;
+            private PipedOutputStream videoOutputStream;
 
             @Override
             public void on_mirror_stream_started() {
                 Log.i(TAG, "on_mirror_stream_started: ");
+                videoOutputStream = new PipedOutputStream();
             }
 
             @Override
             public void on_mirror_stream_codec(byte[] data) {
                 Log.i(TAG, "on_mirror_stream_codec: ");
+                try {
+                    videoOutputStream.write(data);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
 
             @Override
             public void on_mirror_stream_data(byte[] data, long timestamp) {
-                Log.i(TAG, String.format("on_mirror_stream_data: length %d, timestamp %d", data.length, timestamp));
+                Log.d(TAG, String.format("on_mirror_stream_data: length %d, timestamp %d", data.length, timestamp));
+                try {
+                    videoOutputStream.write(data);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
 
             @Override
             public void on_mirror_stream_stopped() {
                 Log.i(TAG, "on_mirror_stream_stopped: ");
+                try {
+                    videoOutputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
 
             @Override
