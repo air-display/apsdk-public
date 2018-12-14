@@ -255,6 +255,7 @@ public class APSPlayerActivity extends Activity
     @Override
     public void onPause() {
         super.onPause();
+        ((APSDemoApplication)getApplication()).stopSession();
         if (Util.SDK_INT <= 23) {
             if (playerView != null) {
                 playerView.onPause();

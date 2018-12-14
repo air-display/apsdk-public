@@ -111,6 +111,10 @@ public class APSDemoApplication extends Application {
         }
     }
 
+    public void stopSession() {
+        airplayServer.stopVideoSession();
+    }
+
     /** Returns whether extension renderers should be used. */
     public boolean useExtensionRenderers() {
         return false;
