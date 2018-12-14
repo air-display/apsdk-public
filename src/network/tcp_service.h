@@ -49,7 +49,9 @@ public:
 
   virtual void start() override {}
 
-  virtual void stop() override {}
+  virtual void stop() override {
+    socket_.close();
+  }
 
   virtual asio::ip::tcp::socket &socket() override { return socket_; }
 
