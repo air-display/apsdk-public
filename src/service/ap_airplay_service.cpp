@@ -1167,10 +1167,6 @@ void PATCH_video_session_manager::remove_video_session(void *p) {
   std::lock_guard<std::mutex> l(video_session_map_mtx_);
   auto s = video_session_map_.find(p);
   if (s != video_session_map_.end()) {
-    auto sp = s->second.lock();
-    if (sp) {
-      sp->stop();
-    }
     video_session_map_.erase(s);
   }
 }
