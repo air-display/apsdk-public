@@ -12,61 +12,60 @@ import java.io.IOException;
 import java.io.PipedInputStream;
 
 public class APMirroringDataSource extends BaseDataSource {
-    private long bytesToRead = 0;
-    private long bytesRead = 0;
-    private PipedInputStream inputStream;
+  private long bytesToRead = 0;
+  private long bytesRead = 0;
+  private PipedInputStream inputStream;
 
-    /**
-     * Creates base data source.
-     *
-     */
-    protected APMirroringDataSource() {
-        super(true);
-        inputStream = new PipedInputStream();
+  /**
+   * Creates base data source.
+   */
+  protected APMirroringDataSource() {
+    super(true);
+    inputStream = new PipedInputStream();
+  }
+
+  @Override
+  public long open(DataSpec dataSpec) throws IOException {
+    Uri uri = dataSpec.uri;
+    inputStream.connect(null);
+    return 0;
+  }
+
+  @Override
+  public int read(byte[] buffer, int offset, int readLength) throws IOException {
+    if (readLength == 0) {
+      return 0;
+    }
+    if (bytesToRead != C.LENGTH_UNSET) {
+      long bytesRemaining = bytesToRead - bytesRead;
+      if (bytesRemaining == 0) {
+        return C.RESULT_END_OF_INPUT;
+      }
+      readLength = (int) Math.min(readLength, bytesRemaining);
     }
 
-    @Override
-    public long open(DataSpec dataSpec) throws IOException {
-        Uri uri = dataSpec.uri;
-        inputStream.connect(null);
-        return 0;
+    int read = inputStream.read(buffer, offset, readLength);
+    if (read == -1) {
+      if (bytesToRead != C.LENGTH_UNSET) {
+        // End of stream reached having not read sufficient data.
+        throw new EOFException();
+      }
+      return C.RESULT_END_OF_INPUT;
     }
 
-    @Override
-    public int read(byte[] buffer, int offset, int readLength) throws IOException {
-        if (readLength == 0) {
-            return 0;
-        }
-        if (bytesToRead != C.LENGTH_UNSET) {
-            long bytesRemaining = bytesToRead - bytesRead;
-            if (bytesRemaining == 0) {
-                return C.RESULT_END_OF_INPUT;
-            }
-            readLength = (int) Math.min(readLength, bytesRemaining);
-        }
+    bytesRead += read;
+    bytesTransferred(read);
+    return read;
+  }
 
-        int read = inputStream.read(buffer, offset, readLength);
-        if (read == -1) {
-            if (bytesToRead != C.LENGTH_UNSET) {
-                // End of stream reached having not read sufficient data.
-                throw new EOFException();
-            }
-            return C.RESULT_END_OF_INPUT;
-        }
+  @Nullable
+  @Override
+  public Uri getUri() {
+    return null;
+  }
 
-        bytesRead += read;
-        bytesTransferred(read);
-        return read;
-    }
-
-    @Nullable
-    @Override
-    public Uri getUri() {
-        return null;
-    }
-
-    @Override
-    public void close() throws IOException {
-        inputStream.close();
-    }
+  @Override
+  public void close() throws IOException {
+    inputStream.close();
+  }
 }

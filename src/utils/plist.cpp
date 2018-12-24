@@ -988,6 +988,8 @@ int plist_object_to_bplist(plist_object_t *object, uint8_t **data,
   serialize_integer(buf, &bufidx, 8, 0);
   serialize_integer(buf, &bufidx, 8, reftaboffset);
 
+  free(reftab);
+
   *data = buf;
   *datalen = buflen;
   return 0;
@@ -1004,6 +1006,7 @@ void plist_object_destroy(plist_object_t *object) {
       free(object->value.value_data.value);
       break;
     case PLIST_TYPE_STRING:
+    case PLIST_TYPE_UNICODE_STRING:
       free(object->value.value_string);
       break;
     case PLIST_TYPE_ARRAY:

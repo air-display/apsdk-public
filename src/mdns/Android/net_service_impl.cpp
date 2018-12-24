@@ -6,7 +6,7 @@
 
 class net_service::net_service_impl : public net_service::implementation {
 public:
-  net_service_impl(const std::string &type) {
+  net_service_impl(const std::string &type) : dns_service_(0) {
     type_ = type;
     TXTRecordCreate(&txt_records_, 0, 0);
   }
@@ -35,7 +35,11 @@ public:
     return true;
   }
 
-  virtual void suppress() override { DNSServiceRefDeallocate(dns_service_); }
+  virtual void suppress() override {
+    if (dns_service_) {
+      DNSServiceRefDeallocate(dns_service_);
+    }
+  }
 
 private:
   std::string type_;

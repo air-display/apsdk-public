@@ -71,7 +71,7 @@ void audio_udp_service::handle_socket_error(const asio::error_code &e) {
 }
 
 ap_audio_stream_service::ap_audio_stream_service(aps::ap_crypto_ptr &crypto,
-                                                 aps::ap_handler_ptr &handler)
+                                                 aps::ap_mirror_session_handler_ptr &handler)
     : handler_(handler), crypto_(crypto), data_service_("audio_data_service"),
       control_service_("audio_control_service") {
   data_service_.bind_recv_handler(std::bind(

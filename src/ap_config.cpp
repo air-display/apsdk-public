@@ -52,6 +52,7 @@ ap_config_ptr ap_config::default_instance() {
 
     s_instance = std::make_shared<ap_config>();
     s_instance->name_ = "APS Display";
+    s_instance->publishService_ = true;
     s_instance->model_ = "AppleTV3,2";
     s_instance->serverVersion_ = "220.68";
     s_instance->pi_ = "b08f5a79-db29-4384-b456-a4784d9e6055";

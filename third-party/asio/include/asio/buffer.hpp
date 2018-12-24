@@ -2,7 +2,7 @@
 // buffer.hpp
 // ~~~~~~~~~~
 //
-// Copyright (c) 2003-2017 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -23,7 +23,6 @@
 #include <string>
 #include <vector>
 #include "asio/detail/array_fwd.hpp"
-#include "asio/detail/is_buffer_sequence.hpp"
 #include "asio/detail/string_view.hpp"
 #include "asio/detail/throw_exception.hpp"
 #include "asio/detail/type_traits.hpp"
@@ -345,41 +344,6 @@ public:
 };
 
 #endif // !defined(ASIO_NO_DEPRECATED)
-
-/// Trait to determine whether a type satisfies the MutableBufferSequence
-/// requirements.
-template <typename T>
-struct is_mutable_buffer_sequence
-#if defined(GENERATING_DOCUMENTATION)
-  : integral_constant<bool, automatically_determined>
-#else // defined(GENERATING_DOCUMENTATION)
-  : asio::detail::is_buffer_sequence<T, mutable_buffer>
-#endif // defined(GENERATING_DOCUMENTATION)
-{
-};
-
-/// Trait to determine whether a type satisfies the ConstBufferSequence
-/// requirements.
-template <typename T>
-struct is_const_buffer_sequence
-#if defined(GENERATING_DOCUMENTATION)
-  : integral_constant<bool, automatically_determined>
-#else // defined(GENERATING_DOCUMENTATION)
-  : asio::detail::is_buffer_sequence<T, const_buffer>
-#endif // defined(GENERATING_DOCUMENTATION)
-{
-};
-
-/// Trait to determine whether a type satisfies the DynamicBuffer requirements.
-template <typename T>
-struct is_dynamic_buffer
-#if defined(GENERATING_DOCUMENTATION)
-  : integral_constant<bool, automatically_determined>
-#else // defined(GENERATING_DOCUMENTATION)
-  : asio::detail::is_dynamic_buffer<T>
-#endif // defined(GENERATING_DOCUMENTATION)
-{
-};
 
 /// (Deprecated: Use the socket/descriptor wait() and async_wait() member
 /// functions.) An implementation of both the ConstBufferSequence and
@@ -706,7 +670,7 @@ public:
 
   void operator()()
   {
-    *iter_;
+    (void)*iter_;
   }
 
 private:
@@ -1403,7 +1367,7 @@ inline ASIO_MUTABLE_BUFFER buffer(
       );
 }
 
-/// Create a new non-modifiable buffer that represents the given string.
+/// Create a new modifiable buffer that represents the given string.
 /**
  * @returns A mutable_buffer value equivalent to:
  * @code mutable_buffer(
@@ -1475,7 +1439,7 @@ inline ASIO_CONST_BUFFER buffer(
       );
 }
 
-#if defined(ASIO_HAS_STD_STRING_VIEW) \
+#if defined(ASIO_HAS_STRING_VIEW) \
   || defined(GENERATING_DOCUMENTATION)
 
 /// Create a new modifiable buffer that represents the given string_view.
@@ -1520,7 +1484,7 @@ inline ASIO_CONST_BUFFER buffer(
       );
 }
 
-#endif // defined(ASIO_HAS_STD_STRING_VIEW)
+#endif // defined(ASIO_HAS_STRING_VIEW)
        //  || defined(GENERATING_DOCUMENTATION)
 
 /*@}*/
@@ -2154,6 +2118,49 @@ inline std::size_t buffer_copy(const MutableBufferSequence& target,
 }
 
 /*@}*/
+
+} // namespace asio
+
+#include "asio/detail/pop_options.hpp"
+#include "asio/detail/is_buffer_sequence.hpp"
+#include "asio/detail/push_options.hpp"
+
+namespace asio {
+
+/// Trait to determine whether a type satisfies the MutableBufferSequence
+/// requirements.
+template <typename T>
+struct is_mutable_buffer_sequence
+#if defined(GENERATING_DOCUMENTATION)
+  : integral_constant<bool, automatically_determined>
+#else // defined(GENERATING_DOCUMENTATION)
+  : asio::detail::is_buffer_sequence<T, mutable_buffer>
+#endif // defined(GENERATING_DOCUMENTATION)
+{
+};
+
+/// Trait to determine whether a type satisfies the ConstBufferSequence
+/// requirements.
+template <typename T>
+struct is_const_buffer_sequence
+#if defined(GENERATING_DOCUMENTATION)
+  : integral_constant<bool, automatically_determined>
+#else // defined(GENERATING_DOCUMENTATION)
+  : asio::detail::is_buffer_sequence<T, const_buffer>
+#endif // defined(GENERATING_DOCUMENTATION)
+{
+};
+
+/// Trait to determine whether a type satisfies the DynamicBuffer requirements.
+template <typename T>
+struct is_dynamic_buffer
+#if defined(GENERATING_DOCUMENTATION)
+  : integral_constant<bool, automatically_determined>
+#else // defined(GENERATING_DOCUMENTATION)
+  : asio::detail::is_dynamic_buffer<T>
+#endif // defined(GENERATING_DOCUMENTATION)
+{
+};
 
 } // namespace asio
 

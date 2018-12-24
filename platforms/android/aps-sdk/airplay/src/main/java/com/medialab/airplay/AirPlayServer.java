@@ -1,115 +1,97 @@
 package com.medialab.airplay;
 
 import android.content.Context;
-import android.util.Log;
-
-import com.medialab.nci.NciObject;
 
 /**
  * Represents the AiaPlayer server.
  */
 public class AirPlayServer extends NciObject {
-    private static final String TAG = "AirPlayServer";
+  private static final String TAG = "AirPlayServer";
+  private AirPlayConfig config;
+  private IAirPlayHandler handler;
 
-    /**
-     * Creates the native class instance.
-     * @return the handle of the native object which is the value of the memory address.
-     *
-     */
-    @Override
-    protected long newNci() {
-        // Call JNI method
-        return nciNew();
-    }
-    private native long nciNew();
+  /**
+   * Constructs a instance of {@link AirPlayServer}.
+   *
+   * @param context The context.
+   */
+  public AirPlayServer(Context context) {
+    MDNSHelper.initializeContext(context);
+  }
+  /**
+   * Creates the native class instance.
+   */
+  private native void nciNew();
+  @Override
+  protected void newNci() {
+    // Call JNI method
+    nciNew();
+  }
+  /**
+   * Destroys the native class instance.
+   */
+  private native void nciDelete();
+  @Override
+  protected void deleteNci() {
+    // Call JIN method
+    nciDelete();
+  }
+  /**
+   * Gets the configuration data.
+   *
+   * @return The {@link AirPlayConfig}.
+   */
+  public AirPlayConfig getConfig() {
+    return config;
+  }
+  /**
+   * Sets the configuration data.
+   *
+   * @param config The {@link AirPlayConfig}.
+   */
+  public void setConfig(AirPlayConfig config) {
+    this.config = config;
+    nciSetConfig(config);
+  }
+  private native void nciSetConfig(AirPlayConfig config);
+  private native void nciSetHandler(IAirPlayHandler handler);
+  /**
+   * Sets the event handler.
+   *
+   * @param handler The {@link IAirPlayHandler}.
+   */
+  public void setHandler(IAirPlayHandler handler) {
+    this.handler = handler;
+    nciSetHandler(handler);
+  }
 
-    /**
-     * Destroys the native class instance.
-     */
-    @Override
-    protected void deleteNci() {
-        // Call JIN method
-        nciDelete();
-    }
-    private native void nciDelete();
-    private native void nciSetConfig(AirPlayConfig config);
-    private native void nciSetHandler(AirPlayHandler handler);
-    private native boolean nciStart();
-    private native void nciStop();
-    private native short nciGetServicePort();
-    private native void nciStopVideoSession();
+  private native boolean nciStart();
+  /**
+   * Starts the server.
+   *
+   * @return True if successful; otherwise false.
+   */
+  public boolean start() {
+    MDNSHelper.acquireMDNSDaemon();
+    return nciStart();
+  }
 
-    private AirPlayConfig config;
-    private AirPlayHandler handler;
+  private native void nciStop();
+  /**
+   * Stops the server.
+   */
+  public void stop() {
+    MDNSHelper.releaseMDNSDaemon();
+    nciStop();
+  }
 
-    /**
-     * Constructs a instance of {@link AirPlayServer}.
-     * @param context The context.
-     */
-    public AirPlayServer(Context context) {
-        MDNSHelper.initializeContext(context);
-    }
-
-    /**
-     * Gets the configuration data.
-     * @return The {@link AirPlayConfig}.
-     */
-    public AirPlayConfig getConfig() {
-        return config;
-    }
-
-    /**
-     * Sets the configuration data.
-     * @param config The {@link AirPlayConfig}.
-     */
-    public void setConfig(AirPlayConfig config) {
-        this.config = config;
-        nciSetConfig(config);
-    }
-
-    /**
-     * Gets the event handler.
-     * @return The {@link AirPlayHandler}.
-     */
-    public AirPlayHandler getHandler() {
-        return handler;
-    }
-
-    /**
-     * Sets the event handler.
-     * @param handler The {@link AirPlayHandler}.
-     */
-    public void setHandler(AirPlayHandler handler) {
-        this.handler = handler;
-        nciSetHandler(handler);
-    }
-
-    /**
-     * Starts the server.
-     * @return True if successful; otherwise false.
-     */
-    public boolean start() {
-        MDNSHelper.acquireMDNSDaemon();
-        return nciStart();
-    }
-
-    /**
-     * Stops the server.
-     */
-    public void stop() {
-        MDNSHelper.releaseMDNSDaemon();
-        nciStop();
-    }
-
-    /**
-     * Gets the primary server port.
-     * @return The port of the service.
-     */
-    public short getServicePort() {
-        return nciGetServicePort();
-    }
-
-    public void stopVideoSession() {
-        nciStopVideoSession();
-    }
+  private native int nciGetServicePort();
+  /**
+   * Gets the primary server port.
+   *
+   * @return The port of the service.
+   */
+  public int getServicePort() {
+    return nciGetServicePort();
+  }
 }

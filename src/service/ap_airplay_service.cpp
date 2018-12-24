@@ -9,6 +9,7 @@
 #include <utils/logger.h>
 #include <utils/plist.h>
 #include <utils/utils.h>
+#include <chrono>
 #include <ctime>
 #include <exception>
 #include <stdexcept>
@@ -19,20 +20,22 @@ using namespace aps::service::details;
 namespace aps {
 namespace service {
 ap_airplay_connection::ap_airplay_connection(asio::io_context &io_ctx,
-                                             aps::ap_config_ptr &config,
-                                             aps::ap_handler_ptr &hanlder,
+                                             ap_config_ptr &config,
+                                             ap_handler_ptr &hanlder,
                                              tcp_service_weak_ptr service)
     : xtxp_connection_base(io_ctx),
+      is_reversed_(false),
+      session_type_(unknown_session),
+      mirror_session_handler_(0),
+      video_session_handler_(0),
       config_(config),
       handler_(hanlder),
       service_(service) {
+  init_session_id();
   crypto_ = std::make_shared<ap_crypto>();
-
   timing_sync_service_ = std::make_shared<ap_timing_sync_service>();
   timing_sync_service_->open();
-
   initialize_request_handlers();
-
   LOGD() << "ap_airplay_connection (" << std::hex << this
          << ") is being created";
 }
@@ -44,12 +47,44 @@ ap_airplay_connection::~ap_airplay_connection() {
   }
 
   if (is_reversed()) {
-    ap_event_connection_manager::get().remove(session_id_);
+    ap_event_connection_manager::get().remove(apple_session_id_);
+  }
+
+  if (video_session == session_type_) {
+    video_session_handler_.reset();
+    if (handler_) {
+      handler_->on_session_end(session_id_);
+    }
+  } else if (mirror_session == session_type_) {
+    mirror_session_handler_.reset();
+    if (handler_) {
+      handler_->on_session_end(session_id_);
+    }
   }
 
   LOGD() << "ap_airplay_connection (" << std::hex << this
          << ") is being destroyed";
 }
+
+uint64_t ap_airplay_connection::get_session_id() { return session_id_; }
+
+uint32_t ap_airplay_connection::get_session_type() { return session_type_; }
+
+void ap_airplay_connection::set_mirror_handler(
+    ap_mirror_session_handler_ptr handler) {
+  if (mirror_session == session_type_) {
+    mirror_session_handler_ = handler;
+  }
+}
+
+void ap_airplay_connection::set_video_handler(
+    ap_video_session_handler_ptr handler) {
+  if (video_session == session_type_) {
+    video_session_handler_ = handler;
+  }
+}
+
+void ap_airplay_connection::disconnect() { stop(); }
 
 void ap_airplay_connection::options_handler(const request &req, response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
@@ -179,12 +214,6 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
         //}
         crypto_->init_audio_stream_aes_cbc();
 
-        if (!audio_stream_service_) {
-          audio_stream_service_ =
-              std::make_shared<ap_audio_stream_service>(crypto_, handler_);
-          audio_stream_service_->start();
-        }
-
         auto format_obj =
             plist_object_dict_get_value(stream_obj, "audioFormat");
         if (!format_obj ||
@@ -207,8 +236,15 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
           break;
         }
 
-        if (handler_) {
-          handler_->on_audio_stream_started((audio_data_format_t)format);
+        if (!audio_stream_service_) {
+          audio_stream_service_ = std::make_shared<ap_audio_stream_service>(
+              crypto_, mirror_session_handler_);
+          audio_stream_service_->start();
+        }
+
+        if (mirror_session_handler_) {
+          mirror_session_handler_->on_audio_stream_started(
+              (audio_data_format_t)format);
         }
 
         // clang-format off
@@ -256,11 +292,12 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
 
         if (!mirror_stream_service_) {
           mirror_stream_service_ =
-              std::make_shared<ap_mirror_stream_service>(crypto_, 0, handler_);
+              std::make_shared<ap_mirror_stream_service>(crypto_, 0, mirror_session_handler_);
           mirror_stream_service_->start();
         }
-        if (handler_) {
-          handler_->on_mirror_stream_started();
+
+        if (mirror_session_handler_) {
+          mirror_session_handler_->on_mirror_stream_started();
         }
 
         uint16_t listen_port = 0;
@@ -326,6 +363,11 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
       int64_t timing_port = 0;
       if (0 != plist_object_integer_get_value(timing_port_obj, &timing_port))
         break;
+
+      session_type_ = mirror_session;
+      if (handler_) {
+        handler_->on_session_begin(shared_from_this());
+      }
 
       timing_sync_service_->set_server_endpoint(
           socket_.remote_endpoint().address(), (uint16_t)timing_port);
@@ -404,6 +446,7 @@ void ap_airplay_connection::get_info_handler(const request &req,
 
 void ap_airplay_connection::post_feedback_handler(const request &req,
                                                   response &res) {
+  // DUMP_REQUEST_WITH_CONNECTION(req);
   res.with_status(ok);
 }
 
@@ -443,7 +486,7 @@ void ap_airplay_connection::set_parameter_handler(const request &req,
 
     // volume: -11.123877
     if (ap_content_parser::get_volume_value(volume, content.c_str())) {
-      if (handler_) {
+      if (mirror_session_handler_) {
         if (0 == volume)
           ratio = 100;
         else if (-144.0f == volume)
@@ -452,28 +495,30 @@ void ap_airplay_connection::set_parameter_handler(const request &req,
           ratio = 100.0f * (30 + volume) / 30;
         }
 
-        handler_->on_audio_set_volume(ratio, volume);
+        mirror_session_handler_->on_audio_set_volume(ratio, volume);
       }
     }
     // progress: 1146221540/1146549156/1195701740  start/current/end
     else if (ap_content_parser::get_progress_values(start, current, end,
                                                     content.c_str())) {
-      if (handler_) {
+      if (mirror_session_handler_) {
         ratio = 100.0f * (current - start) / (end - start);
-        handler_->on_audio_set_progress(ratio, start, current, end);
+        mirror_session_handler_->on_audio_set_progress(ratio, start, current,
+                                                       end);
       }
     }
   } else if (0 == req.content_type.compare(IMAGE_JPEG) ||
              0 == req.content_type.compare(IMAGE_PNG)) {
     // body is image data
-    if (handler_) {
-      handler_->on_audio_set_cover(req.content_type, req.content.data(),
-                                   req.content.size());
+    if (mirror_session_handler_) {
+      mirror_session_handler_->on_audio_set_cover(
+          req.content_type, req.content.data(), req.content.size());
     }
   } else if (0 == req.content_type.compare(APPLICATION_DMAP_TAGGED)) {
     // body is dmap data
-    if (handler_) {
-      handler_->on_audio_set_meta_data(req.content.data(), req.content.size());
+    if (mirror_session_handler_) {
+      mirror_session_handler_->on_audio_set_meta_data(req.content.data(),
+                                                      req.content.size());
     }
   } else {
     LOGE() << "Unknown parameter type: " << req.content_type;
@@ -507,8 +552,8 @@ void ap_airplay_connection::teardown_handler(const request &req,
                 mirror_stream_service_.reset();
               }
 
-              if (handler_) {
-                handler_->on_mirror_stream_stopped();
+              if (mirror_session_handler_) {
+                mirror_session_handler_->on_mirror_stream_stopped();
               }
 
               LOGD() << "Mirroring video stream disconnected";
@@ -519,8 +564,8 @@ void ap_airplay_connection::teardown_handler(const request &req,
                 audio_stream_service_.reset();
               }
 
-              if (handler_) {
-                handler_->on_audio_stream_stopped();
+              if (mirror_session_handler_) {
+                mirror_session_handler_->on_audio_stream_stopped();
               }
 
               LOGD() << "Audio stream disconnected";
@@ -582,6 +627,11 @@ void ap_airplay_connection::get_server_info_handler(const request &req,
          "</plist>";
   // clang-format on
 
+  session_type_ = video_session;
+  if (handler_) {
+    handler_->on_session_begin(shared_from_this());
+  }
+
   res.with_status(ok)
       .with_content_type(TEXT_APPLE_PLIST_XML)
       .with_content(oss.str());
@@ -613,15 +663,12 @@ void ap_airplay_connection::post_reverse_handler(const request &req,
     res.with_header(upgrade->first, upgrade->second);
   }
 
-  auto session_id = req.headers.find("X-Apple-Session-ID");
-  if (session_id != req.headers.end()) {
-    LOGD() << "Session_id: " << session_id->second;
+  auto it_session_id = req.headers.find("X-Apple-Session-ID");
+  if (it_session_id != req.headers.end()) {
+    LOGD() << "Session_id: " << it_session_id->second;
   }
 
-  ap_event_connection_manager::get().insert(session_id->second,
-                                            shared_from_this());
-
-  reverse();
+  reverse_connection(it_session_id->second);
 
   res.with_status(switching_protocols);
 }
@@ -682,15 +729,15 @@ void ap_airplay_connection::post_play_handler(const request &req,
     }
     location = l;
 
-    double p = 0;
+    double pos_in_second = 0;
     auto start_position_obj =
         plist_object_dict_get_value(data_obj, "Start-Position-Seconds");
-    if (0 != plist_object_real_get_value(start_position_obj, &p)) {
+    if (0 != plist_object_real_get_value(start_position_obj, &pos_in_second)) {
       res.with_status(bad_request);
       return;
     }
     // Adjust this value to milliseconds
-    start_pos_ = p * 1000;
+    start_pos_in_ms_ = pos_in_second * 1000;
   } else if (0 == compare_string_no_case(req.content_type.c_str(),
                                          TEXT_PARAMETERS) ||
              0 == compare_string_no_case(req.content_type.c_str(),
@@ -700,7 +747,7 @@ void ap_airplay_connection::post_play_handler(const request &req,
     //      Content-Location:URL
     //      Start-Position: float
     std::string content(req.content.begin(), req.content.end());
-    if (!ap_content_parser::get_play_parameters(location, start_pos_,
+    if (!ap_content_parser::get_play_parameters(location, start_pos_in_ms_,
                                                 content.c_str())) {
       LOGW() << "No start position found, set to 0";
     }
@@ -720,14 +767,9 @@ void ap_airplay_connection::post_play_handler(const request &req,
   if (!ap_media_data_store::get().request_media_data(
           location.c_str(), it_session_id->second.c_str())) {
     // Normal URL
-    if (handler_) {
-      auto it = req.headers.find(HEADER_APPLE_SESSION_ID);
-      if (it != req.headers.end()) {
-        session_id_ = it->second;
-      }
-      PATCH_video_session_manager::get().insert_video_session(
-          this, shared_from_this());
-      handler_->on_video_play(session_id_, location, start_pos_);
+    if (video_session_handler_) {
+      video_session_handler_->on_video_play(session_id_, location,
+                                            start_pos_in_ms_);
     }
   }
 
@@ -738,10 +780,11 @@ void ap_airplay_connection::post_scrub_handler(const request &req,
                                                response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
   // /scrub?position=1298.000000
-  float postition = 0.0f;
-  if (ap_content_parser::get_scrub_position(postition, req.uri.c_str())) {
-    if (handler_) {
-      handler_->on_video_scrub(session_id_, postition);
+  float pos_in_ms = 0.0f;
+  if (ap_content_parser::get_scrub_position(pos_in_ms, req.uri.c_str())) {
+    if (video_session_handler_) {
+      pos_in_ms = pos_in_ms * 1000;
+      video_session_handler_->on_video_scrub(session_id_, pos_in_ms);
     }
   }
 
@@ -754,8 +797,8 @@ void ap_airplay_connection::post_rate_handler(const request &req,
   // /rate?value=0.000000
   float value = 0.0f;
   if (ap_content_parser::get_rate_value(value, req.uri.c_str())) {
-    if (handler_) {
-      handler_->on_video_rate(session_id_, value);
+    if (video_session_handler_) {
+      video_session_handler_->on_video_rate(session_id_, value);
     }
   }
 
@@ -768,9 +811,8 @@ void ap_airplay_connection::post_stop_handler(const request &req,
 
   ap_media_data_store::get().reset();
 
-  if (handler_) {
-    PATCH_video_session_manager::get().remove_video_session(this);
-    handler_->on_video_stop(session_id_);
+  if (video_session_handler_) {
+    video_session_handler_->on_video_stop(session_id_);
   }
 
   res.with_status(ok);
@@ -795,11 +837,7 @@ void ap_airplay_connection::post_action_handler(const request &req,
     return;
   }
 
-  if (0 == compare_string_no_case(type, "playlistInster")) {
-    LOGD() << "Action type: " << type << ". Add new playback.";
-  } else if (0 == compare_string_no_case(type, "playlistRemove")) {
-    LOGD() << "Action type: " << type << ". Stop playback.";
-  } else if (0 == compare_string_no_case(type, "unhandledURLResponse")) {
+  if (0 == compare_string_no_case(type, "unhandledURLResponse")) {
     LOGD() << "Action type: " << type;
     //{
     //  type = unhandledURLResponse;
@@ -836,17 +874,24 @@ void ap_airplay_connection::post_action_handler(const request &req,
     auto location =
         ap_media_data_store::get().process_media_data(fcup_uri, fcup_content);
     if (!location.empty()) {
-      if (handler_) {
+      if (video_session_handler_) {
         auto it = req.headers.find(HEADER_APPLE_SESSION_ID);
         if (it != req.headers.end()) {
-          session_id_ = it->second;
+          apple_session_id_ = it->second;
         }
-        handler_->on_video_play(session_id_, location, start_pos_);
+        video_session_handler_->on_video_play(session_id_, location,
+                                              start_pos_in_ms_);
       }
     }
 
     res.with_content_type(TEXT_APPLE_PLIST_XML)
         .with_content(ERROR_STATUS_RESPONSE);
+  } else if (0 == compare_string_no_case(type, "playlistInster")) {
+    LOGD() << "Action type: " << type << ". Add new playback.";
+
+  } else if (0 == compare_string_no_case(type, "playlistRemove")) {
+    LOGD() << "Action type: " << type << ". Stop playback.";
+
   } else {
     LOGW() << "Unknown action type: " << type;
   }
@@ -856,22 +901,23 @@ void ap_airplay_connection::post_action_handler(const request &req,
 
 void ap_airplay_connection::get_playback_info_handler(const request &req,
                                                       response &res) {
-  DUMP_REQUEST_WITH_CONNECTION(req);
+  // DUMP_REQUEST_WITH_CONNECTION(req);
 
-  ap_handler::playback_info_t playbackinfo;
-  if (handler_) {
-    handler_->on_acquire_playback_info(session_id_, playbackinfo);
+  playback_info_t playback_info;
+  if (video_session_handler_) {
+    video_session_handler_->on_acquire_playback_info(session_id_,
+                                                     playback_info);
   }
-  LOGI() << "PlaybackInfo duration: " << playbackinfo.duration
-         << ", position: " << playbackinfo.position;
+  LOGV() << "PlaybackInfo duration: " << playback_info.duration
+         << ", position: " << playback_info.position;
   // Return binary plist
   // clang-format off
   // auto_plist info = plist_object_dict(10,
   //     //"uuid", plist_object_string(""),
   //     "stallCount", plist_object_integer(0),
-  //     "duration", plist_object_real(playbackinfo.duration),
-  //     "position", plist_object_real(playbackinfo.position),
-  //     "rate", plist_object_real(playbackinfo.rate),
+  //     "duration", plist_object_real(playback_info.duration),
+  //     "position", plist_object_real(playback_info.position),
+  //     "rate", plist_object_real(playback_info.rate),
   //     "readyToPlay", plist_object_integer(1),
   //     "playbackBufferEmpty", plist_object_integer(1),
   //     "playbackBufferFull", plist_object_integer(0),
@@ -879,7 +925,7 @@ void ap_airplay_connection::get_playback_info_handler(const request &req,
   //     "loadedTimeRanges", plist_object_array(1, 
   //         plist_object_dict(2,
   //             "start", plist_object_real(0),
-  //             "duration", plist_object_real(playbackinfo.duration)
+  //             "duration", plist_object_real(playback_info.duration)
   //         )
   //     ), 
   //     "seekableTimeRanges", plist_object_array(1, 
@@ -901,13 +947,13 @@ void ap_airplay_connection::get_playback_info_handler(const request &req,
          "<plist version=\"1.0\">\n"
          "<dict>\n"
          "\t<key>duration</key>\n"
-         "\t<real>" << playbackinfo.duration << "</real>\n"
+         "\t<real>" << playback_info.duration << "</real>\n"
          "\t<key>position</key>\n"
-         "\t<real>" << playbackinfo.position << "</real>\n"
+         "\t<real>" << playback_info.position << "</real>\n"
          "\t<key>rate</key>\n"
-         "\t<real>" << playbackinfo.rate << "</real>\n"
+         "\t<real>" << playback_info.rate << "</real>\n"
          "\t<key>readyToPlay</key>\n"
-         "\t<integer>" << playbackinfo.readyToPlay << "</integer>\n"
+         "\t<integer>" << playback_info.readyToPlay << "</integer>\n"
          "\t<key>playbackBufferEmpty</key>\n"
          "\t<integer>1</integer>\n"
          "\t<key>playbackBufferFull</key>\n"
@@ -918,7 +964,7 @@ void ap_airplay_connection::get_playback_info_handler(const request &req,
          "\t<array>\n"
          "\t\t<dict>\n"
          "\t\t\t<key>duration</key>\n"
-         "\t\t\t<real>" << playbackinfo.duration << "</real>\n"
+         "\t\t\t<real>" << playback_info.duration << "</real>\n"
          "\t\t\t<key>start</key>\n"
          "\t\t\t<real>0.0</real>\n"
          "\t\t</dict>\n"
@@ -927,7 +973,7 @@ void ap_airplay_connection::get_playback_info_handler(const request &req,
          "\t<array>\n"
          "\t\t<dict>\n"
          "\t\t\t<key>duration</key>\n"
-         "\t\t\t<real>" << playbackinfo.duration << "</real>\n"
+         "\t\t\t<real>" << playback_info.duration << "</real>\n"
          "\t\t\t<key>start</key>\n"
          "\t\t\t<real>0.0</real>\n"
          "\t\t</dict>\n"
@@ -947,6 +993,33 @@ void ap_airplay_connection::put_setProperty_handler(const request &req,
 
   if (std::string::npos != req.uri.find("actionAtItemEnd")) {
     // /setProperty?actionAtItemEnd
+    //{
+    //  value = 1;
+    //}
+    // advance = 0; play next item
+    // pause = 1;   puase the playback
+    // none = 2;    do nothing
+    do {
+      auto_plist data_obj =
+          plist_object_from_bplist(req.content.data(), req.content.size());
+      if (!data_obj) {
+        LOGE() << "Failed to pares the actionAtItemEnd value";
+        break;
+      }
+      auto value_obj = plist_object_dict_get_value(data_obj, "value");
+      if (!value_obj) {
+        LOGE() << "Failed to pares the actionAtItemEnd value";
+        break;
+      }
+      int64_t value = 0;
+      if (0 != plist_object_integer_get_value(value_obj, &value)) {
+        LOGE() << "Failed to pares the actionAtItemEnd value";
+        break;
+      }
+
+      LOGD() << "actionAtItemEnd value " << value;
+    } while (0);
+
     res.with_content_type(TEXT_APPLE_PLIST_XML)
         .with_content(ERROR_STATUS_RESPONSE);
   } else if (std::string::npos != req.uri.find("forwardEndTime")) {
@@ -988,6 +1061,11 @@ void ap_airplay_connection::post_getProperty_handler(const request &req,
   res.with_status(ok);
 }
 
+std::shared_ptr<xtxp_connection_base>
+ap_airplay_connection::shared_from_self() {
+  return shared_from_this();
+}
+
 void ap_airplay_connection::add_common_header(const request &req,
                                               response &res) {
   res.with_header(HEADER_DATE, gmt_time_string());
@@ -1003,6 +1081,14 @@ void ap_airplay_connection::add_common_header(const request &req,
   if (0 != req.method.compare("RECORD") &&
       0 != req.method.compare("SET_PARAMETER"))
     res.with_header(HEADER_AUDIO_JACK_STATUS, "Connected; type=digital");
+}
+
+void ap_airplay_connection::init_session_id() {
+  uint64_t address = (uint64_t)this;
+  uint64_t timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::system_clock::now().time_since_epoch())
+          .count();
+  session_id_ = (timestamp << 32) | (address & 0x0ffffffff);
 }
 
 void ap_airplay_connection::validate_user_agent(const request &req) {
@@ -1118,6 +1204,12 @@ void ap_airplay_connection::send_fcup_request(int request_id,
   }
 }
 
+void ap_airplay_connection::reverse_connection(const std::string &session) {
+  apple_session_id_ = session;
+  ap_event_connection_manager::get().insert(session, shared_from_self());
+  reverse();
+}
+
 ap_airplay_service::ap_airplay_service(ap_config_ptr &config,
                                        uint16_t port /*= 0*/)
     : tcp_service_base("ap_airplay_service", port), config_(config) {
@@ -1129,10 +1221,6 @@ ap_airplay_service::~ap_airplay_service() {}
 
 void ap_airplay_service::set_handler(ap_handler_ptr &hanlder) {
   handler_ = hanlder;
-}
-
-void ap_airplay_service::stop_video_session() {
-  PATCH_video_session_manager::get().stop_video_session();
 }
 
 tcp_connection_ptr ap_airplay_service::prepare_new_connection() {
@@ -1150,36 +1238,6 @@ void ap_airplay_service::on_thread_stop() {
   if (handler_) {
     handler_->on_thread_stop();
   }
-}
-
-aps::service::PATCH_video_session_manager &PATCH_video_session_manager::get() {
-  static PATCH_video_session_manager s;
-  return s;
-}
-
-void PATCH_video_session_manager::insert_video_session(
-    void *p, xtxp_connection_base_weak_ptr s) {
-  std::lock_guard<std::mutex> l(video_session_map_mtx_);
-  video_session_map_[p] = s;
-}
-
-void PATCH_video_session_manager::remove_video_session(void *p) {
-  std::lock_guard<std::mutex> l(video_session_map_mtx_);
-  auto s = video_session_map_.find(p);
-  if (s != video_session_map_.end()) {
-    video_session_map_.erase(s);
-  }
-}
-
-void PATCH_video_session_manager::stop_video_session() {
-  std::lock_guard<std::mutex> l(video_session_map_mtx_);
-  for (auto s : video_session_map_) {
-    auto p = s.second.lock();
-    if (p) {
-      p->stop();
-    }
-  }
-  video_session_map_.clear();
 }
 
 }  // namespace service

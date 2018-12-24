@@ -291,7 +291,7 @@ exit:
 	return err;
 	}
 
-// create a socket connected to nameserver
+// attach a socket connected to nameserver
 // caller terminates connection via close()
 mDNSlocal TCPSocket *ConnectToServer(DaemonInfo *d)
 	{
@@ -1471,7 +1471,7 @@ mDNSlocal void UpdateLeaseTable(PktMsg *pkt, DaemonInfo *d, mDNSs32 lease)
 	HdrHToN(pkt);
 	}
 
-// Given a successful reply from a server, create a new reply that contains lease information
+// Given a successful reply from a server, attach a new reply that contains lease information
 // Replies are currently not signed !!!KRS change this
 mDNSlocal PktMsg *FormatLeaseReply(DaemonInfo *d, PktMsg *orig, mDNSu32 lease)
 	{
@@ -2368,7 +2368,7 @@ mDNSlocal int RecvLLQ( DaemonInfo *d, PktMsg *pkt, TCPSocket *sock )
 		e = LookupLLQ(d, pkt->src, &q.qname, q.qtype, &llq->id);
 		if (!e)
 			{
-			// no entry - if zero ID, create new
+			// no entry - if zero ID, attach new
 			e = NewLLQ(d, pkt->src, &q.qname, q.qtype, llq->llqlease );
 			if (!e) goto end;
 			}

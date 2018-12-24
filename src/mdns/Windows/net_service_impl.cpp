@@ -104,7 +104,7 @@ public:
   }
 
   virtual void suppress() override {
-    if (dnssd_lib_.Module && dnssd_lib_.DNSServiceRefDeallocate) {
+    if (dns_service_ && dnssd_lib_.Module && dnssd_lib_.DNSServiceRefDeallocate) {
       dnssd_lib_.DNSServiceRefDeallocate(dns_service_);
       dns_service_ = 0;
     }

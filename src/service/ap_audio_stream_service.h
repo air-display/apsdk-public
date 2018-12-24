@@ -1,6 +1,7 @@
 #pragma once
 #include <ap_handler.h>
 #include <ap_types.h>
+#include <ap_session.h>
 #include <asio.hpp>
 #include <crypto/ap_crypto.h>
 #include <memory>
@@ -47,7 +48,7 @@ private:
 class ap_audio_stream_service {
 public:
   explicit ap_audio_stream_service(aps::ap_crypto_ptr &crypto,
-                                   aps::ap_handler_ptr &handler);
+                                  aps::ap_mirror_session_handler_ptr &handler);
 
   ~ap_audio_stream_service();
 
@@ -77,7 +78,7 @@ protected:
   void on_thread_stop();
 
 private:
-  aps::ap_handler_ptr handler_;
+  aps::ap_mirror_session_handler_ptr handler_;
 
   aps::ap_crypto_ptr crypto_;
 

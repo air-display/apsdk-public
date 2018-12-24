@@ -4,8 +4,9 @@
 
 #ifndef JNI_CLASS_LOADER_H
 #define JNI_CLASS_LOADER_H
-#include <android/log.h>
-#include <jni.h>
+// clang-format off
+#include "aps-jni.h"
+// clang-format on
 
 class jni_class_loader {
 public:
@@ -14,8 +15,8 @@ public:
     return s_instance;
   }
 
-  void init(JavaVM *vm, JNIEnv *env) {
-    jclass nci_object_clz = env->FindClass("com/medialab/nci/NciObject");
+  void init(JNIEnv *env) {
+    jclass nci_object_clz = env->FindClass("com/medialab/airplay/NciObject");
     jclass class_clz = env->GetObjectClass(nci_object_clz);
 
     jclass class_loader_clz = env->FindClass("java/lang/ClassLoader");

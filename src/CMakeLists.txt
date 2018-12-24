@@ -9,6 +9,7 @@ set(SRC_AP
     ap_config.h
     ap_config.cpp
     ap_handler.h
+	ap_session.h
     ap_types.h
 )
 source_group("ap" FILES ${SRC_AP})

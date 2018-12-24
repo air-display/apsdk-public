@@ -7,9 +7,9 @@
 namespace aps {
 namespace service {
 ap_mirror_stream_connection::ap_mirror_stream_connection(
-    asio::io_context &io_ctx, aps::ap_crypto_ptr &crypto,
-    aps::ap_handler_ptr handler /*= 0*/)
-    : aps::network::tcp_connection_base(io_ctx),
+    asio::io_context &io_ctx, ap_crypto_ptr &crypto,
+    ap_mirror_session_handler_ptr handler /*= 0*/)
+    : network::tcp_connection_base(io_ctx),
       handler_(handler),
       buffer_(SMS_BUFFER_SIZE),
       crypto_(crypto) {
@@ -211,10 +211,10 @@ void ap_mirror_stream_connection::close_video_data_file() {
 
 #endif
 
-ap_mirror_stream_service::ap_mirror_stream_service(aps::ap_crypto_ptr &crypto,
-                                                   uint16_t port,
-                                                   aps::ap_handler_ptr &handler)
-    : aps::network::tcp_service_base("ap_video_stream_service", port, true),
+ap_mirror_stream_service::ap_mirror_stream_service(
+    ap_crypto_ptr &crypto, uint16_t port,
+    ap_mirror_session_handler_ptr &handler)
+    : network::tcp_service_base("ap_video_stream_service", port, true),
       handler_(handler),
       crypto_(crypto) {
   bind_thread_actions(
@@ -224,7 +224,7 @@ ap_mirror_stream_service::ap_mirror_stream_service(aps::ap_crypto_ptr &crypto,
 
 ap_mirror_stream_service::~ap_mirror_stream_service() {}
 
-aps::network::tcp_connection_ptr
+network::tcp_connection_ptr
 ap_mirror_stream_service::prepare_new_connection() {
   return std::make_shared<ap_mirror_stream_connection>(io_context(), crypto_,
                                                        handler_);

@@ -16,6 +16,16 @@ public:                                                                        \
 public:                                                                        \
   void n(const std::string &value) { n##_ = value; }
 
+#define DECLARE_BOOL_PROPERTY(n)                                               \
+private:                                                                       \
+  bool n##_;                                                                   \
+                                                                               \
+public:                                                                        \
+  const bool &n() const { return n##_; }                                       \
+                                                                               \
+public:                                                                        \
+  void n(const bool &value) { n##_ = value; }
+
 #define DECLARE_INTEGER32_PROPERTY(n)                                          \
 private:                                                                       \
   std::int32_t n##_;                                                           \
@@ -188,6 +198,11 @@ public:
   /// <summary>
   ///
   /// </summary>
+  DECLARE_BOOL_PROPERTY(publishService);
+
+  /// <summary>
+  ///
+  /// </summary>
   DECLARE_STRING_PROPERTY(model);
 
   /// <summary>
@@ -276,7 +291,7 @@ public:
   const std::string features_hex_string() const;
 
   /// <summary>
-  /// 
+  ///
   /// </summary>
   /// <returns></returns>
   const std::string deviceID() const;

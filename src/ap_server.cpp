@@ -19,8 +19,7 @@ public:
         airplay_tcp_service_(0), ap_media_http_service_(0) {}
 
   ~implementation() { 
-    airplay_net_service_.suppress();
-    raop_net_service_.suppress();
+	  release_net_service();
   }
 
   void set_config(ap_config_ptr &config) { ap_config_ = config; }
@@ -65,8 +64,7 @@ public:
   }
 
   void stop() {
-    airplay_net_service_.suppress();
-    raop_net_service_.suppress();
+    release_net_service();
 
     if (airplay_tcp_service_) {
       airplay_tcp_service_->stop();
@@ -74,21 +72,19 @@ public:
     }
   }
 
-  short get_service_port() {
+  uint16_t get_service_port() {
     if (airplay_tcp_service_) {
       return airplay_tcp_service_->port();
     }
     return -1;
   }
 
-  void stop_video_session() {
-    if (airplay_tcp_service_) {
-      return airplay_tcp_service_->stop_video_session();
-    }
-  }
-
 protected:
   bool initialize_net_service() {
+    if (!ap_config_->publishService()) {
+      return true;
+    }
+
     airplay_net_service_.add_txt_record("deviceId", ap_config_->macAddress());
     airplay_net_service_.add_txt_record("features",
                                         ap_config_->features_hex_string());
@@ -128,6 +124,15 @@ protected:
     return false;
   }
 
+  void release_net_service() {
+    if (!ap_config_->publishService()) {
+      return;
+    }
+
+    airplay_net_service_.suppress();
+    raop_net_service_.suppress();
+  }
+
 private:
   ap_config_ptr ap_config_;
 
@@ -156,8 +161,6 @@ bool aps::ap_server::start() { return impl_->start(); }
 
 void ap_server::stop() { impl_->stop(); }
 
-short ap_server::get_service_port() { return impl_->get_service_port(); }
-
-void ap_server::stop_video_session() { return impl_->stop_video_session(); }
+uint16_t ap_server::get_service_port() { return impl_->get_service_port(); }
 
 } // namespace aps

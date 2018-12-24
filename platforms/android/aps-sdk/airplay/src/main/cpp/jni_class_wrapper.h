@@ -9,6 +9,68 @@
 #include <jni_class_loader.h>
 #include <mutex>
 
+template<const char *CLS> class jni_class_meta {
+protected:
+  static jclass get_class(JNIEnv *env) {
+    static jclass clz_ = 0;
+    if (clz_)
+      return clz_;
+    clz_ = jni_class_loader::get().find_class(CLS, env);
+    if (clz_) {
+      clz_ = (jclass) env->NewGlobalRef(clz_);
+    } else {
+      __android_log_print(ANDROID_LOG_ERROR, LOG_TAG,
+                          "Failed to find class: %s", CLS);
+    }
+    return clz_;
+  }
+
+  static jmethodID get_constructor(JNIEnv *env) {
+    static jmethodID constructor_ = 0;
+    if (constructor_)
+      return constructor_;
+    jclass clz = get_class(env);
+    if (clz) {
+      constructor_ = env->GetMethodID(clz, "<init>", "()V");
+      if (!constructor_) {
+        __android_log_print(ANDROID_LOG_ERROR, LOG_TAG,
+                            "Failed to find constructor of class:%s", CLS);
+      }
+    }
+    return constructor_;
+  }
+};
+
+#define GET_METHOD_ID(name, sig)                                               \
+  static jmethodID mid = env->GetMethodID(get_class(env), #name, sig);         \
+  if (!mid)                                                                    \
+    mid = env->GetMethodID(get_class(env), #name, sig);                        \
+  ;
+
+template<typename T, const char *CLS>
+class jni_meta_object : public jni_class_meta<CLS> {
+public:
+  static T *attach(JNIEnv *env, jobject o) {
+    T *p = new T(env);
+    if (p) {
+      p->jvm_obj_ = env->NewGlobalRef(o);
+    }
+    return p;
+  }
+
+  static void destroy(JNIEnv *env, jobject o) {
+    T *p = T::get(env, o);
+    jobject ref = p->jvm_obj_;
+    delete (T *) ((void *) (p));
+    if (ref) {
+      env->DeleteGlobalRef(ref);
+    }
+  }
+
+protected:
+  jobject jvm_obj_;
+};
+
 typedef jint Int;
 typedef jshort Short;
 typedef jlong Long;
@@ -19,54 +81,23 @@ typedef jbyte Byte;
 typedef jobject Object;
 
 #define WRAPPER_CLASS_BEGIN(c, p)                                              \
-  class c {                                                                    \
-  private:                                                                     \
+  static const char c##_cls[] = p;                                             \
+  class c : public jni_class_meta<c##_cls> {                                   \
+  public:                                                                      \
+    ~c() {}                                                                    \
+    static c attach(JNIEnv *env, jobject obj) { return c(env, obj); }          \
+    static c create(JNIEnv *env) {                                             \
+      jobject obj =                                                            \
+          env->NewObject(jni_class_meta<c##_cls>::get_class(env),              \
+                         jni_class_meta<c##_cls>::get_constructor(env));       \
+      return c(env, obj);                                                      \
+    }                                                                          \
+    jobject get() { return obj_; }                                             \
+                                                                               \
+  protected:                                                                   \
     JNIEnv *env_;                                                              \
     jobject obj_;                                                              \
-    bool auto_release_;                                                        \
-    c(JNIEnv *env, jobject obj, bool auto_release)                             \
-        : env_(env), obj_(obj), auto_release_(auto_release) {}                 \
-    static jclass get_class(JNIEnv *env) {                                     \
-      static jclass clz_ = 0;                                                  \
-      if (clz_)                                                                \
-        return clz_;                                                           \
-      clz_ = jni_class_loader::get().find_class(p, env);                       \
-      if (clz_) {                                                              \
-        clz_ = (jclass)env->NewGlobalRef(clz_);                                \
-      } else {                                                                 \
-        __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,                        \
-                            "Failed to find class:" p);                        \
-      }                                                                        \
-      return clz_;                                                             \
-    }                                                                          \
-    static jmethodID get_constructor(JNIEnv *env) {                            \
-      static jmethodID constructor_ = 0;                                       \
-      if (constructor_)                                                        \
-        return constructor_;                                                   \
-      jclass clz = get_class(env);                                             \
-      if (clz) {                                                               \
-        constructor_ = env->GetMethodID(clz, "<init>", "()V");                 \
-        if (!constructor_) {                                                   \
-          __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,                      \
-                              "Failed to find constructor of class:" p);       \
-        }                                                                      \
-      }                                                                        \
-      return constructor_;                                                     \
-    }                                                                          \
-                                                                               \
-  public:                                                                      \
-    ~c() {                                                                     \
-      if (auto_release_ && env_ && obj_)                                       \
-        env_->DeleteLocalRef(obj_);                                            \
-    }                                                                          \
-    static c attach(JNIEnv *env, jobject obj, bool auto_release = true) {      \
-      return c(env, obj, auto_release);                                        \
-    }                                                                          \
-    static c create(JNIEnv *env) {                                             \
-      jobject obj = env->NewObject(get_class(env), get_constructor(env));      \
-      return c(env, obj, true);                                                \
-    }                                                                          \
-    jobject get() { return obj_; }
+    c(JNIEnv *env, jobject obj) : env_(env), obj_(obj) {}
 
 #define WRAPPER_CLASS_END()                                                    \
   }                                                                            \
@@ -84,22 +115,7 @@ public:                                                                        \
   }
 
 class String {
-private:
-  bool auto_release_;
-  JNIEnv *env_;
-  jstring obj_;
-
-  String(JNIEnv *env, jstring obj, bool auto_release)
-      : env_(env), obj_(obj), auto_release_(auto_release) {}
-
 public:
-  jstring get() { return obj_; }
-
-  ~String() {
-    if (auto_release_ && env_ && obj_)
-      env_->DeleteLocalRef(obj_);
-  }
-
   static String attach(JNIEnv *env, jstring obj, bool auto_release = true) {
     return String(env, obj, auto_release);
   }
@@ -108,6 +124,31 @@ public:
     jstring obj = env->NewStringUTF(s);
     return String(env, obj, true);
   }
+
+  jstring get() { return obj_; }
+
+  ~String() {}
+
+protected:
+  JNIEnv *env_;
+  jstring obj_;
+
+  String(JNIEnv *env, jstring obj, bool auto_release) : env_(env), obj_(obj) {}
+};
+
+template<typename T> class LocalJvmObject : public T {
+public:
+  LocalJvmObject(const T &other) : T(other) {}
+
+  ~LocalJvmObject() {
+    if (this->env_ && this->obj_)
+      this->env_->DeleteLocalRef(this->obj_);
+  }
+
+private:
+  LocalJvmObject() = delete;
+  LocalJvmObject(const LocalJvmObject &other) = delete;
+  LocalJvmObject &operator=(const LocalJvmObject &other) = delete;
 };
 
 #define SHORT_FIELD(x) FIELD(x, Short, "S")
@@ -132,35 +173,40 @@ WRAPPER_CLASS_BEGIN(PlaybackInfo, "com/medialab/airplay/PlaybackInfo")
   BOOLEAN_FIELD(playbackLikelyToKeepUp);
 WRAPPER_CLASS_END()
 
-
+/*
 WRAPPER_CLASS_BEGIN(AudioControlSync, "com/medialab/airplay/AudioControlSync")
   SHORT_FIELD(sequence);
   INT_FIELD(timestamp);
   LONG_FIELD(currentNTPTme);
   INT_FIELD(nextPacketTime);
 WRAPPER_CLASS_END()
+*/
 
-
+/*
 WRAPPER_CLASS_BEGIN(AudioControlRetransmit, "com/medialab/airplay/AudioControlRetransmit")
   SHORT_FIELD(sequence);
   INT_FIELD(timestamp);
   SHORT_FIELD(lostPacketStart);
   SHORT_FIELD(lostPacketCount);
 WRAPPER_CLASS_END()
+*/
 
+/*
 WRAPPER_CLASS_BEGIN(AirPlayConfigDisplay, "com/medialab/airplay/AirPlayConfigDisplay")
   INT_FIELD(width);
   INT_FIELD(height);
 WRAPPER_CLASS_END()
+*/
 
 WRAPPER_CLASS_BEGIN(AirPlayConfig, "com/medialab/airplay/AirPlayConfig")
   STRING_FIELD(name);
+  BOOLEAN_FIELD(publishService);
+  STRING_FIELD(macAddress);
   STRING_FIELD(deviceID);
   STRING_FIELD(model);
   STRING_FIELD(sourceVersion);
   STRING_FIELD(pi);
   STRING_FIELD(pk);
-  STRING_FIELD(macAddress);
   INT_FIELD(vv);
   INT_FIELD(features);
   INT_FIELD(statusFlag);

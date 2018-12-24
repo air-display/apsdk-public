@@ -34,7 +34,7 @@ int parse_line_to_str(const char *src, char **dest, size_t size)
         ++end;
     }
 
-    // create a new string and assign it to the output value
+    // attach a new string and assign it to the output value
     size_t dest_size = end - begin;
     if(dest_size > 0 && dest) {
         *dest = str_utils_ndup(begin, dest_size);

@@ -44,13 +44,18 @@ void ap_media_http_connection::initialize_request_handlers() {
   }
 }
 
+std::shared_ptr<xtxp_connection_base>
+ap_media_http_connection::shared_from_self() {
+  return shared_from_this();
+}
+
 ap_media_http_service::ap_media_http_service(ap_config_ptr &config,
                                              uint16_t port /*= 0*/)
     : tcp_service_base("ap_media_http_service", port), config_(config) {}
 
 ap_media_http_service::~ap_media_http_service() {}
 
-aps::network::tcp_connection_ptr
+network::tcp_connection_ptr
 ap_media_http_service::prepare_new_connection() {
   return std::make_shared<ap_media_http_connection>(io_context());
 }

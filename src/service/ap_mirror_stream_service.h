@@ -4,10 +4,11 @@
 #include <network/tcp_service.h>
 #include <service/ap_mirror_stream_service_details.h>
 #include <utils/packing.h>
+#include <ap_session.h>
 #include <asio.hpp>
+#include <fstream>
 #include <memory>
 #include <vector>
-#include <fstream>
 
 #define PERSIST_VIDEO_DATA_TO_FILE 1
 
@@ -16,12 +17,12 @@ using namespace aps::service::mirror::details;
 namespace aps {
 namespace service {
 class ap_mirror_stream_connection
-    : public aps::network::tcp_connection_base,
+    : public network::tcp_connection_base,
       public std::enable_shared_from_this<ap_mirror_stream_connection> {
  public:
   ap_mirror_stream_connection(asio::io_context &io_ctx,
-                              aps::ap_crypto_ptr &crypto,
-                              aps::ap_handler_ptr handler = 0);
+                              ap_crypto_ptr &crypto,
+                              ap_mirror_session_handler_ptr handler = 0);
 
   ~ap_mirror_stream_connection();
 
@@ -43,9 +44,11 @@ class ap_mirror_stream_connection
   void handle_socket_error(const asio::error_code &e);
 
  private:
-  aps::ap_handler_ptr handler_;
+  bool first_codec_;
 
-  aps::ap_crypto_ptr crypto_;
+  ap_mirror_session_handler_ptr handler_;
+
+  ap_crypto_ptr crypto_;
 
   std::vector<uint8_t> buffer_;
 
@@ -53,7 +56,7 @@ class ap_mirror_stream_connection
 
   uint8_t *payload_;
 
-  #if defined(WIN32) && PERSIST_VIDEO_DATA_TO_FILE
+#if defined(WIN32) && PERSIST_VIDEO_DATA_TO_FILE
   std::ofstream video_data_file_;
   void init_video_data_file(sms_video_codec_packet_t *p);
   void append_nalu(sms_video_data_packet_t *p);
@@ -61,24 +64,24 @@ class ap_mirror_stream_connection
 #endif
 };
 
-class ap_mirror_stream_service : public aps::network::tcp_service_base {
+class ap_mirror_stream_service : public network::tcp_service_base {
  public:
-  explicit ap_mirror_stream_service(aps::ap_crypto_ptr &crypto, uint16_t port,
-                                    aps::ap_handler_ptr &handler);
+  explicit ap_mirror_stream_service(ap_crypto_ptr &crypto, uint16_t port,
+      ap_mirror_session_handler_ptr &handler);
 
   ~ap_mirror_stream_service();
 
  protected:
-  virtual aps::network::tcp_connection_ptr prepare_new_connection() override;
+  virtual network::tcp_connection_ptr prepare_new_connection() override;
 
   void on_thread_start();
 
   void on_thread_stop();
 
  private:
-  aps::ap_handler_ptr handler_;
+  ap_mirror_session_handler_ptr handler_;
 
-  aps::ap_crypto_ptr crypto_;
+  ap_crypto_ptr crypto_;
 };
 
 typedef std::shared_ptr<ap_mirror_stream_service> ap_video_stream_service_ptr;

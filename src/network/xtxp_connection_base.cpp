@@ -116,7 +116,7 @@ void xtxp_connection_base::post_receive_message_head() {
       socket_, in_stream_, RNRN_LINE_BREAK,
       asio::bind_executor(
           strand_, std::bind(&xtxp_connection_base::on_message_head_received,
-                             shared_from_this(), std::placeholders::_1,
+                             shared_from_self(), std::placeholders::_1,
                              std::placeholders::_2)));
 }
 
@@ -229,11 +229,11 @@ void xtxp_connection_base::post_receive_message_content() {
   asio::async_read(
       socket_, in_stream_,
       std::bind(&xtxp_connection_base::body_completion_condition,
-                shared_from_this(), std::placeholders::_1,
+                shared_from_self(), std::placeholders::_1,
                 std::placeholders::_2),
       asio::bind_executor(
           strand_, std::bind(&xtxp_connection_base::on_message_content_received,
-                             shared_from_this(), std::placeholders::_1,
+                             shared_from_self(), std::placeholders::_1,
                              std::placeholders::_2)));
 }
 
@@ -271,7 +271,7 @@ void xtxp_connection_base::post_send_response(const response &res) {
       socket_, out_stream_,
       asio::bind_executor(strand_,
                           std::bind(&xtxp_connection_base::on_response_sent,
-                                    shared_from_this(), std::placeholders::_1,
+                                    shared_from_self(), std::placeholders::_1,
                                     std::placeholders::_2)));
 }
 

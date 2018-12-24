@@ -4,15 +4,39 @@
 
 #ifndef APS_SDK_JNI_AP_HANDLER_H
 #define APS_SDK_JNI_AP_HANDLER_H
-#include <aps-jni.h>
-#include <memory>
+// clang-format off
+#include <aps.h>
+#include "aps-jni.h"
+// clang-format on
 
 using namespace aps;
 
-class airplay_handler;
+class IAirPlayHandler;
 class jni_ap_handler : public ap_handler {
 public:
-  jni_ap_handler(airplay_handler *p);
+  jni_ap_handler(IAirPlayHandler *p);
+
+  ~jni_ap_handler();
+
+  virtual void on_thread_start() override;
+
+  virtual void on_thread_stop() override;
+
+  virtual void
+  on_session_begin(aps::ap_session_ptr session) override;
+
+  virtual void on_session_end(const uint64_t session_id) override;
+
+
+private:
+  IAirPlayHandler *proxy;
+};
+typedef std::shared_ptr<jni_ap_handler> jni_ap_handler_ptr;
+
+class IAirPlayMirrorHandler;
+class jni_ap_mirror_handler : public ap_mirror_session_handler {
+public:
+  jni_ap_mirror_handler(IAirPlayMirrorHandler *p);
 
   virtual void on_thread_start() override;
 
@@ -47,31 +71,39 @@ public:
   virtual void on_audio_stream_data(const aps::rtp_audio_data_packet_t *p,
                                     const uint32_t payload_length) override;
 
-  // virtual void on_audio_control_sync(const aps::rtp_control_sync_packet_t *p)
-  // override;
-
-  // virtual void on_audio_control_retransmit(const
-  // aps::rtp_control_retransmit_packet_t *p) override;
-
   virtual void on_audio_stream_stopped() override;
 
-  virtual void on_video_play(const std::string &session,
-                             const std::string &location,
+private:
+  IAirPlayMirrorHandler *proxy;
+};
+typedef std::shared_ptr<jni_ap_mirror_handler> jni_ap_mirror_handler_ptr;
+
+class IAirPlayVideoHandler;
+class jni_ap_video_handler : public ap_video_session_handler {
+public:
+  jni_ap_video_handler(IAirPlayVideoHandler *p);
+
+  virtual void on_thread_start() override;
+
+  virtual void on_thread_stop() override;
+
+  virtual void on_video_play(const uint64_t session_id, const std::string &location,
                              const float start_pos) override;
 
-  virtual void on_video_scrub(const std::string &session, const float position) override;
+  virtual void on_video_scrub(const uint64_t session_id,
+                              const float position) override;
 
-  virtual void on_video_rate(const std::string &session, const float value) override;
+  virtual void on_video_rate(const uint64_t session_id, const float value) override;
 
-  virtual void on_video_stop(const std::string &session) override;
+  virtual void on_video_stop(const uint64_t session_id) override;
 
   virtual void
-  on_acquire_playback_info(const std::string &session, ap_handler::playback_info_t &playback_info) override;
+  on_acquire_playback_info(const uint64_t session_id,
+                           playback_info_t &playback_info) override;
 
 private:
-  airplay_handler *parent;
+  IAirPlayVideoHandler *proxy;
 };
-
-typedef std::shared_ptr<jni_ap_handler> jni_ap_handler_ptr;
+typedef std::shared_ptr<jni_ap_video_handler> jni_ap_video_handler_ptr;
 
 #endif // APS_SDK_JNI_AP_HANDLER_H

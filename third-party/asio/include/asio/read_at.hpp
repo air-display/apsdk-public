@@ -2,7 +2,7 @@
 // read_at.hpp
 // ~~~~~~~~~~~
 //
-// Copyright (c) 2003-2017 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -32,8 +32,8 @@ namespace asio {
 /**
  * @defgroup read_at asio::read_at
  *
- * @brief Attempt to read a certain amount of data at the specified offset
- * before returning.
+ * @brief The @c read_at function is a composed operation that reads a certain
+ * amount of data at the specified offset before returning.
  */
 /*@{*/
 
@@ -394,8 +394,8 @@ std::size_t read_at(SyncRandomAccessReadDevice& d,
 /**
  * @defgroup async_read_at asio::async_read_at
  *
- * @brief Start an asynchronous operation to read a certain amount of data at
- * the specified offset.
+ * @brief The @c async_read_at function is a composed asynchronous operation
+ * that reads a certain amount of data at the specified offset.
  */
 /*@{*/
 

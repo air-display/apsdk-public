@@ -4,19 +4,21 @@
 using namespace std::chrono;
 using namespace aps::network;
 
-aps::service::ap_timing_sync_service::ap_timing_sync_service(
+namespace aps {
+namespace service {
+ap_timing_sync_service::ap_timing_sync_service(
     const uint16_t port /*= 0*/)
-    : aps::network::udp_service_base("ap_timing_sync_service", port) {}
+    : network::udp_service_base("ap_timing_sync_service", port) {}
 
-aps::service::ap_timing_sync_service::~ap_timing_sync_service() {}
+ap_timing_sync_service::~ap_timing_sync_service() {}
 
-void aps::service::ap_timing_sync_service::set_server_endpoint(
+void ap_timing_sync_service::set_server_endpoint(
     const asio::ip::address &addr, uint16_t port) {
   remote_endpoint_.address(addr);
   remote_endpoint_.port(port);
 }
 
-void aps::service::ap_timing_sync_service::post_send_query() {
+void ap_timing_sync_service::post_send_query() {
   query_packet_.marker = 1;
   query_packet_.payload_type = rtp_timing_query;
   query_packet_.original_timestamp = htonll(0);
@@ -27,7 +29,7 @@ void aps::service::ap_timing_sync_service::post_send_query() {
                remote_endpoint_);
 }
 
-void aps::service::ap_timing_sync_service::on_send_to(
+void ap_timing_sync_service::on_send_to(
     asio::ip::udp::endpoint remote_endpoint, const asio::error_code &e,
     std::size_t bytes_transferred) {
   if (e)
@@ -38,12 +40,12 @@ void aps::service::ap_timing_sync_service::on_send_to(
   }
 }
 
-void aps::service::ap_timing_sync_service::post_recv_reply() {
+void ap_timing_sync_service::post_recv_reply() {
   post_recv_from((uint8_t *)&reply_packet_, sizeof(reply_packet_),
                  remote_endpoint_);
 }
 
-void aps::service::ap_timing_sync_service::on_recv_from(
+void ap_timing_sync_service::on_recv_from(
     asio::ip::udp::endpoint &remote_endpoint, const asio::error_code &e,
     std::size_t bytes_transferred) {
   if (e)
@@ -56,4 +58,6 @@ void aps::service::ap_timing_sync_service::on_recv_from(
     reply_packet_.transmit_timestamp = ntohll(reply_packet_.transmit_timestamp);
     LOGD() << "Timing reply packet received successfully";
   }
+}
+}
 }

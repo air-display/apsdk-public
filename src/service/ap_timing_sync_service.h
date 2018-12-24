@@ -9,7 +9,7 @@
 
 namespace aps {
 namespace service {
-class ap_timing_sync_service : public aps::network::udp_service_base {
+class ap_timing_sync_service : public network::udp_service_base {
 public:
   ap_timing_sync_service(const uint16_t port = 0);
 

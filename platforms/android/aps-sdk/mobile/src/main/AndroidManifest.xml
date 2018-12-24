@@ -38,7 +38,7 @@
         <activity
             android:name=".APSPlayerActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
-            android:launchMode="singleTop"
+            android:launchMode="standard"
             android:theme="@style/AppTheme.NoTitleBar.FullScreen">
             <intent-filter>
                 <action android:name="com.medialab.apserversdk.action.VIEW" />
@@ -57,14 +57,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-
-        <service
-            android:name=".APSDownloadService"
-            android:exported="false">
-            <intent-filter>
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </service>
 
         <service
             android:name="com.google.android.exoplayer2.scheduler.PlatformScheduler$PlatformSchedulerService"

@@ -48,12 +48,7 @@ public:
   /// <summary>
   ///
   /// </summary>
-  short get_service_port();
-
-  /// <summary>
-  /// 
-  /// </summary>
-  void stop_video_session();
+  uint16_t get_service_port();
 
 private:
   /// <summary>

@@ -14,8 +14,10 @@ using namespace aps::network;
 
 namespace aps {
 namespace service {
-class ap_media_http_connection : public xtxp_connection_base {
-public:
+class ap_media_http_connection 
+	: public xtxp_connection_base
+	, public std::enable_shared_from_this<ap_media_http_connection> {
+ public:
   ap_media_http_connection(asio::io_context &io_ctx);
   ~ap_media_http_connection();
 
@@ -26,7 +28,9 @@ public:
  protected:
   void initialize_request_handlers();
 
-private:
+  virtual std::shared_ptr<xtxp_connection_base> shared_from_self() override;
+
+ private:
 };
 
 typedef std::shared_ptr<ap_media_http_connection> ap_media_http_connection_ptr;
@@ -45,7 +49,7 @@ class ap_media_http_service
   virtual tcp_connection_ptr prepare_new_connection() override;
 
 private:
-  aps::ap_config_ptr config_;
+  ap_config_ptr config_;
 };
 
 typedef std::shared_ptr<ap_media_http_service> ap_media_http_service_ptr;

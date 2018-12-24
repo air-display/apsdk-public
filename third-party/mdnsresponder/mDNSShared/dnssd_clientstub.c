@@ -132,7 +132,7 @@ struct _DNSServiceRef_t
 	dnssd_sock_t      sockfd;			// Connected socket between client and daemon
 	dnssd_sock_t      validator;		// Used to detect memory corruption, double disposals, etc.
 	client_context_t  uid;				// For shared connection requests, each subordinate DNSServiceRef has its own ID,
-										// unique within the scope of the same shared parent DNSServiceRef
+										// unique within the scope of the same shared proxy DNSServiceRef
 	uint32_t          op;				// request_op_t or reply_op_t
 	uint32_t          max_index;		// Largest assigned record index - 0 if no additional records registered
 	uint32_t          logcounter;		// Counter used to control number of syslog messages we write
@@ -480,7 +480,7 @@ static DNSServiceErrorType ConnectToServer(DNSServiceRef *ref, DNSServiceFlags f
 		while (*p) p = &(*p)->next;
 		*p = sdr;
 		// Preincrement counter before we use it -- it helps with debugging if we know the all-zeroes ID should never appear
-		if (++(*ref)->uid.u32[0] == 0) ++(*ref)->uid.u32[1];	// In parent DNSServiceOp increment UID counter
+		if (++(*ref)->uid.u32[0] == 0) ++(*ref)->uid.u32[1];	// In proxy DNSServiceOp increment UID counter
 		sdr->primary    = *ref;					// Set our primary pointer
 		sdr->sockfd     = (*ref)->sockfd;		// Inherit primary's socket
 		sdr->validator  = (*ref)->validator;
@@ -556,8 +556,8 @@ static DNSServiceErrorType deliver_request(ipc_msg_hdr *hdr, DNSServiceOp *sdr)
 
 	// Note: need to check hdr->op, not sdr->op.
 	// hdr->op contains the code for the specific operation we're currently doing, whereas sdr->op
-	// contains the original parent DNSServiceOp (e.g. for an add_record_request, hdr->op will be
-	// add_record_request but the parent sdr->op will be connection_request or reg_service_request)
+	// contains the original proxy DNSServiceOp (e.g. for an add_record_request, hdr->op will be
+	// add_record_request but the proxy sdr->op will be connection_request or reg_service_request)
 	if (sdr->primary ||
 		hdr->op == reg_record_request || hdr->op == add_record_request || hdr->op == update_record_request || hdr->op == remove_record_request)
 		MakeSeparateReturnSocket = 1;
@@ -1575,7 +1575,7 @@ static void ConnectionResponse(DNSServiceOp *const sdr, const CallbackHeader *co
 		{
 		// When using kDNSServiceFlagsShareConnection, need to search the list of associated DNSServiceOps
 		// to find the one this response is intended for, and then call through to its ProcessReply handler.
-		// We start with our first subordinate DNSServiceRef -- don't want to accidentally match the parent DNSServiceRef.
+		// We start with our first subordinate DNSServiceRef -- don't want to accidentally match the proxy DNSServiceRef.
 		DNSServiceOp *op = sdr->next;
 		while (op && (op->uid.u32[0] != cbh->ipc_hdr.client_context.u32[0] || op->uid.u32[1] != cbh->ipc_hdr.client_context.u32[1]))
 			op = op->next;

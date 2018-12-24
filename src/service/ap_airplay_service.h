@@ -22,16 +22,32 @@ using namespace aps::network;
 
 namespace aps {
 namespace service {
-class ap_airplay_connection : public xtxp_connection_base {
+class ap_airplay_connection
+  : public xtxp_connection_base
+  , public ap_session
+  , public std::enable_shared_from_this<ap_airplay_connection>
+{
 public:
   explicit ap_airplay_connection(asio::io_context &io_ctx,
-                                 aps::ap_config_ptr &config,
-                                 aps::ap_handler_ptr &handler,
+                                 ap_config_ptr &config,
+                                 ap_handler_ptr &handler,
                                  tcp_service_weak_ptr service);
 
   ~ap_airplay_connection();
 
-protected:
+  virtual uint64_t get_session_id() override;
+
+  virtual uint32_t get_session_type() override;
+
+  virtual void disconnect() override;
+
+  virtual void set_mirror_handler(
+      ap_mirror_session_handler_ptr handler) override;
+
+  virtual void set_video_handler(
+	  ap_video_session_handler_ptr handler) override;
+
+ protected:
   // RTSP
   void options_handler(const request &req, response &res);
 
@@ -93,8 +109,13 @@ protected:
   // APP -> SDK
   void post_getProperty_handler(const request &req, response &res);
 
-protected:
+
+virtual std::shared_ptr<xtxp_connection_base> shared_from_self() override;
+
+ protected:
   virtual void add_common_header(const request &req, response &res) override;
+
+  void init_session_id();
 
   void validate_user_agent(const request &req);
 
@@ -103,19 +124,32 @@ protected:
   void send_fcup_request(int request_id, const std::string &url,
                          const std::string &session_id);
 
+  void reverse_connection(const std::string &session);
+
 private:
-  float start_pos_;
+  bool is_reversed_;
+  uint64_t session_id_;
+  uint32_t session_type_;
   std::string agent_;
-  std::string playback_uuid_;
-  std::string session_id_;
   agent_version_t agent_version_;
-  aps::ap_config_ptr config_;
-  aps::ap_handler_ptr handler_;
-  aps::ap_crypto_ptr crypto_;
+  ap_config_ptr config_;
+  ap_handler_ptr handler_;
+  ap_crypto_ptr crypto_;
   ap_timing_sync_service_ptr timing_sync_service_;
+  tcp_service_weak_ptr service_;
+
+  // For mirroring 
+  //bool is_mirror_session_;
   ap_video_stream_service_ptr mirror_stream_service_;
   ap_audio_stream_service_ptr audio_stream_service_;
-  tcp_service_weak_ptr service_;
+  ap_mirror_session_handler_ptr mirror_session_handler_;
+
+  // For video streaming
+  //bool is_video_session_;
+  float start_pos_in_ms_;
+  std::string playback_uuid_;
+  std::string apple_session_id_;
+  ap_video_session_handler_ptr video_session_handler_;
 };
 
 typedef std::shared_ptr<ap_airplay_connection> ap_airplay_connection_ptr;
@@ -134,8 +168,6 @@ public:
 
   void set_handler(ap_handler_ptr &hanlder);
 
-  void stop_video_session();
-
 protected:
   virtual tcp_connection_ptr prepare_new_connection() override;
 
@@ -144,26 +176,12 @@ protected:
   void on_thread_stop();
 
 private:
-  aps::ap_config_ptr config_;
+  ap_config_ptr config_;
 
-  aps::ap_handler_ptr handler_;
+  ap_handler_ptr handler_;
 };
 
 typedef std::shared_ptr<ap_airplay_service> ap_airplay_service_ptr;
-
-
-class PATCH_video_session_manager
-{
- public:
-  static PATCH_video_session_manager &get();
-  void insert_video_session(void *p, xtxp_connection_base_weak_ptr s);
-  void remove_video_session(void *p);
-  void stop_video_session();
-
- private:
-  std::unordered_map<void *, xtxp_connection_base_weak_ptr> video_session_map_;
-  std::mutex video_session_map_mtx_;
-};
 
 } // namespace service
 } // namespace aps

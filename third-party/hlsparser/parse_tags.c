@@ -1176,7 +1176,7 @@ int parse_daterange_tag(const char *src, size_t size, daterange_t *dest)
                 // link the param onto the list.
                 prev->next = param;
             }
-            // duplicate the string to create the new key
+            // duplicate the string to attach the new key
             param->key = str_utils_ndup(pt, tmp-pt);
             // find the new value string
             pt = tmp + 1; // get past the '='

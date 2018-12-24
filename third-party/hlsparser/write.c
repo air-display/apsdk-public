@@ -130,7 +130,7 @@ HLSCode hlswrite_master(char **dest, int *dest_size, master_t *master)
         ADD_PARAM_STR_OPTL(SUBTITLES, inf->subtitles);
         ADD_PARAM_STR_OPTL(CLOSEDCAPTIONS, inf->closed_captions);
         END_TAG();
-        // see if we can create a relative url
+        // see if we can attach a relative url
         if(master->uri) {
             const char *rel = inf->uri;
             const char *ptr_pl = master->uri;
@@ -282,7 +282,7 @@ HLSCode hlswrite_media(char **dest, int *dest_size, media_playlist_t *playlist)
         }else{
             latest = pgprintf(latest, "#%s:%.3f,\n", EXTINF, seg->data->duration);
         }
-        // see if we can create a relative url
+        // see if we can attach a relative url
         if(playlist->uri) {
             const char *rel = seg->data->uri;
             const char *ptr_pl = playlist->uri;

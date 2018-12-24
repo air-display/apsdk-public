@@ -50,6 +50,7 @@ public:
   virtual void start() override {}
 
   virtual void stop() override {
+    socket_.shutdown(asio::socket_base::shutdown_both);
     socket_.close();
   }
 

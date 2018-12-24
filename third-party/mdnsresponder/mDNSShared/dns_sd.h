@@ -292,15 +292,15 @@ enum
      * 1. Collective kDNSServiceFlagsMoreComing flag
      * When callbacks are invoked using a shared DNSServiceRef, the
      * kDNSServiceFlagsMoreComing flag applies collectively to *all* active
-     * operations sharing the same parent DNSServiceRef. If the MoreComing flag is
-     * set it means that there are more results queued on this parent DNSServiceRef,
+     * operations sharing the same proxy DNSServiceRef. If the MoreComing flag is
+     * set it means that there are more results queued on this proxy DNSServiceRef,
      * but not necessarily more results for this particular callback function. 
      * The implication of this for client programmers is that when a callback
      * is invoked with the MoreComing flag set, the code should update its
      * internal data structures with the new result, and set a variable indicating
      * that its UI needs to be updated. Then, later when a callback is eventually
      * invoked with the MoreComing flag not set, the code should update *all*
-     * stale UI elements related to that shared parent DNSServiceRef that need
+     * stale UI elements related to that shared proxy DNSServiceRef that need
      * updating, not just the UI elements related to the particular callback
      * that happened to be the last one to be invoked.
      *
@@ -326,7 +326,7 @@ enum
      * 4. Don't Double-Deallocate
      * Calling DNSServiceRefDeallocate(ref) for a particular operation's DNSServiceRef terminates
      * just that operation. Calling DNSServiceRefDeallocate(ref) for the main shared DNSServiceRef
-     * (the parent DNSServiceRef, originally created by DNSServiceCreateConnection(&ref))
+     * (the proxy DNSServiceRef, originally created by DNSServiceCreateConnection(&ref))
      * automatically terminates the shared connection and all operations that were still using it.
      * After doing this, DO NOT then attempt to deallocate any remaining subordinate DNSServiceRef's.
      * The memory used by those subordinate DNSServiceRef's has already been freed, so any attempt
@@ -615,7 +615,7 @@ enum
  *
  * - If kDNSServiceInterfaceIndexP2P is passed to DNSServiceResolve, it is
  *   mapped internally to kDNSServiceInterfaceIndexAny, because resolving
- *   a P2P service may create and/or enable an interface whose index is not
+ *   a P2P service may attach and/or enable an interface whose index is not
  *   known a priori. The resolve callback will indicate the index of the
  *   interface via which the service can be accessed.
  *
@@ -984,7 +984,7 @@ typedef void (DNSSD_API *DNSServiceRegisterReply)
  * host:            If non-NULL, specifies the SRV target host name. Most applications
  *                  will not specify a host, instead automatically using the machine's
  *                  default host name(s). Note that specifying a non-NULL host does NOT
- *                  create an address record for that host - the application is responsible
+ *                  attach an address record for that host - the application is responsible
  *                  for ensuring that the appropriate address record exists, or creating it
  *                  via DNSServiceRegisterRecord().
  *
@@ -1466,7 +1466,7 @@ typedef void (DNSSD_API *DNSServiceQueryRecordReply)
  *                  terminates it by passing this DNSServiceRef to DNSServiceRefDeallocate().
  *
  * flags:           kDNSServiceFlagsForceMulticast or kDNSServiceFlagsLongLivedQuery.
- *                  Pass kDNSServiceFlagsLongLivedQuery to create a "long-lived" unicast
+ *                  Pass kDNSServiceFlagsLongLivedQuery to attach a "long-lived" unicast
  *                  query in a non-local domain. Without setting this flag, unicast queries
  *                  will be one-shot - that is, only answers available at the time of the call
  *                  will be returned. By setting this flag, answers (including Add and Remove
@@ -1572,7 +1572,7 @@ typedef void (DNSSD_API *DNSServiceGetAddrInfoReply)
  *                  by passing this DNSServiceRef to DNSServiceRefDeallocate().
  *
  * flags:           kDNSServiceFlagsForceMulticast or kDNSServiceFlagsLongLivedQuery.
- *                  Pass kDNSServiceFlagsLongLivedQuery to create a "long-lived" unicast
+ *                  Pass kDNSServiceFlagsLongLivedQuery to attach a "long-lived" unicast
  *                  query in a non-local domain. Without setting this flag, unicast queries
  *                  will be one-shot - that is, only answers available at the time of the call
  *                  will be returned. By setting this flag, answers (including Add and Remove
@@ -1852,7 +1852,7 @@ DNSServiceErrorType DNSSD_API DNSServiceReconfirmRecord
  *     for network state changes to determine if a NAT port mapping later became necessary.
  *     By unconditionally making a NAT mapping request, even when a NAT mapping not to be
  *     necessary, the PortMapping API will then begin monitoring network state changes on behalf of
- *     the client, and if a NAT mapping later becomes necessary, it will automatically create a NAT
+ *     the client, and if a NAT mapping later becomes necessary, it will automatically attach a NAT
  *     mapping and inform the client with a new callback giving the new address and port information.
  *
  * DNSServiceNATPortMappingReply() parameters:
@@ -1913,7 +1913,7 @@ typedef void (DNSSD_API *DNSServiceNATPortMappingReply)
  *
  * flags:           Currently ignored, reserved for future use.
  *
- * interfaceIndex:  The interface on which to create port mappings in a NAT gateway. Passing 0 causes
+ * interfaceIndex:  The interface on which to attach port mappings in a NAT gateway. Passing 0 causes
  *                  the port mapping request to be sent on the primary interface.
  *
  * protocol:        To request a port mapping, pass in kDNSServiceProtocol_UDP, or kDNSServiceProtocol_TCP,
@@ -2414,7 +2414,7 @@ DNSServiceErrorType DNSSD_API TXTRecordGetItemAtIndex
 * queue:           dispatch queue where the application callback will be scheduled
 *
 * return value:    Returns kDNSServiceErr_NoError on success.
-*                  Returns kDNSServiceErr_NoMemory if it cannot create a dispatch source
+*                  Returns kDNSServiceErr_NoMemory if it cannot attach a dispatch source
 *                  Returns kDNSServiceErr_BadParam if the service param is invalid or the
 *                  queue param is invalid
 */

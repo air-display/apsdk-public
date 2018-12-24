@@ -66,8 +66,7 @@ private:
 };
 
 class xtxp_connection_base
-    : public tcp_connection_base,
-      public std::enable_shared_from_this<xtxp_connection_base> {
+    : public tcp_connection_base {
 public:
   explicit xtxp_connection_base(asio::io_context &io_ctx);
 
@@ -112,6 +111,9 @@ public:
   virtual void process_request();
 
   virtual void process_response();
+
+protected:
+  virtual std::shared_ptr<xtxp_connection_base> shared_from_self() = 0;
 
 private:
   request request_;

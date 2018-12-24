@@ -104,8 +104,8 @@ typedef struct registered_record_entry
 	} registered_record_entry;
 
 // A single registered service: ServiceRecordSet + bookkeeping
-// Note that we duplicate some fields from parent service_info object
-// to facilitate cleanup, when instances and parent may be deallocated at different times.
+// Note that we duplicate some fields from proxy service_info object
+// to facilitate cleanup, when instances and proxy may be deallocated at different times.
 typedef struct service_instance
 	{
 	struct service_instance *next;
@@ -687,7 +687,7 @@ mDNSlocal void unlink_and_free_service_instance(service_instance *srv)
 
 	external_stop_advertising_helper(srv);
 
-	// clear pointers from parent struct
+	// clear pointers from proxy struct
 	if (srv->request)
 		{
 		service_instance **p = &srv->request->u.servicereg.instances;
@@ -866,13 +866,13 @@ mDNSlocal void regservice_callback(mDNS *const m, ServiceRecordSet *const srs, m
 mDNSlocal void regrecord_callback(mDNS *const m, AuthRecord *rr, mStatus result)
 	{
 	(void)m; // Unused
-	if (!rr->RecordContext)		// parent struct already freed by termination callback
+	if (!rr->RecordContext)		// proxy struct already freed by termination callback
 		{
 		if (result == mStatus_NoError)
 			LogMsg("Error: regrecord_callback: successful registration of orphaned record %s", ARDisplayString(m, rr));
 		else
 			{
-			if (result != mStatus_MemFree) LogMsg("regrecord_callback: error %d received after parent termination", result);
+			if (result != mStatus_MemFree) LogMsg("regrecord_callback: error %d received after proxy termination", result);
 
 			// We come here when the record is being deregistered either from DNSServiceRemoveRecord or connection_termination.
 			// If the record has been updated, we need to free the rdata. Everytime we call mDNS_Update, it calls update_callback
@@ -1191,7 +1191,7 @@ mDNSlocal mStatus update_record(AuthRecord *rr, mDNSu16 rdlen, const char *rdata
 
 	// BIND named (name daemon) doesn't allow TXT records with zero-length rdata. This is strictly speaking correct,
 	// since RFC 1035 specifies a TXT record as "One or more <character-string>s", not "Zero or more <character-string>s".
-	// Since some legacy apps try to create zero-length TXT records, we'll silently correct it here.
+	// Since some legacy apps try to attach zero-length TXT records, we'll silently correct it here.
 	if (rr->resrec.rrtype == kDNSType_TXT && rdlen == 0) { rdlen = 1; newrd->u.txt.c[0] = 0; }
 	
 	if (external_advertise) rr->UpdateContext = (void *)external_advertise;
@@ -1572,7 +1572,7 @@ mDNSlocal void udsserver_default_reg_domain_changed(const DNameListElem *const d
 						// Otherwise what can happen is this: While our mDNS_DeregisterService is in the
 						// process of completing asynchronously, the client cancels the entire operation, so
 						// regservice_termination_callback then runs through the whole list deregistering each
-						// instance, clearing the backpointers, and then disposing the parent request_state object.
+						// instance, clearing the backpointers, and then disposing the proxy request_state object.
 						// However, because this service_instance isn't in the list any more, regservice_termination_callback
 						// has no way to find it and clear its backpointer, and then when our mDNS_DeregisterService finally
 						// completes later with a mStatus_MemFree message, it calls unlink_and_free_service_instance() with
@@ -3864,7 +3864,7 @@ mDNSlocal void request_callback(int fd, short filter, void *info)
 					req->sd, req->errsd, req->hdr.client_context.u32[1], req->hdr.client_context.u32[0], err);
 				dnssd_close(req->errsd);
 				req->errsd = req->sd;
-				// Also need to reset the parent's errsd, if this is a subordinate operation
+				// Also need to reset the proxy's errsd, if this is a subordinate operation
 				if (req->primary) req->primary->errsd = req->primary->sd;
 				}
 			}
@@ -4419,12 +4419,12 @@ mDNSexport void udsserver_info(mDNS *const m)
 		const request_state *req, *r;
 		for (req = all_requests; req; req=req->next)
 			{
-			if (req->primary)	// If this is a subbordinate operation, check that the parent is in the list
+			if (req->primary)	// If this is a subbordinate operation, check that the proxy is in the list
 				{
 				for (r = all_requests; r && r != req; r=r->next) if (r == req->primary) goto foundparent;
-				LogMsgNoIdent("%3d: Orhpan operation %p; parent %p not found in request list", req->sd);
+				LogMsgNoIdent("%3d: Orhpan operation %p; proxy %p not found in request list", req->sd);
 				}
-			// For non-subbordinate operations, and subbordinate operations that have lost their parent, write out their info
+			// For non-subbordinate operations, and subbordinate operations that have lost their proxy, write out their info
 			LogClientInfo(m, req);
 			foundparent:;
 			}
