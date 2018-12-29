@@ -40,35 +40,9 @@ void IAirPlayMirrorHandler::on_mirror_stream_codec(
   if (env) {
     GET_METHOD_ID(on_mirror_stream_codec, "([B)V");
     if (mid) {
-      uint32_t sc = htonl(0x01);
-      std::ostringstream oss;
-
-      // Parse SPS
-      uint8_t *cursor = (uint8_t *) p->start;
-      for (int i = 0; i < p->sps_count; i++) {
-        oss.write((char *) &sc, 0x4);
-        uint16_t sps_length = *(uint16_t *) cursor;
-        sps_length = ntohs(sps_length);
-        cursor += sizeof(uint16_t);
-        oss.write((char *) cursor, sps_length);
-        cursor += sps_length;
-      }
-
-      // Parse PPS
-      uint8_t pps_count = *cursor++;
-      for (int i = 0; i < pps_count; i++) {
-        oss.write((char *) &sc, 0x4);
-        uint16_t pps_length = *(uint16_t *) cursor;
-        pps_length = ntohs(pps_length);
-        cursor += sizeof(uint16_t);
-        oss.write((char *) cursor, pps_length);
-        cursor += pps_length;
-      }
-
-      std::string buffer = oss.str();
-      jbyteArray byte_array = env->NewByteArray(buffer.length());
-      env->SetByteArrayRegion(byte_array, 0, buffer.length(),
-                              (jbyte *) (buffer.c_str()));
+      jbyteArray byte_array = env->NewByteArray(p->payload_size);
+      env->SetByteArrayRegion(byte_array, 0, p->payload_size,
+                              (jbyte *)(p->payload));
       env->CallVoidMethod(jvm_obj_, mid, byte_array);
       env->DeleteLocalRef(byte_array);
     } else {
@@ -86,9 +60,7 @@ void IAirPlayMirrorHandler::on_mirror_stream_data(
     if (mid) {
       jbyteArray byte_array = env->NewByteArray(p->payload_size);
       env->SetByteArrayRegion(byte_array, 0, p->payload_size,
-                              (jbyte *) (p->payload));
-      uint32_t sc = htonl(0x01);
-      env->SetByteArrayRegion(byte_array, 0, 0x04, (jbyte *) &sc);
+                              (jbyte *)(p->payload));
       env->CallVoidMethod(jvm_obj_, mid, byte_array, p->timestamp);
       env->DeleteLocalRef(byte_array);
     } else {
@@ -152,7 +124,7 @@ void IAirPlayMirrorHandler::on_audio_set_cover(const std::string format,
       LocalJvmObject<String> image_format(
           String::fromUTF8(env, format.c_str()));
       jbyteArray byte_array = env->NewByteArray(length);
-      env->SetByteArrayRegion(byte_array, 0, length, (jbyte *) data);
+      env->SetByteArrayRegion(byte_array, 0, length, (jbyte *)data);
       env->CallVoidMethod(jvm_obj_, mid, image_format.get(), byte_array);
       env->DeleteLocalRef(byte_array);
     } else {
@@ -169,7 +141,7 @@ void IAirPlayMirrorHandler::on_audio_set_meta_data(const void *data,
     GET_METHOD_ID(on_audio_set_meta_data, "([B)V");
     if (mid) {
       jbyteArray byte_array = env->NewByteArray(length);
-      env->SetByteArrayRegion(byte_array, 0, length, (jbyte *) data);
+      env->SetByteArrayRegion(byte_array, 0, length, (jbyte *)data);
       env->CallVoidMethod(jvm_obj_, mid, byte_array);
       env->DeleteLocalRef(byte_array);
     } else {
@@ -201,7 +173,7 @@ void IAirPlayMirrorHandler::on_audio_stream_data(
     if (mid) {
       jbyteArray byte_array = env->NewByteArray(payload_length);
       env->SetByteArrayRegion(byte_array, 0, payload_length,
-                              (jbyte *) (p->payload));
+                              (jbyte *)(p->payload));
       env->CallVoidMethod(jvm_obj_, mid, byte_array);
       env->DeleteLocalRef(byte_array);
     } else {

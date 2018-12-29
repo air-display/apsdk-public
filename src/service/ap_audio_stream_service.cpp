@@ -3,7 +3,6 @@
 #include <service/ap_audio_stream_service.h>
 #include <utils/logger.h>
 
-
 using namespace aps::network;
 
 namespace aps {
@@ -70,8 +69,8 @@ void audio_udp_service::handle_socket_error(const asio::error_code &e) {
   LOGE() << "Socket error[" << e.value() << "]: " << e.message();
 }
 
-ap_audio_stream_service::ap_audio_stream_service(aps::ap_crypto_ptr &crypto,
-                                                 aps::ap_mirror_session_handler_ptr &handler)
+ap_audio_stream_service::ap_audio_stream_service(
+    aps::ap_crypto_ptr &crypto, aps::ap_mirror_session_handler_ptr &handler)
     : handler_(handler), crypto_(crypto), data_service_("audio_data_service"),
       control_service_("audio_control_service") {
   data_service_.bind_recv_handler(std::bind(
@@ -144,6 +143,7 @@ void ap_audio_stream_service::data_handler(const uint8_t *buf,
 void ap_audio_stream_service::audio_data_packet(rtp_audio_data_packet_t *packet,
                                                 size_t length) {
   LOGV() << "audio DATA packet: " << length;
+
   if (handler_) {
     uint32_t payload_length =
         length - sizeof(rtp_packet_header_t) - sizeof(uint32_t);

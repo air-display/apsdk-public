@@ -162,28 +162,36 @@ typedef sms_packet_header_s sms_packet_header_t;
 // 1 byte    1       number of PPS
 // 2 bytes   4       length of PPS
 // 4 bytes           Picture parameter set
+PACKED(struct avc_decoder_config_record_s {
+  uint8_t version;
+  uint8_t profile;
+  uint8_t compatibility;
+  uint8_t level;
+  uint8_t nallength : 2;
+  uint8_t reserved0 : 6;
+  uint8_t sps_count : 5;
+  uint8_t reserved1 : 3;
+  uint8_t start[];
+
+  // struct {
+  //  uint16_t sps_length;
+  //  // spsNALUnit size = sps_length;
+  //}[sps_count];
+
+  // uint8_t pps_count;
+  // struct {
+  //  uint16_t pps_length;
+  //  // ppsNALUnit size = pps_length;
+  //}[pps_count];
+});
+typedef avc_decoder_config_record_s avc_decoder_config_record_t;
+
 PACKED(struct sms_video_codec_packet_s
        : public sms_packet_header_t {
-         uint8_t version;
-         uint8_t profile;
-         uint8_t compatibility;
-         uint8_t level;
-         uint8_t nallength : 2;
-         uint8_t reserved0 : 6;
-         uint8_t sps_count : 5;
-         uint8_t reserved1 : 3;
-         uint8_t start[];
-
-         // struct {
-         //  uint16_t sps_length;
-         //  // spsNALUnit size = sps_length;
-         //}[sps_count];
-
-         // uint8_t pps_count;
-         // struct {
-         //  uint16_t pps_length;
-         //  // ppsNALUnit size = pps_length;
-         //}[pps_count];
+         union {
+           uint8_t payload[];
+           avc_decoder_config_record_t decord_record;
+         };
        });
 typedef sms_video_codec_packet_s sms_video_codec_packet_t;
 

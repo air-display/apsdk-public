@@ -2,6 +2,9 @@
 // begins and ends there.
 //
 
+#include <strstream>
+#include <fstream>
+#include <asio.hpp>
 #include "../src/ap_config.h"
 #include "../src/ap_server.h"
 #include "../src/ap_session.h"
@@ -9,26 +12,42 @@
 
 class airplay_mirror_handler : public aps::ap_mirror_session_handler {
  public:
-  airplay_mirror_handler() {};
+  airplay_mirror_handler() {
+    time_t now = time(0);
+    std::tm *local_now = localtime(&now);
+    std::ostringstream oss;
+    oss
+      << local_now->tm_year << "-"
+      << local_now->tm_mon << "-"
+      << local_now->tm_mday << "-"
+      << local_now->tm_hour << "-"
+      << local_now->tm_min << "-"
+      << local_now->tm_sec;
+    file_id_ = oss.str();
+  };
   ~airplay_mirror_handler() {};
 
-    virtual void on_mirror_stream_started() override {
+  virtual void on_mirror_stream_started() override {
     LOGI() << "on_mirror_stream_started";
+    init_video_data_file();
   }
 
   virtual void on_mirror_stream_codec(
       const aps::sms_video_codec_packet_t *p) override {
     LOGI() << "on_mirror_stream_codec: ";
+    append_coder_record(p);
   }
 
   virtual void on_mirror_stream_data(
       const aps::sms_video_data_packet_t *p) override {
     uint32_t frame_size = p->payload_size - sizeof(uint32_t);
     LOGV() << "on_mirror_stream_data, frame size: " << frame_size;
+    append_nalu_data(p);
   }
 
   virtual void on_mirror_stream_stopped() override {
     LOGI() << "on_mirror_stream_stopped";
+    close_video_data_file();
   }
 
   virtual void on_audio_set_volume(const float ratio,
@@ -55,16 +74,97 @@ class airplay_mirror_handler : public aps::ap_mirror_session_handler {
 
   virtual void on_audio_stream_started(
       const aps::audio_data_format_t format) override {
-    LOGI() << "on_audio_stream_started: ";
+    LOGI() << "on_audio_stream_started: " << format;
+    init_audio_data_file();
   }
 
   virtual void on_audio_stream_data(const aps::rtp_audio_data_packet_t *p,
                                     const uint32_t payload_length) override {
     LOGV() << "on_audio_stream_data: " << payload_length;
+    append_rtp_data(p->payload, payload_length);
   }
 
   virtual void on_audio_stream_stopped() override {
     LOGI() << "on_audio_stream_stopped";
+  }
+
+private:
+  std::string file_id_;
+
+  std::ofstream video_data_file_;
+  void init_video_data_file() {
+    if (video_data_file_.is_open()) {
+      video_data_file_.close();
+    }
+
+    std::ostringstream oss;
+    oss << file_id_ << "-screen" << ".h264";
+
+    auto mode =
+      std::ios_base::binary | std::ios_base::binary | std::ios_base::trunc;
+    video_data_file_.open(oss.str(), mode);
+  }
+  
+  void append_coder_record (const aps::sms_video_codec_packet_t *p) {
+    uint32_t sc = htonl(0x01);
+    std::ostringstream oss;
+
+    // Parse SPS
+    uint8_t *cursor = (uint8_t *)p->decord_record.start;
+    for (int i = 0; i < p->decord_record.sps_count; i++) {
+      oss.write((char *)&sc, 0x4);
+      uint16_t sps_length = *(uint16_t *)cursor;
+      sps_length = ntohs(sps_length);
+      cursor += sizeof(uint16_t);
+      oss.write((char *)cursor, sps_length);
+      cursor += sps_length;
+    }
+
+    // Parse PPS
+    uint8_t pps_count = *cursor++;
+    for (int i = 0; i < pps_count; i++) {
+      oss.write((char *)&sc, 0x4);
+      uint16_t pps_length = *(uint16_t *)cursor;
+      pps_length = ntohs(pps_length);
+      cursor += sizeof(uint16_t);
+      oss.write((char *)cursor, pps_length);
+      cursor += pps_length;
+    }
+    std::string buffer = oss.str();
+    video_data_file_.write((char *)buffer.c_str(), buffer.length());
+  }
+
+  void append_nalu_data(const aps::sms_video_data_packet_t *p) {
+    static uint32_t sc = htonl(0x01);
+    video_data_file_.write((char *)&sc, sizeof(uint32_t));
+    video_data_file_.write((char *)(p->payload + sizeof(uint32_t)), 
+      p->payload_size - sizeof(uint32_t));
+  }
+
+  void close_video_data_file() {
+    video_data_file_.close();
+  }
+
+  std::ofstream audio_data_file_;
+  void init_audio_data_file() {
+    if (audio_data_file_.is_open()) {
+      audio_data_file_.close();
+    }
+
+    std::ostringstream oss;
+    oss << file_id_ << "-audio" << ".dat";
+
+    auto mode =
+      std::ios_base::binary | std::ios_base::binary | std::ios_base::trunc;
+    audio_data_file_.open(oss.str(), mode);
+  }
+
+  void append_rtp_data(const uint8_t *p, int32_t length) {
+    audio_data_file_.write((char *)p, length);
+  }
+
+  void close_audio_data_file() {
+    audio_data_file_.close();
   }
 };
 
