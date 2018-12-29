@@ -35,7 +35,7 @@ class airplay_mirror_handler : public aps::ap_mirror_session_handler {
   virtual void on_mirror_stream_codec(
       const aps::sms_video_codec_packet_t *p) override {
     LOGI() << "on_mirror_stream_codec: ";
-    append_coder_record(p);
+    append_avc_sequence_header(p);
   }
 
   virtual void on_mirror_stream_data(
@@ -76,6 +76,7 @@ class airplay_mirror_handler : public aps::ap_mirror_session_handler {
       const aps::audio_data_format_t format) override {
     LOGI() << "on_audio_stream_started: " << format;
     init_audio_data_file();
+    append_aac_sequence_header();
   }
 
   virtual void on_audio_stream_data(const aps::rtp_audio_data_packet_t *p,
@@ -105,7 +106,7 @@ private:
     video_data_file_.open(oss.str(), mode);
   }
   
-  void append_coder_record (const aps::sms_video_codec_packet_t *p) {
+  void append_avc_sequence_header(const aps::sms_video_codec_packet_t *p) {
     uint32_t sc = htonl(0x01);
     std::ostringstream oss;
 
@@ -157,6 +158,26 @@ private:
     auto mode =
       std::ios_base::binary | std::ios_base::binary | std::ios_base::trunc;
     audio_data_file_.open(oss.str(), mode);
+  }
+
+  void append_aac_sequence_header() {
+    // Please refer to: https://wiki.multimedia.cx/index.php?title=MPEG-4_Audio#Audio_Specific_Config
+    // 
+    // 5 bits: object type
+    // if (object type == 31)
+    //     6 bits + 32: object type
+    // 4 bits: frequency index
+    // if (frequency index == 15)
+    //     24 bits: frequency
+    // 4 bits: channel configuration
+    // var bits: AOT Specific Config
+    // 
+    // 5 bits: 11111    (31)  
+    // 6 bits: 000111   (7)   object type = 32 +7 (39, ER AAC ELD)
+    // 4 bits: 0100     (4)   frequency index = 4 (44100 Hz)
+    // 4 bits: 0010     (2)   channel configuration = 2 (channels: front-left, front-right)
+    static uint8_t asc_config[] = { 0xF8, 0xE8, 0x50, 0x00 };
+    audio_data_file_.write((char *)asc_config, sizeof(asc_config));
   }
 
   void append_rtp_data(const uint8_t *p, int32_t length) {

@@ -63,13 +63,9 @@ public:
 
   const std::vector<uint8_t> &shared_secret() const;
 
-  const std::vector<uint8_t> &original_aes_key() const;
+  const std::vector<uint8_t> &client_aes_key() const;
 
-  const std::vector<uint8_t> &original_aes_iv() const;
-
-  const std::vector<uint8_t> &video_aes_key() const;
-
-  const std::vector<uint8_t> &video_aes_iv() const;
+  const std::vector<uint8_t> &client_aes_iv() const;
 
   const std::vector<uint8_t> &client_ed_public_key() const;
 
@@ -84,11 +80,8 @@ private:
   std::vector<uint8_t> fp_key_message_;
   std::vector<uint8_t> shared_secret_;
 
-  std::vector<uint8_t> original_aes_iv_;
-  std::vector<uint8_t> original_aes_key_;
-
-  std::vector<uint8_t> video_aes_iv_;
-  std::vector<uint8_t> video_aes_key_;
+  std::vector<uint8_t> client_aes_key_;
+  std::vector<uint8_t> client_aes_iv_;
 
   std::vector<uint8_t> client_ed_public_key_;
   std::vector<uint8_t> client_curve_public_key_;

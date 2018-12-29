@@ -43,8 +43,7 @@ const std::vector<uint8_t> &aps::server_key_chain::curve_private_key() const {
 }
 
 aps::ap_crypto::ap_crypto()
-    : pair_verifyed_(false), fp_key_message_(164), original_aes_key_(16),
-      original_aes_iv_(16), video_aes_key_(16), video_aes_iv_(16),
+    : pair_verifyed_(false), fp_key_message_(164), client_aes_key_(16), client_aes_iv_(16),
       client_curve_public_key_(32), client_ed_public_key_(32),
       shared_secret_(32) {}
 
@@ -153,24 +152,22 @@ void aps::ap_crypto::init_client_aes_info(const uint8_t *piv, uint64_t iv_len,
                                           const uint8_t *pkey,
                                           uint64_t key_len) {
   if (piv && iv_len) {
-    this->original_aes_iv_.assign(piv, piv + iv_len);
-    this->video_aes_iv_.assign(piv, piv + iv_len);
+    this->client_aes_iv_.assign(piv, piv + iv_len);
   }
 
   if (pkey && key_len) {
-    fp_decrypt(pkey, original_aes_key_.data());
+    fp_decrypt(pkey, client_aes_key_.data());
 
-    video_aes_key_.assign(original_aes_key_.begin(), original_aes_key_.end());
     if (pair_verifyed_) {
       sha512_context_ sha512_context;
       std::array<uint8_t, 64> sha512_hash;
       sha512_hash.fill(0);
       sha512_init(&sha512_context);
-      sha512_update(&sha512_context, (uint8_t *)video_aes_key_.data(), 16);
+      sha512_update(&sha512_context, (uint8_t *)client_aes_key_.data(), 16);
       sha512_update(&sha512_context, shared_secret_.data(), 32);
       sha512_final(&sha512_context, sha512_hash.data());
       std::copy(sha512_hash.begin(), sha512_hash.begin() + 16,
-                std::back_inserter(video_aes_key_));
+                std::back_inserter(client_aes_key_));
     }
   }
 }
@@ -188,7 +185,7 @@ void aps::ap_crypto::init_video_stream_aes_ctr(const uint64_t video_stream_id,
   sha512_hash.fill(0);
   sha512_init(&sha512_context);
   sha512_update(&sha512_context, (uint8_t *)source.c_str(), source.length());
-  sha512_update(&sha512_context, video_aes_key_.data(), video_aes_key_.size());
+  sha512_update(&sha512_context, client_aes_key_.data(), client_aes_key_.size());
   sha512_final(&sha512_context, sha512_hash.data());
   std::array<uint8_t, 16> aes_key;
   memcpy(aes_key.data(), sha512_hash.data(), 16);
@@ -199,7 +196,7 @@ void aps::ap_crypto::init_video_stream_aes_ctr(const uint64_t video_stream_id,
   sha512_hash.fill(0);
   sha512_init(&sha512_context);
   sha512_update(&sha512_context, (uint8_t *)source.c_str(), source.length());
-  sha512_update(&sha512_context, video_aes_key_.data(), video_aes_key_.size());
+  sha512_update(&sha512_context, client_aes_key_.data(), client_aes_key_.size());
   sha512_final(&sha512_context, sha512_hash.data());
   std::array<uint8_t, 16> aes_iv;
   memcpy(aes_iv.data(), sha512_hash.data(), 16);
@@ -214,8 +211,8 @@ void aps::ap_crypto::decrypt_video_frame(uint8_t *frame, uint32_t len) {
 }
 
 void aps::ap_crypto::decrypt_audio_data(uint8_t *data, uint32_t len) {
-  audio_stream_aes_cbc_.set_de_key_iv(original_aes_key_.data(),
-                                      original_aes_iv_.data());
+  audio_stream_aes_cbc_.set_de_key_iv(client_aes_key_.data(),
+                                      client_aes_iv_.data());
   audio_stream_aes_cbc_.decrypt_buffer(data, len);
 }
 
@@ -227,20 +224,12 @@ const std::vector<uint8_t> &aps::ap_crypto::shared_secret() const {
   return shared_secret_;
 }
 
-const std::vector<uint8_t> &aps::ap_crypto::original_aes_key() const {
-  return original_aes_key_;
+const std::vector<uint8_t> &aps::ap_crypto::client_aes_key() const {
+  return client_aes_key_;
 }
 
-const std::vector<uint8_t> &aps::ap_crypto::original_aes_iv() const {
-  return original_aes_iv_;
-}
-
-const std::vector<uint8_t> &aps::ap_crypto::video_aes_key() const {
-  return video_aes_key_;
-}
-
-const std::vector<uint8_t> &aps::ap_crypto::video_aes_iv() const {
-  return video_aes_iv_;
+const std::vector<uint8_t> &aps::ap_crypto::client_aes_iv() const {
+  return client_aes_iv_;
 }
 
 const std::vector<uint8_t> &aps::ap_crypto::client_ed_public_key() const {
