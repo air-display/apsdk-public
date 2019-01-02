@@ -9,4 +9,8 @@ add_executable(aps-demo
     ${SRC_FILES}
 )
 
-target_link_libraries(aps-demo PRIVATE aps)
+target_link_libraries(aps-demo PRIVATE
+  aps
+  fdk-aac
+)
+

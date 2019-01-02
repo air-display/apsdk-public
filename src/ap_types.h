@@ -38,8 +38,23 @@ typedef rtp_payload_type_e rtp_payload_type_t;
 /// </summary>
 enum audio_data_format_e {
   audio_format_pcm = 0,
+
+  /// <summary>
+  /// 96 AppleLossless
+  /// 96 352 0 16 40 10 14 2 255 0 0 44100
+  /// </summary>
   audio_format_alac = 1,
+
+  /// <summary>
+  /// 96 mpeg4-generic/44100/2
+  /// 96 mode=AAC-main; constantDuration=1024
+  /// </summary>
   audio_format_aac = 2,
+
+  /// <summary>
+  /// 96 mpeg4-generic/44100/2
+  /// 96 mode=AAC-eld; constantDuration=480
+  /// </summary>
   audio_format_aac_eld = 3
 };
 typedef audio_data_format_e audio_data_format_t;
@@ -52,8 +67,10 @@ PACKED(struct rtp_packet_header_s {
   uint8_t extension : 1;    /* header extension flag */
   uint8_t padding : 1;      /* padding flag */
   uint8_t version : 2;      /* protocol version */
+
   uint8_t payload_type : 7; /* payload type */
   uint8_t marker : 1;       /* marker bit */
+
   uint16_t sequence;        /* sequence number */
   uint32_t timestamp;       /* timestamp */
 

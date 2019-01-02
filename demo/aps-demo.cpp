@@ -9,6 +9,8 @@
 #include "../src/ap_server.h"
 #include "../src/ap_session.h"
 #include "../src/utils/logger.h"
+#include "../src/utils/packing.h"
+#include "aac_eld.h"
 
 class airplay_mirror_handler : public aps::ap_mirror_session_handler {
  public:
@@ -17,8 +19,8 @@ class airplay_mirror_handler : public aps::ap_mirror_session_handler {
     std::tm *local_now = localtime(&now);
     std::ostringstream oss;
     oss
-      << local_now->tm_year << "-"
-      << local_now->tm_mon << "-"
+      << local_now->tm_year + 1900 << "-"
+      << local_now->tm_mon + 1 << "-"
       << local_now->tm_mday << "-"
       << local_now->tm_hour << "-"
       << local_now->tm_min << "-"
@@ -76,7 +78,7 @@ class airplay_mirror_handler : public aps::ap_mirror_session_handler {
       const aps::audio_data_format_t format) override {
     LOGI() << "on_audio_stream_started: " << format;
     init_audio_data_file();
-    append_aac_sequence_header();
+    //append_aac_sequence_header();
   }
 
   virtual void on_audio_stream_data(const aps::rtp_audio_data_packet_t *p,
@@ -146,8 +148,11 @@ private:
     video_data_file_.close();
   }
 
+  aac_eld_file *aac_eld = 0;
   std::ofstream audio_data_file_;
   void init_audio_data_file() {
+    aac_eld = create_aac_eld();
+
     if (audio_data_file_.is_open()) {
       audio_data_file_.close();
     }
@@ -177,11 +182,14 @@ private:
     // 4 bits: 0100     (4)   frequency index = 4 (44100 Hz)
     // 4 bits: 0010     (2)   channel configuration = 2 (channels: front-left, front-right)
     static uint8_t asc_config[] = { 0xF8, 0xE8, 0x50, 0x00 };
-    audio_data_file_.write((char *)asc_config, sizeof(asc_config));
+    //audio_data_file_.write((char *)asc_config, sizeof(asc_config));
   }
 
   void append_rtp_data(const uint8_t *p, int32_t length) {
-    audio_data_file_.write((char *)p, length);
+    std::vector<uint8_t> output(4096);
+    int outsize = 0;
+    aac_eld_decode_frame(aac_eld, (unsigned char *)p, length, output.data(), &outsize);
+    audio_data_file_.write((char *)output.data(), outsize);
   }
 
   void close_audio_data_file() {

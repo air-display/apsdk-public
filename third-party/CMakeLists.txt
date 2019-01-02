@@ -61,3 +61,6 @@ file(GLOB_RECURSE opensslaes_SRC_FILES
 add_library(opensslaes STATIC
     ${opensslaes_SRC_FILES}
 )
+
+#################################################
+add_subdirectory(fdk-aac)

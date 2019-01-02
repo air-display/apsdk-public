@@ -145,11 +145,10 @@ void ap_audio_stream_service::audio_data_packet(rtp_audio_data_packet_t *packet,
   LOGV() << "audio DATA packet: " << length;
 
   if (handler_) {
-    uint32_t payload_length =
-        length - sizeof(rtp_packet_header_t) - sizeof(uint32_t);
-    payload_length = payload_length / 16 * 16;
-    if (payload_length) {
-      crypto_->decrypt_audio_data(packet->payload, payload_length);
+    uint32_t payload_length = length - sizeof(rtp_audio_data_packet_t);
+    uint32_t encrypted_length = payload_length / 16 * 16;
+    if (encrypted_length) {
+      crypto_->decrypt_audio_data(packet->payload, encrypted_length);
     }
     handler_->on_audio_stream_data(packet, payload_length);
   }

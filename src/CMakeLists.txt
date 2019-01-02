@@ -1,7 +1,7 @@
 project(aps)
 
 # Source files
-set(SRC_AP
+file(GLOB SRC_AP
     aps.h
     aps.cpp
     ap_server.h
@@ -9,23 +9,20 @@ set(SRC_AP
     ap_config.h
     ap_config.cpp
     ap_handler.h
-	ap_session.h
+    ap_session.h
     ap_types.h
 )
 source_group("ap" FILES ${SRC_AP})
 
-set(SRC_CRYPTO
-    crypto/ap_crypto.h
-    crypto/ap_crypto.cpp
-    crypto/ap_aes.cpp
-    crypto/ap_aes.h
+file(GLOB SRC_CRYPTO
+    crypto/*.h
+    crypto/*.cpp
 )
 source_group("crypto" FILES ${SRC_CRYPTO})
 
-set(SRC_MDNS
-    mdns/net_service.h
-    mdns/net_service.cpp
-    mdns/net_service_impl.h
+file(GLOB SRC_MDNS
+    mdns/*.h
+    mdns/*.cpp
 )
 if (WIN32)
     list(APPEND SRC_MDNS
@@ -44,47 +41,21 @@ elseif (ANDROID)
 endif()
 source_group("mdns" FILES ${SRC_MDNS})
 
-set(SRC_NETWORK
-    network/tcp_service.h
-    network/udp_service.h
-    network/xtxp_connection_base.cpp
-    network/xtxp_connection_base.h
-    network/xtxp_message.cpp
-    network/xtxp_message.h
+file(GLOB SRC_NETWORK
+    network/*.h
+    network/*.cpp
 )
 source_group("network" FILES ${SRC_NETWORK})
 
-set(SRC_SERVICE
-    service/ap_airplay_service.cpp
-    service/ap_airplay_service.h
-    service/ap_airplay_service_details.h
-    service/ap_audio_stream_service.cpp
-    service/ap_audio_stream_service.h
-    service/ap_audio_stream_service_details.h
-    service/ap_content_parser.cpp
-    service/ap_content_parser.h
-    service/ap_media_data_store.cpp
-    service/ap_media_data_store.h
-    service/ap_event_connection_manager.cpp
-    service/ap_event_connection_manager.h
-    service/ap_media_http_service.cpp
-    service/ap_media_http_service.h
-    service/ap_mirror_stream_service.cpp
-    service/ap_mirror_stream_service.h
-    service/ap_mirror_stream_service_details.h
-    service/ap_timing_sync_service.cpp
-    service/ap_timing_sync_service.h
+file(GLOB SRC_SERVICE
+    service/*.cpp
+    service/*.h
 )
 source_group("service" FILES ${SRC_SERVICE})
 
-set(SRC_UTILS
-    utils/logger.cpp
-    utils/logger.h
-    utils/packing.h
-    utils/plist.cpp
-    utils/plist.h
-    utils/utils.cpp
-    utils/utils.h
+file(GLOB SRC_UTILS
+    utils/*.h
+    utils/*.cpp
 )
 if (WIN32)
     list(APPEND SRC_UTILS
