@@ -90,7 +90,7 @@ public interface IAirPlayMirrorHandler {
    *
    * @param data The audio data.
    */
-  void on_audio_stream_data(byte[] data);
+  void on_audio_stream_data(byte[] data, long timestamp);
 
   // void on_audio_control_sync(AudioControlSync sync);
 

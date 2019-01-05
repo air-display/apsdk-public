@@ -169,12 +169,12 @@ void IAirPlayMirrorHandler::on_audio_stream_data(
     const aps::rtp_audio_data_packet_t *p, const uint32_t payload_length) {
   JNIEnv *env = getJNIEnv();
   if (env) {
-    GET_METHOD_ID(on_audio_stream_data, "([B)V");
+    GET_METHOD_ID(on_audio_stream_data, "([BJ)V");
     if (mid) {
       jbyteArray byte_array = env->NewByteArray(payload_length);
       env->SetByteArrayRegion(byte_array, 0, payload_length,
                               (jbyte *)(p->payload));
-      env->CallVoidMethod(jvm_obj_, mid, byte_array);
+      env->CallVoidMethod(jvm_obj_, mid, byte_array, p->timestamp);
       env->DeleteLocalRef(byte_array);
     } else {
       __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
