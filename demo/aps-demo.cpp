@@ -78,7 +78,6 @@ class airplay_mirror_handler : public aps::ap_mirror_session_handler {
       const aps::audio_data_format_t format) override {
     LOGI() << "on_audio_stream_started: " << format;
     init_audio_data_file();
-    //append_aac_sequence_header();
   }
 
   virtual void on_audio_stream_data(const aps::rtp_audio_data_packet_t *p,

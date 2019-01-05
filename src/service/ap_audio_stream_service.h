@@ -9,6 +9,7 @@
 #include <service/ap_audio_stream_service_details.h>
 #include <utils/packing.h>
 #include <vector>
+#include <unordered_set>
 
 using namespace aps::service::audio::details;
 
@@ -85,6 +86,8 @@ private:
   audio_udp_service data_service_;
 
   audio_udp_service control_service_;
+
+  std::unordered_set<uint16_t> sequence_set_;
 };
 
 typedef std::shared_ptr<ap_audio_stream_service> ap_audio_stream_service_ptr;

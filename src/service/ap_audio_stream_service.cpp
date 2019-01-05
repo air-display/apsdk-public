@@ -3,6 +3,8 @@
 #include <service/ap_audio_stream_service.h>
 #include <utils/logger.h>
 
+#define SEQUENCE_SET_CACH_SIZE 100
+
 using namespace aps::network;
 
 namespace aps {
@@ -131,6 +133,8 @@ void ap_audio_stream_service::data_handler(const uint8_t *buf,
     }
 
     rtp_packet_header_t *header = (rtp_packet_header_t *)buf;
+    header->sequence = ntohs(header->sequence);
+    header->timestamp = ntohl(header->timestamp);
     if (header->payload_type != rtp_audio_data) {
       LOGE() << "Invalid audio data packet: " << bytes_transferred;
       return;
@@ -142,6 +146,18 @@ void ap_audio_stream_service::data_handler(const uint8_t *buf,
 
 void ap_audio_stream_service::audio_data_packet(rtp_audio_data_packet_t *packet,
                                                 size_t length) {
+  // Remove the duplicated packet and reorder the packet
+  if (sequence_set_.find(packet->sequence) != sequence_set_.end()) {
+    return;
+  }
+  if (sequence_set_.size() >= SEQUENCE_SET_CACH_SIZE) {
+    sequence_set_.clear();
+  }
+  sequence_set_.insert(packet->sequence);
+
+  LOGV() << "RTP PACKET HEADER >>>>>>>>>>>>>>>>>>>>>>>>>>"
+    << "seq: " << packet->sequence << "\t" << "ts: " << (packet->timestamp * (uint64_t)90);
+  
   LOGV() << "audio DATA packet: " << length;
 
   if (handler_) {
@@ -183,12 +199,12 @@ void ap_audio_stream_service::control_handler(const uint8_t *buf,
 
 void ap_audio_stream_service::control_sync_packet(
     rtp_control_sync_packet_t *packet) {
-  LOGV() << "audio CONTROL SYNC packet";
+  LOGI() << "audio CONTROL SYNC packet";
 }
 
 void ap_audio_stream_service::control_retransmit_packet(
     rtp_control_retransmit_reply_packet_t *packet) {
-  LOGV() << "audio CONTROL RETRANSMIT packet";
+  LOGI() << "audio CONTROL RETRANSMIT packet";
 }
 
 void ap_audio_stream_service::on_thread_start() {
