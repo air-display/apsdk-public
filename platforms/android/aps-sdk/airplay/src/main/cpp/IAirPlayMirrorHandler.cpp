@@ -10,6 +10,14 @@
 #include "IAirPlayMirrorHandler.h"
 // clang-format on
 
+static uint64_t normalize_ntp_to_ms(uint64_t ntp) {
+  const uint32_t EPOCH = 2208988800ULL;        // January 1970, in NTP seconds.
+  const double NTP_SCALE_FRAC = 4294967296ULL; // NTP fractional unit.
+  uint64_t milliseconds = (ntp >> 32) * 1000 - EPOCH;
+  uint32_t fraction = (ntp & 0x0ffffffff) * 1000 / NTP_SCALE_FRAC;
+  return (milliseconds + fraction);
+}
+
 IAirPlayMirrorHandler::IAirPlayMirrorHandler(JNIEnv *env)
     : jni_meta_object<IAirPlayMirrorHandler, IAirPlayMirrorHandler_cls>() {
   handler_ = std::make_shared<jni_ap_mirror_handler>(this);
@@ -61,7 +69,8 @@ void IAirPlayMirrorHandler::on_mirror_stream_data(
       jbyteArray byte_array = env->NewByteArray(p->payload_size);
       env->SetByteArrayRegion(byte_array, 0, p->payload_size,
                               (jbyte *)(p->payload));
-      env->CallVoidMethod(jvm_obj_, mid, byte_array, p->timestamp);
+      uint32_t timestamp = normalize_ntp_to_ms(p->timestamp);
+      env->CallVoidMethod(jvm_obj_, mid, byte_array, timestamp);
       env->DeleteLocalRef(byte_array);
     } else {
       __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,

@@ -8,9 +8,10 @@
 
 using namespace std::chrono;
 
+const uint32_t EPOCH = 2208988800ULL;        // January 1970, in NTP seconds.
+const double NTP_SCALE_FRAC = 4294967296ULL; // NTP fractional unit.
+
 uint64_t get_ntp_timestamp() {
-  const uint32_t EPOCH = 2208988800ULL;        // January 1970, in NTP seconds.
-  const double NTP_SCALE_FRAC = 4294967296ULL; // NTP fractional unit.
   uint64_t seconds = 0;
   uint64_t fraction = 0;
 
@@ -21,6 +22,12 @@ uint64_t get_ntp_timestamp() {
   fraction = (uint64_t)((ms.count() % 1000) * NTP_SCALE_FRAC) / 1000;
 
   return (seconds << 32) | fraction;
+}
+
+uint64_t normalize_ntp_to_ms(uint64_t ntp) {
+  uint64_t milliseconds = (ntp >> 32) * 1000 - EPOCH;
+  uint32_t fraction = (ntp & 0x0ffffffff) * 1000 / NTP_SCALE_FRAC;
+  return (milliseconds + fraction);
 }
 
 const char *gmt_time_string() {

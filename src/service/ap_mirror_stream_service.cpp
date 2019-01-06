@@ -3,7 +3,7 @@
 #include <service/ap_mirror_stream_service.h>
 #include <sstream>
 #include <utils/logger.h>
-
+#include <utils/utils.h>
 
 namespace aps {
 namespace service {
@@ -63,6 +63,18 @@ void ap_mirror_stream_connection::on_packet_payload_received(
   if (!e) {
     LOGV() << "mirror stream payload received, size: " << bytes_transferred;
 
+    // Because all fields are little-endian we need to convert them to network
+    // byte order first and then convert them from network byte order to local
+    // host byte order
+    header_->payload_size = swap_bytes(header_->payload_size);
+    header_->payload_size = ntohl(header_->payload_size);
+
+    header_->payload_type = swap_bytes(header_->payload_type);
+    header_->payload_type = ntohs(header_->payload_type);
+
+    header_->timestamp = swap_bytes(header_->timestamp);
+    header_->timestamp = ntohll(header_->timestamp);
+
     process_packet();
 
     post_receive_packet_header();
@@ -84,7 +96,6 @@ void ap_mirror_stream_connection::process_packet() {
     // replace the first 4bytes with 00 00 00 01
     sms_video_data_packet_t *p = (sms_video_data_packet_t *)header_;
     crypto_->decrypt_video_frame(payload_, p->payload_size);
-
     if (handler_) {
       handler_->on_mirror_stream_data(p);
     }

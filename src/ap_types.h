@@ -72,7 +72,7 @@ PACKED(struct rtp_packet_header_s {
   uint8_t marker : 1;       /* marker bit */
 
   uint16_t sequence;        /* sequence number */
-  uint32_t timestamp;       /* timestamp */
+  uint32_t timestamp;       /* timestamp, unit is frequncey rate */
 
   rtp_packet_header_s() {
     memset(this, 0, sizeof(rtp_packet_header_s));
@@ -157,11 +157,14 @@ typedef sms_payload_type_e sms_payload_type_t;
 /// <summary>
 /// Screen Mirroring Stream(SMS) packet header.
 /// </summary>
+/// <remarks>
+/// All fields are little-endian
+/// </remarks>
 PACKED(struct sms_packet_header_s {
   uint32_t payload_size;
   uint16_t payload_type;
   uint16_t reserverd;
-  uint64_t timestamp;
+  uint64_t timestamp;   // NTP timestamp
   uint8_t padding[112];
 });
 typedef sms_packet_header_s sms_packet_header_t;

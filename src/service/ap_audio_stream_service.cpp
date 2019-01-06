@@ -156,8 +156,9 @@ void ap_audio_stream_service::audio_data_packet(rtp_audio_data_packet_t *packet,
   sequence_set_.insert(packet->sequence);
 
   LOGV() << "RTP PACKET HEADER >>>>>>>>>>>>>>>>>>>>>>>>>>"
-    << "seq: " << packet->sequence << "\t" << "ts: " << (packet->timestamp * (uint64_t)90);
-  
+         << "seq: " << packet->sequence << "\t"
+         << "ts: " << (packet->timestamp * (uint64_t)90);
+
   LOGV() << "audio DATA packet: " << length;
 
   if (handler_) {
@@ -182,6 +183,8 @@ void ap_audio_stream_service::control_handler(const uint8_t *buf,
     LOGV() << "ap_audio_stream_service::control_handler, " << bytes_transferred;
 
     rtp_packet_header_t *header = (rtp_packet_header_t *)buf;
+    header->sequence = ntohs(header->sequence);
+    header->timestamp = ntohl(header->timestamp);
     if (header->payload_type == rtp_ctrl_timing_sync &&
         bytes_transferred == sizeof(rtp_control_sync_packet_t)) {
       control_sync_packet((rtp_control_sync_packet_t *)header);

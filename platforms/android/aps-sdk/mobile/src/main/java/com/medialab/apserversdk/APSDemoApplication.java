@@ -298,8 +298,8 @@ public class APSDemoApplication extends Application implements Application.Activ
       }
 
       @Override
-      public void on_audio_stream_data(byte[] data) {
-        Log.v(TAG, "on_audio_stream_data: ");
+      public void on_audio_stream_data(byte[] data, long timestamp) {
+        Log.v(TAG, "on_audio_stream_data: " + data.length + ", timestamp: " + timestamp);
       }
 
       @Override
