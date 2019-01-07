@@ -3,7 +3,7 @@
 #include <service/ap_audio_stream_service.h>
 #include <utils/logger.h>
 
-#define SEQUENCE_SET_CACH_SIZE 100
+#define MAX_CACHED_PACKET_SIZE 10
 
 using namespace aps::network;
 
@@ -74,7 +74,7 @@ void audio_udp_service::handle_socket_error(const asio::error_code &e) {
 ap_audio_stream_service::ap_audio_stream_service(
     aps::ap_crypto_ptr &crypto, aps::ap_mirror_session_handler_ptr &handler)
     : handler_(handler), crypto_(crypto), data_service_("audio_data_service"),
-      control_service_("audio_control_service") {
+      control_service_("audio_control_service"), expected_seq_(0) {
   data_service_.bind_recv_handler(std::bind(
       &ap_audio_stream_service::data_handler, this, std::placeholders::_1,
       std::placeholders::_2, std::placeholders::_3));
@@ -140,26 +140,44 @@ void ap_audio_stream_service::data_handler(const uint8_t *buf,
       return;
     }
 
-    audio_data_packet((rtp_audio_data_packet_t *)header, bytes_transferred);
+    if (expected_seq_ == 0) {
+      expected_seq_ = header->sequence;
+    }
+
+    // If the new packet is next expected one just process it
+    if (header->sequence == expected_seq_) {
+      audio_data_packet((rtp_audio_data_packet_t *)header, bytes_transferred);
+      expected_seq_ = header->sequence + 1;
+      // Check the cached buffer
+      process_cached_packet();
+      return;
+    }
+
+    // This packet is not the one we are waiting for 
+    if (header->sequence > expected_seq_) {
+      if (cached_queue_.size() < MAX_CACHED_PACKET_SIZE) {
+        LOGI() << "CACHE RTP PACKET +++++++++++++++++++++++"
+          << "seq: " << header->sequence << ", expected:" << expected_seq_;
+        // Cache this packet
+        cache_packet(header->sequence, buf, bytes_transferred);
+      }
+      else {
+        LOGI() << "FLUSH RTP PACKET ***********************"
+          << "seq: " << header->sequence << ", expected:" << expected_seq_;
+        // have been waiting for too long time, flush
+        process_cached_packet(true);
+      }
+      return;
+    }
+
+    LOGV() << "ABANDON-RTP-PACKET xxxxxxxxxxxxxxxxxxxxxxx"
+      << "seq: " << header->sequence << ", expected:" << expected_seq_;
   }
 }
 
 void ap_audio_stream_service::audio_data_packet(rtp_audio_data_packet_t *packet,
                                                 size_t length) {
-  // Remove the duplicated packet and reorder the packet
-  if (sequence_set_.find(packet->sequence) != sequence_set_.end()) {
-    return;
-  }
-  if (sequence_set_.size() >= SEQUENCE_SET_CACH_SIZE) {
-    sequence_set_.clear();
-  }
-  sequence_set_.insert(packet->sequence);
-
-  LOGV() << "RTP PACKET HEADER >>>>>>>>>>>>>>>>>>>>>>>>>>"
-         << "seq: " << packet->sequence << "\t"
-         << "ts: " << (packet->timestamp * (uint64_t)90);
-
-  LOGV() << "audio DATA packet: " << length;
+  LOGV() << "VALID RTP PACKET: " << length << ", sequence: " << packet->sequence;
 
   if (handler_) {
     uint32_t payload_length = length - sizeof(rtp_audio_data_packet_t);
@@ -219,6 +237,28 @@ void ap_audio_stream_service::on_thread_start() {
 void ap_audio_stream_service::on_thread_stop() {
   if (handler_) {
     handler_->on_thread_stop();
+  }
+}
+
+void ap_audio_stream_service::cache_packet(const uint16_t seq, const uint8_t *buf, std::size_t length) {
+  cached_packet_ptr pk = std::make_shared<cached_packet_t>();
+  pk->sequence = seq;
+  pk->data.assign(buf, buf + length);
+  cached_queue_.push(pk);
+}
+
+void ap_audio_stream_service::process_cached_packet(bool flush/* = false*/) {
+  while (!cached_queue_.empty()) {
+    auto p = cached_queue_.top();
+    if (flush || p->sequence == expected_seq_) {
+      cached_queue_.pop();
+      rtp_audio_data_packet_t *header = (rtp_audio_data_packet_t *)p->data.data();
+      audio_data_packet(header, p->data.size());
+      expected_seq_ = p->sequence + 1;
+    }
+    else {
+      break;
+    }
   }
 }
 
