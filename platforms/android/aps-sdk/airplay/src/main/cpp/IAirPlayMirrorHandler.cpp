@@ -71,6 +71,8 @@ void IAirPlayMirrorHandler::on_mirror_stream_data(
                               (jbyte *)(p->payload));
       uint32_t timestamp = normalize_ntp_to_ms(p->timestamp);
       // convert the value
+      __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG,
+                          "================================== Mirror stream data packet timestamp: %d", timestamp);
       env->CallVoidMethod(jvm_obj_, mid, byte_array, timestamp);
       env->DeleteLocalRef(byte_array);
     } else {
@@ -184,6 +186,8 @@ void IAirPlayMirrorHandler::on_audio_stream_data(
       jbyteArray byte_array = env->NewByteArray(payload_length);
       env->SetByteArrayRegion(byte_array, 0, payload_length,
                               (jbyte *)(p->payload));
+      __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG,
+                          "================================== Audio stream data packet timestamp: %d", p->timestamp);
       env->CallVoidMethod(jvm_obj_, mid, byte_array, p->timestamp);
       env->DeleteLocalRef(byte_array);
     } else {
