@@ -72,7 +72,7 @@ PACKED(struct rtp_packet_header_s {
   uint8_t marker : 1;       /* marker bit */
 
   uint16_t sequence;        /* sequence number */
-  uint32_t timestamp;       /* timestamp, unit is frequncey rate */
+  uint32_t timestamp;       /* timestamp, unit is frequency rate */
 
   rtp_packet_header_s() {
     memset(this, 0, sizeof(rtp_packet_header_s));
