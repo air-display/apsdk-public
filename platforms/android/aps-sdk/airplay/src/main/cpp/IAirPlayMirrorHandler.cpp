@@ -70,6 +70,7 @@ void IAirPlayMirrorHandler::on_mirror_stream_data(
       env->SetByteArrayRegion(byte_array, 0, p->payload_size,
                               (jbyte *)(p->payload));
       uint32_t timestamp = normalize_ntp_to_ms(p->timestamp);
+      // convert the value
       env->CallVoidMethod(jvm_obj_, mid, byte_array, timestamp);
       env->DeleteLocalRef(byte_array);
     } else {
