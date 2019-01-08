@@ -199,8 +199,8 @@ private:
 
 class airplay_video_handler : public aps::ap_video_session_handler {
 public:
-  long session_;
-  airplay_video_handler(long sid) : session_(sid){};
+  uint64_t session_;
+  airplay_video_handler(uint64_t sid) : session_(sid){};
   ~airplay_video_handler(){};
 
   virtual void on_video_play(const uint64_t session_id,

@@ -43,7 +43,8 @@ void IAirPlayHandler::on_session_end(const uint64_t session_id) {
   if (env) {
     GET_METHOD_ID(on_session_end, "(J)V");
     if (mid) {
-      env->CallVoidMethod(jvm_obj_, mid, session_id);
+      jlong sid = static_cast<jlong>(session_id);
+      env->CallVoidMethod(jvm_obj_, mid, sid);
     } else {
       __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
                           "Failed to get method id of on_mirror_session_end");
