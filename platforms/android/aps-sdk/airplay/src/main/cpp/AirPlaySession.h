@@ -23,7 +23,7 @@ public:
 
   void set_ap_session(const ap_session_ptr &p);
 
-  long get_session_id();
+  uint64_t get_session_id();
 
   int get_session_type();
 

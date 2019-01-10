@@ -71,7 +71,7 @@ void AirPlaySession::set_ap_session(
   session_ = p;
 }
 
-long AirPlaySession::get_session_id() {
+uint64_t AirPlaySession::get_session_id() {
   auto p = session_.lock();
   if (p) {
     return p->get_session_id();

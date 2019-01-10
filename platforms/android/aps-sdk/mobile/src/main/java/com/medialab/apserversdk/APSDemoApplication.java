@@ -200,19 +200,19 @@ public class APSDemoApplication extends Application implements Application.Activ
         }
         @Override
         public void on_session_end(long session_id) {
-          Log.i(TAG, String.format("----------------------session end: %d", session_id));
+          Log.i(TAG, "----------------------session end: " + session_id);
           removeSession(session_id);
         }
 
         public void on_mirror_session_begin(AirPlaySession session) {
           long sid = session.getSessionId();
-          Log.i(TAG, String.format("++++++++++++++++++++++mirror stream begins: %d", sid));
+          Log.i(TAG, "++++++++++++++++++++++mirror stream begins: " + sid);
           createNewMirrorSession(session);
         }
 
         public void on_video_session_begin(AirPlaySession session) {
           long sid = session.getSessionId();
-          Log.i(TAG, String.format("#######################video stream begins: %d", sid));
+          Log.i(TAG, "#######################video stream begins: " + sid);
           createNewVideoSession(session);
         }
       };
