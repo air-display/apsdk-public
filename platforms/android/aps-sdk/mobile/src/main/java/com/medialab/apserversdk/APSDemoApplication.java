@@ -240,9 +240,18 @@ public class APSDemoApplication extends Application implements Application.Activ
 
       @Override
       public void on_mirror_stream_data(byte[] data, long timestamp) {
-        Log.v(TAG, String.format("on_mirror_stream_data: length %d, timestamp %d", data.length, timestamp));
-
-
+        int frame_size = ((int)data[0])<< 24;
+        frame_size += ((int)data[1]) << 16;
+        frame_size += ((int)data[2]) << 8;
+        frame_size += (int)data[3];
+        //Log.v(TAG, "on_mirror_stream_data: length " + data.length + ", frame size: " + frame_size + ", timestamp " + timestamp);
+        Log.v(TAG, String.format("P========:%02x, %02x, %02x, %02x ========= frame size %d",
+            data[0],
+            data[1],
+            data[2],
+            data[3],
+            frame_size
+        ));
       }
 
       @Override

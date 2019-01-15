@@ -30,7 +30,7 @@ public class AirPlayConfig {
     instance.setPk(
         "99FD4299889422515FBD27949E4E1E21B2AF50A454499E3D4BE75A4E0F55FE63");
     instance.setVv(2);
-    instance.setFeatures(0x5A7FDFD1);
+    instance.setFeatures(0x527FFFF7);
     instance.setStatusFlag(68);
     instance.display.setWidth(1920);
     instance.display.setHeight(1080);

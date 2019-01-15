@@ -6,7 +6,11 @@
 #include <sstream>
 #include <string>
 
+#if !defined(NDEBUG) // Debug
+#define DEFAULT_LOG_LEVEL LL_DEBUG
+#else // Release
 #define DEFAULT_LOG_LEVEL LL_INFO
+#endif
 
 typedef enum log_level_e {
   LL_UNKNOWN = 0,
