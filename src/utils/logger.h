@@ -6,10 +6,10 @@
 #include <sstream>
 #include <string>
 
-#if !defined(NDEBUG) // Debug
-#define DEFAULT_LOG_LEVEL LL_DEBUG
-#else // Release
+#ifdef NDEBUG // Release
 #define DEFAULT_LOG_LEVEL LL_INFO
+#else // Debug
+#define DEFAULT_LOG_LEVEL LL_DEBUG
 #endif
 
 typedef enum log_level_e {

@@ -156,13 +156,13 @@ void ap_audio_stream_service::data_handler(const uint8_t *buf,
     // This packet is not the one we are waiting for 
     if (header->sequence > expected_seq_) {
       if (cached_queue_.size() < MAX_CACHED_PACKET_SIZE) {
-        LOGI() << "CACHE RTP PACKET +++++++++++++++++++++++"
+        LOGD() << "CACHE RTP PACKET +++++++++++++++++++++++"
           << "seq: " << header->sequence << ", expected:" << expected_seq_;
         // Cache this packet
         cache_packet(header->sequence, buf, bytes_transferred);
       }
       else {
-        LOGI() << "FLUSH RTP PACKET ***********************"
+        LOGD() << "FLUSH RTP PACKET ***********************"
           << "seq: " << header->sequence << ", expected:" << expected_seq_;
         // have been waiting for too long time, flush
         process_cached_packet(true);
