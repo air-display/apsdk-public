@@ -8,7 +8,7 @@ namespace service {
 namespace mirror {
 namespace details {
 
-#define SMS_BUFFER_SIZE 1024 * 1024 * 16
+#define SMS_BUFFER_SIZE 4 * 1024 * 1024
 
 } // namespace details
 } // namespace mirror
