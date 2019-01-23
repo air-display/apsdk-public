@@ -25,13 +25,18 @@ typedef enum log_level_e {
 } log_level;
 
 typedef struct log_config_s {
+  bool headers;
+  log_level level;
+
+  log_config_s() {
 #if defined(ANDROID)
-  bool headers = false;
-  log_level level = LL_DEFAULT;
+    headers = false;
+    level = LL_DEFAULT;
 #else
-  bool headers = true;
-  log_level level = DEFAULT_LOG_LEVEL;
+    headers = true;
+    level = DEFAULT_LOG_LEVEL;
 #endif
+  }
 } log_config;
 
 class logger {
