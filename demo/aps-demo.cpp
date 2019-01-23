@@ -40,14 +40,10 @@ public:
 
   virtual void
   on_mirror_stream_data(const aps::sms_video_data_packet_t *p) override {
-    //uint32_t frame_size = 0;
-    //frame_size |= p->payload[0] << 24;
-    //frame_size |= p->payload[1] << 16;
-    //frame_size |= p->payload[2] << 8;
-    //frame_size |= p->payload[3];
-    //LOGI() << "on_mirror_stream_data payload_size: " << p->payload_size
-    //  << ", frame size: " << frame_size
-    //  << ", timestamp: " << normalize_ntp_to_ms(p->timestamp);
+    uint32_t frame_size = 0;
+    LOGV() << "on_mirror_stream_data payload_size: " << p->payload_size
+      << ", frame size: " << frame_size
+      << ", timestamp: " << normalize_ntp_to_ms(p->timestamp);
     append_nalu_data(p);
   }
 
@@ -291,10 +287,11 @@ airplay_handler::airplay_handler() {}
 airplay_handler::~airplay_handler() {}
 
 int main() {
-  logger::init_logger(false, log_level::LL_DEBUG);
+  logger::init_logger(false, log_level::LL_INFO);
   aps::ap_server_ptr server = std::make_shared<aps::ap_server>();
   aps::ap_handler_ptr handler = std::make_shared<airplay_handler>();
   aps::ap_config_ptr config = aps::ap_config::default_instance();
+  //config->features(0x527FF18D);  //0x527FFFF7
   config->macAddress("AA:BB:CC:DD:EE:FF");
   config->name("APS[" + config->macAddress() + "]");
   server->set_config(config);

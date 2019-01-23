@@ -103,8 +103,8 @@ void aac_eld_decode_frame(aac_eld_file *aac_eld, unsigned char *inbuffer,
   ret = aacDecoder_DecodeFrame(aac_eld->phandle, (INT_PCM *)outbuffer, pcm_pkt_size,
                                aac_eld->fdk_flags);
   if (ret != AAC_DEC_OK) {
-    fprintf(stderr, "aacDecoder_DecodeFrame : 0x%x -- inputsize: %d\n", ret,
-            inputsize);
+    //fprintf(stderr, "aacDecoder_DecodeFrame : 0x%x -- inputsize: %d\n", ret,
+    //        inputsize);
     *outputsize = 0;
     return;
   }
@@ -112,5 +112,5 @@ void aac_eld_decode_frame(aac_eld_file *aac_eld, unsigned char *inbuffer,
   *outputsize = pcm_pkt_size;
 
   /* TOCHECK: need to check and handle inputsize != valid_size ? */
-  fprintf(stderr, "pcm output %d -- inputsize: %d\n", *outputsize, inputsize);
+  //fprintf(stderr, "pcm output %d -- inputsize: %d\n", *outputsize, inputsize);
 }

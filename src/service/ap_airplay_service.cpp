@@ -290,14 +290,14 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
 
         crypto_->init_video_stream_aes_ctr(connection_id, agent_version_);
 
+        if (mirror_session_handler_) {
+          mirror_session_handler_->on_mirror_stream_started();
+        }
+
         if (!mirror_stream_service_) {
           mirror_stream_service_ =
               std::make_shared<ap_mirror_stream_service>(crypto_, 0, mirror_session_handler_);
           mirror_stream_service_->start();
-        }
-
-        if (mirror_session_handler_) {
-          mirror_session_handler_->on_mirror_stream_started();
         }
 
         uint16_t listen_port = 0;
