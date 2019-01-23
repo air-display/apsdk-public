@@ -255,6 +255,12 @@ public class APSDemoApplication extends Application implements Application.Activ
       }
 
       @Override
+      public void on_mirror_stream_heartbeat() {
+        Log.i(TAG, "on_mirror_stream_heartbeat: ");
+
+      }
+
+      @Override
       public void on_mirror_stream_stopped() {
         Log.i(TAG, "on_mirror_stream_stopped: ");
         try {

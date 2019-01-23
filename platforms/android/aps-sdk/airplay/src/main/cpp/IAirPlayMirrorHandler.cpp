@@ -80,6 +80,19 @@ void IAirPlayMirrorHandler::on_mirror_stream_data(
   }
 }
 
+void IAirPlayMirrorHandler::on_mirror_stream_heartbeat() {
+  JNIEnv *env = getJNIEnv();
+  if (env) {
+    GET_METHOD_ID(on_mirror_stream_heartbeat, "()V");
+    if (mid) {
+      env->CallVoidMethod(jvm_obj_, mid);
+    } else {
+      __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
+                          "Failed to get method id of on_mirror_stream_heartbeat");
+    }
+  }
+}
+
 void IAirPlayMirrorHandler::on_mirror_stream_stopped() {
   JNIEnv *env = getJNIEnv();
   if (env) {

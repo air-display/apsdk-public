@@ -61,6 +61,14 @@ class ap_mirror_session_handler {
   /// </remarks>
   virtual void on_mirror_stream_data(const aps::sms_video_data_packet_t *p) = 0;
 
+  /// <summary>
+  ///
+  /// </summary>
+  /// <remarks>
+  /// THREAD_VIDEO_STREAM
+  /// </remarks>
+  virtual void on_mirror_stream_heartbeat() = 0;
+
   // Audio
   /// <summary>
   ///

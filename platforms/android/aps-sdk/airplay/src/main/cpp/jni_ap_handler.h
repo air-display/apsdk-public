@@ -50,6 +50,9 @@ public:
   virtual void
   on_mirror_stream_data(const aps::sms_video_data_packet_t *p) override;
 
+  virtual void
+  on_mirror_stream_heartbeat() override;
+
   virtual void on_mirror_stream_stopped() override;
 
   virtual void on_audio_set_volume(const float ratio,

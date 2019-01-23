@@ -28,6 +28,8 @@ public:
 
   void on_mirror_stream_data(const aps::sms_video_data_packet_t *p);
 
+  void on_mirror_stream_heartbeat();
+
   void on_mirror_stream_stopped();
 
   void on_audio_set_volume(const float ratio, const float volume);

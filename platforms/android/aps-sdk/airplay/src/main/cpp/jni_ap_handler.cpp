@@ -78,9 +78,15 @@ void jni_ap_mirror_handler::on_mirror_stream_codec(
 
 void jni_ap_mirror_handler::on_mirror_stream_data(
     const aps::sms_video_data_packet_t *p) {
-  __android_log_write(ANDROID_LOG_VERBOSE, LOG_TAG, "on_mirror_stream_data");
+  //__android_log_write(ANDROID_LOG_VERBOSE, LOG_TAG, "on_mirror_stream_data");
   if (proxy)
     proxy->on_mirror_stream_data(p);
+}
+
+void jni_ap_mirror_handler::on_mirror_stream_heartbeat() {
+  //__android_log_write(ANDROID_LOG_VERBOSE, LOG_TAG, "on_mirror_stream_heartbeat");
+  if (proxy)
+    proxy->on_mirror_stream_heartbeat();
 }
 
 void jni_ap_mirror_handler::on_mirror_stream_stopped() {
@@ -129,7 +135,7 @@ void jni_ap_mirror_handler::on_audio_stream_started(
 
 void jni_ap_mirror_handler::on_audio_stream_data(
     const aps::rtp_audio_data_packet_t *p, const uint32_t payload_length) {
-  __android_log_write(ANDROID_LOG_VERBOSE, LOG_TAG, "on_audio_stream_data");
+  //__android_log_write(ANDROID_LOG_VERBOSE, LOG_TAG, "on_audio_stream_data");
   if (proxy)
     proxy->on_audio_stream_data(p, payload_length);
 }

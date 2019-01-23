@@ -40,6 +40,12 @@ public interface IAirPlayMirrorHandler {
   void on_mirror_stream_data(byte[] data, long timestamp);
 
   /**
+   * Gets called when the mirroring video heartbeat is coming.
+   *
+   */
+  void on_mirror_stream_heartbeat();
+
+  /**
    * Gets called when the mirroring session stopped.
    */
   void on_mirror_stream_stopped();

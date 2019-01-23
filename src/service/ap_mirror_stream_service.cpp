@@ -103,6 +103,9 @@ void ap_mirror_stream_connection::process_packet() {
   } else if (sms_payload_5 == header_->payload_type) {
     // Process the 5 packet
     LOGV() << "mirror 5 packet: " << header_->payload_size;
+    if (handler_) {
+      handler_->on_mirror_stream_heartbeat();
+    }
   } else {
     // Unknown packet
     LOGE() << "Unknown payload type: " << header_->payload_type;
