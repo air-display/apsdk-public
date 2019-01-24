@@ -91,6 +91,11 @@ public:
     LOGI() << "on_audio_stream_stopped";
   }
 
+
+  virtual void on_mirror_stream_heartbeat() override {
+    LOGI() << "on_mirror_stream_heartbeat";
+  }
+
 private:
   std::string file_id_;
 
