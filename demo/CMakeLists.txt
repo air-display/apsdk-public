@@ -11,6 +11,6 @@ add_executable(aps-demo
 
 target_link_libraries(aps-demo PRIVATE
   aps
-  fdk-aac
+  audiodec
 )
 

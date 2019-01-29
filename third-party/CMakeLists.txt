@@ -64,3 +64,13 @@ add_library(opensslaes STATIC
 
 #################################################
 add_subdirectory(fdk-aac)
+
+#################################################
+file(GLOB_RECURSE audiodec_SRC_FILES
+    "./audiodec/*.cpp"
+    "./audiodec/*.h"
+)
+add_library(audiodec STATIC
+    ${audiodec_SRC_FILES}
+)
+target_link_libraries(audiodec PRIVATE fdk-aac)

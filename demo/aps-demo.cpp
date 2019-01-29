@@ -5,10 +5,12 @@
 #include "../src/ap_config.h"
 #include "../src/ap_server.h"
 #include "../src/ap_session.h"
+#include "../src/ap_types.h"
 #include "../src/utils/logger.h"
 #include "../src/utils/packing.h"
 #include "../src/utils/utils.h"
-#include "aac_eld.h"
+#include "audiodec/aac_eld.h"
+#include "audiodec/alac.h"
 #include <asio.hpp>
 #include <fstream>
 #include <strstream>
@@ -77,6 +79,7 @@ public:
   virtual void
   on_audio_stream_started(const aps::audio_data_format_t format) override {
     LOGI() << "on_audio_stream_started: " << format;
+    this->format = format;
     init_audio_data_file();
   }
 
@@ -152,55 +155,59 @@ private:
 
   void close_video_data_file() { video_data_file_.close(); }
 
-  aac_eld_file *aac_eld = 0;
+
+  aps::audio_data_format_t format;
+  aps::alac_context alac_ctx = 0;
+  aps::aaceld_context aaceld_ctx = 0;
   std::ofstream audio_data_file_;
   void init_audio_data_file() {
-    aac_eld = create_aac_eld();
+    std::ostringstream oss;
+
+    if (format == aps::audio_format_alac) {
+      alac_ctx = aps::create_alac_decoder();
+      oss << file_id_ << "-audio"
+        << ".alac.pcm";
+    }
+    else if (format == aps::audio_format_aac_eld) {
+      aaceld_ctx = aps::create_aaceld_decoder();
+      oss << file_id_ << "-audio"
+        << ".aac-eld.pcm";
+    }
 
     if (audio_data_file_.is_open()) {
       audio_data_file_.close();
     }
-
-    std::ostringstream oss;
-    oss << file_id_ << "-audio"
-        << ".dat";
 
     auto mode =
         std::ios_base::binary | std::ios_base::binary | std::ios_base::trunc;
     audio_data_file_.open(oss.str(), mode);
   }
 
-  void append_aac_sequence_header() {
-    // Please refer to:
-    // https://wiki.multimedia.cx/index.php?title=MPEG-4_Audio#Audio_Specific_Config
-    //
-    // 5 bits: object type
-    // if (object type == 31)
-    //     6 bits + 32: object type
-    // 4 bits: frequency index
-    // if (frequency index == 15)
-    //     24 bits: frequency
-    // 4 bits: channel configuration
-    // var bits: AOT Specific Config
-    //
-    // 5 bits: 11111    (31)
-    // 6 bits: 000111   (7)   object type = 32 +7 (39, ER AAC ELD)
-    // 4 bits: 0100     (4)   frequency index = 4 (44100 Hz)
-    // 4 bits: 0010     (2)   channel configuration = 2 (channels: front-left,
-    // front-right)
-    static uint8_t asc_config[] = {0xF8, 0xE8, 0x50, 0x00};
-    // audio_data_file_.write((char *)asc_config, sizeof(asc_config));
-  }
-
   void append_rtp_data(const uint8_t *p, int32_t length) {
     std::vector<uint8_t> output(4096);
     int outsize = 0;
-    aac_eld_decode_frame(aac_eld, (unsigned char *)p, length, output.data(),
-                         &outsize);
+    
+    if (format == aps::audio_format_alac) {
+      aps::alac_decode_frame(alac_ctx, (unsigned char *)p, output.data(), &outsize);
+    }
+    else if (format == aps::audio_format_aac_eld) {
+      aps::aaceld_decode_frame(aaceld_ctx, (unsigned char *)p, length, output.data(),
+        &outsize);
+    }
+
     audio_data_file_.write((char *)output.data(), outsize);
   }
 
-  void close_audio_data_file() { audio_data_file_.close(); }
+  void close_audio_data_file() { 
+    audio_data_file_.close();
+    if (alac_ctx) {
+      aps::destory_alac_decoder(alac_ctx);
+    }
+
+    if (aaceld_ctx) {
+      aps::destroy_aaceld_decoder(aaceld_ctx);
+    }
+  }
 };
 
 class airplay_video_handler : public aps::ap_video_session_handler {
