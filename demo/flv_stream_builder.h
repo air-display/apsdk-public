@@ -38,7 +38,7 @@ public:
 
   void header_block(std::vector<uint8_t> &buf, bool has_audio, bool has_video);
 
-  void meta_block(std::vector<uint8_t> &buf, );
+  void meta_block(std::vector<uint8_t> &buf);
 
   void audio_block(std::vector<uint8_t> &buf, uint32_t timestamp,
                         const uint8_t *data, uint32_t length);

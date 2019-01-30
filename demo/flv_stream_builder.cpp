@@ -58,8 +58,8 @@ enum audio_data_sound_type {
 };
 
 enum aac_audio_data_packet_type {
-  SequenceHeader = 0,
-  Raw = 1,
+  AacSequenceHeader = 0,
+  AacRaw = 1,
 };
 
 enum video_data_frame_type {
@@ -81,9 +81,9 @@ enum video_data_codec_id {
 };
 
 enum avc_video_packet_type {
-  SequenceHeader = 0,
-  NALU = 1,
-  SequenceHeaderEOF = 2,
+  AvcSequenceHeader = 0,
+  AvcNALU = 1,
+  AvcSequenceHeaderEOF = 2,
 };
 
 flv::flv_stream_builder::flv_stream_builder() {}
