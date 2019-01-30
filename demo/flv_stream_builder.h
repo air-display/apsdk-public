@@ -11,13 +11,25 @@ struct tag_header_s {};
 struct tag_s {};
 
 enum tag_type_e {
-  kAudio = 0x08,
-  kVideo = 0x09,
-  kScript = 0x12,
+  Unknown = 0,
+  Audio = 0x08,
+  Video = 0x09,
+  Script = 0x12,
 
-  kFORCE_UIN8 = (uint8_t)0xff
+  FORCE_UINT8 = (uint8_t)0xff
 };
 typedef tag_type_e tag_type_t;
+
+class flv_meta_data {
+public:
+  static flv_meta_data &create();
+
+protected:
+  flv_meta_data();
+  ~flv_meta_data();
+private:
+
+};
 
 class flv_stream_builder {
 public:
@@ -26,7 +38,7 @@ public:
 
   void header_block(std::vector<uint8_t> &buf, bool has_audio, bool has_video);
 
-  void meta_block(std::vector<uint8_t> &buf);
+  void meta_block(std::vector<uint8_t> &buf, );
 
   void audio_block(std::vector<uint8_t> &buf, uint32_t timestamp,
                         const uint8_t *data, uint32_t length);
