@@ -6,22 +6,8 @@ static const uint8_t VIDEO_HEADER_SIZE = 5;
 static const uint8_t VIDEO_SPECIFIC_CONFIG_EXTENDED_SIZE = 11;
 static const uint8_t AUDIO_HEADER_SIZE = 2;
 static const uint8_t AUDIO_SPECIFIC_CONFIG_SIZE = 2;
-
-enum meta_value_type_e {
-  NumberType = 0,
-  BooleanType = 1,
-  StringType = 2,
-  ObjectType = 3,
-  MovieClipType = 4,
-  NullType = 5,
-  UndefinedType = 6,
-  ReferenceType = 7,
-  ECMAArrayType = 8,
-  StrictArrayType = 10,
-  DateType = 11,
-  LongStringType = 12,
-};
-typedef meta_value_type_e meta_value_type_t;
+static const char *ON_META_DATA = "onMetaData";
+static const uint8_t ON_META_DATA_LENGTH = 0x0a;
 
 enum audio_data_sound_format {
   LPCM_PE = 0,
@@ -86,49 +72,27 @@ enum avc_video_packet_type {
   AvcSequenceHeaderEOF = 2,
 };
 
+using namespace flv::amf;
+
 flv::flv_stream_builder::flv_stream_builder() {}
 
 flv::flv_stream_builder::~flv_stream_builder() {}
 
-void flv::flv_stream_builder::header_block(std::vector<uint8_t> &buf,
-                                           bool has_audio, bool has_video) {
-  init_stream_header(buf, has_audio, has_video);
-  buf.push_back(0);
-  buf.push_back(0);
-  buf.push_back(0);
-  buf.push_back(0);
-}
-
-void flv::flv_stream_builder::audio_block(std::vector<uint8_t> &buf,
-                                               uint32_t timestamp,
-                                               const uint8_t *data,
-                                               uint32_t length) {
-  append_audio_tag(buf, timestamp, data, length);
-  append_tag_size(buf);
-}
-
-void flv::flv_stream_builder::video_block(std::vector<uint8_t> &buf,
-                                               uint32_t timestamp,
-                                               const uint8_t *data,
-                                               uint32_t length) {
-  append_video_tag(buf, timestamp, data, length);
-  append_tag_size(buf);
-}
-
 void flv::flv_stream_builder::init_stream_header(std::vector<uint8_t> &buf,
                                                  bool has_audio,
                                                  bool has_video) {
+  buf.clear();
+  buf.resize(9 + 4, 0);
+
   uint8_t flags = 0;
   has_audio_ = has_audio;
   if (has_audio_) {
-    flags |= 0x40;
+    flags |= 0x04;
   }
   has_video_ = has_video;
   if (has_video_) {
-    flags |= 0x10;
+    flags |= 0x01;
   }
-  buf.clear();
-  buf.resize(9);
 
   // Signature
   buf[0] = 'F';
@@ -146,13 +110,19 @@ void flv::flv_stream_builder::init_stream_header(std::vector<uint8_t> &buf,
   buf[6] = 0;
   buf[7] = 0;
   buf[8] = FLV_HEADER_SIZE;
+
+  buf[9] = 0;
+  buf[10] = 0;
+  buf[11] = 0;
+  buf[12] = 0;
 }
 
-void flv::flv_stream_builder::append_audio_tag(std::vector<uint8_t> &buf,
-                                               uint32_t timestamp,
-                                               const uint8_t *data,
-                                               uint32_t length) {
-  append_tag(buf, Audio, timestamp, 0, data, length);
+void flv::flv_stream_builder::append_meta_tag(std::vector<uint8_t> &buf,
+                                              amf::amf_value_ref meta) {
+  std::vector<uint8_t> meta_data;
+  amf_string::create(ON_META_DATA)->serialize(meta_data);
+  meta->serialize(meta_data);
+  append_tag(buf, Script, 0, 0, meta_data.data(), meta_data.size());
 }
 
 void flv::flv_stream_builder::append_video_tag(std::vector<uint8_t> &buf,
@@ -162,29 +132,53 @@ void flv::flv_stream_builder::append_video_tag(std::vector<uint8_t> &buf,
   append_tag(buf, Video, timestamp, 0, data, length);
 }
 
+void flv::flv_stream_builder::append_audio_tag(std::vector<uint8_t> &buf,
+                                               uint32_t timestamp,
+                                               const uint8_t *data,
+                                               uint32_t length) {
+  append_tag(buf, Audio, timestamp, 0, data, length);
+}
+
 void flv::flv_stream_builder::append_tag(std::vector<uint8_t> &buf,
                                          tag_type_t type, uint32_t timestamp,
                                          uint32_t strem_id, const uint8_t *data,
                                          uint32_t length) {
-  buf.clear();
-  buf.resize(FLV_TAG_HEADER_SIZE + length);
+  int32_t original_size = buf.size();
+  buf.reserve(buf.size() + FLV_TAG_HEADER_SIZE + length);
 
   // Header.Type
-  buf[0] = type;
+  buf.emplace_back(type);
 
   // Header.DataSize
+  buf.emplace_back((length & 0x00ff0000) >> 16);
+  buf.emplace_back((length & 0x0000ff00) >> 8);
+  buf.emplace_back((length & 0x000000ff));
 
   // Header.Timestamp
+  buf.emplace_back((timestamp & 0x00ff0000) >> 16);
+  buf.emplace_back((timestamp & 0x0000ff00) >> 8);
+  buf.emplace_back((timestamp & 0x000000ff));
 
-  // Header.StreamID
+  // Header.TimestampExtended
+  buf.emplace_back((timestamp & 0xff000000) >> 24);
+
+  // Header.StreamID (actually this is always 0 according to the specification)
+  buf.emplace_back((strem_id & 0x00ff0000) >> 16);
+  buf.emplace_back((strem_id & 0x0000ff00) >> 8);
+  buf.emplace_back((strem_id & 0x000000ff));
 
   // Data
+  std::copy(data, data + length, std::back_inserter(buf));
+
+  uint32_t tag_size = buf.size() - original_size;
+  append_tag_size(buf, tag_size);
 }
 
-void flv::flv_stream_builder::append_tag_size(std::vector<uint8_t> &buf) {
-  uint32_t size = buf.size();
-  buf.push_back(size >> 24);
-  buf.push_back((size & 0x00ff0000) >> 16);
-  buf.push_back((size & 0x0000ff00) >> 8);
-  buf.push_back(size & 0x000000ff);
+void flv::flv_stream_builder::append_tag_size(std::vector<uint8_t> &buf,
+                                              uint32_t length) {
+  buf.reserve(buf.size() + 4);
+  buf.emplace_back((length & 0xff000000) >> 24);
+  buf.emplace_back((length & 0x00ff0000) >> 16);
+  buf.emplace_back((length & 0x0000ff00) >> 8);
+  buf.emplace_back((length & 0x000000ff));
 }

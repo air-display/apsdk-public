@@ -14,6 +14,7 @@
 #include <asio.hpp>
 #include <fstream>
 #include <strstream>
+#include "flv_stream_builder.h"
 
 
 class airplay_mirror_handler : public aps::ap_mirror_session_handler {
@@ -299,6 +300,9 @@ airplay_handler::airplay_handler() {}
 airplay_handler::~airplay_handler() {}
 
 int main() {
+  flv::test::generate_flv_file();
+  return 0;
+
   logger::init_logger(false, log_level::LL_INFO);
   aps::ap_server_ptr server = std::make_shared<aps::ap_server>();
   aps::ap_handler_ptr handler = std::make_shared<airplay_handler>();

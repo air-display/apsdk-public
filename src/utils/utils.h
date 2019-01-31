@@ -8,9 +8,6 @@
 
 #if defined(ANDROID)
 #include <endian.h>
-#endif
-
-#if defined(ANDROID)
 #define ntohll(n) ntohq(n)
 #define htonll(n) htonq(n)
 #endif
