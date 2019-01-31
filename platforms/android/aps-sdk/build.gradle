@@ -3,16 +3,14 @@
 buildscript {
     
     repositories {
-        google()
-        jcenter()
         // Private Maven repository
-        //maven {
-        //    url "http://maven.oa.com/nexus/content/groups/androidbuild"
-        //}
+        maven {
+            url "http://maven.oa.com/nexus/content/groups/androidbuild"
+        }
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.3.0'
+        classpath 'com.android.tools.build:gradle:3.2.1'
         
 
         // NOTE: Do not place your application dependencies here; they belong
@@ -22,13 +20,10 @@ buildscript {
 
 allprojects {
     repositories {
-        google()
-        jcenter()
-
         // Private Maven repository
-        //maven {
-        //    url "http://maven.oa.com/nexus/content/groups/androidbuild"
-        //}
+        maven {
+            url "http://maven.oa.com/nexus/content/groups/androidbuild"
+        }
     }
 }
 
