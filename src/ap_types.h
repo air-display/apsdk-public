@@ -164,9 +164,15 @@ PACKED(struct sms_packet_header_s {
   uint32_t payload_size;
   uint16_t payload_type;
   uint16_t reserverd;
-  uint64_t timestamp;   // NTP timestamp
+
+  /// <summary>
+  /// NTP timestamp
+  /// </summary>
+  uint64_t timestamp;
   uint8_t padding[112];
 });
+
+//
 typedef sms_packet_header_s sms_packet_header_t;
 
 // 1 byte    1       version

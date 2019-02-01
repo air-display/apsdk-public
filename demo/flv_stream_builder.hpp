@@ -315,9 +315,20 @@ enum audio_data_sound_type_e {
 typedef audio_data_sound_type_e audio_data_sound_type_t;
 
 class flv_stream_builder {
+private:
+  std::atomic<uint64_t> tag_count_;
+  bool has_audio_;
+  bool has_video_;
+
 public:
   flv_stream_builder() {}
   ~flv_stream_builder() {}
+
+  void reset() {
+    tag_count_ = 0;
+    has_audio_ = false;
+    has_video_ = false;
+  }
 
   void init_stream_header(std::vector<uint8_t> &buf, bool has_audio,
                           bool has_video) {
@@ -391,7 +402,7 @@ public:
     avc_packet.reserve(512);
     avc_packet.emplace_back(INTER_FRAME << 4 | AVC);
     avc_packet.emplace_back(AvcNALU);
-    uint32_t composition_time = 0;
+    uint32_t composition_time = timestamp;
     avc_packet.emplace_back((composition_time & 0x00ff0000) >> 16);
     avc_packet.emplace_back((composition_time & 0x0000ff00) >> 8);
     avc_packet.emplace_back((composition_time & 0x000000ff));
@@ -483,17 +494,12 @@ protected:
     buf.emplace_back((length & 0x0000ff00) >> 8);
     buf.emplace_back((length & 0x000000ff));
   }
-
-private:
-  std::atomic<uint64_t> tag_count_;
-  bool has_audio_;
-  bool has_video_;
 };
 
 namespace test {
 static void generate_flv_file() {
   auto meta = amf::amf_array::create()
-                  //->with_item("duration", (double)0)
+                  ->with_item("duration", (double)0xffffffff)
                   ->with_item("width", (double)1920)
                   ->with_item("height", (double)1080)
                   //->with_item("videodatarate", (double)520)
