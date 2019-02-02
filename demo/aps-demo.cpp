@@ -141,7 +141,7 @@ private:
   }
 
   void append_avc_sequence_header(const aps::sms_video_codec_packet_t *p) {
-    auto meta = amf::amf_array::create()
+    auto meta = flv::amf::amf_array::create()
       ->with_item("framerate", (double)30)
       ->with_item("videocodecid", (double)7)
       ->with_item("audiosamplerate", (double)44100)
@@ -156,7 +156,7 @@ private:
       ;
     std::vector<uint8_t> tag;
     flv_builder_.append_meta_tag(tag, meta);
-    flv_builder_.append_avc_decoder_config_video_tag(tag, 0, p->payload, p->payload_size);
+    flv_builder_.append_video_tag_with_avc_decoder_config(tag, 0, p->payload, p->payload_size);
     flv_data_file_.write((char *)tag.data(), tag.size());
 
     uint32_t sc = htonl(0x01);
@@ -190,7 +190,7 @@ private:
   void append_nalu_data(const aps::sms_video_data_packet_t *p) {
     std::vector<uint8_t> tag;
     uint64_t timestamp = normalize_ntp_to_ms(p->timestamp);
-    flv_builder_.append_avc_nalu_data_video_tag(tag, timestamp, p->payload, p->payload_size);
+    flv_builder_.append_video_tag_with_avc_nalu_data(tag, timestamp, p->payload, p->payload_size);
     flv_data_file_.write((char *)tag.data(), tag.size());
 
     static uint32_t sc = htonl(0x01);
@@ -231,14 +231,14 @@ private:
 
     std::vector<uint8_t> tag;
         uint8_t asc[] = { 0xF8, 0xE8, 0x50, 0x00 };
-    flv_builder_.append_aac_specific_config_audio_tag(
+    flv_builder_.append_audio_tag_with_aac_specific_config(
       tag, 0, flv::R44KHZ, flv::S16BIT, flv::STEREO, asc, 4);
     flv_data_file_.write((char *)tag.data(), tag.size());
   }
 
   void append_rtp_data(const uint8_t *p, int32_t length) {
     std::vector<uint8_t> tag;
-    flv_builder_.append_aac_frame_data_audio_tag(
+    flv_builder_.append_audio_tag_with_aac_frame_data(
       tag, 0, flv::R44KHZ, flv::S16BIT, flv::STEREO, p, length);
     flv_data_file_.write((char *)tag.data(), tag.size());
 
