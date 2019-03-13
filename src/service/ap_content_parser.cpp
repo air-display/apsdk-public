@@ -1,4 +1,5 @@
 #include <regex>
+
 #include <service/ap_content_parser.h>
 
 bool aps::ap_content_parser::get_volume_value(float &value,

@@ -1,8 +1,10 @@
-#include "../net_service_impl.h"
-#include "../dns_sd.h"
 #include <dlfcn.h>
 #include <sys/endian.h>
+
 #include <utils/logger.h>
+
+#include "../dns_sd.h"
+#include "../net_service_impl.h"
 
 class net_service::net_service_impl : public net_service::implementation {
 public:
@@ -32,7 +34,7 @@ public:
       return true;
 
     LOGE() << "Failed to register service: " << name << ": " << error;
-    return true;
+    return false;
   }
 
   virtual void suppress() override {

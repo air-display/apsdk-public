@@ -1,12 +1,12 @@
-#include <ap_server.h>
-#include <ap_config.h>
-#include <mdns/net_service.h>
-#include <service/ap_airplay_service.h>
-#include <service/ap_media_http_service.h>
-#include <service/ap_media_data_store.h>
 #include <ctime>
 #include <memory>
 
+#include <ap_config.h>
+#include <ap_server.h>
+#include <mdns/net_service.h>
+#include <service/ap_airplay_service.h>
+#include <service/ap_media_data_store.h>
+#include <service/ap_media_http_service.h>
 
 using namespace aps::service;
 using namespace aps::network;
@@ -18,9 +18,7 @@ public:
       : airplay_net_service_("_airplay._tcp"), raop_net_service_("_raop._tcp"),
         airplay_tcp_service_(0), ap_media_http_service_(0) {}
 
-  ~implementation() { 
-	  release_net_service();
-  }
+  ~implementation() { release_net_service(); }
 
   void set_config(ap_config_ptr &config) { ap_config_ = config; }
 
@@ -30,8 +28,7 @@ public:
     if (airplay_tcp_service_)
       return true;
 
-    airplay_tcp_service_ =
-        std::make_shared<ap_airplay_service>(ap_config_, 0);
+    airplay_tcp_service_ = std::make_shared<ap_airplay_service>(ap_config_, 0);
     if (!airplay_tcp_service_)
       return false;
 

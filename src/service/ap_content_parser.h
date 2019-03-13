@@ -2,7 +2,6 @@
 #include <ap_types.h>
 #include <string>
 
-
 namespace aps {
 
 namespace ap_content_parser {

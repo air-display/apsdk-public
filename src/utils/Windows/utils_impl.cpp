@@ -1,6 +1,4 @@
 #include "../utils.h"
-#include <Windows.h>
-
 
 void set_thread_name(void *t, const char *name) {
   const DWORD MS_VC_EXCEPTION = 0x406D1388;

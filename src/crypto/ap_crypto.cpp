@@ -1,13 +1,14 @@
-#include "ap_crypto.h"
 #include <array>
+#include <sstream>
+
 #include <asio.hpp>
 #include <curve25519/curve25519-donna.h>
 #include <ed25519/ed25519.h>
 #include <ed25519/sha512.h>
 #include <playfair/playfair.h>
-#include <sstream>
 #include <utils/utils.h>
 
+#include "ap_crypto.h"
 
 aps::server_key_chain::server_key_chain() {
   curve_private_key_.resize(32, 0);
@@ -43,9 +44,9 @@ const std::vector<uint8_t> &aps::server_key_chain::curve_private_key() const {
 }
 
 aps::ap_crypto::ap_crypto()
-    : pair_verifyed_(false), fp_key_message_(164), client_aes_key_(16), client_aes_iv_(16),
-      client_curve_public_key_(32), client_ed_public_key_(32),
-      shared_secret_(32) {}
+    : pair_verifyed_(false), fp_key_message_(164), client_aes_key_(16),
+      client_aes_iv_(16), client_curve_public_key_(32),
+      client_ed_public_key_(32), shared_secret_(32) {}
 
 aps::ap_crypto::~ap_crypto() {}
 
@@ -185,7 +186,8 @@ void aps::ap_crypto::init_video_stream_aes_ctr(const uint64_t video_stream_id,
   sha512_hash.fill(0);
   sha512_init(&sha512_context);
   sha512_update(&sha512_context, (uint8_t *)source.c_str(), source.length());
-  sha512_update(&sha512_context, client_aes_key_.data(), client_aes_key_.size());
+  sha512_update(&sha512_context, client_aes_key_.data(),
+                client_aes_key_.size());
   sha512_final(&sha512_context, sha512_hash.data());
   std::array<uint8_t, 16> aes_key;
   memcpy(aes_key.data(), sha512_hash.data(), 16);
@@ -196,7 +198,8 @@ void aps::ap_crypto::init_video_stream_aes_ctr(const uint64_t video_stream_id,
   sha512_hash.fill(0);
   sha512_init(&sha512_context);
   sha512_update(&sha512_context, (uint8_t *)source.c_str(), source.length());
-  sha512_update(&sha512_context, client_aes_key_.data(), client_aes_key_.size());
+  sha512_update(&sha512_context, client_aes_key_.data(),
+                client_aes_key_.size());
   sha512_final(&sha512_context, sha512_hash.data());
   std::array<uint8_t, 16> aes_iv;
   memcpy(aes_iv.data(), sha512_hash.data(), 16);

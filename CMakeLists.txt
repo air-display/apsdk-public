@@ -2,9 +2,13 @@ cmake_minimum_required(VERSION 3.4.1)
 
 project(aps)
 
+if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+  set(LINUX TRUE)
+endif()
+
 # Flags
 set(CMAKE_CXX_STANDARD 11)
-set(CXX_STANDARD_REQUIRED)
+set(CXX_STANDARD_REQUIRED ON)
 if (WIN32)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -12,6 +16,7 @@ endif()
 
 # Definitions
 add_definitions(-DASIO_STANDALONE)
+add_definitions(-DASIO_NO_TYPEID)
 if (WIN32)
     add_definitions(-D_WIN32_WINNT=0x0600) # Windows Vista +
     add_definitions(-DINCL_EXTRA_HTON_FUNCTIONS)

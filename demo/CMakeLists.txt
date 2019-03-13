@@ -1,4 +1,4 @@
-project(aps)
+project(aps-demo)
 
 file(GLOB_RECURSE SRC_FILES
     "./*.cpp"

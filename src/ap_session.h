@@ -1,18 +1,20 @@
-#ifndef AP_MIRROR_SESSION_H
-#define AP_MIRROR_SESSION_H
+#ifndef AP_SESSION_H
+#define AP_SESSION_H
 #pragma once
-#include <ap_types.h>
-#include <stdint.h>
+
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
+
+#include <ap_types.h>
 
 namespace aps {
 /// <summary>
 ///
 /// </summary>
 class ap_mirror_session_handler {
- public:
+public:
   virtual ~ap_mirror_session_handler(){};
 
   /// <summary>
@@ -49,8 +51,8 @@ class ap_mirror_session_handler {
   /// <remarks>
   /// THREAD_VIDEO_STREAM
   /// </remarks>
-  virtual void on_mirror_stream_codec(
-      const aps::sms_video_codec_packet_t *p) = 0;
+  virtual void
+  on_mirror_stream_codec(const aps::sms_video_codec_packet_t *p) = 0;
 
   /// <summary>
   ///
@@ -123,8 +125,8 @@ class ap_mirror_session_handler {
   /// <remarks>
   /// THREAD_AIRPLAY
   /// </remarks>
-  virtual void on_audio_stream_started(
-      const aps::audio_data_format_t format) = 0;
+  virtual void
+  on_audio_stream_started(const aps::audio_data_format_t format) = 0;
 
   /// <summary>
   ///
@@ -252,7 +254,7 @@ typedef playback_info_s playback_info_t;
 /// <remarks>All methods will be called in the mirroring </remarks>
 /// </summary>
 class ap_video_session_handler {
- public:
+public:
   virtual ~ap_video_session_handler(){};
 
   /// <summary>
@@ -327,15 +329,15 @@ typedef std::weak_ptr<ap_video_session_handler>
     ap_video_session_handler_weakptr;
 
 enum session_type_e {
-	mirror_session = 0,
-	video_session = 1,
+  mirror_session = 0,
+  video_session = 1,
 
-	unknown_session = (uint32_t)-1
+  unknown_session = (uint32_t)-1
 };
 typedef session_type_e session_type_t;
 
 class ap_session {
- public:
+public:
   virtual ~ap_session(){};
 
   virtual uint64_t get_session_id() = 0;
@@ -352,6 +354,6 @@ class ap_session {
 typedef std::shared_ptr<ap_session> ap_session_ptr;
 typedef std::weak_ptr<ap_session> ap_session_weakptr;
 
-}  // namespace aps
+} // namespace aps
 
-#endif  // AP_MIRROR_SESSION_H
+#endif // AP_SESSION_H

@@ -1,10 +1,15 @@
 #pragma once
+#include <array>
+#include <map>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+#include <asio.hpp>
+
 #include <ap_config.h>
 #include <ap_handler.h>
-#include <array>
-#include <asio.hpp>
 #include <crypto/ap_crypto.h>
-#include <map>
 #include <network/tcp_service.h>
 #include <network/udp_service.h>
 #include <network/xtxp_connection_base.h>
@@ -14,23 +19,18 @@
 #include <service/ap_content_parser.h>
 #include <service/ap_mirror_stream_service.h>
 #include <service/ap_timing_sync_service.h>
-#include <string>
-#include <vector>
-#include <unordered_map>
 
 using namespace aps::network;
 
 namespace aps {
 namespace service {
 class ap_airplay_connection
-  : public xtxp_connection_base
-  , public ap_session
-  , public std::enable_shared_from_this<ap_airplay_connection>
-{
+    : public xtxp_connection_base,
+      public ap_session,
+      public std::enable_shared_from_this<ap_airplay_connection> {
 public:
   explicit ap_airplay_connection(asio::io_context &io_ctx,
-                                 ap_config_ptr &config,
-                                 ap_handler_ptr &handler,
+                                 ap_config_ptr &config, ap_handler_ptr &handler,
                                  tcp_service_weak_ptr service);
 
   ~ap_airplay_connection();
@@ -41,13 +41,12 @@ public:
 
   virtual void disconnect() override;
 
-  virtual void set_mirror_handler(
-      ap_mirror_session_handler_ptr handler) override;
+  virtual void
+  set_mirror_handler(ap_mirror_session_handler_ptr handler) override;
 
-  virtual void set_video_handler(
-	  ap_video_session_handler_ptr handler) override;
+  virtual void set_video_handler(ap_video_session_handler_ptr handler) override;
 
- protected:
+protected:
   // RTSP
   void options_handler(const request &req, response &res);
 
@@ -109,10 +108,9 @@ public:
   // APP -> SDK
   void post_getProperty_handler(const request &req, response &res);
 
+  virtual std::shared_ptr<xtxp_connection_base> shared_from_self() override;
 
-virtual std::shared_ptr<xtxp_connection_base> shared_from_self() override;
-
- protected:
+protected:
   virtual void add_common_header(const request &req, response &res) override;
 
   void init_session_id();
@@ -138,14 +136,14 @@ private:
   ap_timing_sync_service_ptr timing_sync_service_;
   tcp_service_weak_ptr service_;
 
-  // For mirroring 
-  //bool is_mirror_session_;
+  // For mirroring
+  // bool is_mirror_session_;
   ap_video_stream_service_ptr mirror_stream_service_;
   ap_audio_stream_service_ptr audio_stream_service_;
   ap_mirror_session_handler_ptr mirror_session_handler_;
 
   // For video streaming
-  //bool is_video_session_;
+  // bool is_video_session_;
   float start_pos_in_ms_;
   std::string playback_uuid_;
   std::string apple_session_id_;

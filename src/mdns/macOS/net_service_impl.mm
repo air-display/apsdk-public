@@ -1,7 +1,8 @@
-#include "../net_service_impl.h"
 #include <Foundation/Foundation.h>
 
-class net_service::net_service_impl : public net_service::implementation {
+#include "../net_service_impl.h"
+
+class net_service::net_service_impl : public net_service::implementation { 
 public:
   net_service_impl(const std::string &type) {
     type_ = [NSString stringWithUTF8String:type.c_str()];

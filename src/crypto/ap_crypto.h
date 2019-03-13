@@ -4,9 +4,9 @@
 #include <string>
 #include <vector>
 
-#include "ap_aes.h"
 #include <ap_types.h>
 
+#include "ap_aes.h"
 
 namespace aps {
 class server_key_chain {

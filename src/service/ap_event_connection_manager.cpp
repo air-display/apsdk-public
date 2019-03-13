@@ -2,8 +2,7 @@
 
 namespace aps {
 namespace service {
-aps::service::ap_event_connection_manager &
-ap_event_connection_manager::get() {
+aps::service::ap_event_connection_manager &ap_event_connection_manager::get() {
   static ap_event_connection_manager s_instance;
   return s_instance;
 }

@@ -4,6 +4,7 @@
 
 #include <cmath>
 #include <cstdint>
+#include <memory>
 #include <string>
 
 #define DECLARE_STRING_PROPERTY(n)                                             \

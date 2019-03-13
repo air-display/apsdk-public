@@ -1,8 +1,8 @@
 #include <algorithm>
-#include <ap_config.h>
 #include <sstream>
-#include <utils/utils.h>
 
+#include <ap_config.h>
+#include <utils/utils.h>
 
 namespace aps {
 ap_config_audio_format::ap_config_audio_format() {

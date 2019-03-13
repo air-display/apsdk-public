@@ -1,17 +1,17 @@
 README
 ===========================
-APS(Airplay Server) is an complete implementation of Airplay server including screen mirroring and vide streaming. And this project is written for cross-platform.
+APS(Airplay Server) is an complete implementation of Airplay server including screen mirroring and video streaming. And this project is written for cross-platform.
 
 # Build instructions:
 
 ## Windows
-Run the generate_vs_proj,bat to generate the project files. Build the generated solutions and collect the output static library. 
+Run the generate_vs_proj.bat to generate the project files. Build the generated solutions and collect the output static library. 
 
 ## Android
 Open the project folder with Android Studio and build the airplay module. The output is AAR library.
 
 ## macOS & iOS
-Run the generate_xcode_proj,bat to generate the project files. Build the xCode project.
+Run the generate_xcode_proj.bat to generate the project files. Build the xCode project.
 
 
 # Runtime requirements

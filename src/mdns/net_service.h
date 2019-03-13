@@ -3,8 +3,8 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <string>
-
 
 class net_service {
 public:

@@ -1,3 +1,9 @@
+#include <chrono>
+#include <cstring>
+#include <ctime>
+#include <exception>
+#include <stdexcept>
+
 #include <ap_types.h>
 #include <service/ap_airplay_service.h>
 #include <service/ap_audio_stream_service.h>
@@ -5,14 +11,9 @@
 #include <service/ap_event_connection_manager.h>
 #include <service/ap_media_data_store.h>
 #include <service/ap_mirror_stream_service.h>
-#include <string.h>
 #include <utils/logger.h>
 #include <utils/plist.h>
 #include <utils/utils.h>
-#include <chrono>
-#include <ctime>
-#include <exception>
-#include <stdexcept>
 
 using namespace aps::network;
 using namespace aps::service::details;
@@ -23,13 +24,9 @@ ap_airplay_connection::ap_airplay_connection(asio::io_context &io_ctx,
                                              ap_config_ptr &config,
                                              ap_handler_ptr &hanlder,
                                              tcp_service_weak_ptr service)
-    : xtxp_connection_base(io_ctx),
-      is_reversed_(false),
-      session_type_(unknown_session),
-      mirror_session_handler_(0),
-      video_session_handler_(0),
-      config_(config),
-      handler_(hanlder),
+    : xtxp_connection_base(io_ctx), is_reversed_(false),
+      session_type_(unknown_session), mirror_session_handler_(0),
+      video_session_handler_(0), config_(config), handler_(hanlder),
       service_(service) {
   init_session_id();
   crypto_ = std::make_shared<ap_crypto>();
@@ -90,9 +87,8 @@ void ap_airplay_connection::options_handler(const request &req, response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
 
   res.with_status(ok)
-      .with_header("Public",
-                   "ANNOUNCE, SETUP, RECORD, PAUSE, FLUSH, TEARDOWN, "
-                   "OPTIONS, GET_PARAMETER, SET_PARAMETER, POST, GET")
+      .with_header("Public", "ANNOUNCE, SETUP, RECORD, PAUSE, FLUSH, TEARDOWN, "
+                             "OPTIONS, GET_PARAMETER, SET_PARAMETER, POST, GET")
       .with_content_type(APPLICATION_OCTET_STREAM);
 }
 
@@ -116,8 +112,8 @@ void ap_airplay_connection::post_pair_verify_handler(const request &req,
   pair_verify_header_t *header = (pair_verify_header_t *)req.content.data();
   if (header->is_first_frame) {
     crypto_->init_client_public_keys(
-        req.content.data() + 4, 32,        // client curve public key
-        req.content.data() + 4 + 32, 32);  // client ed public key
+        req.content.data() + 4, 32,       // client curve public key
+        req.content.data() + 4 + 32, 32); // client ed public key
 
     crypto_->init_pair_verify_aes();
 
@@ -145,31 +141,33 @@ void ap_airplay_connection::post_fp_setup_handler(const request &req,
   DUMP_REQUEST_WITH_CONNECTION(req);
 
   fp_header_t *header = (fp_header_t *)req.content.data();
-  if (header->major_version == 0x03) {
-    if (header->phase == 0x01 && req.content.size() == 16) {
-      uint8_t mode = req.content[14];
-      std::vector<uint8_t> content(142, 0);
-      crypto_->fp_setup(mode, content.data());
-      res.with_status(ok)
-          .with_content_type(APPLICATION_OCTET_STREAM)
-          .with_content(content);
-    } else if (header->phase == 0x02) {
-      LOGE() << "Unsupported FP phase.";
-    } else if (header->phase == 0x03 && req.content.size() == 164) {
-      // Process the hand shake request
-      std::vector<uint8_t> content(32, 0);
-      crypto_->fp_handshake(content.data(), req.content.data(),
-                            req.content.size());
-      res.with_status(ok)
-          .with_content_type(APPLICATION_OCTET_STREAM)
-          .with_content(content);
-    } else {
-      LOGE() << "Invalid request";
-      res.with_status(bad_request);
-      return;
+  if (header->signature[0] == 'F' && header->signature[1] == 'P' &&
+      header->signature[2] == 'L' && header->signature[3] == 'Y') {
+    if (header->major_version == 0x03) {
+      if (header->phase == 0x01 && req.content.size() == 16) {
+        uint8_t mode = req.content[14];
+        std::vector<uint8_t> content(142, 0);
+        crypto_->fp_setup(mode, content.data());
+        res.with_status(ok)
+            .with_content_type(APPLICATION_OCTET_STREAM)
+            .with_content(content);
+      } else if (header->phase == 0x02) {
+        LOGE() << "Unsupported FP phase.";
+      } else if (header->phase == 0x03 && req.content.size() == 164) {
+        // Process the hand shake request
+        std::vector<uint8_t> content(32, 0);
+        crypto_->fp_handshake(content.data(), req.content.data(),
+                              req.content.size());
+        res.with_status(ok)
+            .with_content_type(APPLICATION_OCTET_STREAM)
+            .with_content(content);
+      } else {
+        LOGE() << "Invalid request";
+        res.with_status(bad_request);
+        return;
+      }
     }
   }
-
   res.with_status(ok).with_content_type(APPLICATION_OCTET_STREAM);
 }
 
@@ -177,16 +175,19 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
 
   do {
-    if (req.content_type.compare(APPLICATION_BINARY_PLIST)) break;
+    if (req.content_type.compare(APPLICATION_BINARY_PLIST))
+      break;
 
     auto_plist plist_obj =
         plist_object_from_bplist(req.content.data(), req.content.size());
     auto data_obj = plist_obj.get();
-    if (!data_obj) break;
+    if (!data_obj)
+      break;
 
     auto streams = plist_object_dict_get_value(data_obj, "streams");
     if (streams) {
-      if (PLIST_TYPE_ARRAY != plist_object_get_type(streams)) break;
+      if (PLIST_TYPE_ARRAY != plist_object_get_type(streams))
+        break;
 
       auto stream_obj = plist_object_array_get_value(streams, 0);
       if (!stream_obj || PLIST_TYPE_DICT != plist_object_get_type(stream_obj))
@@ -197,7 +198,8 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
         break;
 
       int64_t type = 0;
-      if (0 != plist_object_integer_get_value(type_obj, &type)) break;
+      if (0 != plist_object_integer_get_value(type_obj, &type))
+        break;
 
       if (stream_type_t::audio == type) {
         //{
@@ -348,18 +350,21 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
       const uint8_t *piv = 0;
       uint64_t iv_len = 0;
       auto eiv_obj = plist_object_dict_get_value(data_obj, "eiv");
-      if (0 != plist_object_data_get_value(eiv_obj, &piv, &iv_len)) break;
+      if (0 != plist_object_data_get_value(eiv_obj, &piv, &iv_len))
+        break;
 
       const uint8_t *pkey = 0;
       uint64_t key_len = 0;
       auto ekey_obj = plist_object_dict_get_value(data_obj, "ekey");
-      if (0 != plist_object_data_get_value(ekey_obj, &pkey, &key_len)) break;
+      if (0 != plist_object_data_get_value(ekey_obj, &pkey, &key_len))
+        break;
 
       crypto_->init_client_aes_info(piv, iv_len, pkey, key_len);
 
       auto timing_port_obj =
           plist_object_dict_get_value(data_obj, "timingPort");
-      if (PLIST_TYPE_INTEGER != plist_object_get_type(timing_port_obj)) break;
+      if (PLIST_TYPE_INTEGER != plist_object_get_type(timing_port_obj))
+        break;
       int64_t timing_port = 0;
       if (0 != plist_object_integer_get_value(timing_port_obj, &timing_port))
         break;
@@ -737,7 +742,7 @@ void ap_airplay_connection::post_play_handler(const request &req,
       return;
     }
     // Adjust this value to milliseconds
-    start_pos_in_ms_ = pos_in_second * 1000;
+    start_pos_in_ms_ = (float)pos_in_second * 1000.f;
   } else if (0 == compare_string_no_case(req.content_type.c_str(),
                                          TEXT_PARAMETERS) ||
              0 == compare_string_no_case(req.content_type.c_str(),
@@ -869,7 +874,7 @@ void ap_airplay_connection::post_action_handler(const request &req,
     }
 
     std::string fcup_content;
-    fcup_content.assign((char *)fcup_data, data_len);
+    fcup_content.assign((char *)fcup_data, (size_t)data_len);
 
     auto location =
         ap_media_data_store::get().process_media_data(fcup_uri, fcup_content);
@@ -1086,13 +1091,14 @@ void ap_airplay_connection::add_common_header(const request &req,
 void ap_airplay_connection::init_session_id() {
   uint64_t address = (uint64_t)this;
   uint64_t timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
-                    std::chrono::system_clock::now().time_since_epoch())
-          .count();
+                           std::chrono::system_clock::now().time_since_epoch())
+                           .count();
   session_id_ = (timestamp << 32) | (address & 0x0ffffffff);
 }
 
 void ap_airplay_connection::validate_user_agent(const request &req) {
-  if (!agent_.empty()) return;
+  if (!agent_.empty())
+    return;
 
   auto user_agent_header = req.headers.find("User-Agent");
   if (user_agent_header != req.headers.end()) {
@@ -1115,8 +1121,8 @@ void ap_airplay_connection::validate_user_agent(const request &req) {
   }
 }
 
-#define RH(x)                                                       \
-  std::bind(&ap_airplay_connection::x, this, std::placeholders::_1, \
+#define RH(x)                                                                  \
+  std::bind(&ap_airplay_connection::x, this, std::placeholders::_1,            \
             std::placeholders::_2)
 
 void ap_airplay_connection::initialize_request_handlers() {
@@ -1240,5 +1246,5 @@ void ap_airplay_service::on_thread_stop() {
   }
 }
 
-}  // namespace service
-}  // namespace aps
+} // namespace service
+} // namespace aps

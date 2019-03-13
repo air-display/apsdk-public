@@ -1,7 +1,6 @@
 #include <service/ap_media_data_store.h>
 #include <service/ap_media_http_service.h>
 
-
 namespace aps {
 namespace service {
 
@@ -55,8 +54,7 @@ ap_media_http_service::ap_media_http_service(ap_config_ptr &config,
 
 ap_media_http_service::~ap_media_http_service() {}
 
-network::tcp_connection_ptr
-ap_media_http_service::prepare_new_connection() {
+network::tcp_connection_ptr ap_media_http_service::prepare_new_connection() {
   return std::make_shared<ap_media_http_connection>(io_context());
 }
 

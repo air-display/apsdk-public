@@ -1,7 +1,7 @@
-#include "../net_service_impl.h"
-#include "../dns_sd.h"
 #include <utils/logger.h>
 
+#include "../dns_sd.h"
+#include "../net_service_impl.h"
 
 class net_service::net_service_impl : public net_service::implementation {
   typedef DNSServiceErrorType(DNSSD_API *DNSServiceRegister_t)(
@@ -104,7 +104,8 @@ public:
   }
 
   virtual void suppress() override {
-    if (dns_service_ && dnssd_lib_.Module && dnssd_lib_.DNSServiceRefDeallocate) {
+    if (dns_service_ && dnssd_lib_.Module &&
+        dnssd_lib_.DNSServiceRefDeallocate) {
       dnssd_lib_.DNSServiceRefDeallocate(dns_service_);
       dns_service_ = 0;
     }

@@ -1,11 +1,12 @@
 #include <assert.h>
+#include <cstring>
 #include <stdarg.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include <asio.hpp>
-#include "utils.h"
+
 #include "plist.h"
+#include "utils.h"
 
 #define BPLIST_HEADER_LEN 8
 #define BPLIST_TRAILER_LEN 32
@@ -51,46 +52,46 @@ static int parse_integer(const uint8_t *data, uint64_t dataidx, uint8_t length,
   assert(value);
 
   switch (length) {
-    case sizeof(uint8_t):
-      *value = data[dataidx];
-      break;
-    case sizeof(uint16_t): {
-      uint16_t v = 0;
-      memcpy(&v, data + dataidx, sizeof(uint16_t));
-      v = ntohs(v);
-      *value = 0;
-      memcpy(value, &v, sizeof(uint16_t));
-      //*value = ((int64_t)data[dataidx++]) << 8;
-      //*value |= (int64_t)data[dataidx++];
-    } break;
-    case sizeof(uint32_t): {
-      uint32_t v = 0;
-      memcpy(&v, data + dataidx, sizeof(uint32_t));
-      v = ntohl(v);
-      *value = 0;
-      memcpy(value, &v, sizeof(uint32_t));
-      //*value = ((int64_t)data[dataidx++]) << 24;
-      //*value |= ((int64_t)data[dataidx++]) << 16;
-      //*value |= ((int64_t)data[dataidx++]) << 8;
-      //*value |= (int64_t)data[dataidx++];
-    } break;
-    case sizeof(uint64_t): {
-      uint64_t v = 0;
-      memcpy(&v, data + dataidx, sizeof(uint64_t));
-      v = ntohll(v);
-      *value = 0;
-      memcpy(value, &v, sizeof(uint64_t));
-      //*value = ((int64_t)data[dataidx++]) << 56;
-      //*value |= ((int64_t)data[dataidx++]) << 48;
-      //*value |= ((int64_t)data[dataidx++]) << 40;
-      //*value |= ((int64_t)data[dataidx++]) << 32;
-      //*value |= ((int64_t)data[dataidx++]) << 24;
-      //*value |= ((int64_t)data[dataidx++]) << 16;
-      //*value |= ((int64_t)data[dataidx++]) << 8;
-      //*value |= (int64_t)data[dataidx++];
-    } break;
-    default:
-      return -1;
+  case sizeof(uint8_t):
+    *value = data[dataidx];
+    break;
+  case sizeof(uint16_t): {
+    uint16_t v = 0;
+    memcpy(&v, data + dataidx, sizeof(uint16_t));
+    v = ntohs(v);
+    *value = 0;
+    memcpy(value, &v, sizeof(uint16_t));
+    //*value = ((int64_t)data[dataidx++]) << 8;
+    //*value |= (int64_t)data[dataidx++];
+  } break;
+  case sizeof(uint32_t): {
+    uint32_t v = 0;
+    memcpy(&v, data + dataidx, sizeof(uint32_t));
+    v = ntohl(v);
+    *value = 0;
+    memcpy(value, &v, sizeof(uint32_t));
+    //*value = ((int64_t)data[dataidx++]) << 24;
+    //*value |= ((int64_t)data[dataidx++]) << 16;
+    //*value |= ((int64_t)data[dataidx++]) << 8;
+    //*value |= (int64_t)data[dataidx++];
+  } break;
+  case sizeof(uint64_t): {
+    uint64_t v = 0;
+    memcpy(&v, data + dataidx, sizeof(uint64_t));
+    v = ntohll(v);
+    *value = 0;
+    memcpy(value, &v, sizeof(uint64_t));
+    //*value = ((int64_t)data[dataidx++]) << 56;
+    //*value |= ((int64_t)data[dataidx++]) << 48;
+    //*value |= ((int64_t)data[dataidx++]) << 40;
+    //*value |= ((int64_t)data[dataidx++]) << 32;
+    //*value |= ((int64_t)data[dataidx++]) << 24;
+    //*value |= ((int64_t)data[dataidx++]) << 16;
+    //*value |= ((int64_t)data[dataidx++]) << 8;
+    //*value |= (int64_t)data[dataidx++];
+  } break;
+  default:
+    return -1;
   }
   return length;
 }
@@ -98,44 +99,43 @@ static int parse_integer(const uint8_t *data, uint64_t dataidx, uint8_t length,
 static int serialize_integer(uint8_t *data, uint64_t *dataidx, uint8_t length,
                              int64_t value) {
   switch (length) {
-    case sizeof(uint8_t):
-      data[(*dataidx)++] = (uint8_t)value;
-      break;
-    case sizeof(uint16_t): {
-      uint16_t v = (uint16_t)value;
-      v = htons(v);
-      memcpy(data + *dataidx, &v, sizeof(uint16_t));
-      *dataidx += sizeof(uint16_t);
-      // data[(*dataidx)++] = (uint8_t)(value >> 8);
-      // data[(*dataidx)++] = (uint8_t)value;
-    } break;
-    case sizeof(uint32_t): {
-      uint32_t v = (uint32_t)value;
-      v = htonl(v);
-      memcpy(data + *dataidx, &v, sizeof(uint32_t));
-      *dataidx += sizeof(uint32_t);
-      // data[(*dataidx)++] = (uint8_t)(value >> 24);
-      // data[(*dataidx)++] = (uint8_t)(value >> 16);
-      // data[(*dataidx)++] = (uint8_t)(value >> 8);
-      // data[(*dataidx)++] = (uint8_t)value;
-    } break;
-    case sizeof(uint64_t): {
-      uint64_t v = (uint64_t)value;
-      v = htonll(v);
-      memcpy(data + *dataidx, &v, sizeof(uint64_t));
-      *dataidx += sizeof(uint64_t);
-      // data[(*dataidx)++] = (uint8_t)(value >> 56);
-      // data[(*dataidx)++] = (uint8_t)(value >> 48);
-      // data[(*dataidx)++] = (uint8_t)(value >> 40);
-      // data[(*dataidx)++] = (uint8_t)(value >> 32);
-      // data[(*dataidx)++] = (uint8_t)(value >> 24);
-      // data[(*dataidx)++] = (uint8_t)(value >> 16);
-      // data[(*dataidx)++] = (uint8_t)(value >> 8);
-      // data[(*dataidx)++] = (uint8_t)value;
-    }
-      break;
-    default:
-      return -1;
+  case sizeof(uint8_t):
+    data[(*dataidx)++] = (uint8_t)value;
+    break;
+  case sizeof(uint16_t): {
+    uint16_t v = (uint16_t)value;
+    v = htons(v);
+    memcpy(data + *dataidx, &v, sizeof(uint16_t));
+    *dataidx += sizeof(uint16_t);
+    // data[(*dataidx)++] = (uint8_t)(value >> 8);
+    // data[(*dataidx)++] = (uint8_t)value;
+  } break;
+  case sizeof(uint32_t): {
+    uint32_t v = (uint32_t)value;
+    v = htonl(v);
+    memcpy(data + *dataidx, &v, sizeof(uint32_t));
+    *dataidx += sizeof(uint32_t);
+    // data[(*dataidx)++] = (uint8_t)(value >> 24);
+    // data[(*dataidx)++] = (uint8_t)(value >> 16);
+    // data[(*dataidx)++] = (uint8_t)(value >> 8);
+    // data[(*dataidx)++] = (uint8_t)value;
+  } break;
+  case sizeof(uint64_t): {
+    uint64_t v = (uint64_t)value;
+    v = htonll(v);
+    memcpy(data + *dataidx, &v, sizeof(uint64_t));
+    *dataidx += sizeof(uint64_t);
+    // data[(*dataidx)++] = (uint8_t)(value >> 56);
+    // data[(*dataidx)++] = (uint8_t)(value >> 48);
+    // data[(*dataidx)++] = (uint8_t)(value >> 40);
+    // data[(*dataidx)++] = (uint8_t)(value >> 32);
+    // data[(*dataidx)++] = (uint8_t)(value >> 24);
+    // data[(*dataidx)++] = (uint8_t)(value >> 16);
+    // data[(*dataidx)++] = (uint8_t)(value >> 8);
+    // data[(*dataidx)++] = (uint8_t)value;
+  } break;
+  default:
+    return -1;
   }
   return length;
 }
@@ -1002,29 +1002,29 @@ void plist_object_destroy(plist_object_t *object) {
   }
 
   switch (object->type) {
-    case PLIST_TYPE_DATA:
-      free(object->value.value_data.value);
-      break;
-    case PLIST_TYPE_STRING:
-    case PLIST_TYPE_UNICODE_STRING:
-      free(object->value.value_string);
-      break;
-    case PLIST_TYPE_ARRAY:
-      for (i = 0; i < object->value.value_array.size; i++) {
-        plist_object_destroy(object->value.value_array.values[i]);
-      }
-      free(object->value.value_array.values);
-      break;
-    case PLIST_TYPE_DICT:
-      for (i = 0; i < object->value.value_dict.size; i++) {
-        free(object->value.value_dict.keys[i]);
-      }
-      free(object->value.value_dict.keys);
-      for (i = 0; i < object->value.value_dict.size; i++) {
-        plist_object_destroy(object->value.value_dict.values[i]);
-      }
-      free(object->value.value_dict.values);
-      break;
+  case PLIST_TYPE_DATA:
+    free(object->value.value_data.value);
+    break;
+  case PLIST_TYPE_STRING:
+  case PLIST_TYPE_UNICODE_STRING:
+    free(object->value.value_string);
+    break;
+  case PLIST_TYPE_ARRAY:
+    for (i = 0; i < object->value.value_array.size; i++) {
+      plist_object_destroy(object->value.value_array.values[i]);
+    }
+    free(object->value.value_array.values);
+    break;
+  case PLIST_TYPE_DICT:
+    for (i = 0; i < object->value.value_dict.size; i++) {
+      free(object->value.value_dict.keys[i]);
+    }
+    free(object->value.value_dict.keys);
+    for (i = 0; i < object->value.value_dict.size; i++) {
+      plist_object_destroy(object->value.value_dict.values[i]);
+    }
+    free(object->value.value_dict.values);
+    break;
   }
   free(object);
 }

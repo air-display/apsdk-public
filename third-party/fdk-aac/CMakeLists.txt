@@ -191,9 +191,8 @@ set(libfdk_aac_SOURCES
 add_library(fdk-aac ${libfdk_aac_SOURCES})
 target_include_directories (fdk-aac PUBLIC ${FDK_AAC_INCLUDES})
 
-
-
 if(WIN32)
+    set_target_properties(fdk-aac PROPERTIES FOLDER thrid-party)
 	add_compile_options(/EHsc /Dinline=__inline)
 	list(APPEND FDK_AAC_INCLUDES win32)
 endif(WIN32)

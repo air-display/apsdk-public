@@ -1,8 +1,9 @@
-#include <service/ap_media_data_store.h>
-#include <service/ap_event_connection_manager.h>
-#include <utils/utils.h>
-#include <hlsparser/hlsparse.h>
 #include <regex>
+
+#include <hlsparser/hlsparse.h>
+#include <service/ap_event_connection_manager.h>
+#include <service/ap_media_data_store.h>
+#include <utils/utils.h>
 
 namespace aps {
 namespace service {
@@ -23,7 +24,7 @@ void ap_media_data_store::set_store_root(uint16_t port) {
 }
 
 bool ap_media_data_store::request_media_data(const std::string &primary_uri,
-                                           const std::string &session_id) {
+                                             const std::string &session_id) {
   reset();
   if (is_local_m3u8_uri(primary_uri)) {
     primary_uri_ = string_replace(primary_uri, SCHEME_LIST, HTTP_SCHEME);
@@ -73,7 +74,7 @@ std::string ap_media_data_store::process_media_data(const std::string &uri,
   path = string_replace(path, HOST_LIST, "");
 
   if (!path.empty() && !media_data.empty()) {
-    add_media_data(path, media_data); 
+    add_media_data(path, media_data);
   }
 
   if (uri_stack_.empty()) {
@@ -97,7 +98,7 @@ std::string ap_media_data_store::query_media_data(const std::string &path) {
   return std::string();
 }
 
-void ap_media_data_store::reset() { 
+void ap_media_data_store::reset() {
   request_id_ = 1;
   session_id_.clear();
   primary_uri_.clear();
@@ -115,17 +116,21 @@ void ap_media_data_store::add_media_data(const std::string &uri,
 
 bool ap_media_data_store::is_local_m3u8_uri(const std::string &uri) {
   // Youtube
-  if (0 == uri.find(MLHLS_SCHEME)) return true;
+  if (0 == uri.find(MLHLS_SCHEME))
+    return true;
 
   // Netflix
-  if (0 == uri.find(NFHLS_SCHEME)) return true;
+  if (0 == uri.find(NFHLS_SCHEME))
+    return true;
 
   return false;
 }
 
-bool ap_media_data_store::is_primary_data_uri(const std::string &uri) { 
-  if (strstr(uri.c_str(), MASTER_M3U8)) return true;
-  if (strstr(uri.c_str(), INDEX_M3U8)) return true;
+bool ap_media_data_store::is_primary_data_uri(const std::string &uri) {
+  if (strstr(uri.c_str(), MASTER_M3U8))
+    return true;
+  if (strstr(uri.c_str(), INDEX_M3U8))
+    return true;
 
   return false;
 }
@@ -177,8 +182,8 @@ void ap_media_data_store::send_fcup_request(const std::string &uri) {
   }
 }
 
-std::string ap_media_data_store::adjust_primary_media_data(
-    const std::string &data) {
+std::string
+ap_media_data_store::adjust_primary_media_data(const std::string &data) {
   std::string r;
   // Replace all scheme
   r = string_replace(data, SCHEME_LIST, HTTP_SCHEME);
@@ -189,9 +194,9 @@ std::string ap_media_data_store::adjust_primary_media_data(
   return r;
 }
 
-std::string ap_media_data_store::adjust_secondary_meida_data(
-    const std::string &data) {
-  std::string result = data; 
+std::string
+ap_media_data_store::adjust_secondary_meida_data(const std::string &data) {
+  std::string result = data;
 
   static std::regex youtube_pattern(
       "#YT-EXT-CONDENSED-URL:BASE-URI=\"(.*)\",PARAMS=.*PREFIX=\"(.*)\"");
@@ -215,5 +220,5 @@ std::string ap_media_data_store::adjust_secondary_meida_data(
   return result;
 }
 
-}
-}
+} // namespace service
+} // namespace aps

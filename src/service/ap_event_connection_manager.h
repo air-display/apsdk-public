@@ -1,8 +1,9 @@
 #pragma once
 #include <map>
 #include <memory>
-#include <network/xtxp_connection_base.h>
 #include <string>
+
+#include <network/xtxp_connection_base.h>
 
 using namespace aps::network;
 

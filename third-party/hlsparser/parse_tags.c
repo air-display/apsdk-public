@@ -1154,7 +1154,7 @@ int parse_daterange_tag(const char *src, size_t size, daterange_t *dest)
         // custom client parameter
         // find the '=' sign so we know where the key ends
         const char *tmp = pt+1;
-        while(*tmp != '=' && *tmp != '\n' && tmp != '\0' ) {
+        while(*tmp != '=' && *tmp != '\n' && *tmp != '\0' ) {
             ++tmp;
         }
         // get the key string

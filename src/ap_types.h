@@ -1,7 +1,17 @@
+#ifndef AP_TYPES_H
+#define AP_TYPES_H
 #pragma once
-#include <stdint.h>
-#include <string.h>
-#include <utils/packing.h>
+#pragma once
+
+#include <cstdint>
+#include <cstring>
+
+#ifdef __GNUC__
+#define PACKED(type_to_pack) type_to_pack __attribute__((__packed__))
+#else
+#define PACKED(type_to_pack)                                                   \
+  __pragma(pack(push, 1)) type_to_pack __pragma(pack(pop))
+#endif
 
 namespace aps {
 /// <summary>
@@ -63,16 +73,16 @@ typedef audio_data_format_e audio_data_format_t;
 ///
 /// </summary>
 PACKED(struct rtp_packet_header_s {
-  uint8_t csrc_count : 4;   /* CSRC count */
-  uint8_t extension : 1;    /* header extension flag */
-  uint8_t padding : 1;      /* padding flag */
-  uint8_t version : 2;      /* protocol version */
+  uint8_t csrc_count : 4; /* CSRC count */
+  uint8_t extension : 1;  /* header extension flag */
+  uint8_t padding : 1;    /* padding flag */
+  uint8_t version : 2;    /* protocol version */
 
   uint8_t payload_type : 7; /* payload type */
   uint8_t marker : 1;       /* marker bit */
 
-  uint16_t sequence;        /* sequence number */
-  uint32_t timestamp;       /* timestamp, unit is frequency rate */
+  uint16_t sequence;  /* sequence number */
+  uint32_t timestamp; /* timestamp, unit is frequency rate */
 
   rtp_packet_header_s() {
     memset(this, 0, sizeof(rtp_packet_header_s));
@@ -84,7 +94,7 @@ typedef rtp_packet_header_s rtp_packet_header_t;
 PACKED(struct rtp_audio_data_packet_s
        : public rtp_packet_header_t {
          uint32_t ssrc;
-         uint8_t payload[];
+         uint8_t payload[0];
 
          rtp_audio_data_packet_s() : rtp_packet_header_t() { ssrc = 0; }
        });
@@ -164,15 +174,9 @@ PACKED(struct sms_packet_header_s {
   uint32_t payload_size;
   uint16_t payload_type;
   uint16_t reserverd;
-
-  /// <summary>
-  /// NTP timestamp
-  /// </summary>
-  uint64_t timestamp;
+  uint64_t timestamp; // NTP timestamp
   uint8_t padding[112];
 });
-
-//
 typedef sms_packet_header_s sms_packet_header_t;
 
 // 1 byte    1       version
@@ -197,7 +201,7 @@ PACKED(struct avc_decoder_config_record_s {
   uint8_t reserved0 : 6;
   uint8_t sps_count : 5;
   uint8_t reserved1 : 3;
-  uint8_t start[];
+  uint8_t start[0];
 
   // struct {
   //  uint16_t sps_length;
@@ -215,22 +219,24 @@ typedef avc_decoder_config_record_s avc_decoder_config_record_t;
 PACKED(struct sms_video_codec_packet_s
        : public sms_packet_header_t {
          union {
-           uint8_t payload[];
+           uint8_t payload[0];
            avc_decoder_config_record_t decord_record;
          };
        });
 typedef sms_video_codec_packet_s sms_video_codec_packet_t;
 
 PACKED(struct sms_video_data_packet_s
-       : public sms_packet_header_t { uint8_t payload[]; });
+       : public sms_packet_header_t { uint8_t payload[0]; });
 typedef sms_video_data_packet_s sms_video_data_packet_t;
 
 PACKED(struct sms_video_5_packet_s
-       : public sms_packet_header_t { uint8_t payload[]; });
+       : public sms_packet_header_t { uint8_t payload[0]; });
 typedef sms_video_5_packet_s sms_video_5_packet_t;
 
 PACKED(struct sms_video_4096_packet_s
-       : public sms_packet_header_t { uint8_t payload[]; });
+       : public sms_packet_header_t { uint8_t payload[0]; });
 typedef sms_video_4096_packet_s sms_video_4096_packet_t;
 
 } // namespace aps
+
+#endif // AP_TYPES_H

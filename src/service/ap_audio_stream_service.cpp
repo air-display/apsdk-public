@@ -1,5 +1,6 @@
-#include <crypto/ap_crypto.h>
 #include <functional>
+
+#include <crypto/ap_crypto.h>
 #include <service/ap_audio_stream_service.h>
 #include <utils/logger.h>
 
@@ -153,17 +154,16 @@ void ap_audio_stream_service::data_handler(const uint8_t *buf,
       return;
     }
 
-    // This packet is not the one we are waiting for 
+    // This packet is not the one we are waiting for
     if (header->sequence > expected_seq_) {
       if (cached_queue_.size() < MAX_CACHED_PACKET_SIZE) {
         LOGD() << "CACHE RTP PACKET +++++++++++++++++++++++"
-          << "seq: " << header->sequence << ", expected:" << expected_seq_;
+               << "seq: " << header->sequence << ", expected:" << expected_seq_;
         // Cache this packet
         cache_packet(header->sequence, buf, bytes_transferred);
-      }
-      else {
+      } else {
         LOGD() << "FLUSH RTP PACKET ***********************"
-          << "seq: " << header->sequence << ", expected:" << expected_seq_;
+               << "seq: " << header->sequence << ", expected:" << expected_seq_;
         // have been waiting for too long time, flush
         process_cached_packet(true);
       }
@@ -171,13 +171,14 @@ void ap_audio_stream_service::data_handler(const uint8_t *buf,
     }
 
     LOGV() << "ABANDON-RTP-PACKET xxxxxxxxxxxxxxxxxxxxxxx"
-      << "seq: " << header->sequence << ", expected:" << expected_seq_;
+           << "seq: " << header->sequence << ", expected:" << expected_seq_;
   }
 }
 
 void ap_audio_stream_service::audio_data_packet(rtp_audio_data_packet_t *packet,
                                                 size_t length) {
-  LOGV() << "VALID RTP PACKET: " << length << ", sequence: " << packet->sequence;
+  LOGV() << "VALID RTP PACKET: " << length
+         << ", sequence: " << packet->sequence;
 
   if (handler_) {
     uint32_t payload_length = length - sizeof(rtp_audio_data_packet_t);
@@ -240,23 +241,25 @@ void ap_audio_stream_service::on_thread_stop() {
   }
 }
 
-void ap_audio_stream_service::cache_packet(const uint16_t seq, const uint8_t *buf, std::size_t length) {
+void ap_audio_stream_service::cache_packet(const uint16_t seq,
+                                           const uint8_t *buf,
+                                           std::size_t length) {
   cached_packet_ptr pk = std::make_shared<cached_packet_t>();
   pk->sequence = seq;
   pk->data.assign(buf, buf + length);
   cached_queue_.push(pk);
 }
 
-void ap_audio_stream_service::process_cached_packet(bool flush/* = false*/) {
+void ap_audio_stream_service::process_cached_packet(bool flush /* = false*/) {
   while (!cached_queue_.empty()) {
     auto p = cached_queue_.top();
     if (flush || p->sequence == expected_seq_) {
       cached_queue_.pop();
-      rtp_audio_data_packet_t *header = (rtp_audio_data_packet_t *)p->data.data();
+      rtp_audio_data_packet_t *header =
+          (rtp_audio_data_packet_t *)p->data.data();
       audio_data_packet(header, p->data.size());
       expected_seq_ = p->sequence + 1;
-    }
-    else {
+    } else {
       break;
     }
   }

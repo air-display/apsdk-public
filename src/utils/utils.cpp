@@ -1,9 +1,10 @@
 #include <chrono>
+#include <cstring>
 #include <ctime>
-#include <hlsparser/hlsparse.h>
 #include <regex>
-#include <string.h>
 #include <time.h>
+
+#include <hlsparser/hlsparse.h>
 #include <utils/utils.h>
 
 using namespace std::chrono;
@@ -25,8 +26,8 @@ uint64_t get_ntp_timestamp() {
 }
 
 uint64_t normalize_ntp_to_ms(uint64_t ntp) {
-  uint64_t milliseconds = ((ntp & 0xffffffff00000000) >> 32) * 1000;
-  uint32_t fraction = (ntp & 0x0ffffffff) * 1000 / NTP_SCALE_FRAC;
+  uint64_t milliseconds = (ntp >> 32) * 1000;
+  uint32_t fraction = (uint32_t)(ntp & 0x0ffffffff) * 1000 / NTP_SCALE_FRAC;
   return (milliseconds + fraction);
 }
 

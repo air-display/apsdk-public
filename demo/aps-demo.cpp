@@ -2,6 +2,12 @@
 // begins and ends there.
 //
 
+#include <fstream>
+#include <strstream>
+
+#include <audiodec/aac_eld.h>
+#include <audiodec/alac.h>
+
 #include "../src/ap_config.h"
 #include "../src/ap_server.h"
 #include "../src/ap_session.h"
@@ -9,12 +15,6 @@
 #include "../src/utils/logger.h"
 #include "../src/utils/packing.h"
 #include "../src/utils/utils.h"
-#include "audiodec/aac_eld.h"
-#include "audiodec/alac.h"
-#include "flv_stream_builder.hpp"
-#include <asio.hpp>
-#include <fstream>
-#include <strstream>
 
 class airplay_mirror_handler : public aps::ap_mirror_session_handler {
 public:
@@ -31,7 +31,6 @@ public:
 
   virtual void on_mirror_stream_started() override {
     LOGI() << "on_mirror_stream_started";
-    // init_flv_file();
     init_video_data_file();
   }
 
@@ -52,7 +51,6 @@ public:
 
   virtual void on_mirror_stream_stopped() override {
     LOGI() << "on_mirror_stream_stopped";
-    // close_flv_data_file();
     close_video_data_file();
   }
 
@@ -82,14 +80,14 @@ public:
   on_audio_stream_started(const aps::audio_data_format_t format) override {
     LOGI() << "on_audio_stream_started: " << format;
     this->format = format;
-    // init_audio_data_file();
+    init_audio_data_file();
   }
 
   virtual void on_audio_stream_data(const aps::rtp_audio_data_packet_t *p,
                                     const uint32_t payload_length) override {
     LOGV() << "on_audio_stream_data: " << payload_length
            << ", timestamp: " << p->timestamp;
-    // append_rtp_data(p->payload, payload_length);
+    append_rtp_data(p->payload, payload_length);
   }
 
   virtual void on_audio_stream_stopped() override {
@@ -102,27 +100,6 @@ public:
 
 private:
   std::string file_id_;
-
-  flv::flv_stream_builder flv_builder_;
-  std::ofstream flv_data_file_;
-  void init_flv_file() {
-    if (flv_data_file_.is_open()) {
-      flv_data_file_.close();
-    }
-
-    std::ostringstream oss;
-    oss << file_id_ << "-screen"
-        << ".flv";
-
-    auto mode =
-        std::ios_base::binary | std::ios_base::binary | std::ios_base::trunc;
-    flv_data_file_.open(oss.str(), mode);
-
-    std::vector<uint8_t> tag;
-    flv_builder_.reset();
-    flv_builder_.init_stream_header(tag, true, true);
-    flv_data_file_.write((char *)tag.data(), tag.size());
-  }
 
   std::ofstream video_data_file_;
   void init_video_data_file() {
@@ -140,25 +117,7 @@ private:
   }
 
   void append_avc_sequence_header(const aps::sms_video_codec_packet_t *p) {
-    auto meta = flv::amf::amf_array::create()
-                    ->with_item("framerate", (double)30)
-                    ->with_item("videocodecid", (double)7)
-                    ->with_item("audiosamplerate", (double)44100)
-                    ->with_item("audiosamplesize", (double)16)
-                    ->with_item("stereo", true)
-                    ->with_item("audiocodecid", (double)10)
-        //->with_item("duration", (double)0)
-        //->with_item("width", (double)1920)
-        //->with_item("height", (double)1080)
-        //->with_item("videodatarate", (double)520)
-        //->with_item("filesize", (double)0)
-        ;
-    std::vector<uint8_t> tag;
-    flv_builder_.append_meta_tag(tag, meta);
-    flv_builder_.append_video_tag_with_avc_decoder_config(tag, 0, p->payload,
-                                                          p->payload_size);
-    flv_data_file_.write((char *)tag.data(), tag.size());
-
+    // Convert from H264 AVCC format to H264 Annex-B format
     uint32_t sc = htonl(0x01);
     std::ostringstream oss;
 
@@ -188,19 +147,12 @@ private:
   }
 
   void append_nalu_data(const aps::sms_video_data_packet_t *p) {
-    // std::vector<uint8_t> tag;
-    // uint64_t timestamp = normalize_ntp_to_ms(p->timestamp);
-    // flv_builder_.append_video_tag_with_avc_nalu_data(tag, timestamp,
-    // p->payload, p->payload_size); flv_data_file_.write((char *)tag.data(),
-    // tag.size());
-
+    // Convert from H264 AVCC format to H264 Annex-B format
     static uint32_t sc = htonl(0x01);
     video_data_file_.write((char *)&sc, sizeof(uint32_t));
     video_data_file_.write((char *)(p->payload + sizeof(uint32_t)),
                            p->payload_size - sizeof(uint32_t));
   }
-
-  void close_flv_data_file() { flv_data_file_.close(); }
 
   void close_video_data_file() { video_data_file_.close(); }
 
@@ -228,20 +180,9 @@ private:
     auto mode =
         std::ios_base::binary | std::ios_base::binary | std::ios_base::trunc;
     audio_data_file_.open(oss.str(), mode);
-
-    std::vector<uint8_t> tag;
-    uint8_t asc[] = {0xF8, 0xE8, 0x50, 0x00};
-    flv_builder_.append_audio_tag_with_aac_specific_config(
-        tag, 0, flv::R44KHZ, flv::S16BIT, flv::STEREO, asc, 4);
-    flv_data_file_.write((char *)tag.data(), tag.size());
   }
 
   void append_rtp_data(const uint8_t *p, int32_t length) {
-    std::vector<uint8_t> tag;
-    flv_builder_.append_audio_tag_with_aac_frame_data(
-        tag, 0, flv::R44KHZ, flv::S16BIT, flv::STEREO, p, length);
-    flv_data_file_.write((char *)tag.data(), tag.size());
-
     std::vector<uint8_t> output(4096);
     int outsize = 0;
 
@@ -357,7 +298,7 @@ airplay_handler::airplay_handler() {}
 airplay_handler::~airplay_handler() {}
 
 int main() {
-  logger::init_logger(false, log_level::LL_INFO);
+  logger::init_logger(false, log_level::LL_VERBOSE);
   aps::ap_server_ptr server = std::make_shared<aps::ap_server>();
   aps::ap_handler_ptr handler = std::make_shared<airplay_handler>();
   aps::ap_config_ptr config = aps::ap_config::default_instance();

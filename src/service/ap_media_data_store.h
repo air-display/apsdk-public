@@ -1,11 +1,13 @@
 #pragma once
-#include <ap_config.h>
-#include <asio.hpp>
 #include <map>
 #include <memory>
+#include <stack>
 #include <string>
 #include <vector>
-#include <stack>
+
+#include <asio.hpp>
+
+#include <ap_config.h>
 
 namespace aps {
 namespace service {
@@ -46,16 +48,16 @@ class ap_media_data_store {
   static constexpr const char *INDEX_M3U8 = "index.m3u8";
 
   /// <summary>
-  /// 
+  ///
   /// </summary>
   static constexpr const char *HTTP_SCHEME = "http://";
 
   /// <summary>
-  /// 
+  ///
   /// </summary>
   typedef std::map<std::string, std::string> media_data;
 
- public:
+public:
   static ap_media_data_store &get();
 
   void set_store_root(uint16_t port);
@@ -70,7 +72,7 @@ class ap_media_data_store {
 
   void reset();
 
- protected:
+protected:
   void add_media_data(const std::string &uri, const std::string &data);
 
   bool is_local_m3u8_uri(const std::string &uri);
@@ -87,7 +89,7 @@ class ap_media_data_store {
 
   ~ap_media_data_store();
 
- private:
+private:
   uint32_t request_id_;
   std::string session_id_;
   std::string primary_uri_;
@@ -97,5 +99,5 @@ class ap_media_data_store {
   media_data media_data_;
   std::mutex mtx_;
 };
-}
-}
+} // namespace service
+} // namespace aps

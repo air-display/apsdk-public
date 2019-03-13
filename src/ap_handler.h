@@ -1,19 +1,21 @@
 #ifndef AP_HANDLER_H
 #define AP_HANDLER_H
 #pragma once
-#include <ap_session.h>
-#include <ap_types.h>
-#include <stdint.h>
+
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
+
+#include <ap_session.h>
+#include <ap_types.h>
 
 namespace aps {
 /// <summary>
 ///
 /// </summary>
 class ap_handler {
- public:
+public:
   /// <summary>
   ///
   /// </summary>
@@ -30,7 +32,7 @@ class ap_handler {
   virtual void on_thread_stop(){};
 
   /// <summary>
-  /// 
+  ///
   /// </summary>
   /// <param name="session"></param>
   virtual void on_session_begin(aps::ap_session_ptr session) = 0;
@@ -45,5 +47,5 @@ class ap_handler {
 ///
 /// </summary>
 typedef std::shared_ptr<ap_handler> ap_handler_ptr;
-}  // namespace aps
-#endif  // AP_HANDLER_H
+} // namespace aps
+#endif // AP_HANDLER_H

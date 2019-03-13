@@ -1,16 +1,30 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 #pragma once
-#include <asio.hpp>
+#include <cstdint>
 #include <functional>
-#include <stdint.h>
 #include <string>
+#include <thread>
 
-#if defined(ANDROID)
+#include <asio.hpp>
+
+/// <summary>
+///
+/// </summary>
+typedef asio::thread aps_thread;
+
+#ifdef __GNUC__
+#ifdef ANDROID
 #include <endian.h>
 #define ntohll(n) ntohq(n)
 #define htonll(n) htonq(n)
-#endif
+#else
+#define ntohll(n)                                                              \
+  (((uint64_t)ntohl((uint32_t)n)) << 32) + ntohl(((uint64_t)n) >> 32)
+#define htonll(n)                                                              \
+  (((uint64_t)htonl((uint32_t)n)) << 32) + htonl(((uint64_t)n) >> 32)
+#endif // ANDROID
+#endif // __GNUC__
 
 inline float _ntohf(float f) {
   union {

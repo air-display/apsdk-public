@@ -1,11 +1,13 @@
 #pragma once
 #include <array>
-#include <asio.hpp>
 #include <map>
 #include <string>
+#include <vector>
+
+#include <asio.hpp>
+
 #include <utils/logger.h>
 #include <utils/packing.h>
-#include <vector>
 
 //#define DUMP_REQUEST_BODY 1
 
@@ -43,8 +45,7 @@ typedef pair_verify_header_s pair_verify_header_t;
 ///
 /// </summary>
 PACKED(struct fp_header_s {
-  static const uint32_t FP_SIG = 'FPLY';
-  uint8_t signature[4];
+  uint8_t signature[4]; // Always 'FPLY'
   uint8_t major_version;
   uint8_t minor_version;
   uint8_t phase;

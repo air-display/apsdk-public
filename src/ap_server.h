@@ -2,9 +2,10 @@
 #define AP_SERVER_H
 #pragma once
 
+#include <memory>
+
 #include <ap_config.h>
 #include <ap_handler.h>
-#include <memory>
 
 namespace aps {
 /// <summary>

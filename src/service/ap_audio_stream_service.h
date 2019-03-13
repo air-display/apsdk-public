@@ -1,16 +1,18 @@
 #pragma once
-#include <ap_handler.h>
-#include <ap_types.h>
-#include <ap_session.h>
-#include <asio.hpp>
-#include <crypto/ap_crypto.h>
 #include <memory>
+#include <queue>
+#include <unordered_set>
+#include <vector>
+
+#include <asio.hpp>
+
+#include <ap_handler.h>
+#include <ap_session.h>
+#include <ap_types.h>
+#include <crypto/ap_crypto.h>
 #include <network/udp_service.h>
 #include <service/ap_audio_stream_service_details.h>
 #include <utils/packing.h>
-#include <vector>
-#include <unordered_set>
-#include <queue>
 
 using namespace aps::service::audio::details;
 
@@ -55,17 +57,19 @@ typedef cached_packet_s cached_packet_t;
 typedef std::shared_ptr<cached_packet_t> cached_packet_ptr;
 
 struct cmp {
-  bool operator()(const cached_packet_ptr& a, const cached_packet_ptr& b) {
+  bool operator()(const cached_packet_ptr &a, const cached_packet_ptr &b) {
     return a->sequence > b->sequence;
   }
 };
 
-typedef std::priority_queue<cached_packet_ptr, std::vector<cached_packet_ptr>, cmp> cached_packet_queue;
+typedef std::priority_queue<cached_packet_ptr, std::vector<cached_packet_ptr>,
+                            cmp>
+    cached_packet_queue;
 
 class ap_audio_stream_service {
 public:
   explicit ap_audio_stream_service(aps::ap_crypto_ptr &crypto,
-                                  aps::ap_mirror_session_handler_ptr &handler);
+                                   aps::ap_mirror_session_handler_ptr &handler);
 
   ~ap_audio_stream_service();
 

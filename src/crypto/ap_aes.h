@@ -3,6 +3,7 @@
 #pragma once
 
 #include <array>
+
 #include <opensslaes/aes.h>
 
 class ap_aes_ctr128 {

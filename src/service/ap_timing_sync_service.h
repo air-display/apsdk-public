@@ -1,11 +1,13 @@
 #pragma once
-#include <ap_types.h>
-#include <asio.hpp>
-#include <crypto/ap_crypto.h>
 #include <memory>
+#include <vector>
+
+#include <asio.hpp>
+
+#include <ap_types.h>
+#include <crypto/ap_crypto.h>
 #include <network/udp_service.h>
 #include <utils/packing.h>
-#include <vector>
 
 namespace aps {
 namespace service {

@@ -1,23 +1,24 @@
 #pragma once
-#include <ap_config.h>
 #include <array>
-#include <asio.hpp>
-#include <crypto/ap_crypto.h>
 #include <map>
 #include <memory>
-#include <network/xtxp_connection_base.h>
 #include <string>
 #include <vector>
 
+#include <asio.hpp>
+
+#include <ap_config.h>
+#include <crypto/ap_crypto.h>
+#include <network/xtxp_connection_base.h>
 
 using namespace aps::network;
 
 namespace aps {
 namespace service {
-class ap_media_http_connection 
-	: public xtxp_connection_base
-	, public std::enable_shared_from_this<ap_media_http_connection> {
- public:
+class ap_media_http_connection
+    : public xtxp_connection_base,
+      public std::enable_shared_from_this<ap_media_http_connection> {
+public:
   ap_media_http_connection(asio::io_context &io_ctx);
   ~ap_media_http_connection();
 
@@ -25,12 +26,12 @@ class ap_media_http_connection
 
   virtual void add_common_header(const request &req, response &res) override;
 
- protected:
+protected:
   void initialize_request_handlers();
 
   virtual std::shared_ptr<xtxp_connection_base> shared_from_self() override;
 
- private:
+private:
 };
 
 typedef std::shared_ptr<ap_media_http_connection> ap_media_http_connection_ptr;
@@ -40,12 +41,12 @@ typedef std::weak_ptr<ap_media_http_connection>
 class ap_media_http_service
     : public tcp_service_base,
       public std::enable_shared_from_this<ap_media_http_service> {
- public:
+public:
   ap_media_http_service(ap_config_ptr &config, uint16_t port = 0);
 
   ~ap_media_http_service();
 
- protected:
+protected:
   virtual tcp_connection_ptr prepare_new_connection() override;
 
 private:

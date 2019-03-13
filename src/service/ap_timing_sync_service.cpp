@@ -6,14 +6,13 @@ using namespace aps::network;
 
 namespace aps {
 namespace service {
-ap_timing_sync_service::ap_timing_sync_service(
-    const uint16_t port /*= 0*/)
+ap_timing_sync_service::ap_timing_sync_service(const uint16_t port /*= 0*/)
     : network::udp_service_base("ap_timing_sync_service", port) {}
 
 ap_timing_sync_service::~ap_timing_sync_service() {}
 
-void ap_timing_sync_service::set_server_endpoint(
-    const asio::ip::address &addr, uint16_t port) {
+void ap_timing_sync_service::set_server_endpoint(const asio::ip::address &addr,
+                                                 uint16_t port) {
   remote_endpoint_.address(addr);
   remote_endpoint_.port(port);
 }
@@ -29,9 +28,9 @@ void ap_timing_sync_service::post_send_query() {
                remote_endpoint_);
 }
 
-void ap_timing_sync_service::on_send_to(
-    asio::ip::udp::endpoint remote_endpoint, const asio::error_code &e,
-    std::size_t bytes_transferred) {
+void ap_timing_sync_service::on_send_to(asio::ip::udp::endpoint remote_endpoint,
+                                        const asio::error_code &e,
+                                        std::size_t bytes_transferred) {
   if (e)
     LOGE() << "Failed to send timing query: " << e.message();
   else {
@@ -59,5 +58,5 @@ void ap_timing_sync_service::on_recv_from(
     LOGD() << "Timing reply packet received successfully";
   }
 }
-}
-}
+} // namespace service
+} // namespace aps

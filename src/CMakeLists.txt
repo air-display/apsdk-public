@@ -38,6 +38,11 @@ elseif (ANDROID)
         mdns/dns_sd.h
         mdns/Android/net_service_impl.cpp
     )
+elseif (LINUX)
+    list(APPEND SRC_MDNS
+        mdns/dns_sd.h
+        mdns/Linux/net_service_impl.cpp
+    )
 endif()
 source_group("mdns" FILES ${SRC_MDNS})
 
@@ -96,8 +101,10 @@ if (APPLE)
     if (NOT FOUNDATION_FX)
         message(FATAL_ERROR "Foundation.Framework not found")
     endif()
-
     target_link_libraries(aps PUBLIC ${FOUNDATION_FX})
 elseif (ANDROID)
     target_link_libraries(aps PUBLIC mdnssd)
+elseif (LINUX)
+    # pthread is required by asio standalone
+    target_link_libraries(aps PUBLIC pthread)
 endif()

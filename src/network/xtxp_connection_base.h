@@ -1,13 +1,14 @@
 #pragma once
 #include <array>
-#include <asio.hpp>
 #include <map>
 #include <mutex>
-#include <network/tcp_service.h>
-#include <network/xtxp_message.h>
 #include <string>
 #include <vector>
 
+#include <asio.hpp>
+
+#include <network/tcp_service.h>
+#include <network/xtxp_message.h>
 
 namespace aps {
 namespace network {
@@ -65,8 +66,7 @@ private:
   std::mutex mtx_;
 };
 
-class xtxp_connection_base
-    : public tcp_connection_base {
+class xtxp_connection_base : public tcp_connection_base {
 public:
   explicit xtxp_connection_base(asio::io_context &io_ctx);
 

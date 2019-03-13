@@ -1,16 +1,17 @@
 #pragma once
-#include <asio.hpp>
 #include <memory>
 #include <thread>
+
+#include <asio.hpp>
+
 #include <utils/logger.h>
 #include <utils/utils.h>
-
 
 namespace aps {
 namespace network {
 class tcp_connection {
 public:
-  virtual ~tcp_connection() {};
+  virtual ~tcp_connection(){};
 
   virtual void start() = 0;
 
@@ -38,7 +39,6 @@ public:
 
 typedef std::shared_ptr<tcp_service> tcp_service_ptr;
 typedef std::weak_ptr<tcp_service> tcp_service_weak_ptr;
-
 
 class tcp_connection_base : public tcp_connection {
 public:
@@ -128,7 +128,7 @@ protected:
 protected:
   bool setup() {
     // Create the worker thread
-    worker_thread_ = std::make_shared<asio::thread>([&]() {
+    worker_thread_ = std::make_shared<aps_thread>([&]() {
 #if defined(DEBUG) || defined(_DEBUG)
       set_current_thread_name(service_name_.c_str());
 #endif
@@ -166,7 +166,7 @@ private:
   asio::io_context::work io_work_;
   asio::ip::tcp::acceptor acceptor_;
   asio::ip::tcp::endpoint local_endpoint_;
-  std::shared_ptr<asio::thread> worker_thread_;
+  std::shared_ptr<aps_thread> worker_thread_;
   thread_actoin worker_thread_start_;
   thread_actoin worker_thread_stop_;
 

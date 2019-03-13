@@ -1,7 +1,9 @@
 #pragma once
-#include <asio.hpp>
-#include <utils/packing.h>
 #include <vector>
+
+#include <asio.hpp>
+
+#include <utils/packing.h>
 
 namespace aps {
 namespace service {
