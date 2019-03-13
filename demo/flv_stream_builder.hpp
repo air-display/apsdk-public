@@ -7,7 +7,7 @@
 namespace flv {
 namespace amf {
 /// <summary>
-/// 
+///
 /// </summary>
 enum amf_value_type_e {
   NumberType = 0,  // 8 bytes
@@ -26,26 +26,26 @@ enum amf_value_type_e {
 typedef amf_value_type_e amf_value_type_t;
 
 /// <summary>
-/// 
+///
 /// </summary>
 class amf_root {
 public:
   virtual ~amf_root(){};
 
   /// <summary>
-  /// 
+  ///
   /// </summary>
   /// <returns></returns>
   virtual amf_value_type_t value_type() const = 0;
 
   /// <summary>
-  /// 
+  ///
   /// </summary>
   /// <param name="buf"></param>
   virtual void serialize(std::vector<uint8_t> &buf) = 0;
 
   /// <summary>
-  /// 
+  ///
   /// </summary>
   /// <param name="data"></param>
   /// <returns></returns>
@@ -54,7 +54,7 @@ public:
 typedef std::shared_ptr<amf_root> amf_root_ref;
 
 /// <summary>
-/// 
+///
 /// </summary>
 class amf_value : public amf_root {
 protected:
@@ -69,17 +69,17 @@ public:
 typedef std::shared_ptr<amf_value> amf_value_ref;
 
 /// <summary>
-/// 
+///
 /// </summary>
 class amf_number : public amf_value {
 public:
   /// <summary>
-  /// 
+  ///
   /// </summary>
   friend std::_Ref_count_obj<amf_number>;
 
   /// <summary>
-  /// 
+  ///
   /// </summary>
   /// <param name="value"></param>
   /// <returns></returns>
@@ -88,7 +88,7 @@ public:
   }
 
   /// <summary>
-  /// 
+  ///
   /// </summary>
   /// <param name="buf"></param>
   virtual void serialize(std::vector<uint8_t> &buf) override {
@@ -102,7 +102,7 @@ public:
   }
 
   /// <summary>
-  /// 
+  ///
   /// </summary>
   /// <param name="data"></param>
   /// <returns></returns>
@@ -112,20 +112,20 @@ public:
 
 protected:
   /// <summary>
-  /// 
+  ///
   /// </summary>
   amf_number(double value) : amf_value(NumberType), v(value){};
 
 private:
   /// <summary>
-  /// 
+  ///
   /// </summary>
   double v;
 };
 typedef std::shared_ptr<amf_number> amf_number_ref;
 
 /// <summary>
-/// 
+///
 /// </summary>
 class amf_boolean : public amf_value {
 public:
@@ -153,7 +153,7 @@ private:
 typedef std::shared_ptr<amf_boolean> amf_boolean_ref;
 
 /// <summary>
-/// 
+///
 /// </summary>
 class amf_string : public amf_value {
 public:
@@ -184,7 +184,7 @@ private:
 typedef std::shared_ptr<amf_string> amf_string_ref;
 
 /// <summary>
-/// 
+///
 /// </summary>
 class amf_object : public amf_value,
                    public std::enable_shared_from_this<amf_object> {
@@ -247,7 +247,7 @@ private:
 typedef std::shared_ptr<amf_object> amf_object_ref;
 
 /// <summary>
-/// 
+///
 /// </summary>
 class amf_array : public amf_value,
                   public std::enable_shared_from_this<amf_array> {
@@ -326,7 +326,7 @@ static const char *ON_META_DATA = "onMetaData";
 static const uint8_t ON_META_DATA_LENGTH = 0x0a;
 
 /// <summary>
-/// 
+///
 /// </summary>
 enum tag_type_e {
   Unknown = 0,
@@ -339,7 +339,7 @@ enum tag_type_e {
 typedef tag_type_e tag_type_t;
 
 /// <summary>
-/// 
+///
 /// </summary>
 enum audio_data_sound_format {
   LPCM_PE = 0,
@@ -359,7 +359,7 @@ enum audio_data_sound_format {
 };
 
 /// <summary>
-/// 
+///
 /// </summary>
 enum aac_audio_data_packet_type {
   AacSequenceHeader = 0,
@@ -367,7 +367,7 @@ enum aac_audio_data_packet_type {
 };
 
 /// <summary>
-/// 
+///
 /// </summary>
 enum video_data_frame_type {
   KEY_FRAME = 1,
@@ -378,7 +378,7 @@ enum video_data_frame_type {
 };
 
 /// <summary>
-/// 
+///
 /// </summary>
 enum video_data_codec_id {
   JPEG = 1,
@@ -391,7 +391,7 @@ enum video_data_codec_id {
 };
 
 /// <summary>
-/// 
+///
 /// </summary>
 enum avc_video_packet_type {
   AvcSequenceHeader = 0,
@@ -408,7 +408,7 @@ enum audio_data_sound_rate_e {
 typedef audio_data_sound_rate_e audio_data_sound_rate_t;
 
 /// <summary>
-/// 
+///
 /// </summary>
 enum audio_data_sound_size_e {
   S8BIT = 0,
@@ -417,7 +417,7 @@ enum audio_data_sound_size_e {
 typedef audio_data_sound_size_e audio_data_sound_size_t;
 
 /// <summary>
-/// 
+///
 /// </summary>
 enum audio_data_sound_type_e {
   MONO = 0,
@@ -426,7 +426,7 @@ enum audio_data_sound_type_e {
 typedef audio_data_sound_type_e audio_data_sound_type_t;
 
 /// <summary>
-/// 
+///
 /// </summary>
 class flv_stream_builder {
 private:
@@ -439,7 +439,7 @@ public:
   ~flv_stream_builder() {}
 
   /// <summary>
-  /// 
+  ///
   /// </summary>
   void reset() {
     tag_count_ = 0;
@@ -448,14 +448,14 @@ public:
   }
 
   /// <summary>
-  /// 
+  ///
   /// </summary>
   /// <param name="buf"></param>
   /// <param name="has_audio"></param>
   /// <param name="has_video"></param>
   /// <returns></returns>
-  flv_stream_builder & init_stream_header(std::vector<uint8_t> &buf, bool has_audio,
-                          bool has_video) {
+  flv_stream_builder &init_stream_header(std::vector<uint8_t> &buf,
+                                         bool has_audio, bool has_video) {
     buf.clear();
     buf.resize(9 + 4, 0);
 
@@ -494,12 +494,13 @@ public:
   }
 
   /// <summary>
-  /// 
+  ///
   /// </summary>
   /// <param name="buf"></param>
   /// <param name="meta"></param>
   /// <returns></returns>
-  flv_stream_builder & append_meta_tag(std::vector<uint8_t> &buf, amf::amf_value_ref meta) {
+  flv_stream_builder &append_meta_tag(std::vector<uint8_t> &buf,
+                                      amf::amf_value_ref meta) {
     std::vector<uint8_t> meta_data;
     amf::amf_string::create(ON_META_DATA)->serialize(meta_data);
     meta->serialize(meta_data);
@@ -508,31 +509,31 @@ public:
   }
 
   /// <summary>
-  /// 
+  ///
   /// </summary>
   /// <param name="buf"></param>
   /// <param name="timestamp"></param>
   /// <param name="data"></param>
   /// <param name="length"></param>
   /// <returns></returns>
-  flv_stream_builder & append_video_tag(std::vector<uint8_t> &buf, uint32_t timestamp,
-                        const uint8_t *data, uint32_t length) {
+  flv_stream_builder &append_video_tag(std::vector<uint8_t> &buf,
+                                       uint32_t timestamp, const uint8_t *data,
+                                       uint32_t length) {
     append_tag(buf, Video, timestamp, 0, data, length);
     return *this;
   }
 
   /// <summary>
-  /// 
+  ///
   /// </summary>
   /// <param name="buf"></param>
   /// <param name="timestamp"></param>
   /// <param name="data"></param>
   /// <param name="length"></param>
   /// <returns></returns>
-  flv_stream_builder & append_video_tag_with_avc_decoder_config(std::vector<uint8_t> &buf,
-                                           uint32_t timestamp,
-                                           const uint8_t *data,
-                                           uint32_t length) {
+  flv_stream_builder &append_video_tag_with_avc_decoder_config(
+      std::vector<uint8_t> &buf, uint32_t timestamp, const uint8_t *data,
+      uint32_t length) {
     std::vector<uint8_t> avc_packet;
     avc_packet.reserve(512);
     avc_packet.emplace_back(INTER_FRAME << 4 | AVC);
@@ -546,14 +547,15 @@ public:
   }
 
   /// <summary>
-  /// 
+  ///
   /// </summary>
   /// <param name="buf"></param>
   /// <param name="timestamp"></param>
   /// <param name="data"></param>
   /// <param name="length"></param>
   /// <returns></returns>
-  flv_stream_builder & append_video_tag_with_avc_nalu_data(std::vector<uint8_t> &buf,
+  flv_stream_builder &
+  append_video_tag_with_avc_nalu_data(std::vector<uint8_t> &buf,
                                       uint32_t timestamp, const uint8_t *data,
                                       uint32_t length) {
     std::vector<uint8_t> avc_packet;
@@ -569,22 +571,23 @@ public:
     return *this;
   }
 
-/// <summary>
-/// 
-/// </summary>
-/// <param name="buf"></param>
-/// <param name="timestamp"></param>
-/// <param name="data"></param>
-/// <param name="length"></param>
-/// <returns></returns>
-flv_stream_builder & append_audio_tag(std::vector<uint8_t> &buf, uint32_t timestamp,
-  const uint8_t *data, uint32_t length) {
-  append_tag(buf, Audio, timestamp, 0, data, length);
-  return *this;
-}
+  /// <summary>
+  ///
+  /// </summary>
+  /// <param name="buf"></param>
+  /// <param name="timestamp"></param>
+  /// <param name="data"></param>
+  /// <param name="length"></param>
+  /// <returns></returns>
+  flv_stream_builder &append_audio_tag(std::vector<uint8_t> &buf,
+                                       uint32_t timestamp, const uint8_t *data,
+                                       uint32_t length) {
+    append_tag(buf, Audio, timestamp, 0, data, length);
+    return *this;
+  }
 
   /// <summary>
-  /// 
+  ///
   /// </summary>
   /// <param name="buf"></param>
   /// <param name="timestamp"></param>
@@ -594,7 +597,7 @@ flv_stream_builder & append_audio_tag(std::vector<uint8_t> &buf, uint32_t timest
   /// <param name="data"></param>
   /// <param name="length"></param>
   /// <returns></returns>
-  flv_stream_builder & append_audio_tag_with_aac_specific_config(
+  flv_stream_builder &append_audio_tag_with_aac_specific_config(
       std::vector<uint8_t> &buf, uint32_t timestamp,
       audio_data_sound_rate_t rate, audio_data_sound_size_t size,
       audio_data_sound_type_t type, const uint8_t *data, uint32_t length) {
@@ -612,7 +615,7 @@ flv_stream_builder & append_audio_tag(std::vector<uint8_t> &buf, uint32_t timest
   }
 
   /// <summary>
-  /// 
+  ///
   /// </summary>
   /// <param name="buf"></param>
   /// <param name="timestamp"></param>
@@ -622,12 +625,10 @@ flv_stream_builder & append_audio_tag(std::vector<uint8_t> &buf, uint32_t timest
   /// <param name="data"></param>
   /// <param name="length"></param>
   /// <returns></returns>
-  flv_stream_builder & append_audio_tag_with_aac_frame_data(std::vector<uint8_t> &buf,
-                                       uint32_t timestamp,
-                                       audio_data_sound_rate_t rate,
-                                       audio_data_sound_size_t size,
-                                       audio_data_sound_type_t type,
-                                       const uint8_t *data, uint32_t length) {
+  flv_stream_builder &append_audio_tag_with_aac_frame_data(
+      std::vector<uint8_t> &buf, uint32_t timestamp,
+      audio_data_sound_rate_t rate, audio_data_sound_size_t size,
+      audio_data_sound_type_t type, const uint8_t *data, uint32_t length) {
     std::vector<uint8_t> aac_packet;
     aac_packet.reserve(32);
     uint8_t fb = AAC << 4;
@@ -643,7 +644,7 @@ flv_stream_builder & append_audio_tag(std::vector<uint8_t> &buf, uint32_t timest
 
 protected:
   /// <summary>
-  /// 
+  ///
   /// </summary>
   /// <param name="buf"></param>
   /// <param name="type"></param>
@@ -689,7 +690,7 @@ protected:
   }
 
   /// <summary>
-  /// 
+  ///
   /// </summary>
   /// <param name="buf"></param>
   /// <param name="length"></param>
