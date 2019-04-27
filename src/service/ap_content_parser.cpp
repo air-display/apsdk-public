@@ -88,7 +88,7 @@ void aps::ap_content_parser::get_user_agent_version(
   static std::regex pattern(
       "(.*)\\/([0-9]+)(?:\\.([0-9]+)(?:\\.([0-9]+)(?:\\.([0-9]+))?)?)?");
   std::cmatch groups;
-  memset(&version, sizeof(aps::agent_version_t), 0);
+  memset(&version, 0, sizeof(aps::agent_version_t));
   if (std::regex_search(content, groups, pattern)) {
     if (groups.size() > 1) {
       agent = groups.str(1);
