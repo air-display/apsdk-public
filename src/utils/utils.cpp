@@ -16,8 +16,7 @@ uint64_t get_ntp_timestamp() {
   uint64_t seconds = 0;
   uint64_t fraction = 0;
 
-  milliseconds ms =
-      duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+  milliseconds ms = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
 
   seconds = ms.count() / 1000 + EPOCH;
   fraction = (uint64_t)((ms.count() % 1000) * NTP_SCALE_FRAC) / 1000;
@@ -27,7 +26,7 @@ uint64_t get_ntp_timestamp() {
 
 uint64_t normalize_ntp_to_ms(uint64_t ntp) {
   uint64_t milliseconds = (ntp >> 32) * 1000;
-  uint32_t fraction = (uint32_t)(ntp & 0x0ffffffff) * 1000 / NTP_SCALE_FRAC;
+  uint32_t fraction = (uint32_t)((ntp & 0x0ffffffff) * 1000.f / NTP_SCALE_FRAC);
   return (milliseconds + fraction);
 }
 
@@ -43,21 +42,22 @@ const char *gmt_time_string() {
 }
 
 std::string generate_mac_address() {
-  uint64_t ts =
-      duration_cast<milliseconds>(system_clock::now().time_since_epoch())
-          .count();
+  uint64_t ts = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 
   static char buffer[32];
   memset(buffer, 0, 32);
-  std::sprintf(buffer, "%02X:%02X:%02X:%02X:%02X:%02X",
-               (uint8_t)((ts >> 0) & 0xff), (uint8_t)((ts >> 8) & 0xff),
-               (uint8_t)((ts >> 16) & 0xff), (uint8_t)((ts >> 24) & 0xff),
-               (uint8_t)((ts >> 32) & 0xff), (uint8_t)((ts >> 40) & 0xff));
+  std::sprintf(buffer,
+               "%02X:%02X:%02X:%02X:%02X:%02X",
+               (uint8_t)((ts >> 0) & 0xff),
+               (uint8_t)((ts >> 8) & 0xff),
+               (uint8_t)((ts >> 16) & 0xff),
+               (uint8_t)((ts >> 24) & 0xff),
+               (uint8_t)((ts >> 32) & 0xff),
+               (uint8_t)((ts >> 40) & 0xff));
   return buffer;
 }
 
-std::string string_replace(const std::string &str, const std::string &pattern,
-                           const std::string &with) {
+std::string string_replace(const std::string &str, const std::string &pattern, const std::string &with) {
   std::regex p(pattern);
   return std::regex_replace(str, p, with);
 }
@@ -110,8 +110,7 @@ std::string get_best_quality_stream_uri(const char *data, uint32_t length) {
   while (stream_inf && stream_inf->data) {
     if (!best_quality_stream) {
       best_quality_stream = stream_inf;
-    } else if (stream_inf->data->bandwidth >
-               best_quality_stream->data->bandwidth) {
+    } else if (stream_inf->data->bandwidth > best_quality_stream->data->bandwidth) {
       best_quality_stream = stream_inf;
     }
     stream_inf = stream_inf->next;

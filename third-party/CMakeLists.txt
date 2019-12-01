@@ -1,9 +1,6 @@
 project(aps-third-party)
 
 #################################################
-add_subdirectory(fdk-aac)
-
-#################################################
 file(GLOB_RECURSE curve25519_SRC_FILES
     "./curve25519/*.c"
     "./curve25519/*.h"
@@ -68,15 +65,4 @@ file(GLOB_RECURSE opensslaes_SRC_FILES
 add_library(opensslaes STATIC ${opensslaes_SRC_FILES})
 if(WIN32)
     set_target_properties(opensslaes PROPERTIES FOLDER third-party)
-endif(WIN32)
-
-#################################################
-file(GLOB_RECURSE audiodec_SRC_FILES
-    "./audiodec/*.cpp"
-    "./audiodec/*.h"
-)
-add_library(audiodec STATIC ${audiodec_SRC_FILES})
-target_link_libraries(audiodec PRIVATE fdk-aac)
-if(WIN32)
-    set_target_properties(audiodec PROPERTIES FOLDER third-party)
 endif(WIN32)

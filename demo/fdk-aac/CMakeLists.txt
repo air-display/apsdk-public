@@ -192,13 +192,11 @@ add_library(fdk-aac ${libfdk_aac_SOURCES})
 target_include_directories (fdk-aac PUBLIC ${FDK_AAC_INCLUDES})
 
 if(WIN32)
-    set_target_properties(fdk-aac PROPERTIES FOLDER third-party)
 	add_compile_options(/EHsc /Dinline=__inline)
 	list(APPEND FDK_AAC_INCLUDES win32)
 endif(WIN32)
 
 list(APPEND FDK_AAC_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR})
-
 
 #set(aac_enc_SOURCES aac-enc.c wavreader.c)
 #add_executable(aac-enc ${libfdk_aac_SOURCES} ${aac_enc_SOURCES})

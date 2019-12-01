@@ -8,7 +8,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "fdk-aac/libAACdec/include/aacdecoder_lib.h"
+
+#include "../fdk-aac/libAACdec/include/aacdecoder_lib.h"
 
 struct aaceld_context_s {
   int fdk_flags;
@@ -43,7 +44,7 @@ aaceld_context create_aaceld_decoder() {
 
   aac->fdk_flags = 0;
   aac->transportFmt = (TRANSPORT_TYPE)0; // raw
-  aac->nrOfLayers = 1;   // 1 layer
+  aac->nrOfLayers = 1;                   // 1 layer
   aac->phandle = aacDecoder_Open(aac->transportFmt, aac->nrOfLayers);
   if (aac->phandle == NULL) {
     printf("aacDecoder open faild!\n");
@@ -74,7 +75,7 @@ aaceld_context create_aaceld_decoder() {
  * called by external, aac data input queue
  */
 void aaceld_decode_frame(aaceld_context aaceld_ctx, unsigned char *inbuffer,
-                          int inputsize, void *outbuffer, int *outputsize) {
+                         int inputsize, void *outbuffer, int *outputsize) {
   int ret = 0;
   aaceld_context_s *aaceld = (aaceld_context_s *)aaceld_ctx;
   UCHAR *input_buf[1] = {inbuffer};
@@ -90,10 +91,10 @@ void aaceld_decode_frame(aaceld_context aaceld_ctx, unsigned char *inbuffer,
   }
 
   /* step 2 -> call decoder function */
-  ret = aacDecoder_DecodeFrame(aaceld->phandle, (INT_PCM *)outbuffer, pcm_pkt_size,
-                               aaceld->fdk_flags);
+  ret = aacDecoder_DecodeFrame(aaceld->phandle, (INT_PCM *)outbuffer,
+                               pcm_pkt_size, aaceld->fdk_flags);
   if (ret != AAC_DEC_OK) {
-    //fprintf(stderr, "aacDecoder_DecodeFrame : 0x%x -- inputsize: %d\n", ret,
+    // fprintf(stderr, "aacDecoder_DecodeFrame : 0x%x -- inputsize: %d\n", ret,
     //        inputsize);
     *outputsize = 0;
     return;
@@ -102,7 +103,8 @@ void aaceld_decode_frame(aaceld_context aaceld_ctx, unsigned char *inbuffer,
   *outputsize = pcm_pkt_size;
 
   /* TOCHECK: need to check and handle inputsize != valid_size ? */
-  //fprintf(stderr, "pcm output %d -- inputsize: %d\n", *outputsize, inputsize);
+  // fprintf(stderr, "pcm output %d -- inputsize: %d\n", *outputsize,
+  // inputsize);
 }
 
 void destroy_aaceld_decoder(aaceld_context aaceld_ctx) {
@@ -112,4 +114,4 @@ void destroy_aaceld_decoder(aaceld_context aaceld_ctx) {
     free(aaceld);
   }
 }
-}
+} // namespace aps
