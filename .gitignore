@@ -8,3 +8,4 @@
 /platforms/android/aps-sdk/mobile/*.classpath
 /platforms/android/aps-sdk/mobile/*.project
 /platforms/android/aps-sdk/mobile/.settings/*.prefs
+/.vscode
