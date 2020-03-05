@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+?Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -83,7 +83,6 @@ amm-info@iis.fraunhofer.de
 
 #include "psdec_hybrid.h"
 
-
 #include "fft.h"
 #include "sbr_ram.h"
 
@@ -102,24 +101,23 @@ amm-info@iis.fraunhofer.de
 
 *******************************************************************************/
 
-
 SBR_ERROR
-InitHybridFilterBank ( HANDLE_HYBRID hs,          /*!< Handle to HYBRID struct. */
-                       SCHAR frameSize,           /*!< Framesize (in Qmf súbband samples). */
-                       SCHAR noBands,             /*!< Number of Qmf bands for hybrid filtering. */
-                       const UCHAR *pResolution ) /*!< Resolution in Qmf bands (length noBands). */
+InitHybridFilterBank(HANDLE_HYBRID hs,         /*!< Handle to HYBRID struct. */
+                     SCHAR frameSize,          /*!< Framesize (in Qmf súbband samples). */
+                     SCHAR noBands,            /*!< Number of Qmf bands for hybrid filtering. */
+                     const UCHAR *pResolution) /*!< Resolution in Qmf bands (length noBands). */
 {
   SCHAR i;
   UCHAR maxNoChannels = 0;
 
   for (i = 0; i < noBands; i++) {
     hs->pResolution[i] = pResolution[i];
-    if(pResolution[i] > maxNoChannels)
+    if (pResolution[i] > maxNoChannels)
       maxNoChannels = pResolution[i];
   }
 
-  hs->nQmfBands     = noBands;
-  hs->frameSize     = frameSize;
+  hs->nQmfBands = noBands;
+  hs->frameSize = frameSize;
   hs->qmfBufferMove = HYBRID_FILTER_LENGTH - 1;
 
   hs->sf_mQmfBuffer = 0;
@@ -166,35 +164,31 @@ InitHybridFilterBank ( HANDLE_HYBRID hs,          /*!< Handle to HYBRID struct. 
 </pre>
 */
 
-static void slotBasedDualChannelFiltering( const FIXP_DBL *pQmfReal,
-                                           const FIXP_DBL *pQmfImag,
+static void slotBasedDualChannelFiltering(const FIXP_DBL *pQmfReal, const FIXP_DBL *pQmfImag,
 
-                                           FIXP_DBL       *mHybridReal,
-                                           FIXP_DBL       *mHybridImag)
-{
+                                          FIXP_DBL *mHybridReal, FIXP_DBL *mHybridImag) {
 
-  FIXP_DBL  t1, t3, t5, t6;
+  FIXP_DBL t1, t3, t5, t6;
 
   /* symmetric filter coefficients */
 
   /*  you don't have to shift the result after fMult because of p2_13_20 <= 0.5 */
-  t1 = fMultDiv2(p2_13_20[1] , ( (pQmfReal[1] >> 1) + (pQmfReal[11] >> 1)));
-  t3 = fMultDiv2(p2_13_20[3] , ( (pQmfReal[3] >> 1) + (pQmfReal[ 9] >> 1)));
-  t5 = fMultDiv2(p2_13_20[5] , ( (pQmfReal[5] >> 1) + (pQmfReal[ 7] >> 1)));
-  t6 = fMultDiv2(p2_13_20[6] ,   (pQmfReal[6] >> 1) );
+  t1 = fMultDiv2(p2_13_20[1], ((pQmfReal[1] >> 1) + (pQmfReal[11] >> 1)));
+  t3 = fMultDiv2(p2_13_20[3], ((pQmfReal[3] >> 1) + (pQmfReal[9] >> 1)));
+  t5 = fMultDiv2(p2_13_20[5], ((pQmfReal[5] >> 1) + (pQmfReal[7] >> 1)));
+  t6 = fMultDiv2(p2_13_20[6], (pQmfReal[6] >> 1));
 
   mHybridReal[0] = (t1 + t3 + t5 + t6) << 2;
-  mHybridReal[1] = (- t1 - t3 - t5 + t6) << 2;
+  mHybridReal[1] = (-t1 - t3 - t5 + t6) << 2;
 
-  t1 = fMultDiv2(p2_13_20[1] , ( (pQmfImag[1] >> 1) + (pQmfImag[11] >> 1)));
-  t3 = fMultDiv2(p2_13_20[3] , ( (pQmfImag[3] >> 1) + (pQmfImag[ 9] >> 1)));
-  t5 = fMultDiv2(p2_13_20[5] , ( (pQmfImag[5] >> 1) + (pQmfImag[ 7] >> 1)));
-  t6 = fMultDiv2(p2_13_20[6] ,    pQmfImag[6] >> 1 );
+  t1 = fMultDiv2(p2_13_20[1], ((pQmfImag[1] >> 1) + (pQmfImag[11] >> 1)));
+  t3 = fMultDiv2(p2_13_20[3], ((pQmfImag[3] >> 1) + (pQmfImag[9] >> 1)));
+  t5 = fMultDiv2(p2_13_20[5], ((pQmfImag[5] >> 1) + (pQmfImag[7] >> 1)));
+  t6 = fMultDiv2(p2_13_20[6], pQmfImag[6] >> 1);
 
   mHybridImag[0] = (t1 + t3 + t5 + t6) << 2;
-  mHybridImag[1] = (- t1 - t3 - t5 + t6) << 2;
+  mHybridImag[1] = (-t1 - t3 - t5 + t6) << 2;
 }
-
 
 /*******************************************************************************
  Functionname:  eightChannelFiltering
@@ -301,82 +295,89 @@ static void slotBasedDualChannelFiltering( const FIXP_DBL *pQmfReal,
 
 /* defining rotation factors for *ChannelFiltering */
 
-#define cos0Pi    FL2FXCONST_DBL( 1.f)
-#define sin0Pi    FL2FXCONST_DBL( 0.f)
+#define cos0Pi FL2FXCONST_DBL(1.f)
+#define sin0Pi FL2FXCONST_DBL(0.f)
 
-#define cos1Pi    FL2FXCONST_DBL(-1.f)
-#define sin1Pi    FL2FXCONST_DBL( 0.f)
+#define cos1Pi FL2FXCONST_DBL(-1.f)
+#define sin1Pi FL2FXCONST_DBL(0.f)
 
-#define cos1Pi_2  FL2FXCONST_DBL( 0.f)
-#define sin1Pi_2  FL2FXCONST_DBL( 1.f)
+#define cos1Pi_2 FL2FXCONST_DBL(0.f)
+#define sin1Pi_2 FL2FXCONST_DBL(1.f)
 
-#define cos1Pi_3  FL2FXCONST_DBL( 0.5f)
-#define sin1Pi_3  FL2FXCONST_DBL( 0.86602540378444f)
+#define cos1Pi_3 FL2FXCONST_DBL(0.5f)
+#define sin1Pi_3 FL2FXCONST_DBL(0.86602540378444f)
 
-#define cos0Pi_4  cos0Pi
-#define cos1Pi_4  FL2FXCONST_DBL(0.70710678118655f)
-#define cos2Pi_4  cos1Pi_2
-#define cos3Pi_4  (-cos1Pi_4)
-#define cos4Pi_4  (-cos0Pi_4)
-#define cos5Pi_4  cos3Pi_4
-#define cos6Pi_4  cos2Pi_4
+#define cos0Pi_4 cos0Pi
+#define cos1Pi_4 FL2FXCONST_DBL(0.70710678118655f)
+#define cos2Pi_4 cos1Pi_2
+#define cos3Pi_4 (-cos1Pi_4)
+#define cos4Pi_4 (-cos0Pi_4)
+#define cos5Pi_4 cos3Pi_4
+#define cos6Pi_4 cos2Pi_4
 
-#define sin0Pi_4  sin0Pi
-#define sin1Pi_4  FL2FXCONST_DBL(0.70710678118655f)
-#define sin2Pi_4  sin1Pi_2
-#define sin3Pi_4  sin1Pi_4
-#define sin4Pi_4  sin0Pi_4
-#define sin5Pi_4  (-sin3Pi_4)
-#define sin6Pi_4  (-sin2Pi_4)
+#define sin0Pi_4 sin0Pi
+#define sin1Pi_4 FL2FXCONST_DBL(0.70710678118655f)
+#define sin2Pi_4 sin1Pi_2
+#define sin3Pi_4 sin1Pi_4
+#define sin4Pi_4 sin0Pi_4
+#define sin5Pi_4 (-sin3Pi_4)
+#define sin6Pi_4 (-sin2Pi_4)
 
-#define cos0Pi_8  cos0Pi
-#define cos1Pi_8  FL2FXCONST_DBL(0.92387953251129f)
-#define cos2Pi_8  cos1Pi_4
-#define cos3Pi_8  FL2FXCONST_DBL(0.38268343236509f)
-#define cos4Pi_8  cos2Pi_4
-#define cos5Pi_8  (-cos3Pi_8)
-#define cos6Pi_8  (-cos2Pi_8)
+#define cos0Pi_8 cos0Pi
+#define cos1Pi_8 FL2FXCONST_DBL(0.92387953251129f)
+#define cos2Pi_8 cos1Pi_4
+#define cos3Pi_8 FL2FXCONST_DBL(0.38268343236509f)
+#define cos4Pi_8 cos2Pi_4
+#define cos5Pi_8 (-cos3Pi_8)
+#define cos6Pi_8 (-cos2Pi_8)
 
-#define sin0Pi_8  sin0Pi
-#define sin1Pi_8  cos3Pi_8
-#define sin2Pi_8  sin1Pi_4
-#define sin3Pi_8  cos1Pi_8
-#define sin4Pi_8  sin2Pi_4
-#define sin5Pi_8  sin3Pi_8
-#define sin6Pi_8  sin1Pi_4
+#define sin0Pi_8 sin0Pi
+#define sin1Pi_8 cos3Pi_8
+#define sin2Pi_8 sin1Pi_4
+#define sin3Pi_8 cos1Pi_8
+#define sin4Pi_8 sin2Pi_4
+#define sin5Pi_8 sin3Pi_8
+#define sin6Pi_8 sin1Pi_4
 
 #if defined(ARCH_PREFER_MULT_32x16)
-  #define FIXP_HYB FIXP_SGL
-  #define FIXP_CAST FX_DBL2FX_SGL
+#define FIXP_HYB FIXP_SGL
+#define FIXP_CAST FX_DBL2FX_SGL
 #else
-  #define FIXP_HYB FIXP_DBL
-  #define FIXP_CAST
+#define FIXP_HYB FIXP_DBL
+#define FIXP_CAST
 #endif
 
-static const FIXP_HYB  cr[13] =
-{
-   FIXP_CAST(cos6Pi_8), FIXP_CAST(cos5Pi_8), FIXP_CAST(cos4Pi_8),
-   FIXP_CAST(cos3Pi_8), FIXP_CAST(cos2Pi_8), FIXP_CAST(cos1Pi_8),
-   FIXP_CAST(cos0Pi_8),
-   FIXP_CAST(cos1Pi_8), FIXP_CAST(cos2Pi_8), FIXP_CAST(cos3Pi_8),
-   FIXP_CAST(cos4Pi_8), FIXP_CAST(cos5Pi_8), FIXP_CAST(cos6Pi_8)
-};
+static const FIXP_HYB cr[13] = {FIXP_CAST(cos6Pi_8),
+                                FIXP_CAST(cos5Pi_8),
+                                FIXP_CAST(cos4Pi_8),
+                                FIXP_CAST(cos3Pi_8),
+                                FIXP_CAST(cos2Pi_8),
+                                FIXP_CAST(cos1Pi_8),
+                                FIXP_CAST(cos0Pi_8),
+                                FIXP_CAST(cos1Pi_8),
+                                FIXP_CAST(cos2Pi_8),
+                                FIXP_CAST(cos3Pi_8),
+                                FIXP_CAST(cos4Pi_8),
+                                FIXP_CAST(cos5Pi_8),
+                                FIXP_CAST(cos6Pi_8)};
 
-static const FIXP_HYB  ci[13] =
-{
-   FIXP_CAST( sin6Pi_8), FIXP_CAST( sin5Pi_8), FIXP_CAST( sin4Pi_8),
-   FIXP_CAST( sin3Pi_8), FIXP_CAST( sin2Pi_8), FIXP_CAST( sin1Pi_8),
-   FIXP_CAST( sin0Pi_8) ,
-   FIXP_CAST(-sin1Pi_8), FIXP_CAST(-sin2Pi_8), FIXP_CAST(-sin3Pi_8),
-   FIXP_CAST(-sin4Pi_8), FIXP_CAST(-sin5Pi_8), FIXP_CAST(-sin6Pi_8)
-};
+static const FIXP_HYB ci[13] = {FIXP_CAST(sin6Pi_8),
+                                FIXP_CAST(sin5Pi_8),
+                                FIXP_CAST(sin4Pi_8),
+                                FIXP_CAST(sin3Pi_8),
+                                FIXP_CAST(sin2Pi_8),
+                                FIXP_CAST(sin1Pi_8),
+                                FIXP_CAST(sin0Pi_8),
+                                FIXP_CAST(-sin1Pi_8),
+                                FIXP_CAST(-sin2Pi_8),
+                                FIXP_CAST(-sin3Pi_8),
+                                FIXP_CAST(-sin4Pi_8),
+                                FIXP_CAST(-sin5Pi_8),
+                                FIXP_CAST(-sin6Pi_8)};
 
-static void slotBasedEightChannelFiltering( const FIXP_DBL *pQmfReal,
-                                            const FIXP_DBL *pQmfImag,
+static void slotBasedEightChannelFiltering(const FIXP_DBL *pQmfReal, const FIXP_DBL *pQmfImag,
 
-                                            FIXP_DBL  *mHybridReal,
-                                            FIXP_DBL  *mHybridImag)
-{
+                                           FIXP_DBL *mHybridReal, FIXP_DBL *mHybridImag) {
 
   int bin;
   FIXP_DBL _fft[128 + ALIGNMENT_DEFAULT - 1];
@@ -394,41 +395,40 @@ static void slotBasedEightChannelFiltering( const FIXP_DBL *pQmfReal,
   /*   x*(a*b - c*d) = fMultDiv2(x, fMultSubDiv2(fMultDiv2(a, b), c, d)) */
   FIXP_DBL accu1, accu2, accu3, accu4;
 
-  #define TWIDDLE_1(n_0,n_1,n_2)                                                        \
-         cplxMultDiv2(&accu1, &accu2, pQmfReal[n_0], pQmfImag[n_0], cr[n_0], ci[n_0]);  \
-         accu1 = fMultDiv2(p[n_0], accu1);                                              \
-         accu2 = fMultDiv2(p[n_0], accu2);                                              \
-         cplxMultDiv2(&accu3, &accu4, pQmfReal[n_1], pQmfImag[n_1], cr[n_1], ci[n_1]);  \
-         accu3 = fMultDiv2(p[n_1], accu3);                                              \
-         accu4 = fMultDiv2(p[n_1], accu4);                                              \
-         fft[FIXP_FFT_IDX_R(n_2)] = accu1 + accu3;                                      \
-         fft[FIXP_FFT_IDX_I(n_2)] = accu2 + accu4;
+#define TWIDDLE_1(n_0, n_1, n_2)                                                                                       \
+  cplxMultDiv2(&accu1, &accu2, pQmfReal[n_0], pQmfImag[n_0], cr[n_0], ci[n_0]);                                        \
+  accu1 = fMultDiv2(p[n_0], accu1);                                                                                    \
+  accu2 = fMultDiv2(p[n_0], accu2);                                                                                    \
+  cplxMultDiv2(&accu3, &accu4, pQmfReal[n_1], pQmfImag[n_1], cr[n_1], ci[n_1]);                                        \
+  accu3 = fMultDiv2(p[n_1], accu3);                                                                                    \
+  accu4 = fMultDiv2(p[n_1], accu4);                                                                                    \
+  fft[FIXP_FFT_IDX_R(n_2)] = accu1 + accu3;                                                                            \
+  fft[FIXP_FFT_IDX_I(n_2)] = accu2 + accu4;
 
-  #define TWIDDLE_0(n_0,n_1)                                                            \
-         cplxMultDiv2(&accu1, &accu2, pQmfReal[n_0], pQmfImag[n_0], cr[n_0], ci[n_0]);  \
-         fft[FIXP_FFT_IDX_R(n_1)] = fMultDiv2(p[n_0], accu1);                           \
-         fft[FIXP_FFT_IDX_I(n_1)] = fMultDiv2(p[n_0], accu2);
+#define TWIDDLE_0(n_0, n_1)                                                                                            \
+  cplxMultDiv2(&accu1, &accu2, pQmfReal[n_0], pQmfImag[n_0], cr[n_0], ci[n_0]);                                        \
+  fft[FIXP_FFT_IDX_R(n_1)] = fMultDiv2(p[n_0], accu1);                                                                 \
+  fft[FIXP_FFT_IDX_I(n_1)] = fMultDiv2(p[n_0], accu2);
 
-  TWIDDLE_0( 6, 0)
-  TWIDDLE_0( 7, 1)
+  TWIDDLE_0(6, 0)
+  TWIDDLE_0(7, 1)
 
-  TWIDDLE_1( 0, 8, 2)
-  TWIDDLE_1( 1, 9, 3)
-  TWIDDLE_1( 2,10, 4)
-  TWIDDLE_1( 3,11, 5)
-  TWIDDLE_1( 4,12, 6)
+  TWIDDLE_1(0, 8, 2)
+  TWIDDLE_1(1, 9, 3)
+  TWIDDLE_1(2, 10, 4)
+  TWIDDLE_1(3, 11, 5)
+  TWIDDLE_1(4, 12, 6)
 
-  TWIDDLE_0( 5, 7)
+  TWIDDLE_0(5, 7)
 
-  fft_8 (fft);
+  fft_8(fft);
 
   /* resort fft data into output array*/
-  for(bin=0; bin<8;bin++ ) {
+  for (bin = 0; bin < 8; bin++) {
     mHybridReal[bin] = fft[FIXP_FFT_IDX_R(bin)] << 4;
     mHybridImag[bin] = fft[FIXP_FFT_IDX_I(bin)] << 4;
   }
 }
-
 
 /*******************************************************************************
  Functionname:  fillHybridDelayLine
@@ -441,29 +441,22 @@ static void slotBasedEightChannelFiltering( const FIXP_DBL *pQmfReal,
 
 *******************************************************************************/
 
-void
-fillHybridDelayLine( FIXP_DBL **fixpQmfReal,          /*!< Qmf real Values    */
-                     FIXP_DBL **fixpQmfImag,          /*!< Qmf imag Values    */
-                     FIXP_DBL   fixpHybridLeftR[12],  /*!< Hybrid real Values left channel  */
-                     FIXP_DBL   fixpHybridLeftI[12],  /*!< Hybrid imag Values left channel  */
-                     FIXP_DBL   fixpHybridRightR[12], /*!< Hybrid real Values right channel */
-                     FIXP_DBL   fixpHybridRightI[12], /*!< Hybrid imag Values right channel */
-                     HANDLE_HYBRID hHybrid )
-{
+void fillHybridDelayLine(FIXP_DBL **fixpQmfReal,        /*!< Qmf real Values    */
+                         FIXP_DBL **fixpQmfImag,        /*!< Qmf imag Values    */
+                         FIXP_DBL fixpHybridLeftR[12],  /*!< Hybrid real Values left channel  */
+                         FIXP_DBL fixpHybridLeftI[12],  /*!< Hybrid imag Values left channel  */
+                         FIXP_DBL fixpHybridRightR[12], /*!< Hybrid real Values right channel */
+                         FIXP_DBL fixpHybridRightI[12], /*!< Hybrid imag Values right channel */
+                         HANDLE_HYBRID hHybrid) {
   int i;
 
   for (i = 0; i < HYBRID_FILTER_DELAY; i++) {
-    slotBasedHybridAnalysis ( fixpQmfReal[i],
-                              fixpQmfReal[i],
-                              fixpHybridLeftR,
-                              fixpHybridLeftI,
-                              hHybrid );
+    slotBasedHybridAnalysis(fixpQmfReal[i], fixpQmfReal[i], fixpHybridLeftR, fixpHybridLeftI, hHybrid);
   }
 
-  FDKmemcpy(fixpHybridRightR, fixpHybridLeftR, sizeof(FIXP_DBL)*NO_SUB_QMF_CHANNELS);
-  FDKmemcpy(fixpHybridRightI, fixpHybridLeftI, sizeof(FIXP_DBL)*NO_SUB_QMF_CHANNELS);
+  FDKmemcpy(fixpHybridRightR, fixpHybridLeftR, sizeof(FIXP_DBL) * NO_SUB_QMF_CHANNELS);
+  FDKmemcpy(fixpHybridRightI, fixpHybridLeftI, sizeof(FIXP_DBL) * NO_SUB_QMF_CHANNELS);
 }
-
 
 /*******************************************************************************
  Functionname:  slotBasedHybridAnalysis
@@ -476,21 +469,18 @@ fillHybridDelayLine( FIXP_DBL **fixpQmfReal,          /*!< Qmf real Values    */
 
 *******************************************************************************/
 
+void slotBasedHybridAnalysis(FIXP_DBL *fixpQmfReal, /*!< Qmf real Values */
+                             FIXP_DBL *fixpQmfImag, /*!< Qmf imag Values */
 
-void
-slotBasedHybridAnalysis ( FIXP_DBL *fixpQmfReal,      /*!< Qmf real Values */
-                          FIXP_DBL *fixpQmfImag,      /*!< Qmf imag Values */
+                             FIXP_DBL fixpHybridReal[12], /*!< Hybrid real Values */
+                             FIXP_DBL fixpHybridImag[12], /*!< Hybrid imag Values */
 
-                          FIXP_DBL  fixpHybridReal[12],   /*!< Hybrid real Values */
-                          FIXP_DBL  fixpHybridImag[12],   /*!< Hybrid imag Values */
-
-                          HANDLE_HYBRID hHybrid)
-{
-  int  k, band;
+                             HANDLE_HYBRID hHybrid) {
+  int k, band;
   HYBRID_RES hybridRes;
-  int  chOffset = 0;
+  int chOffset = 0;
 
-  C_ALLOC_SCRATCH_START(pTempRealSlot, FIXP_DBL, 4*HYBRID_FILTER_LENGTH);
+  C_ALLOC_SCRATCH_START(pTempRealSlot, FIXP_DBL, 4 * HYBRID_FILTER_LENGTH);
 
   FIXP_DBL *pTempImagSlot = pTempRealSlot + HYBRID_FILTER_LENGTH;
   FIXP_DBL *pWorkRealSlot = pTempImagSlot + HYBRID_FILTER_LENGTH;
@@ -503,7 +493,7 @@ slotBasedHybridAnalysis ( FIXP_DBL *fixpQmfReal,      /*!< Qmf real Values */
   QMF samples in the low-band buffer.
   */
 
-  for(band = 0; band < hHybrid->nQmfBands; band++) {
+  for (band = 0; band < hHybrid->nQmfBands; band++) {
 
     /*  get hybrid resolution per qmf band                */
     /*  in case of baseline ps 10/20 band stereo mode :   */
@@ -528,32 +518,26 @@ slotBasedHybridAnalysis ( FIXP_DBL *fixpQmfReal,      /*!< Qmf real Values */
     if (fixpQmfReal) {
 
       /* actual filtering only if output signal requested */
-      switch( hybridRes ) {
+      switch (hybridRes) {
 
       /* HYBRID_2_REAL & HYBRID_8_CPLX are only needful for baseline ps */
       case HYBRID_2_REAL:
 
-        slotBasedDualChannelFiltering( pWorkRealSlot,
-                                       pWorkImagSlot,
-                                       pTempRealSlot,
-                                       pTempImagSlot);
+        slotBasedDualChannelFiltering(pWorkRealSlot, pWorkImagSlot, pTempRealSlot, pTempImagSlot);
         break;
 
       case HYBRID_8_CPLX:
 
-        slotBasedEightChannelFiltering( pWorkRealSlot,
-                                        pWorkImagSlot,
-                                        pTempRealSlot,
-                                        pTempImagSlot);
+        slotBasedEightChannelFiltering(pWorkRealSlot, pWorkImagSlot, pTempRealSlot, pTempImagSlot);
         break;
 
       default:
         FDK_ASSERT(0);
       }
 
-      for(k = 0; k < (SCHAR)hybridRes; k++) {
-        fixpHybridReal [chOffset + k] = pTempRealSlot[k];
-        fixpHybridImag [chOffset + k] = pTempImagSlot[k];
+      for (k = 0; k < (SCHAR)hybridRes; k++) {
+        fixpHybridReal[chOffset + k] = pTempRealSlot[k];
+        fixpHybridImag[chOffset + k] = pTempImagSlot[k];
       }
       chOffset += hybridRes;
     } /* if (mHybridReal) */
@@ -571,10 +555,8 @@ slotBasedHybridAnalysis ( FIXP_DBL *fixpQmfReal,      /*!< Qmf real Values */
   fixpHybridImag[5] = (FIXP_DBL)0;
 
   /* free memory on scratch */
-  C_ALLOC_SCRATCH_END(pTempRealSlot, FIXP_DBL, 4*HYBRID_FILTER_LENGTH);
-
+  C_ALLOC_SCRATCH_END(pTempRealSlot, FIXP_DBL, 4 * HYBRID_FILTER_LENGTH);
 }
-
 
 /*******************************************************************************
  Functionname:  slotBasedHybridSynthesis
@@ -617,26 +599,24 @@ slotBasedHybridAnalysis ( FIXP_DBL *fixpQmfReal,      /*!< Qmf real Values */
       [see ISO/IEC 14496-3:2001/FDAM 2:2004(E) - Page 52]
 */
 
-
-void
-slotBasedHybridSynthesis ( FIXP_DBL  *fixpHybridReal,  /*!< Hybrid real Values */
-                           FIXP_DBL  *fixpHybridImag,  /*!< Hybrid imag Values */
-                           FIXP_DBL  *fixpQmfReal,     /*!< Qmf real Values */
-                           FIXP_DBL  *fixpQmfImag,     /*!< Qmf imag Values */
-                           HANDLE_HYBRID hHybrid )     /*!< Handle to HYBRID struct. */
+void slotBasedHybridSynthesis(FIXP_DBL *fixpHybridReal, /*!< Hybrid real Values */
+                              FIXP_DBL *fixpHybridImag, /*!< Hybrid imag Values */
+                              FIXP_DBL *fixpQmfReal,    /*!< Qmf real Values */
+                              FIXP_DBL *fixpQmfImag,    /*!< Qmf imag Values */
+                              HANDLE_HYBRID hHybrid)    /*!< Handle to HYBRID struct. */
 {
-  int  k, band;
+  int k, band;
 
   HYBRID_RES hybridRes;
-  int  chOffset = 0;
+  int chOffset = 0;
 
-  for(band = 0; band < hHybrid->nQmfBands; band++) {
+  for (band = 0; band < hHybrid->nQmfBands; band++) {
 
     FIXP_DBL qmfReal = FL2FXCONST_DBL(0.f);
     FIXP_DBL qmfImag = FL2FXCONST_DBL(0.f);
     hybridRes = (HYBRID_RES)hHybrid->pResolution[band];
 
-    for(k = 0; k < (SCHAR)hybridRes; k++) {
+    for (k = 0; k < (SCHAR)hybridRes; k++) {
       qmfReal += fixpHybridReal[chOffset + k];
       qmfImag += fixpHybridImag[chOffset + k];
     }
@@ -647,6 +627,3 @@ slotBasedHybridSynthesis ( FIXP_DBL  *fixpHybridReal,  /*!< Hybrid real Values *
     chOffset += hybridRes;
   }
 }
-
-
-

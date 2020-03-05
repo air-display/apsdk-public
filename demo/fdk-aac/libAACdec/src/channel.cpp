@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+?Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -89,11 +89,11 @@ amm-info@iis.fraunhofer.de
 ******************************************************************************/
 
 #include "channel.h"
-#include "aacdecoder.h"
-#include "block.h"
-#include "aacdec_tns.h"
 #include "FDK_bitstream.h"
 #include "FDK_tools_rom.h"
+#include "aacdec_tns.h"
+#include "aacdecoder.h"
+#include "block.h"
 
 #include "conceal.h"
 
@@ -101,16 +101,13 @@ amm-info@iis.fraunhofer.de
 
 #include "aacdec_hcr.h"
 
-
-static
-void MapMidSideMaskToPnsCorrelation (CAacDecoderChannelInfo *pAacDecoderChannelInfo[2])
-{
+static void MapMidSideMaskToPnsCorrelation(CAacDecoderChannelInfo *pAacDecoderChannelInfo[2]) {
   int group;
 
-  for (group = 0 ; group < pAacDecoderChannelInfo[L]->icsInfo.WindowGroups; group++) {
+  for (group = 0; group < pAacDecoderChannelInfo[L]->icsInfo.WindowGroups; group++) {
     UCHAR groupMask = 1 << group;
 
-    for (UCHAR band = 0 ; band < pAacDecoderChannelInfo[L]->icsInfo.MaxSfBands; band++) {
+    for (UCHAR band = 0; band < pAacDecoderChannelInfo[L]->icsInfo.MaxSfBands; band++) {
       if (pAacDecoderChannelInfo[L]->pComData->jointStereoData.MsUsed[band] & groupMask) { /* channels are correlated */
         CPns_SetCorrelation(&pAacDecoderChannelInfo[L]->data.aac.PnsData, group, band, 0);
 
@@ -129,32 +126,28 @@ void MapMidSideMaskToPnsCorrelation (CAacDecoderChannelInfo *pAacDecoderChannelI
 
   \return  none
 */
-void CChannelElement_Decode( CAacDecoderChannelInfo *pAacDecoderChannelInfo[2], /*!< pointer to aac decoder channel info */
-                             CAacDecoderStaticChannelInfo *pAacDecoderStaticChannelInfo[2],
-                             SamplingRateInfo *pSamplingRateInfo,
-                             UINT  flags,
-                             int el_channels)
-{
+void CChannelElement_Decode(
+    CAacDecoderChannelInfo *pAacDecoderChannelInfo[2], /*!< pointer to aac decoder channel info */
+    CAacDecoderStaticChannelInfo *pAacDecoderStaticChannelInfo[2], SamplingRateInfo *pSamplingRateInfo, UINT flags,
+    int el_channels) {
   int ch, maybe_jstereo = 0;
 
   maybe_jstereo = (el_channels > 1);
 
   for (ch = 0; ch < el_channels; ch++) {
-    if ( pAacDecoderChannelInfo[ch]->renderMode == AACDEC_RENDER_IMDCT
-      || pAacDecoderChannelInfo[ch]->renderMode == AACDEC_RENDER_ELDFB )
-    {
+    if (pAacDecoderChannelInfo[ch]->renderMode == AACDEC_RENDER_IMDCT ||
+        pAacDecoderChannelInfo[ch]->renderMode == AACDEC_RENDER_ELDFB) {
       CBlock_InverseQuantizeSpectralData(pAacDecoderChannelInfo[ch], pSamplingRateInfo);
     }
   }
-
-
 
   if (maybe_jstereo) {
     /* apply ms */
     if (pAacDecoderChannelInfo[L]->pDynData->RawDataInfo.CommonWindow) {
       int maxSfBandsL = GetScaleFactorBandsTransmitted(&pAacDecoderChannelInfo[L]->icsInfo);
       int maxSfBandsR = GetScaleFactorBandsTransmitted(&pAacDecoderChannelInfo[R]->icsInfo);
-      if (pAacDecoderChannelInfo[L]->data.aac.PnsData.PnsActive || pAacDecoderChannelInfo[R]->data.aac.PnsData.PnsActive) {
+      if (pAacDecoderChannelInfo[L]->data.aac.PnsData.PnsActive ||
+          pAacDecoderChannelInfo[R]->data.aac.PnsData.PnsActive) {
         MapMidSideMaskToPnsCorrelation(pAacDecoderChannelInfo);
       }
 
@@ -173,35 +166,26 @@ void CChannelElement_Decode( CAacDecoderChannelInfo *pAacDecoderChannelInfo[2], 
                          GetWindowGroups(&pAacDecoderChannelInfo[L]->icsInfo),
                          GetScaleFactorBandsTransmitted(&pAacDecoderChannelInfo[L]->icsInfo),
                          pAacDecoderChannelInfo[L]->pDynData->RawDataInfo.CommonWindow ? 1 : 0);
-
   }
 
-  for (ch = 0; ch < el_channels; ch++)
-  {
+  for (ch = 0; ch < el_channels; ch++) {
     {
       /* write pAacDecoderChannelInfo[ch]->specScale */
       CBlock_ScaleSpectralData(pAacDecoderChannelInfo[ch], pSamplingRateInfo);
 
-      ApplyTools (pAacDecoderChannelInfo, pSamplingRateInfo, flags, ch);
+      ApplyTools(pAacDecoderChannelInfo, pSamplingRateInfo, flags, ch);
     }
-
   }
 
-  CRvlc_ElementCheck(
-          pAacDecoderChannelInfo,
-          pAacDecoderStaticChannelInfo,
-          flags,
-          el_channels
-          );
+  CRvlc_ElementCheck(pAacDecoderChannelInfo, pAacDecoderStaticChannelInfo, flags, el_channels);
 }
 
-void CChannel_CodebookTableInit(CAacDecoderChannelInfo *pAacDecoderChannelInfo)
-{
+void CChannel_CodebookTableInit(CAacDecoderChannelInfo *pAacDecoderChannelInfo) {
   int b, w, maxBands, maxWindows;
   int maxSfb = GetScaleFactorBandsTransmitted(&pAacDecoderChannelInfo->icsInfo);
   UCHAR *pCodeBook = pAacDecoderChannelInfo->pDynData->aCodeBook;
 
-  if ( IsLongBlock(&pAacDecoderChannelInfo->icsInfo) ) {
+  if (IsLongBlock(&pAacDecoderChannelInfo->icsInfo)) {
     maxBands = 64;
     maxWindows = 1;
   } else {
@@ -209,40 +193,32 @@ void CChannel_CodebookTableInit(CAacDecoderChannelInfo *pAacDecoderChannelInfo)
     maxWindows = 8;
   }
 
-  for (w = 0; w<maxWindows; w++) {
+  for (w = 0; w < maxWindows; w++) {
     for (b = 0; b < maxSfb; b++) {
       pCodeBook[b] = ESCBOOK;
     }
-    for (; b<maxBands; b++) {
+    for (; b < maxBands; b++) {
       pCodeBook[b] = ZERO_HCB;
     }
     pCodeBook += maxBands;
   }
 }
 
-
 /*
  * Arbitrary order bitstream parser
  */
 
-AAC_DECODER_ERROR CChannelElement_Read(HANDLE_FDK_BITSTREAM hBs,
-                                       CAacDecoderChannelInfo *pAacDecoderChannelInfo[],
+AAC_DECODER_ERROR CChannelElement_Read(HANDLE_FDK_BITSTREAM hBs, CAacDecoderChannelInfo *pAacDecoderChannelInfo[],
                                        CAacDecoderStaticChannelInfo *pAacDecoderStaticChannelInfo[],
-                                       const AUDIO_OBJECT_TYPE aot,
-                                       const SamplingRateInfo *pSamplingRateInfo,
-                                       const UINT  flags,
-                                       const UINT  frame_length,
-                                       const UCHAR numberOfChannels,
-                                       const SCHAR epConfig,
-                                       HANDLE_TRANSPORTDEC pTpDec
-                                       )
-{
+                                       const AUDIO_OBJECT_TYPE aot, const SamplingRateInfo *pSamplingRateInfo,
+                                       const UINT flags, const UINT frame_length, const UCHAR numberOfChannels,
+                                       const SCHAR epConfig, HANDLE_TRANSPORTDEC pTpDec) {
   AAC_DECODER_ERROR error = AAC_DEC_OK;
   const element_list_t *list;
   int i, ch, decision_bit;
   int crcReg1 = -1, crcReg2 = -1;
 
-  FDK_ASSERT( (numberOfChannels == 1) || (numberOfChannels == 2) );
+  FDK_ASSERT((numberOfChannels == 1) || (numberOfChannels == 2));
 
   /* Get channel element sequence table */
   list = getBitstreamElementList(aot, epConfig, numberOfChannels, 0);
@@ -256,13 +232,15 @@ AAC_DECODER_ERROR CChannelElement_Read(HANDLE_FDK_BITSTREAM hBs,
     CTns_Reset(&pAacDecoderChannelInfo[1]->pDynData->TnsData);
   }
 
-  if (flags & (AC_ELD|AC_SCALABLE)) {
+  if (flags & (AC_ELD | AC_SCALABLE)) {
     pAacDecoderChannelInfo[0]->pDynData->RawDataInfo.CommonWindow = 1;
     if (numberOfChannels == 2) {
-      pAacDecoderChannelInfo[1]->pDynData->RawDataInfo.CommonWindow = pAacDecoderChannelInfo[0]->pDynData->RawDataInfo.CommonWindow;
+      pAacDecoderChannelInfo[1]->pDynData->RawDataInfo.CommonWindow =
+          pAacDecoderChannelInfo[0]->pDynData->RawDataInfo.CommonWindow;
     }
     if (numberOfChannels == 2) {
-      pAacDecoderChannelInfo[1]->pDynData->RawDataInfo.CommonWindow = pAacDecoderChannelInfo[0]->pDynData->RawDataInfo.CommonWindow;
+      pAacDecoderChannelInfo[1]->pDynData->RawDataInfo.CommonWindow =
+          pAacDecoderChannelInfo[0]->pDynData->RawDataInfo.CommonWindow;
     }
   }
 
@@ -281,21 +259,18 @@ AAC_DECODER_ERROR CChannelElement_Read(HANDLE_FDK_BITSTREAM hBs,
     case common_window:
       decision_bit = pAacDecoderChannelInfo[ch]->pDynData->RawDataInfo.CommonWindow = FDKreadBits(hBs, 1);
       if (numberOfChannels == 2) {
-        pAacDecoderChannelInfo[1]->pDynData->RawDataInfo.CommonWindow = pAacDecoderChannelInfo[0]->pDynData->RawDataInfo.CommonWindow;
+        pAacDecoderChannelInfo[1]->pDynData->RawDataInfo.CommonWindow =
+            pAacDecoderChannelInfo[0]->pDynData->RawDataInfo.CommonWindow;
       }
       break;
     case ics_info:
       /* Read individual channel info */
-      error = IcsRead( hBs,
-                      &pAacDecoderChannelInfo[ch]->icsInfo,
-                       pSamplingRateInfo,
-                       flags );
+      error = IcsRead(hBs, &pAacDecoderChannelInfo[ch]->icsInfo, pSamplingRateInfo, flags);
 
       if (numberOfChannels == 2 && pAacDecoderChannelInfo[0]->pDynData->RawDataInfo.CommonWindow) {
         pAacDecoderChannelInfo[1]->icsInfo = pAacDecoderChannelInfo[0]->icsInfo;
       }
       break;
-
 
     case ltp_data_present:
       if (FDKreadBits(hBs, 1) != 0) {
@@ -304,49 +279,40 @@ AAC_DECODER_ERROR CChannelElement_Read(HANDLE_FDK_BITSTREAM hBs,
       break;
 
     case ms:
-      if ( CJointStereo_Read(
-              hBs,
-             &pAacDecoderChannelInfo[0]->pComData->jointStereoData, 
-              GetWindowGroups(&pAacDecoderChannelInfo[0]->icsInfo),
-              GetScaleMaxFactorBandsTransmitted(&pAacDecoderChannelInfo[0]->icsInfo,
-                                                &pAacDecoderChannelInfo[1]->icsInfo),
-              flags) )
-      {
+      if (CJointStereo_Read(hBs,
+                            &pAacDecoderChannelInfo[0]->pComData->jointStereoData,
+                            GetWindowGroups(&pAacDecoderChannelInfo[0]->icsInfo),
+                            GetScaleMaxFactorBandsTransmitted(&pAacDecoderChannelInfo[0]->icsInfo,
+                                                              &pAacDecoderChannelInfo[1]->icsInfo),
+                            flags)) {
         error = AAC_DEC_PARSE_ERROR;
       }
       break;
 
     case global_gain:
-      pAacDecoderChannelInfo[ch]->pDynData->RawDataInfo.GlobalGain = (UCHAR) FDKreadBits(hBs,8);
+      pAacDecoderChannelInfo[ch]->pDynData->RawDataInfo.GlobalGain = (UCHAR)FDKreadBits(hBs, 8);
       break;
 
     case section_data:
-      error = CBlock_ReadSectionData( hBs,
-                                      pAacDecoderChannelInfo[ch],
-                                      pSamplingRateInfo,
-                                      flags );
+      error = CBlock_ReadSectionData(hBs, pAacDecoderChannelInfo[ch], pSamplingRateInfo, flags);
       break;
-
 
     case scale_factor_data:
       if (flags & AC_ER_RVLC) {
-        /* read RVLC data from bitstream (error sens. cat. 1) */ 
+        /* read RVLC data from bitstream (error sens. cat. 1) */
         CRvlc_Read(pAacDecoderChannelInfo[ch], hBs);
-      }
-      else
-      {
+      } else {
         error = CBlock_ReadScaleFactorData(pAacDecoderChannelInfo[ch], hBs, flags);
       }
       break;
 
     case pulse:
-      if ( CPulseData_Read( hBs,
-                           &pAacDecoderChannelInfo[ch]->pDynData->specificTo.aac.PulseData,
-                            pSamplingRateInfo->ScaleFactorBands_Long, /* pulse data is only allowed to be present in long blocks! */
-                            (void*)&pAacDecoderChannelInfo[ch]->icsInfo,
-                            frame_length
-                          ) != 0 )
-      {
+      if (CPulseData_Read(
+              hBs,
+              &pAacDecoderChannelInfo[ch]->pDynData->specificTo.aac.PulseData,
+              pSamplingRateInfo->ScaleFactorBands_Long, /* pulse data is only allowed to be present in long blocks! */
+              (void *)&pAacDecoderChannelInfo[ch]->icsInfo,
+              frame_length) != 0) {
         error = AAC_DEC_DECODE_FRAME_ERROR;
       }
       break;
@@ -355,12 +321,13 @@ AAC_DECODER_ERROR CChannelElement_Read(HANDLE_FDK_BITSTREAM hBs,
       break;
     case tns_data:
       /* tns_data_present is checked inside CTns_Read(). */
-      error = CTns_Read(hBs, &pAacDecoderChannelInfo[ch]->pDynData->TnsData, &pAacDecoderChannelInfo[ch]->icsInfo, flags);
+      error =
+          CTns_Read(hBs, &pAacDecoderChannelInfo[ch]->pDynData->TnsData, &pAacDecoderChannelInfo[ch]->icsInfo, flags);
       break;
 
     case gain_control_data:
       break;
-    
+
     case gain_control_data_present:
       if (FDKreadBits(hBs, 1)) {
         error = AAC_DEC_UNSUPPORTED_GAIN_CONTROL_DATA;
@@ -369,32 +336,24 @@ AAC_DECODER_ERROR CChannelElement_Read(HANDLE_FDK_BITSTREAM hBs,
 
     case esc2_rvlc:
       if (flags & AC_ER_RVLC) {
-        CRvlc_Decode(
-                pAacDecoderChannelInfo[ch],
-                pAacDecoderStaticChannelInfo[ch],
-                hBs
-                );
+        CRvlc_Decode(pAacDecoderChannelInfo[ch], pAacDecoderStaticChannelInfo[ch], hBs);
       }
       break;
 
     case esc1_hcr:
       if (flags & AC_ER_HCR) {
-        CHcr_Read(hBs, pAacDecoderChannelInfo[ch] );
+        CHcr_Read(hBs, pAacDecoderChannelInfo[ch]);
       }
       break;
 
     case spectral_data:
-      error = CBlock_ReadSpectralData( hBs,
-                                       pAacDecoderChannelInfo[ch],
-                                       pSamplingRateInfo,
-                                       flags );
+      error = CBlock_ReadSpectralData(hBs, pAacDecoderChannelInfo[ch], pSamplingRateInfo, flags);
       if (flags & AC_ELD) {
         pAacDecoderChannelInfo[ch]->renderMode = AACDEC_RENDER_ELDFB;
       } else {
         pAacDecoderChannelInfo[ch]->renderMode = AACDEC_RENDER_IMDCT;
       }
       break;
-
 
       /* CRC handling */
     case adtscrc_start_reg1:
@@ -430,7 +389,7 @@ AAC_DECODER_ERROR CChannelElement_Read(HANDLE_FDK_BITSTREAM hBs,
       break;
     case link_sequence:
       list = list->next[decision_bit];
-      i=-1;
+      i = -1;
       break;
 
     default:

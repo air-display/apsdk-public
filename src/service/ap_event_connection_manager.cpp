@@ -7,8 +7,7 @@ aps::service::ap_event_connection_manager &ap_event_connection_manager::get() {
   return s_instance;
 }
 
-void ap_event_connection_manager::insert(const std::string &id,
-                                         xtxp_connection_base_weak_ptr p) {
+void ap_event_connection_manager::insert(const std::string &id, xtxp_connection_base_weak_ptr p) {
   std::lock_guard<std::mutex> l(mtx_);
   even_connection_map_[id] = p;
 }
@@ -21,8 +20,7 @@ void ap_event_connection_manager::remove(const std::string &id) {
   }
 }
 
-xtxp_connection_base_weak_ptr
-ap_event_connection_manager::get(const std::string &id) {
+xtxp_connection_base_weak_ptr ap_event_connection_manager::get(const std::string &id) {
   std::lock_guard<std::mutex> l(mtx_);
   auto it = even_connection_map_.find(id);
   if (it != even_connection_map_.end()) {

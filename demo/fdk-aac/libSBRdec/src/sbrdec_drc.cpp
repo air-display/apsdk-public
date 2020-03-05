@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+?Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -90,12 +90,10 @@ amm-info@iis.fraunhofer.de
 
 #include "sbrdec_drc.h"
 
-
 /* DRC - Offset table for QMF interpolation. */
-static const int offsetTab[2][16] =
-{
-  { 0, 4, 8, 12, 16, 20, 24, 28, 0, 0, 0, 0, 0, 0, 0, 0 },  /* 1024 framing */
-  { 0, 4, 8, 12, 16, 19, 22, 26, 0, 0, 0, 0, 0, 0, 0, 0 }   /*  960 framing */
+static const int offsetTab[2][16] = {
+    {0, 4, 8, 12, 16, 20, 24, 28, 0, 0, 0, 0, 0, 0, 0, 0}, /* 1024 framing */
+    {0, 4, 8, 12, 16, 19, 22, 26, 0, 0, 0, 0, 0, 0, 0, 0}  /*  960 framing */
 };
 
 /*!
@@ -105,9 +103,7 @@ static const int offsetTab[2][16] =
 
   \return none
 */
-void sbrDecoder_drcInitChannel (
-    HANDLE_SBR_DRC_CHANNEL  hDrcData )
-{
+void sbrDecoder_drcInitChannel(HANDLE_SBR_DRC_CHANNEL hDrcData) {
   int band;
 
   if (hDrcData == NULL) {
@@ -139,7 +135,6 @@ void sbrDecoder_drcInitChannel (
   hDrcData->enable = 0;
 }
 
-
 /*!
   \brief Swap DRC QMF scaling factors after they have been applied.
 
@@ -147,9 +142,7 @@ void sbrDecoder_drcInitChannel (
 
   \return none
 */
-void sbrDecoder_drcUpdateChannel (
-    HANDLE_SBR_DRC_CHANNEL  hDrcData )
-{
+void sbrDecoder_drcUpdateChannel(HANDLE_SBR_DRC_CHANNEL hDrcData) {
   if (hDrcData == NULL) {
     return;
   }
@@ -158,23 +151,18 @@ void sbrDecoder_drcUpdateChannel (
   }
 
   /* swap previous data */
-  FDKmemcpy( hDrcData->currFact_mag,
-             hDrcData->nextFact_mag,
-             SBRDEC_MAX_DRC_BANDS * sizeof(FIXP_DBL) );
+  FDKmemcpy(hDrcData->currFact_mag, hDrcData->nextFact_mag, SBRDEC_MAX_DRC_BANDS * sizeof(FIXP_DBL));
 
   hDrcData->currFact_exp = hDrcData->nextFact_exp;
 
   hDrcData->numBandsCurr = hDrcData->numBandsNext;
 
-  FDKmemcpy( hDrcData->bandTopCurr,
-             hDrcData->bandTopNext,
-             SBRDEC_MAX_DRC_BANDS * sizeof(USHORT) );
+  FDKmemcpy(hDrcData->bandTopCurr, hDrcData->bandTopNext, SBRDEC_MAX_DRC_BANDS * sizeof(USHORT));
 
   hDrcData->drcInterpolationSchemeCurr = hDrcData->drcInterpolationSchemeNext;
 
   hDrcData->winSequenceCurr = hDrcData->winSequenceNext;
 }
-
 
 /*!
   \brief Apply DRC factors slot based.
@@ -188,19 +176,12 @@ void sbrDecoder_drcUpdateChannel (
 
   \return None.
 */
-void sbrDecoder_drcApplySlot (
-    HANDLE_SBR_DRC_CHANNEL  hDrcData,
-    FIXP_DBL   *qmfRealSlot,
-    FIXP_DBL   *qmfImagSlot,
-    int  col,
-    int  numQmfSubSamples,
-    int  maxShift
-  )
-{
+void sbrDecoder_drcApplySlot(HANDLE_SBR_DRC_CHANNEL hDrcData, FIXP_DBL *qmfRealSlot, FIXP_DBL *qmfImagSlot, int col,
+                             int numQmfSubSamples, int maxShift) {
   const int *offset;
 
   int band, bottomMdct, topMdct, bin, useLP;
-  int indx = numQmfSubSamples - (numQmfSubSamples >> 1) - 10;   /* l_border */
+  int indx = numQmfSubSamples - (numQmfSubSamples >> 1) - 10; /* l_border */
   int frameLenFlag = (numQmfSubSamples == 30) ? 1 : 0;
 
   const FIXP_DBL *fact_mag = NULL;
@@ -227,22 +208,20 @@ void sbrDecoder_drcApplySlot (
   bin = 0;
 
   /* get respective data and calc interpolation factor */
-  if (col < (numQmfSubSamples>>1)) {  /* first half of current frame */
+  if (col < (numQmfSubSamples >> 1)) {    /* first half of current frame */
     if (hDrcData->winSequenceCurr != 2) { /* long window */
-      int j = col + (numQmfSubSamples>>1);
+      int j = col + (numQmfSubSamples >> 1);
 
       if (hDrcData->drcInterpolationSchemeCurr == 0) {
         INT k = (frameLenFlag) ? 0x4444444 : 0x4000000;
 
         alphaValue = (FIXP_DBL)(j * k);
-      }
-      else {
+      } else {
         if (j >= offset[hDrcData->drcInterpolationSchemeCurr - 1]) {
           alphaValue = (FIXP_DBL)MAXVAL_DBL;
         }
       }
-    }
-    else {  /* short windows */
+    } else { /* short windows */
       shortDrc = 1;
     }
 
@@ -250,17 +229,15 @@ void sbrDecoder_drcApplySlot (
     fact_exp = hDrcData->currFact_exp;
     numBands = hDrcData->numBandsCurr;
     bandTop = hDrcData->bandTopCurr;
-  }
-  else if (col < numQmfSubSamples) {  /* second half of current frame */
+  } else if (col < numQmfSubSamples) {    /* second half of current frame */
     if (hDrcData->winSequenceNext != 2) { /* next: long window */
-      int j = col - (numQmfSubSamples>>1);
+      int j = col - (numQmfSubSamples >> 1);
 
       if (hDrcData->drcInterpolationSchemeNext == 0) {
         INT k = (frameLenFlag) ? 0x4444444 : 0x4000000;
 
         alphaValue = (FIXP_DBL)(j * k);
-      }
-      else {
+      } else {
         if (j >= offset[hDrcData->drcInterpolationSchemeNext - 1]) {
           alphaValue = (FIXP_DBL)MAXVAL_DBL;
         }
@@ -270,17 +247,15 @@ void sbrDecoder_drcApplySlot (
       fact_exp = hDrcData->nextFact_exp;
       numBands = hDrcData->numBandsNext;
       bandTop = hDrcData->bandTopNext;
-    }
-    else {  /* next: short windows */
-      if (hDrcData->winSequenceCurr != 2) {  /* current: long window */
+    } else {                                /* next: short windows */
+      if (hDrcData->winSequenceCurr != 2) { /* current: long window */
         alphaValue = (FIXP_DBL)0;
 
         fact_mag = hDrcData->nextFact_mag;
         fact_exp = hDrcData->nextFact_exp;
         numBands = hDrcData->numBandsNext;
         bandTop = hDrcData->bandTopNext;
-      }
-      else {  /* current: short windows */
+      } else { /* current: short windows */
         shortDrc = 1;
 
         fact_mag = hDrcData->currFact_mag;
@@ -289,23 +264,20 @@ void sbrDecoder_drcApplySlot (
         bandTop = hDrcData->bandTopCurr;
       }
     }
-  }
-  else {  /* first half of next frame */
+  } else {                                /* first half of next frame */
     if (hDrcData->winSequenceNext != 2) { /* long window */
-      int j = col - (numQmfSubSamples>>1);
+      int j = col - (numQmfSubSamples >> 1);
 
       if (hDrcData->drcInterpolationSchemeNext == 0) {
         INT k = (frameLenFlag) ? 0x4444444 : 0x4000000;
 
         alphaValue = (FIXP_DBL)(j * k);
-      }
-      else {
+      } else {
         if (j >= offset[hDrcData->drcInterpolationSchemeNext - 1]) {
           alphaValue = (FIXP_DBL)MAXVAL_DBL;
         }
       }
-    }
-    else {  /* short windows */
+    } else { /* short windows */
       shortDrc = 1;
     }
 
@@ -317,37 +289,35 @@ void sbrDecoder_drcApplySlot (
     col -= numQmfSubSamples;
   }
 
-
   /* process bands */
   for (band = 0; band < (int)numBands; band++) {
     int bottomQmf, topQmf;
 
     FIXP_DBL drcFact_mag = (FIXP_DBL)MAXVAL_DBL;
 
-    topMdct = (bandTop[band]+1) << 2;
+    topMdct = (bandTop[band] + 1) << 2;
 
-    if (!shortDrc) {  /* long window */
+    if (!shortDrc) { /* long window */
       if (frameLenFlag) {
         /* 960 framing */
         bottomMdct = 30 * (bottomMdct / 30);
-        topMdct    = 30 * (topMdct / 30);
+        topMdct = 30 * (topMdct / 30);
 
         bottomQmf = fMultIfloor((FIXP_DBL)0x4444444, bottomMdct);
-        topQmf    = fMultIfloor((FIXP_DBL)0x4444444, topMdct);
-      }
-      else {
+        topQmf = fMultIfloor((FIXP_DBL)0x4444444, topMdct);
+      } else {
         /* 1024 framing */
         bottomMdct &= ~0x1f;
-        topMdct    &= ~0x1f;
+        topMdct &= ~0x1f;
 
         bottomQmf = bottomMdct >> 5;
-        topQmf    = topMdct >> 5;
+        topQmf = topMdct >> 5;
       }
 
-      if (band == ((int)numBands-1)) {
+      if (band == ((int)numBands - 1)) {
         topQmf = (64);
       }
-    
+
       for (bin = bottomQmf; bin < topQmf; bin++) {
         FIXP_DBL drcFact1_mag = hDrcData->prevFact_mag[bin];
         FIXP_DBL drcFact2_mag = fact_mag[band];
@@ -376,39 +346,37 @@ void sbrDecoder_drcApplySlot (
         }
 
         /* save previous factors */
-        if (col == (numQmfSubSamples>>1)-1) {
+        if (col == (numQmfSubSamples >> 1) - 1) {
           hDrcData->prevFact_mag[bin] = fact_mag[band];
         }
       }
-    }
-    else {  /* short windows */
+    } else { /* short windows */
       int startSample, stopSample;
       FIXP_DBL invFrameSizeDiv8 = (frameLenFlag) ? (FIXP_DBL)0x1111111 : (FIXP_DBL)0x1000000;
 
       if (frameLenFlag) {
         /*  960 framing */
-        bottomMdct = 30/8 * (bottomMdct*8/30);
-        topMdct    = 30/8 * (topMdct*8/30);
-      }
-      else {
+        bottomMdct = 30 / 8 * (bottomMdct * 8 / 30);
+        topMdct = 30 / 8 * (topMdct * 8 / 30);
+      } else {
         /* 1024 framing */
         bottomMdct &= ~0x03;
-        topMdct    &= ~0x03;
+        topMdct &= ~0x03;
       }
 
       /* startSample is truncated to the nearest corresponding start subsample in
          the QMF of the short window bottom is present in:*/
-      startSample  = ((fMultIfloor( invFrameSizeDiv8, bottomMdct ) & 0x7) * numQmfSubSamples) >> 3;
+      startSample = ((fMultIfloor(invFrameSizeDiv8, bottomMdct) & 0x7) * numQmfSubSamples) >> 3;
 
       /* stopSample is rounded upwards to the nearest corresponding stop subsample
          in the QMF of the short window top is present in. */
-      stopSample  = ((fMultIceil( invFrameSizeDiv8, topMdct ) & 0xf) * numQmfSubSamples) >> 3;
+      stopSample = ((fMultIceil(invFrameSizeDiv8, topMdct) & 0xf) * numQmfSubSamples) >> 3;
 
-      bottomQmf = fMultIfloor( invFrameSizeDiv8, ((bottomMdct%(numQmfSubSamples<<2)) << 5) );
-      topQmf    = fMultIfloor( invFrameSizeDiv8, ((topMdct%(numQmfSubSamples<<2)) << 5) );
+      bottomQmf = fMultIfloor(invFrameSizeDiv8, ((bottomMdct % (numQmfSubSamples << 2)) << 5));
+      topQmf = fMultIfloor(invFrameSizeDiv8, ((topMdct % (numQmfSubSamples << 2)) << 5));
 
       /* extend last band */
-      if (band == ((int)numBands-1)) {
+      if (band == ((int)numBands - 1)) {
         topQmf = (64);
         stopSample = numQmfSubSamples;
       }
@@ -421,8 +389,8 @@ void sbrDecoder_drcApplySlot (
       if (stopSample == numQmfSubSamples) {
         int tmpBottom = bottomQmf;
 
-        if (((numQmfSubSamples-1) & ~0x03) > startSample) {
-            tmpBottom = 0;    /* band starts in previous short window */
+        if (((numQmfSubSamples - 1) & ~0x03) > startSample) {
+          tmpBottom = 0; /* band starts in previous short window */
         }
 
         for (bin = tmpBottom; bin < topQmf; bin++) {
@@ -433,10 +401,10 @@ void sbrDecoder_drcApplySlot (
       /* apply */
       if ((col >= startSample) && (col < stopSample)) {
         if ((col & ~0x03) > startSample) {
-            bottomQmf = 0;    /* band starts in previous short window */
+          bottomQmf = 0; /* band starts in previous short window */
         }
-        if (col < ((stopSample-1) & ~0x03)) {
-            topQmf = (64);   /* band ends in next short window */
+        if (col < ((stopSample - 1) & ~0x03)) {
+          topQmf = (64); /* band ends in next short window */
         }
 
         drcFact_mag = fact_mag[band];
@@ -457,13 +425,12 @@ void sbrDecoder_drcApplySlot (
     }
 
     bottomMdct = topMdct;
-  }   /* end of bands loop */
+  } /* end of bands loop */
 
-  if (col == (numQmfSubSamples>>1)-1) {
+  if (col == (numQmfSubSamples >> 1) - 1) {
     hDrcData->prevFact_exp = fact_exp;
   }
 }
-
 
 /*!
   \brief Apply DRC factors frame based.
@@ -476,14 +443,8 @@ void sbrDecoder_drcApplySlot (
 
   \return None.
 */
-void sbrDecoder_drcApply (
-    HANDLE_SBR_DRC_CHANNEL  hDrcData,
-    FIXP_DBL **QmfBufferReal,
-    FIXP_DBL **QmfBufferImag,
-    int  numQmfSubSamples,
-    int *scaleFactor
-  )
-{
+void sbrDecoder_drcApply(HANDLE_SBR_DRC_CHANNEL hDrcData, FIXP_DBL **QmfBufferReal, FIXP_DBL **QmfBufferImag,
+                         int numQmfSubSamples, int *scaleFactor) {
   int col;
   int maxShift = 0;
 
@@ -491,7 +452,7 @@ void sbrDecoder_drcApply (
     return;
   }
   if (hDrcData->enable == 0) {
-    return;  /* Avoid changing the scaleFactor even though the processing is disabled. */
+    return; /* Avoid changing the scaleFactor even though the processing is disabled. */
   }
 
   /* get max scale factor */
@@ -505,21 +466,12 @@ void sbrDecoder_drcApply (
     maxShift = hDrcData->nextFact_exp;
   }
 
-  for (col = 0; col < numQmfSubSamples; col++)
-  {
+  for (col = 0; col < numQmfSubSamples; col++) {
     FIXP_DBL *qmfSlotReal = QmfBufferReal[col];
     FIXP_DBL *qmfSlotImag = (QmfBufferImag == NULL) ? NULL : QmfBufferImag[col];
 
-    sbrDecoder_drcApplySlot (
-      hDrcData,
-      qmfSlotReal,
-      qmfSlotImag,
-      col,
-      numQmfSubSamples,
-      maxShift
-    );
+    sbrDecoder_drcApplySlot(hDrcData, qmfSlotReal, qmfSlotImag, col, numQmfSubSamples, maxShift);
   }
 
   *scaleFactor += maxShift;
 }
-

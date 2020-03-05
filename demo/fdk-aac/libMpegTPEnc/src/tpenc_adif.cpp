@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+?Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -89,20 +89,15 @@ amm-info@iis.fraunhofer.de
 
 #include "tpenc_adif.h"
 
-#include "tpenc_lib.h"
 #include "tpenc_asc.h"
+#include "tpenc_lib.h"
 
-
-
-int adifWrite_EncodeHeader(ADIF_INFO *adif,
-                                 HANDLE_FDK_BITSTREAM hBs,
-                                 INT adif_buffer_fullness)
-{
+int adifWrite_EncodeHeader(ADIF_INFO *adif, HANDLE_FDK_BITSTREAM hBs, INT adif_buffer_fullness) {
   /* ADIF/PCE/ADTS definitions */
-  const char adifId[5]="ADIF";
-  const int  copyRightIdPresent=0;
-  const int  originalCopy=0;
-  const int  home=0;
+  const char adifId[5] = "ADIF";
+  const int copyRightIdPresent = 0;
+  const int originalCopy = 0;
+  const int home = 0;
 
   int i;
 
@@ -116,30 +111,29 @@ int adifWrite_EncodeHeader(ADIF_INFO *adif,
   UINT alignAnchor = FDKgetValidBits(hBs);
 
   /* Signal variable bitrate if buffer fullnes exceeds 20 bit */
-  adif->bVariableRate = ( adif_buffer_fullness >= (INT)(0x1<<20) ) ? 1 : 0;
+  adif->bVariableRate = (adif_buffer_fullness >= (INT)(0x1 << 20)) ? 1 : 0;
 
-  FDKwriteBits(hBs, adifId[0],8);
-  FDKwriteBits(hBs, adifId[1],8);
-  FDKwriteBits(hBs, adifId[2],8);
-  FDKwriteBits(hBs, adifId[3],8);
+  FDKwriteBits(hBs, adifId[0], 8);
+  FDKwriteBits(hBs, adifId[1], 8);
+  FDKwriteBits(hBs, adifId[2], 8);
+  FDKwriteBits(hBs, adifId[3], 8);
 
+  FDKwriteBits(hBs, copyRightIdPresent ? 1 : 0, 1);
 
-  FDKwriteBits(hBs, copyRightIdPresent ? 1:0,1);
-
-  if(copyRightIdPresent) {
-    for(i=0;i<72;i++) {
-      FDKwriteBits(hBs,0,1);
+  if (copyRightIdPresent) {
+    for (i = 0; i < 72; i++) {
+      FDKwriteBits(hBs, 0, 1);
     }
   }
-  FDKwriteBits(hBs, originalCopy ? 1:0,1);
-  FDKwriteBits(hBs, home ? 1:0,1);
-  FDKwriteBits(hBs, adif->bVariableRate?1:0, 1);
-  FDKwriteBits(hBs, totalBitRate,23);
+  FDKwriteBits(hBs, originalCopy ? 1 : 0, 1);
+  FDKwriteBits(hBs, home ? 1 : 0, 1);
+  FDKwriteBits(hBs, adif->bVariableRate ? 1 : 0, 1);
+  FDKwriteBits(hBs, totalBitRate, 23);
 
   /* we write only one PCE at the moment */
   FDKwriteBits(hBs, 0, 4);
 
-  if(!adif->bVariableRate) {
+  if (!adif->bVariableRate) {
     FDKwriteBits(hBs, adif_buffer_fullness, 20);
   }
 
@@ -149,28 +143,27 @@ int adifWrite_EncodeHeader(ADIF_INFO *adif,
   return 0;
 }
 
-int adifWrite_GetHeaderBits(ADIF_INFO *adif)
-{
+int adifWrite_GetHeaderBits(ADIF_INFO *adif) {
   /* ADIF definitions */
-  const int  copyRightIdPresent=0;
+  const int copyRightIdPresent = 0;
 
   if (adif->headerWritten)
     return 0;
 
   int bits = 0;
 
-  bits += 8*4; /* ADIF ID */
+  bits += 8 * 4; /* ADIF ID */
 
   bits += 1; /* Copyright present */
 
   if (copyRightIdPresent)
-    bits += 72;          /* Copyright ID */
+    bits += 72; /* Copyright ID */
 
   bits += 26;
 
   bits += 4; /* Number of PCE's */
 
-  if(!adif->bVariableRate) {
+  if (!adif->bVariableRate) {
     bits += 20;
   }
 
@@ -179,4 +172,3 @@ int adifWrite_GetHeaderBits(ADIF_INFO *adif)
 
   return bits;
 }
-

@@ -9,8 +9,7 @@
 #ifdef __GNUC__
 #define PACKED(type_to_pack) type_to_pack __attribute__((__packed__))
 #else
-#define PACKED(type_to_pack)                                                   \
-  __pragma(pack(push, 1)) type_to_pack __pragma(pack(pop))
+#define PACKED(type_to_pack) __pragma(pack(push, 1)) type_to_pack __pragma(pack(pop))
 #endif
 
 namespace aps {
@@ -122,8 +121,7 @@ PACKED(struct rtp_control_retransmit_request_packet_s
            lost_packet_count = 0;
          }
        });
-typedef rtp_control_retransmit_request_packet_s
-    rtp_control_retransmit_request_packet_t;
+typedef rtp_control_retransmit_request_packet_s rtp_control_retransmit_request_packet_t;
 
 PACKED(struct rtp_control_retransmit_reply_packet_s {
   uint8_t csrc_count : 4;   /* CSRC count */
@@ -139,8 +137,7 @@ PACKED(struct rtp_control_retransmit_reply_packet_s {
     memset(this, 0, sizeof(rtp_control_retransmit_reply_packet_s));
   }
 });
-typedef rtp_control_retransmit_reply_packet_s
-    rtp_control_retransmit_reply_packet_t;
+typedef rtp_control_retransmit_reply_packet_s rtp_control_retransmit_reply_packet_t;
 
 PACKED(struct rtp_timming_sync_packet_s
        : public rtp_packet_header_t {
@@ -225,16 +222,13 @@ PACKED(struct sms_video_codec_packet_s
        });
 typedef sms_video_codec_packet_s sms_video_codec_packet_t;
 
-PACKED(struct sms_video_data_packet_s
-       : public sms_packet_header_t { uint8_t payload[0]; });
+PACKED(struct sms_video_data_packet_s : public sms_packet_header_t { uint8_t payload[0]; });
 typedef sms_video_data_packet_s sms_video_data_packet_t;
 
-PACKED(struct sms_video_5_packet_s
-       : public sms_packet_header_t { uint8_t payload[0]; });
+PACKED(struct sms_video_5_packet_s : public sms_packet_header_t { uint8_t payload[0]; });
 typedef sms_video_5_packet_s sms_video_5_packet_t;
 
-PACKED(struct sms_video_4096_packet_s
-       : public sms_packet_header_t { uint8_t payload[0]; });
+PACKED(struct sms_video_4096_packet_s : public sms_packet_header_t { uint8_t payload[0]; });
 typedef sms_video_4096_packet_s sms_video_4096_packet_t;
 
 } // namespace aps

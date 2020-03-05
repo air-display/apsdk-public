@@ -32,27 +32,18 @@ plist_object_t *plist_object_array(uint32_t size, ...);
 plist_object_t *plist_object_dict(uint32_t size, ...);
 
 uint8_t plist_object_get_type(const plist_object_t *object);
-int plist_object_primitive_get_value(const plist_object_t *object,
-                                     uint8_t *value);
-int plist_object_integer_get_value(const plist_object_t *object,
-                                   int64_t *value);
+int plist_object_primitive_get_value(const plist_object_t *object, uint8_t *value);
+int plist_object_integer_get_value(const plist_object_t *object, int64_t *value);
 int plist_object_real_get_value(const plist_object_t *object, double *value);
-int plist_object_data_get_value(const plist_object_t *object,
-                                const uint8_t **value, uint64_t *valuelen);
-int plist_object_string_get_value(const plist_object_t *object,
-                                  const char **value);
-const plist_object_t *plist_object_array_get_value(const plist_object_t *object,
-                                                   uint32_t idx);
-const plist_object_t *plist_object_dict_get_value(const plist_object_t *object,
-                                                  const char *key);
+int plist_object_data_get_value(const plist_object_t *object, const uint8_t **value, uint64_t *valuelen);
+int plist_object_string_get_value(const plist_object_t *object, const char **value);
+const plist_object_t *plist_object_array_get_value(const plist_object_t *object, uint32_t idx);
+const plist_object_t *plist_object_dict_get_value(const plist_object_t *object, const char *key);
 
-const plist_object_t *
-plist_object_dict_get_key_value(const plist_object_t *object, const char **pkey,
-                                uint32_t idx);
+const plist_object_t *plist_object_dict_get_key_value(const plist_object_t *object, const char **pkey, uint32_t idx);
 
 plist_object_t *plist_object_from_bplist(const uint8_t *data, uint32_t datalen);
-int plist_object_to_bplist(plist_object_t *object, uint8_t **data,
-                           uint64_t *datalen);
+int plist_object_to_bplist(plist_object_t *object, uint8_t **data, uint64_t *datalen);
 
 void plist_object_destroy(plist_object_t *object);
 
@@ -158,9 +149,8 @@ protected:
         oss << "[" << std::endl;
         int i = 0;
         const plist_object_t *v = 0;
-        while (v = plist_object_array_get_value(o, i++)) {
-          oss << prefix_indent << "    " << dump_object(v, indent + 2) << ", "
-              << std::endl;
+        while ((v = plist_object_array_get_value(o, i++))) {
+          oss << prefix_indent << "    " << dump_object(v, indent + 2) << ", " << std::endl;
         }
         oss << prefix_indent << "]";
       } break;
@@ -173,8 +163,7 @@ protected:
         const char *key = 0;
         const plist_object_t *v = 0;
         while (key = 0, v = plist_object_dict_get_key_value(o, &key, i++), v) {
-          oss << prefix_indent << "    " << key << ": "
-              << dump_object(v, indent + 2) << ", " << std::endl;
+          oss << prefix_indent << "    " << key << ": " << dump_object(v, indent + 2) << ", " << std::endl;
         }
         oss << prefix_indent << "}";
       } break;

@@ -31,10 +31,10 @@
 
 static const int host_bigendian = 0;
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
 
 #include "alac.h"
 
@@ -73,15 +73,15 @@ struct alac_context_s {
                                         /* end setinfo stuff */
 };
 
-#define _Swap32(v)                                                             \
-  do {                                                                         \
-    v = (((v)&0x000000FF) << 0x18) | (((v)&0x0000FF00) << 0x08) |              \
-        (((v)&0x00FF0000) >> 0x08) | (((v)&0xFF000000) >> 0x18);               \
+#define _Swap32(v)                                                                                                     \
+  do {                                                                                                                 \
+    v = (((v)&0x000000FF) << 0x18) | (((v)&0x0000FF00) << 0x08) | (((v)&0x00FF0000) >> 0x08) |                         \
+        (((v)&0xFF000000) >> 0x18);                                                                                    \
   } while (0)
 
-#define _Swap16(v)                                                             \
-  do {                                                                         \
-    v = (((v)&0x00FF) << 0x08) | (((v)&0xFF00) >> 0x08);                       \
+#define _Swap16(v)                                                                                                     \
+  do {                                                                                                                 \
+    v = (((v)&0x00FF) << 0x08) | (((v)&0xFF00) >> 0x08);                                                               \
   } while (0)
 
 struct {
@@ -93,15 +93,11 @@ void alac_allocate_buffers(alac_context_s *alac) {
   alac->predicterror_buffer_a = (int32_t *)malloc(alac->setinfo_max_samples_per_frame * 4);
   alac->predicterror_buffer_b = (int32_t *)malloc(alac->setinfo_max_samples_per_frame * 4);
 
-  alac->outputsamples_buffer_a =
-    (int32_t *)malloc(alac->setinfo_max_samples_per_frame * 4);
-  alac->outputsamples_buffer_b =
-    (int32_t *)malloc(alac->setinfo_max_samples_per_frame * 4);
+  alac->outputsamples_buffer_a = (int32_t *)malloc(alac->setinfo_max_samples_per_frame * 4);
+  alac->outputsamples_buffer_b = (int32_t *)malloc(alac->setinfo_max_samples_per_frame * 4);
 
-  alac->uncompressed_bytes_buffer_a =
-    (int32_t *)malloc(alac->setinfo_max_samples_per_frame * 4);
-  alac->uncompressed_bytes_buffer_b =
-    (int32_t *)malloc(alac->setinfo_max_samples_per_frame * 4);
+  alac->uncompressed_bytes_buffer_a = (int32_t *)malloc(alac->setinfo_max_samples_per_frame * 4);
+  alac->uncompressed_bytes_buffer_b = (int32_t *)malloc(alac->setinfo_max_samples_per_frame * 4);
 }
 
 /* stream reading */
@@ -111,8 +107,7 @@ static uint32_t readbits_16(alac_context_s *alac, int bits) {
   uint32_t result;
   int new_accumulator;
 
-  result = (alac->input_buffer[0] << 16) | (alac->input_buffer[1] << 8) |
-           (alac->input_buffer[2]);
+  result = (alac->input_buffer[0] << 16) | (alac->input_buffer[1] << 8) | (alac->input_buffer[2]);
 
   /* shift left by the number of bits we've already read,
    * so that the top 'n' bits of the 24 bits we read will
@@ -271,9 +266,7 @@ found:
 
 #define RICE_THRESHOLD 8 // maximum number of bits for a rice prefix.
 
-static int32_t entropy_decode_value(alac_context_s *alac,
-                                    int readSampleSize, int k,
-                                    int rice_kmodifier_mask) {
+static int32_t entropy_decode_value(alac_context_s *alac, int readSampleSize, int k, int rice_kmodifier_mask) {
   int32_t x = 0; // decoded value
 
   // read x, number of 1s before 0 represent the rice value.
@@ -308,10 +301,8 @@ static int32_t entropy_decode_value(alac_context_s *alac,
   return x;
 }
 
-static void entropy_rice_decode(alac_context_s *alac,
-                                int32_t *outputBuffer, int outputSize,
-                                int readSampleSize, int rice_initialhistory,
-                                int rice_kmodifier, int rice_historymult,
+static void entropy_rice_decode(alac_context_s *alac, int32_t *outputBuffer, int outputSize, int readSampleSize,
+                                int rice_initialhistory, int rice_kmodifier, int rice_historymult,
                                 int rice_kmodifier_mask) {
   int outputCount;
   int history = rice_initialhistory;
@@ -342,8 +333,7 @@ static void entropy_rice_decode(alac_context_s *alac,
     signModifier = 0;
 
     // update history
-    history +=
-        (decodedValue * rice_historymult) - ((history * rice_historymult) >> 9);
+    history += (decodedValue * rice_historymult) - ((history * rice_historymult) >> 9);
 
     if (decodedValue > 0xFFFF)
       history = 0xFFFF;
@@ -361,8 +351,7 @@ static void entropy_rice_decode(alac_context_s *alac,
 
       // got blockSize 0s
       if (blockSize > 0) {
-        memset(&outputBuffer[outputCount + 1], 0,
-               blockSize * sizeof(*outputBuffer));
+        memset(&outputBuffer[outputCount + 1], 0, blockSize * sizeof(*outputBuffer));
         outputCount += blockSize;
       }
 
@@ -378,11 +367,8 @@ static void entropy_rice_decode(alac_context_s *alac,
 
 #define SIGN_ONLY(v) ((v < 0) ? (-1) : ((v > 0) ? (1) : (0)))
 
-static void predictor_decompress_fir_adapt(int32_t *error_buffer,
-                                           int32_t *buffer_out, int output_size,
-                                           int readsamplesize,
-                                           int16_t *predictor_coef_table,
-                                           int predictor_coef_num,
+static void predictor_decompress_fir_adapt(int32_t *error_buffer, int32_t *buffer_out, int output_size,
+                                           int readsamplesize, int16_t *predictor_coef_table, int predictor_coef_num,
                                            int predictor_quantitization) {
   int i;
 
@@ -397,9 +383,9 @@ static void predictor_decompress_fir_adapt(int32_t *error_buffer,
   }
 
   if (predictor_coef_num == 0x1f) /* 11111 - max value of predictor_coef_num */
-  { /* second-best case scenario for fir decompression,
-     * error describes a small difference from the previous sample only
-     */
+  {                               /* second-best case scenario for fir decompression,
+                                   * error describes a small difference from the previous sample only
+                                   */
     if (output_size <= 1)
       return;
     for (i = 0; i < output_size - 1; i++) {
@@ -408,8 +394,7 @@ static void predictor_decompress_fir_adapt(int32_t *error_buffer,
 
       prev_value = buffer_out[i];
       error_value = error_buffer[i + 1];
-      buffer_out[i + 1] =
-          SIGN_EXTENDED32((prev_value + error_value), readsamplesize);
+      buffer_out[i + 1] = SIGN_EXTENDED32((prev_value + error_value), readsamplesize);
     }
     return;
   }
@@ -454,8 +439,7 @@ static void predictor_decompress_fir_adapt(int32_t *error_buffer,
       int error_val = error_buffer[i];
 
       for (j = 0; j < predictor_coef_num; j++) {
-        sum += (buffer_out[predictor_coef_num - j] - buffer_out[0]) *
-               predictor_coef_table[j];
+        sum += (buffer_out[predictor_coef_num - j] - buffer_out[0]) * predictor_coef_table[j];
       }
 
       outval = (1 << (predictor_quantitization - 1)) + sum;
@@ -469,16 +453,14 @@ static void predictor_decompress_fir_adapt(int32_t *error_buffer,
         int predictor_num = predictor_coef_num - 1;
 
         while (predictor_num >= 0 && error_val > 0) {
-          int val =
-              buffer_out[0] - buffer_out[predictor_coef_num - predictor_num];
+          int val = buffer_out[0] - buffer_out[predictor_coef_num - predictor_num];
           int sign = SIGN_ONLY(val);
 
           predictor_coef_table[predictor_num] -= sign;
 
           val *= sign; /* absolute value */
 
-          error_val -= ((val >> predictor_quantitization) *
-                        (predictor_coef_num - predictor_num));
+          error_val -= ((val >> predictor_quantitization) * (predictor_coef_num - predictor_num));
 
           predictor_num--;
         }
@@ -486,16 +468,14 @@ static void predictor_decompress_fir_adapt(int32_t *error_buffer,
         int predictor_num = predictor_coef_num - 1;
 
         while (predictor_num >= 0 && error_val < 0) {
-          int val =
-              buffer_out[0] - buffer_out[predictor_coef_num - predictor_num];
+          int val = buffer_out[0] - buffer_out[predictor_coef_num - predictor_num];
           int sign = -SIGN_ONLY(val);
 
           predictor_coef_table[predictor_num] -= sign;
 
           val *= sign; /* neg value */
 
-          error_val -= ((val >> predictor_quantitization) *
-                        (predictor_coef_num - predictor_num));
+          error_val -= ((val >> predictor_quantitization) * (predictor_coef_num - predictor_num));
 
           predictor_num--;
         }
@@ -506,10 +486,8 @@ static void predictor_decompress_fir_adapt(int32_t *error_buffer,
   }
 }
 
-static void deinterlace_16(int32_t *buffer_a, int32_t *buffer_b,
-                           int16_t *buffer_out, int numchannels, int numsamples,
-                           uint8_t interlacing_shift,
-                           uint8_t interlacing_leftweight) {
+static void deinterlace_16(int32_t *buffer_a, int32_t *buffer_b, int16_t *buffer_out, int numchannels, int numsamples,
+                           uint8_t interlacing_shift, uint8_t interlacing_leftweight) {
   int i;
   if (numsamples <= 0)
     return;
@@ -524,8 +502,7 @@ static void deinterlace_16(int32_t *buffer_a, int32_t *buffer_b,
       midright = buffer_a[i];
       difference = buffer_b[i];
 
-      right = midright -
-              ((difference * interlacing_leftweight) >> interlacing_shift);
+      right = midright - ((difference * interlacing_leftweight) >> interlacing_shift);
       left = right + difference;
 
       /* output is always little endian */
@@ -559,13 +536,9 @@ static void deinterlace_16(int32_t *buffer_a, int32_t *buffer_b,
   }
 }
 
-static void deinterlace_24(int32_t *buffer_a, int32_t *buffer_b,
-                           int uncompressed_bytes,
-                           int32_t *uncompressed_bytes_buffer_a,
-                           int32_t *uncompressed_bytes_buffer_b,
-                           void *buffer_out, int numchannels, int numsamples,
-                           uint8_t interlacing_shift,
-                           uint8_t interlacing_leftweight) {
+static void deinterlace_24(int32_t *buffer_a, int32_t *buffer_b, int uncompressed_bytes,
+                           int32_t *uncompressed_bytes_buffer_a, int32_t *uncompressed_bytes_buffer_b, void *buffer_out,
+                           int numchannels, int numsamples, uint8_t interlacing_shift, uint8_t interlacing_leftweight) {
   int i;
   if (numsamples <= 0)
     return;
@@ -580,8 +553,7 @@ static void deinterlace_24(int32_t *buffer_a, int32_t *buffer_b,
       midright = buffer_a[i];
       difference = buffer_b[i];
 
-      right = midright -
-              ((difference * interlacing_leftweight) >> interlacing_shift);
+      right = midright - ((difference * interlacing_leftweight) >> interlacing_shift);
       left = right + difference;
 
       if (uncompressed_bytes) {
@@ -653,8 +625,7 @@ void alac_set_decoder_info(alac_context_s *alac, char *inputbuffer) {
 
   ptr += 4; /* 0 ? */
 
-  alac->setinfo_max_samples_per_frame =
-    *(uint32_t *)ptr; /* buffer size / 2 ? */
+  alac->setinfo_max_samples_per_frame = *(uint32_t *)ptr; /* buffer size / 2 ? */
   if (!host_bigendian)
     _Swap32(alac->setinfo_max_samples_per_frame);
   ptr += 4;
@@ -692,18 +663,18 @@ void alac_set_decoder_info(alac_context_s *alac, char *inputbuffer) {
 namespace aps {
 
 alac_context create_alac_decoder() {
-#define SET_UINT16(buf, value)                                                 \
-  do {                                                                         \
-    (buf)[0] = (unsigned char)((value) >> 8);                                  \
-    (buf)[1] = (unsigned char)(value);                                         \
+#define SET_UINT16(buf, value)                                                                                         \
+  do {                                                                                                                 \
+    (buf)[0] = (unsigned char)((value) >> 8);                                                                          \
+    (buf)[1] = (unsigned char)(value);                                                                                 \
   } while (0)
 
-#define SET_UINT32(buf, value)                                                 \
-  do {                                                                         \
-    (buf)[0] = (unsigned char)((value) >> 24);                                 \
-    (buf)[1] = (unsigned char)((value) >> 16);                                 \
-    (buf)[2] = (unsigned char)((value) >> 8);                                  \
-    (buf)[3] = (unsigned char)(value);                                         \
+#define SET_UINT32(buf, value)                                                                                         \
+  do {                                                                                                                 \
+    (buf)[0] = (unsigned char)((value) >> 24);                                                                         \
+    (buf)[1] = (unsigned char)((value) >> 16);                                                                         \
+    (buf)[2] = (unsigned char)((value) >> 8);                                                                          \
+    (buf)[3] = (unsigned char)(value);                                                                                 \
   } while (0)
 
 #define FRAME_LENGTH 352
@@ -739,10 +710,9 @@ alac_context create_alac_decoder() {
   return alac_ctx;
 }
 
-void alac_decode_frame(alac_context alac_ctx, unsigned char *inbuffer,
-                       void *outbuffer, int *outputsize) {
+void alac_decode_frame(alac_context alac_ctx, unsigned char *inbuffer, void *outbuffer, int *outputsize) {
   int channels;
-  alac_context_s * alac = (alac_context_s *)alac_ctx;
+  alac_context_s *alac = (alac_context_s *)alac_ctx;
   int32_t outputsamples = alac->setinfo_max_samples_per_frame;
 
   /* setup the stream */
@@ -772,9 +742,8 @@ void alac_decode_frame(alac_context alac_ctx, unsigned char *inbuffer,
 
     hassize = readbits(alac, 1); /* the output sample size is stored soon */
 
-    uncompressed_bytes =
-        readbits(alac, 2); /* number of bytes in the (compressed) stream that
-                      are not compressed */
+    uncompressed_bytes = readbits(alac, 2); /* number of bytes in the (compressed) stream that
+                                       are not compressed */
 
     isnotcompressed = readbits(alac, 1); /* whether the frame is compressed */
 
@@ -813,25 +782,29 @@ void alac_decode_frame(alac_context alac_ctx, unsigned char *inbuffer,
       if (uncompressed_bytes) {
         int i;
         for (i = 0; i < outputsamples; i++) {
-          alac->uncompressed_bytes_buffer_a[i] =
-              readbits(alac, uncompressed_bytes * 8);
+          alac->uncompressed_bytes_buffer_a[i] = readbits(alac, uncompressed_bytes * 8);
         }
       }
 
-      entropy_rice_decode(alac, alac->predicterror_buffer_a, outputsamples,
-                          readsamplesize, alac->setinfo_rice_initialhistory,
+      entropy_rice_decode(alac,
+                          alac->predicterror_buffer_a,
+                          outputsamples,
+                          readsamplesize,
+                          alac->setinfo_rice_initialhistory,
                           alac->setinfo_rice_kmodifier,
                           ricemodifier * alac->setinfo_rice_historymult / 4,
                           (1 << alac->setinfo_rice_kmodifier) - 1);
 
       if (prediction_type == 0) { /* adaptive fir */
-        predictor_decompress_fir_adapt(
-            alac->predicterror_buffer_a, alac->outputsamples_buffer_a,
-            outputsamples, readsamplesize, predictor_coef_table,
-            predictor_coef_num, prediction_quantitization);
+        predictor_decompress_fir_adapt(alac->predicterror_buffer_a,
+                                       alac->outputsamples_buffer_a,
+                                       outputsamples,
+                                       readsamplesize,
+                                       predictor_coef_table,
+                                       predictor_coef_num,
+                                       prediction_quantitization);
       } else {
-        fprintf(stderr, "FIXME: unhandled predicition type: %i\n",
-                prediction_type);
+        fprintf(stderr, "FIXME: unhandled predicition type: %i\n", prediction_type);
         /* i think the only other prediction type (or perhaps this is just a
          * boolean?) runs adaptive fir twice.. like:
          * predictor_decompress_fir_adapt(predictor_error, tempout, ...)
@@ -891,17 +864,14 @@ void alac_decode_frame(alac_context alac_ctx, unsigned char *inbuffer,
         }
 
         ((uint8_t *)outbuffer)[i * alac->numchannels * 3] = (sample)&0xFF;
-        ((uint8_t *)outbuffer)[i * alac->numchannels * 3 + 1] =
-            (sample >> 8) & 0xFF;
-        ((uint8_t *)outbuffer)[i * alac->numchannels * 3 + 2] =
-            (sample >> 16) & 0xFF;
+        ((uint8_t *)outbuffer)[i * alac->numchannels * 3 + 1] = (sample >> 8) & 0xFF;
+        ((uint8_t *)outbuffer)[i * alac->numchannels * 3 + 2] = (sample >> 16) & 0xFF;
       }
       break;
     }
     case 20:
     case 32:
-      fprintf(stderr, "FIXME: unimplemented sample size %i\n",
-              alac->setinfo_sample_size);
+      fprintf(stderr, "FIXME: unimplemented sample size %i\n", alac->setinfo_sample_size);
       break;
     default:
       break;
@@ -928,9 +898,8 @@ void alac_decode_frame(alac_context alac_ctx, unsigned char *inbuffer,
 
     hassize = readbits(alac, 1); /* the output sample size is stored soon */
 
-    uncompressed_bytes =
-        readbits(alac, 2); /* the number of bytes in the (compressed) stream
-                      that are not compressed */
+    uncompressed_bytes = readbits(alac, 2); /* the number of bytes in the (compressed) stream
+                                       that are not compressed */
 
     isnotcompressed = readbits(alac, 1); /* whether the frame is compressed */
 
@@ -989,45 +958,53 @@ void alac_decode_frame(alac_context alac_ctx, unsigned char *inbuffer,
       if (uncompressed_bytes) { /* see mono case */
         int i;
         for (i = 0; i < outputsamples; i++) {
-          alac->uncompressed_bytes_buffer_a[i] =
-              readbits(alac, uncompressed_bytes * 8);
-          alac->uncompressed_bytes_buffer_b[i] =
-              readbits(alac, uncompressed_bytes * 8);
+          alac->uncompressed_bytes_buffer_a[i] = readbits(alac, uncompressed_bytes * 8);
+          alac->uncompressed_bytes_buffer_b[i] = readbits(alac, uncompressed_bytes * 8);
         }
       }
 
       /* channel 1 */
-      entropy_rice_decode(alac, alac->predicterror_buffer_a, outputsamples,
-                          readsamplesize, alac->setinfo_rice_initialhistory,
+      entropy_rice_decode(alac,
+                          alac->predicterror_buffer_a,
+                          outputsamples,
+                          readsamplesize,
+                          alac->setinfo_rice_initialhistory,
                           alac->setinfo_rice_kmodifier,
                           ricemodifier_a * alac->setinfo_rice_historymult / 4,
                           (1 << alac->setinfo_rice_kmodifier) - 1);
 
       if (prediction_type_a == 0) { /* adaptive fir */
-        predictor_decompress_fir_adapt(
-            alac->predicterror_buffer_a, alac->outputsamples_buffer_a,
-            outputsamples, readsamplesize, predictor_coef_table_a,
-            predictor_coef_num_a, prediction_quantitization_a);
+        predictor_decompress_fir_adapt(alac->predicterror_buffer_a,
+                                       alac->outputsamples_buffer_a,
+                                       outputsamples,
+                                       readsamplesize,
+                                       predictor_coef_table_a,
+                                       predictor_coef_num_a,
+                                       prediction_quantitization_a);
       } else { /* see mono case */
-        fprintf(stderr, "FIXME: unhandled predicition type: %i\n",
-                prediction_type_a);
+        fprintf(stderr, "FIXME: unhandled predicition type: %i\n", prediction_type_a);
       }
 
       /* channel 2 */
-      entropy_rice_decode(alac, alac->predicterror_buffer_b, outputsamples,
-                          readsamplesize, alac->setinfo_rice_initialhistory,
+      entropy_rice_decode(alac,
+                          alac->predicterror_buffer_b,
+                          outputsamples,
+                          readsamplesize,
+                          alac->setinfo_rice_initialhistory,
                           alac->setinfo_rice_kmodifier,
                           ricemodifier_b * alac->setinfo_rice_historymult / 4,
                           (1 << alac->setinfo_rice_kmodifier) - 1);
 
       if (prediction_type_b == 0) { /* adaptive fir */
-        predictor_decompress_fir_adapt(
-            alac->predicterror_buffer_b, alac->outputsamples_buffer_b,
-            outputsamples, readsamplesize, predictor_coef_table_b,
-            predictor_coef_num_b, prediction_quantitization_b);
+        predictor_decompress_fir_adapt(alac->predicterror_buffer_b,
+                                       alac->outputsamples_buffer_b,
+                                       outputsamples,
+                                       readsamplesize,
+                                       predictor_coef_table_b,
+                                       predictor_coef_num_b,
+                                       prediction_quantitization_b);
       } else {
-        fprintf(stderr, "FIXME: unhandled predicition type: %i\n",
-                prediction_type_b);
+        fprintf(stderr, "FIXME: unhandled predicition type: %i\n", prediction_type_b);
       }
     } else { /* not compressed, easy case */
       if (alac->setinfo_sample_size <= 16) {
@@ -1070,23 +1047,31 @@ void alac_decode_frame(alac_context alac_ctx, unsigned char *inbuffer,
 
     switch (alac->setinfo_sample_size) {
     case 16: {
-      deinterlace_16(alac->outputsamples_buffer_a, alac->outputsamples_buffer_b,
-                     (int16_t *)outbuffer, alac->numchannels, outputsamples,
-                     interlacing_shift, interlacing_leftweight);
+      deinterlace_16(alac->outputsamples_buffer_a,
+                     alac->outputsamples_buffer_b,
+                     (int16_t *)outbuffer,
+                     alac->numchannels,
+                     outputsamples,
+                     interlacing_shift,
+                     interlacing_leftweight);
       break;
     }
     case 24: {
-      deinterlace_24(alac->outputsamples_buffer_a, alac->outputsamples_buffer_b,
-                     uncompressed_bytes, alac->uncompressed_bytes_buffer_a,
-                     alac->uncompressed_bytes_buffer_b, (int16_t *)outbuffer,
-                     alac->numchannels, outputsamples, interlacing_shift,
+      deinterlace_24(alac->outputsamples_buffer_a,
+                     alac->outputsamples_buffer_b,
+                     uncompressed_bytes,
+                     alac->uncompressed_bytes_buffer_a,
+                     alac->uncompressed_bytes_buffer_b,
+                     (int16_t *)outbuffer,
+                     alac->numchannels,
+                     outputsamples,
+                     interlacing_shift,
                      interlacing_leftweight);
       break;
     }
     case 20:
     case 32:
-      fprintf(stderr, "FIXME: unimplemented sample size %i\n",
-              alac->setinfo_sample_size);
+      fprintf(stderr, "FIXME: unimplemented sample size %i\n", alac->setinfo_sample_size);
       break;
     default:
       break;
@@ -1098,7 +1083,7 @@ void alac_decode_frame(alac_context alac_ctx, unsigned char *inbuffer,
 }
 
 void destory_alac_decoder(alac_context alac_ctx) {
-  alac_context_s * alac = (alac_context_s *)alac_ctx;
+  alac_context_s *alac = (alac_context_s *)alac_ctx;
   if (alac->predicterror_buffer_a)
     free(alac->predicterror_buffer_a);
   if (alac->predicterror_buffer_b)
@@ -1116,4 +1101,4 @@ void destory_alac_decoder(alac_context alac_ctx) {
 
   free(alac);
 }
-}
+} // namespace aps

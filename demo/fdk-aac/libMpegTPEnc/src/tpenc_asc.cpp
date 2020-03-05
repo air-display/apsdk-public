@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+?Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -90,10 +90,10 @@ amm-info@iis.fraunhofer.de
 
 #include "tp_data.h"
 
-#include "tpenc_lib.h"
-#include "tpenc_asc.h"
 #include "FDK_bitstream.h"
 #include "genericStds.h"
+#include "tpenc_asc.h"
+#include "tpenc_lib.h"
 
 #define PCE_MAX_ELEMENTS 8
 
@@ -102,25 +102,23 @@ amm-info@iis.fraunhofer.de
  */
 typedef struct {
 
-    UCHAR    num_front_channel_elements;     /*!< Number of front channel elements. */
-    UCHAR    num_side_channel_elements;      /*!< Number of side channel elements. */
-    UCHAR    num_back_channel_elements;      /*!< Number of back channel elements. */
-    UCHAR    num_lfe_channel_elements;       /*!< Number of lfe channel elements. */
-    MP4_ELEMENT_ID el_list[PCE_MAX_ELEMENTS];/*!< List contains sequence describing the elements
-                                                  in present channel mode. (MPEG order) */
+  UCHAR num_front_channel_elements;         /*!< Number of front channel elements. */
+  UCHAR num_side_channel_elements;          /*!< Number of side channel elements. */
+  UCHAR num_back_channel_elements;          /*!< Number of back channel elements. */
+  UCHAR num_lfe_channel_elements;           /*!< Number of lfe channel elements. */
+  MP4_ELEMENT_ID el_list[PCE_MAX_ELEMENTS]; /*!< List contains sequence describing the elements
+                                                 in present channel mode. (MPEG order) */
 } PCE_CONFIGURATION;
-
 
 /**
  *  Map an incoming channel mode to a existing PCE configuration entry.
  */
 typedef struct {
 
-    CHANNEL_MODE        channel_mode;        /*!< Present channel mode. */
-    PCE_CONFIGURATION   pce_configuration;   /*!< Program config element description. */
+  CHANNEL_MODE channel_mode;           /*!< Present channel mode. */
+  PCE_CONFIGURATION pce_configuration; /*!< Program config element description. */
 
 } CHANNEL_CONFIGURATION;
-
 
 /**
  * \brief Table contains all supported channel modes and according PCE configuration description.
@@ -131,33 +129,30 @@ typedef struct {
  *                          - Next element (CPE) is a back channel element.
  *                          - Last element (LFE) is a lfe channel element.
  */
-static const CHANNEL_CONFIGURATION pceConfigTab[] =
-{
-  { MODE_1,                        {  1, 0, 0, 0, { ID_SCE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
-  { MODE_2,                        {  1, 0, 0, 0, { ID_CPE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
-  { MODE_1_2,                      {  2, 0, 0, 0, { ID_SCE,  ID_CPE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
-  { MODE_1_2_1,                    {  2, 0, 1, 0, { ID_SCE,  ID_CPE,  ID_SCE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
-  { MODE_1_2_2,                    {  2, 0, 1, 0, { ID_SCE,  ID_CPE,  ID_CPE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
-  { MODE_1_2_2_1,                  {  2, 0, 1, 1, { ID_SCE,  ID_CPE,  ID_CPE,  ID_LFE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
-  { MODE_1_2_2_2_1,                {  3, 0, 1, 1, { ID_SCE,  ID_CPE,  ID_CPE,  ID_CPE,  ID_LFE,  ID_NONE, ID_NONE, ID_NONE } } },
+static const CHANNEL_CONFIGURATION pceConfigTab[] = {
+    {MODE_1, {1, 0, 0, 0, {ID_SCE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE}}},
+    {MODE_2, {1, 0, 0, 0, {ID_CPE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE}}},
+    {MODE_1_2, {2, 0, 0, 0, {ID_SCE, ID_CPE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE}}},
+    {MODE_1_2_1, {2, 0, 1, 0, {ID_SCE, ID_CPE, ID_SCE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE}}},
+    {MODE_1_2_2, {2, 0, 1, 0, {ID_SCE, ID_CPE, ID_CPE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE}}},
+    {MODE_1_2_2_1, {2, 0, 1, 1, {ID_SCE, ID_CPE, ID_CPE, ID_LFE, ID_NONE, ID_NONE, ID_NONE, ID_NONE}}},
+    {MODE_1_2_2_2_1, {3, 0, 1, 1, {ID_SCE, ID_CPE, ID_CPE, ID_CPE, ID_LFE, ID_NONE, ID_NONE, ID_NONE}}},
 
+    {MODE_1_1, {2, 0, 0, 0, {ID_SCE, ID_SCE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE}}},
+    {MODE_1_1_1_1, {2, 2, 0, 0, {ID_SCE, ID_SCE, ID_SCE, ID_SCE, ID_NONE, ID_NONE, ID_NONE, ID_NONE}}},
+    {MODE_1_1_1_1_1_1, {2, 2, 2, 0, {ID_SCE, ID_SCE, ID_SCE, ID_SCE, ID_SCE, ID_SCE, ID_NONE, ID_NONE}}},
+    {MODE_1_1_1_1_1_1_1_1, {3, 2, 3, 0, {ID_SCE, ID_SCE, ID_SCE, ID_SCE, ID_SCE, ID_SCE, ID_SCE, ID_SCE}}},
 
-  { MODE_1_1,                      {  2, 0, 0, 0, { ID_SCE,  ID_SCE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
-  { MODE_1_1_1_1,                  {  2, 2, 0, 0, { ID_SCE,  ID_SCE,  ID_SCE,  ID_SCE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
-  { MODE_1_1_1_1_1_1,              {  2, 2, 2, 0, { ID_SCE,  ID_SCE,  ID_SCE,  ID_SCE,  ID_SCE,  ID_SCE,  ID_NONE, ID_NONE } } },
-  { MODE_1_1_1_1_1_1_1_1,          {  3, 2, 3, 0, { ID_SCE,  ID_SCE,  ID_SCE,  ID_SCE,  ID_SCE,  ID_SCE,  ID_SCE,  ID_SCE } } },
+    {MODE_2_2, {1, 0, 1, 0, {ID_CPE, ID_CPE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE}}},
+    {MODE_2_2_2, {1, 1, 1, 0, {ID_CPE, ID_CPE, ID_CPE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE}}},
+    {MODE_2_2_2_2, {4, 0, 0, 0, {ID_CPE, ID_CPE, ID_CPE, ID_CPE, ID_NONE, ID_NONE, ID_NONE, ID_NONE}}},
 
-  { MODE_2_2,                      {  1, 0, 1, 0, { ID_CPE,  ID_CPE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
-  { MODE_2_2_2,                    {  1, 1, 1, 0, { ID_CPE,  ID_CPE,  ID_CPE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
-  { MODE_2_2_2_2,                  {  4, 0, 0, 0, { ID_CPE,  ID_CPE,  ID_CPE,  ID_CPE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
+    {MODE_2_1, {1, 0, 1, 0, {ID_CPE, ID_SCE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE}}},
 
-  { MODE_2_1,                      {  1, 0, 1, 0, { ID_CPE,  ID_SCE,  ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE, ID_NONE } } },
-
-  { MODE_7_1_REAR_SURROUND,        {  2, 0, 2, 1, { ID_SCE,  ID_CPE,  ID_CPE,  ID_CPE,  ID_LFE,  ID_NONE, ID_NONE, ID_NONE } } },
-  { MODE_7_1_FRONT_CENTER,         {  3, 0, 1, 1, { ID_SCE,  ID_CPE,  ID_CPE,  ID_CPE,  ID_LFE,  ID_NONE, ID_NONE, ID_NONE } } },
+    {MODE_7_1_REAR_SURROUND, {2, 0, 2, 1, {ID_SCE, ID_CPE, ID_CPE, ID_CPE, ID_LFE, ID_NONE, ID_NONE, ID_NONE}}},
+    {MODE_7_1_FRONT_CENTER, {3, 0, 1, 1, {ID_SCE, ID_CPE, ID_CPE, ID_CPE, ID_LFE, ID_NONE, ID_NONE, ID_NONE}}},
 
 };
-
 
 /**
  * \brief  Get program config element description for existing channel mode.
@@ -168,14 +163,11 @@ static const CHANNEL_CONFIGURATION pceConfigTab[] =
  *          - Pointer to PCE_CONFIGURATION entry, on success.
  *          - NULL, on failure.
  */
-static const PCE_CONFIGURATION* getPceEntry(
-        const CHANNEL_MODE channel_mode
-        )
-{
+static const PCE_CONFIGURATION *getPceEntry(const CHANNEL_MODE channel_mode) {
   UINT i;
   const PCE_CONFIGURATION *pce_config = NULL;
 
-  for (i=0; i < (sizeof(pceConfigTab)/sizeof(CHANNEL_CONFIGURATION)); i++) {
+  for (i = 0; i < (sizeof(pceConfigTab) / sizeof(CHANNEL_CONFIGURATION)); i++) {
     if (pceConfigTab[i].channel_mode == channel_mode) {
       pce_config = &pceConfigTab[i].pce_configuration;
     }
@@ -184,27 +176,40 @@ static const PCE_CONFIGURATION* getPceEntry(
   return pce_config;
 }
 
-int getChannelConfig( CHANNEL_MODE channel_mode )
-{
+int getChannelConfig(CHANNEL_MODE channel_mode) {
   INT chan_config = 0;
 
-  switch(channel_mode) {
-    case MODE_1:         chan_config = 1; break;
-    case MODE_2:         chan_config = 2; break;
-    case MODE_1_2:       chan_config = 3; break;
-    case MODE_1_2_1:     chan_config = 4; break;
-    case MODE_1_2_2:     chan_config = 5; break;
-    case MODE_1_2_2_1:   chan_config = 6; break;
-    case MODE_1_2_2_2_1: chan_config = 7; break;
+  switch (channel_mode) {
+  case MODE_1:
+    chan_config = 1;
+    break;
+  case MODE_2:
+    chan_config = 2;
+    break;
+  case MODE_1_2:
+    chan_config = 3;
+    break;
+  case MODE_1_2_1:
+    chan_config = 4;
+    break;
+  case MODE_1_2_2:
+    chan_config = 5;
+    break;
+  case MODE_1_2_2_1:
+    chan_config = 6;
+    break;
+  case MODE_1_2_2_2_1:
+    chan_config = 7;
+    break;
 
-    default:             chan_config = 0;
+  default:
+    chan_config = 0;
   }
 
   return chan_config;
 }
 
-CHANNEL_MODE transportEnc_GetChannelMode( int noChannels )
-{
+CHANNEL_MODE transportEnc_GetChannelMode(int noChannels) {
   CHANNEL_MODE chMode;
 
   if (noChannels <= 8 && noChannels > 0)
@@ -216,75 +221,67 @@ CHANNEL_MODE transportEnc_GetChannelMode( int noChannels )
 }
 
 #ifdef TP_PCE_ENABLE
-int transportEnc_writePCE(HANDLE_FDK_BITSTREAM hBs,
-                          CHANNEL_MODE channelMode,
-                          INT sampleRate,
-                          int instanceTagPCE,
-                          int profile,
-                          int matrixMixdownA,
-                          int pseudoSurroundEnable,
-                          UINT alignAnchor)
-{
+int transportEnc_writePCE(HANDLE_FDK_BITSTREAM hBs, CHANNEL_MODE channelMode, INT sampleRate, int instanceTagPCE,
+                          int profile, int matrixMixdownA, int pseudoSurroundEnable, UINT alignAnchor) {
   int sampleRateIndex, i;
-  const PCE_CONFIGURATION* config = NULL;
-  const MP4_ELEMENT_ID* pEl_list = NULL;
-  UCHAR cpeCnt=0, sceCnt=0, lfeCnt=0;
+  const PCE_CONFIGURATION *config = NULL;
+  const MP4_ELEMENT_ID *pEl_list = NULL;
+  UCHAR cpeCnt = 0, sceCnt = 0, lfeCnt = 0;
 
   sampleRateIndex = getSamplingRateIndex(sampleRate);
   if (sampleRateIndex == 15) {
     return -1;
   }
 
-  if ((config=getPceEntry(channelMode))==NULL) {
+  if ((config = getPceEntry(channelMode)) == NULL) {
     return -1;
   }
 
   /* Pointer to first element in element list. */
   pEl_list = &config->el_list[0];
 
-  FDKwriteBits(hBs, instanceTagPCE,  4);                        /* Element instance tag */
-  FDKwriteBits(hBs, profile,         2);                        /* Object type */
-  FDKwriteBits(hBs, sampleRateIndex, 4);                        /* Sample rate index*/
+  FDKwriteBits(hBs, instanceTagPCE, 4);  /* Element instance tag */
+  FDKwriteBits(hBs, profile, 2);         /* Object type */
+  FDKwriteBits(hBs, sampleRateIndex, 4); /* Sample rate index*/
 
-  FDKwriteBits(hBs, config->num_front_channel_elements, 4);     /* Front channel Elements */
-  FDKwriteBits(hBs, config->num_side_channel_elements , 4);     /* No Side Channel Elements */
-  FDKwriteBits(hBs, config->num_back_channel_elements , 4);     /* No Back channel Elements */
-  FDKwriteBits(hBs, config->num_lfe_channel_elements  , 2);     /* No Lfe channel elements */
+  FDKwriteBits(hBs, config->num_front_channel_elements, 4); /* Front channel Elements */
+  FDKwriteBits(hBs, config->num_side_channel_elements, 4);  /* No Side Channel Elements */
+  FDKwriteBits(hBs, config->num_back_channel_elements, 4);  /* No Back channel Elements */
+  FDKwriteBits(hBs, config->num_lfe_channel_elements, 2);   /* No Lfe channel elements */
 
-  FDKwriteBits(hBs, 0, 3);                                      /* No assoc data elements */
-  FDKwriteBits(hBs, 0, 4);                                      /* No valid cc elements */
-  FDKwriteBits(hBs, 0, 1);                                      /* Mono mixdown present */
-  FDKwriteBits(hBs, 0, 1);                                      /* Stereo mixdown present */
+  FDKwriteBits(hBs, 0, 3); /* No assoc data elements */
+  FDKwriteBits(hBs, 0, 4); /* No valid cc elements */
+  FDKwriteBits(hBs, 0, 1); /* Mono mixdown present */
+  FDKwriteBits(hBs, 0, 1); /* Stereo mixdown present */
 
-  if ( matrixMixdownA!=0 && ((channelMode==MODE_1_2_2)||(channelMode==MODE_1_2_2_1)) ) {
-      FDKwriteBits(hBs, 1, 1);                                  /* Matrix mixdown present */
-      FDKwriteBits(hBs, (matrixMixdownA-1)&0x3, 2);             /* matrix_mixdown_idx */
-      FDKwriteBits(hBs, (pseudoSurroundEnable)?1:0, 1);         /* pseudo_surround_enable */
-  }
-  else {
-      FDKwriteBits(hBs, 0, 1);                                  /* Matrix mixdown not present */
+  if (matrixMixdownA != 0 && ((channelMode == MODE_1_2_2) || (channelMode == MODE_1_2_2_1))) {
+    FDKwriteBits(hBs, 1, 1);                              /* Matrix mixdown present */
+    FDKwriteBits(hBs, (matrixMixdownA - 1) & 0x3, 2);     /* matrix_mixdown_idx */
+    FDKwriteBits(hBs, (pseudoSurroundEnable) ? 1 : 0, 1); /* pseudo_surround_enable */
+  } else {
+    FDKwriteBits(hBs, 0, 1); /* Matrix mixdown not present */
   }
 
-  for(i=0; i<config->num_front_channel_elements; i++) {
-      UCHAR isCpe = (*pEl_list++==ID_CPE) ? 1 : 0;
-      UCHAR tag   = (isCpe) ? cpeCnt++ : sceCnt++;
-      FDKwriteBits(hBs, isCpe, 1);                              /* Front channel Elements is CPE? */
-      FDKwriteBits(hBs, tag, 4);                                /* Front channel Instance Tag.*/
+  for (i = 0; i < config->num_front_channel_elements; i++) {
+    UCHAR isCpe = (*pEl_list++ == ID_CPE) ? 1 : 0;
+    UCHAR tag = (isCpe) ? cpeCnt++ : sceCnt++;
+    FDKwriteBits(hBs, isCpe, 1); /* Front channel Elements is CPE? */
+    FDKwriteBits(hBs, tag, 4);   /* Front channel Instance Tag.*/
   }
-  for(i=0; i<config->num_side_channel_elements; i++) {
-      UCHAR isCpe = (*pEl_list++==ID_CPE) ? 1 : 0;
-      UCHAR tag   = (isCpe) ? cpeCnt++ : sceCnt++;
-      FDKwriteBits(hBs, isCpe, 1);                              /* Front channel Elements is CPE? */
-      FDKwriteBits(hBs, tag, 4);                                /* Front channel Instance Tag.*/
+  for (i = 0; i < config->num_side_channel_elements; i++) {
+    UCHAR isCpe = (*pEl_list++ == ID_CPE) ? 1 : 0;
+    UCHAR tag = (isCpe) ? cpeCnt++ : sceCnt++;
+    FDKwriteBits(hBs, isCpe, 1); /* Front channel Elements is CPE? */
+    FDKwriteBits(hBs, tag, 4);   /* Front channel Instance Tag.*/
   }
-  for(i=0; i<config->num_back_channel_elements; i++) {
-      UCHAR isCpe = (*pEl_list++==ID_CPE) ? 1 : 0;
-      UCHAR tag   = (isCpe) ? cpeCnt++ : sceCnt++;
-      FDKwriteBits(hBs, isCpe, 1);                              /* Front channel Elements is CPE? */
-      FDKwriteBits(hBs, tag, 4);                                /* Front channel Instance Tag.*/
+  for (i = 0; i < config->num_back_channel_elements; i++) {
+    UCHAR isCpe = (*pEl_list++ == ID_CPE) ? 1 : 0;
+    UCHAR tag = (isCpe) ? cpeCnt++ : sceCnt++;
+    FDKwriteBits(hBs, isCpe, 1); /* Front channel Elements is CPE? */
+    FDKwriteBits(hBs, tag, 4);   /* Front channel Instance Tag.*/
   }
-  for(i=0; i<config->num_lfe_channel_elements; i++) {
-      FDKwriteBits(hBs, lfeCnt++, 4);                           /* LFE channel Instance Tag. */
+  for (i = 0; i < config->num_lfe_channel_elements; i++) {
+    FDKwriteBits(hBs, lfeCnt++, 4); /* LFE channel Instance Tag. */
   }
 
   /* - num_valid_cc_elements always 0.
@@ -294,47 +291,44 @@ int transportEnc_writePCE(HANDLE_FDK_BITSTREAM hBs,
        ADTS: align with respect to the first bit of the raw_data_block()
        ADIF: align with respect to the first bit of the header
        LATM: align with respect to the first bit of the ASC */
-  FDKbyteAlign(hBs, alignAnchor);                               /* Alignment */
+  FDKbyteAlign(hBs, alignAnchor); /* Alignment */
 
-  FDKwriteBits(hBs, 0 ,8);                                      /* Do no write any comment. */
+  FDKwriteBits(hBs, 0, 8); /* Do no write any comment. */
 
   /* - comment_field_bytes always 0. */
 
   return 0;
 }
 
-int transportEnc_GetPCEBits(CHANNEL_MODE channelMode,
-                            int matrixMixdownA,
-                            int bits)
-{
-  const PCE_CONFIGURATION* config = NULL;
+int transportEnc_GetPCEBits(CHANNEL_MODE channelMode, int matrixMixdownA, int bits) {
+  const PCE_CONFIGURATION *config = NULL;
 
-  if ((config=getPceEntry(channelMode))==NULL) {
-    return -1;  /* unsupported channelmapping */
+  if ((config = getPceEntry(channelMode)) == NULL) {
+    return -1; /* unsupported channelmapping */
   }
 
-  bits += 4 + 2 + 4;        /* Element instance tag  + Object type + Sample rate index */
-  bits += 4 + 4 + 4 + 2;    /* No (front + side + back + lfe channel) elements */
-  bits += 3 + 4;            /* No (assoc data + valid cc) elements */
-  bits += 1 + 1 + 1 ;       /* Mono + Stereo + Matrix mixdown present */
+  bits += 4 + 2 + 4;     /* Element instance tag  + Object type + Sample rate index */
+  bits += 4 + 4 + 4 + 2; /* No (front + side + back + lfe channel) elements */
+  bits += 3 + 4;         /* No (assoc data + valid cc) elements */
+  bits += 1 + 1 + 1;     /* Mono + Stereo + Matrix mixdown present */
 
-  if ( matrixMixdownA!=0 && ((channelMode==MODE_1_2_2)||(channelMode==MODE_1_2_2_1)) ) {
-    bits +=3;               /* matrix_mixdown_idx + pseudo_surround_enable */
+  if (matrixMixdownA != 0 && ((channelMode == MODE_1_2_2) || (channelMode == MODE_1_2_2_1))) {
+    bits += 3; /* matrix_mixdown_idx + pseudo_surround_enable */
   }
 
-  bits += (1+4) * (INT)config->num_front_channel_elements;
-  bits += (1+4) * (INT)config->num_side_channel_elements;
-  bits += (1+4) * (INT)config->num_back_channel_elements;
-  bits +=   (4) * (INT)config->num_lfe_channel_elements;
+  bits += (1 + 4) * (INT)config->num_front_channel_elements;
+  bits += (1 + 4) * (INT)config->num_side_channel_elements;
+  bits += (1 + 4) * (INT)config->num_back_channel_elements;
+  bits += (4) * (INT)config->num_lfe_channel_elements;
 
   /* - num_valid_cc_elements always 0.
      - num_assoc_data_elements always 0. */
 
-  if ((bits%8) != 0) {
-    bits += (8 - (bits%8)); /* Alignment */
+  if ((bits % 8) != 0) {
+    bits += (8 - (bits % 8)); /* Alignment */
   }
 
-  bits += 8;                /* Comment field  bytes */
+  bits += 8; /* Comment field  bytes */
 
   /* - comment_field_bytes alwys 0. */
 
@@ -342,62 +336,62 @@ int transportEnc_GetPCEBits(CHANNEL_MODE channelMode,
 }
 #endif /* TP_PCE_ENABLE */
 
-static void writeAot(HANDLE_FDK_BITSTREAM hBitstreamBuffer, AUDIO_OBJECT_TYPE aot)
-{
-    int tmp = (int) aot;
+static void writeAot(HANDLE_FDK_BITSTREAM hBitstreamBuffer, AUDIO_OBJECT_TYPE aot) {
+  int tmp = (int)aot;
 
-    if (tmp > 31) {
-        FDKwriteBits( hBitstreamBuffer, AOT_ESCAPE, 5 );
-        FDKwriteBits( hBitstreamBuffer, tmp-32, 6 );   /* AudioObjectType */
-    } else {
-        FDKwriteBits( hBitstreamBuffer, tmp, 5 );
-    }
+  if (tmp > 31) {
+    FDKwriteBits(hBitstreamBuffer, AOT_ESCAPE, 5);
+    FDKwriteBits(hBitstreamBuffer, tmp - 32, 6); /* AudioObjectType */
+  } else {
+    FDKwriteBits(hBitstreamBuffer, tmp, 5);
+  }
 }
 
-static void writeSampleRate(HANDLE_FDK_BITSTREAM hBitstreamBuffer, int sampleRate)
-{
+static void writeSampleRate(HANDLE_FDK_BITSTREAM hBitstreamBuffer, int sampleRate) {
   int sampleRateIndex = getSamplingRateIndex(sampleRate);
 
-  FDKwriteBits( hBitstreamBuffer, sampleRateIndex, 4 );
-  if( sampleRateIndex == 15 ) {
-    FDKwriteBits( hBitstreamBuffer, sampleRate, 24 );
+  FDKwriteBits(hBitstreamBuffer, sampleRateIndex, 4);
+  if (sampleRateIndex == 15) {
+    FDKwriteBits(hBitstreamBuffer, sampleRate, 24);
   }
 }
 
 #ifdef TP_GA_ENABLE
-static
-int transportEnc_writeGASpecificConfig(
-                                        HANDLE_FDK_BITSTREAM asc,
-                                        CODER_CONFIG *config,
-                                        int          extFlg,
-                                        UINT         alignAnchor
-                                       )
-{
+static int transportEnc_writeGASpecificConfig(HANDLE_FDK_BITSTREAM asc, CODER_CONFIG *config, int extFlg,
+                                              UINT alignAnchor) {
   int aot = config->aot;
   int samplesPerFrame = config->samplesPerFrame;
 
   /* start of GASpecificConfig according to ISO/IEC 14496-3 Subpart 4, 4.4.1 */
-  FDKwriteBits( asc, ((samplesPerFrame==960 || samplesPerFrame==480)?1:0), 1);  /* frameLengthFlag: 1 for a 960/480 (I)MDCT, 0 for a 1024/512 (I)MDCT*/
-  FDKwriteBits( asc, 0, 1);  /* dependsOnCoreCoder: Sampling Rate Coder Specific, see in ISO/IEC 14496-3 Subpart 4, 4.4.1 */
-  FDKwriteBits( asc, extFlg, 1 ); /* Extension Flag: Shall be 1 for aot = 17,19,20,21,22,23 */
+  FDKwriteBits(asc,
+               ((samplesPerFrame == 960 || samplesPerFrame == 480) ? 1 : 0),
+               1); /* frameLengthFlag: 1 for a 960/480 (I)MDCT, 0 for a 1024/512 (I)MDCT*/
+  FDKwriteBits(
+      asc, 0, 1); /* dependsOnCoreCoder: Sampling Rate Coder Specific, see in ISO/IEC 14496-3 Subpart 4, 4.4.1 */
+  FDKwriteBits(asc, extFlg, 1); /* Extension Flag: Shall be 1 for aot = 17,19,20,21,22,23 */
 
   /* Write PCE if channel config is not 1-7 */
   if (getChannelConfig(config->channelMode) == 0) {
-      transportEnc_writePCE(asc, config->channelMode, config->samplingRate, 0, 1, config->matrixMixdownA, (config->flags&CC_PSEUDO_SURROUND)?1:0, alignAnchor);
+    transportEnc_writePCE(asc,
+                          config->channelMode,
+                          config->samplingRate,
+                          0,
+                          1,
+                          config->matrixMixdownA,
+                          (config->flags & CC_PSEUDO_SURROUND) ? 1 : 0,
+                          alignAnchor);
   }
   if (extFlg) {
     if (aot == AOT_ER_BSAC) {
-      FDKwriteBits( asc, config->BSACnumOfSubFrame, 5 ); /* numOfSubFrame */
-      FDKwriteBits( asc, config->BSAClayerLength, 11 );  /* layer_length */
+      FDKwriteBits(asc, config->BSACnumOfSubFrame, 5); /* numOfSubFrame */
+      FDKwriteBits(asc, config->BSAClayerLength, 11);  /* layer_length */
     }
-    if ((aot == AOT_ER_AAC_LC)   || (aot == AOT_ER_AAC_LTP)  ||
-        (aot == AOT_ER_AAC_SCAL) || (aot == AOT_ER_AAC_LD))
-    {
-      FDKwriteBits( asc, (config->flags & CC_VCB11) ? 1 : 0, 1 ); /* aacSectionDataResillienceFlag */
-      FDKwriteBits( asc, (config->flags & CC_RVLC) ? 1 : 0,  1 ); /* aacScaleFactorDataResillienceFlag */
-      FDKwriteBits( asc, (config->flags & CC_HCR) ? 1 : 0,   1 ); /* aacSpectralDataResillienceFlag */
+    if ((aot == AOT_ER_AAC_LC) || (aot == AOT_ER_AAC_LTP) || (aot == AOT_ER_AAC_SCAL) || (aot == AOT_ER_AAC_LD)) {
+      FDKwriteBits(asc, (config->flags & CC_VCB11) ? 1 : 0, 1); /* aacSectionDataResillienceFlag */
+      FDKwriteBits(asc, (config->flags & CC_RVLC) ? 1 : 0, 1);  /* aacScaleFactorDataResillienceFlag */
+      FDKwriteBits(asc, (config->flags & CC_HCR) ? 1 : 0, 1);   /* aacSpectralDataResillienceFlag */
     }
-    FDKwriteBits( asc, 0, 1 ); /* extensionFlag3: reserved. Shall be '0' */
+    FDKwriteBits(asc, 0, 1); /* extensionFlag3: reserved. Shall be '0' */
   }
   return 0;
 }
@@ -405,28 +399,22 @@ int transportEnc_writeGASpecificConfig(
 
 #ifdef TP_ELD_ENABLE
 
-static
-int transportEnc_writeELDSpecificConfig(
-                                         HANDLE_FDK_BITSTREAM hBs,
-                                         CODER_CONFIG *config,
-                                         int        epConfig,
-                                         CSTpCallBacks *cb
-                                        )
-{
+static int transportEnc_writeELDSpecificConfig(HANDLE_FDK_BITSTREAM hBs, CODER_CONFIG *config, int epConfig,
+                                               CSTpCallBacks *cb) {
   /* ELD specific config */
   if (config->channelMode == MODE_1_1) {
     return -1;
   }
   FDKwriteBits(hBs, (config->samplesPerFrame == 480) ? 1 : 0, 1);
 
-  FDKwriteBits(hBs, (config->flags & CC_VCB11 ) ? 1:0, 1);
-  FDKwriteBits(hBs, (config->flags & CC_RVLC ) ? 1:0, 1);
-  FDKwriteBits(hBs, (config->flags & CC_HCR  ) ? 1:0, 1);
+  FDKwriteBits(hBs, (config->flags & CC_VCB11) ? 1 : 0, 1);
+  FDKwriteBits(hBs, (config->flags & CC_RVLC) ? 1 : 0, 1);
+  FDKwriteBits(hBs, (config->flags & CC_HCR) ? 1 : 0, 1);
 
-  FDKwriteBits(hBs, (config->flags & CC_SBR) ? 1:0, 1); /* SBR header flag */
-  if ( (config->flags & CC_SBR) ) {
-    FDKwriteBits(hBs, (config->samplingRate == config->extSamplingRate) ? 0:1, 1); /* Samplerate Flag */
-    FDKwriteBits(hBs, (config->flags & CC_SBRCRC) ? 1:0, 1); /* SBR CRC flag*/
+  FDKwriteBits(hBs, (config->flags & CC_SBR) ? 1 : 0, 1); /* SBR header flag */
+  if ((config->flags & CC_SBR)) {
+    FDKwriteBits(hBs, (config->samplingRate == config->extSamplingRate) ? 0 : 1, 1); /* Samplerate Flag */
+    FDKwriteBits(hBs, (config->flags & CC_SBRCRC) ? 1 : 0, 1);                       /* SBR CRC flag*/
 
     if (cb->cbSbr != NULL) {
       const PCE_CONFIGURATION *pPce;
@@ -434,8 +422,8 @@ int transportEnc_writeELDSpecificConfig(
 
       pPce = getPceEntry(config->channelMode);
 
-      for (e=0; e<PCE_MAX_ELEMENTS && pPce->el_list[e] != ID_NONE; e++  ) {
-        if ( (pPce->el_list[e] == ID_SCE) || (pPce->el_list[e] == ID_CPE) ) {
+      for (e = 0; e < PCE_MAX_ELEMENTS && pPce->el_list[e] != ID_NONE; e++) {
+        if ((pPce->el_list[e] == ID_SCE) || (pPce->el_list[e] == ID_CPE)) {
           cb->cbSbr(cb->cbSbrData, hBs, 0, 0, 0, config->aot, pPce->el_list[e], e);
         }
       }
@@ -448,13 +436,7 @@ int transportEnc_writeELDSpecificConfig(
 }
 #endif /* TP_ELD_ENABLE */
 
-
-int transportEnc_writeASC (
-                            HANDLE_FDK_BITSTREAM asc,
-                            CODER_CONFIG *config,
-                            CSTpCallBacks *cb
-                           )
-{
+int transportEnc_writeASC(HANDLE_FDK_BITSTREAM asc, CODER_CONFIG *config, CSTpCallBacks *cb) {
   UINT extFlag = 0;
   int err;
   int epConfig = 0;
@@ -464,28 +446,26 @@ int transportEnc_writeASC (
 
   /* Extension Flag: Shall be 1 for aot = 17,19,20,21,22,23,39 */
   switch (config->aot) {
-    case AOT_ER_AAC_LC:
-    case AOT_ER_AAC_LTP:
-    case AOT_ER_AAC_SCAL:
-    case AOT_ER_TWIN_VQ:
-    case AOT_ER_BSAC:
-    case AOT_ER_AAC_LD:
-    case AOT_ER_AAC_ELD:
-    case AOT_USAC:
-        extFlag = 1;
-        break;
-    default:
-        break;
+  case AOT_ER_AAC_LC:
+  case AOT_ER_AAC_LTP:
+  case AOT_ER_AAC_SCAL:
+  case AOT_ER_TWIN_VQ:
+  case AOT_ER_BSAC:
+  case AOT_ER_AAC_LD:
+  case AOT_ER_AAC_ELD:
+  case AOT_USAC:
+    extFlag = 1;
+    break;
+  default:
+    break;
   }
 
-  if (config->sbrSignaling==SIG_EXPLICIT_HIERARCHICAL && config->sbrPresent)
+  if (config->sbrSignaling == SIG_EXPLICIT_HIERARCHICAL && config->sbrPresent)
     writeAot(asc, config->extAOT);
   else
     writeAot(asc, config->aot);
 
-  {
-    writeSampleRate(asc, config->samplingRate);
-  }
+  { writeSampleRate(asc, config->samplingRate); }
 
   /* Try to guess a reasonable channel mode if not given */
   if (config->channelMode == MODE_INVALID) {
@@ -494,83 +474,81 @@ int transportEnc_writeASC (
       return -1;
   }
 
-  FDKwriteBits( asc, getChannelConfig(config->channelMode), 4 );
+  FDKwriteBits(asc, getChannelConfig(config->channelMode), 4);
 
-  if (config->sbrSignaling==SIG_EXPLICIT_HIERARCHICAL && config->sbrPresent) {
+  if (config->sbrSignaling == SIG_EXPLICIT_HIERARCHICAL && config->sbrPresent) {
     writeSampleRate(asc, config->extSamplingRate);
     writeAot(asc, config->aot);
   }
 
   switch (config->aot) {
 #ifdef TP_GA_ENABLE
-    case AOT_AAC_MAIN:
-    case AOT_AAC_LC:
-    case AOT_AAC_SSR:
-    case AOT_AAC_LTP:
-    case AOT_AAC_SCAL:
-    case AOT_TWIN_VQ:
-    case AOT_ER_AAC_LC:
-    case AOT_ER_AAC_LTP:
-    case AOT_ER_AAC_SCAL:
-    case AOT_ER_TWIN_VQ:
-    case AOT_ER_BSAC:
-    case AOT_ER_AAC_LD:
-      err = transportEnc_writeGASpecificConfig(asc, config, extFlag, alignAnchor);
-      if (err)
-        return err;
-      break;
+  case AOT_AAC_MAIN:
+  case AOT_AAC_LC:
+  case AOT_AAC_SSR:
+  case AOT_AAC_LTP:
+  case AOT_AAC_SCAL:
+  case AOT_TWIN_VQ:
+  case AOT_ER_AAC_LC:
+  case AOT_ER_AAC_LTP:
+  case AOT_ER_AAC_SCAL:
+  case AOT_ER_TWIN_VQ:
+  case AOT_ER_BSAC:
+  case AOT_ER_AAC_LD:
+    err = transportEnc_writeGASpecificConfig(asc, config, extFlag, alignAnchor);
+    if (err)
+      return err;
+    break;
 #endif /* TP_GA_ENABLE */
 #ifdef TP_ELD_ENABLE
-    case AOT_ER_AAC_ELD:
-      err = transportEnc_writeELDSpecificConfig(asc, config, epConfig, cb);
-      if (err)
-        return err;
-      break;
+  case AOT_ER_AAC_ELD:
+    err = transportEnc_writeELDSpecificConfig(asc, config, epConfig, cb);
+    if (err)
+      return err;
+    break;
 #endif /* TP_ELD_ENABLE */
-    default:
-      return -1;
+  default:
+    return -1;
   }
 
   switch (config->aot) {
-    case AOT_ER_AAC_LC:
-    case AOT_ER_AAC_LTP:
-    case AOT_ER_AAC_SCAL:
-    case AOT_ER_TWIN_VQ:
-    case AOT_ER_BSAC:
-    case AOT_ER_AAC_LD:
-    case AOT_ER_CELP:
-    case AOT_ER_HVXC:
-    case AOT_ER_HILN:
-    case AOT_ER_PARA:
-    case AOT_ER_AAC_ELD:
-      FDKwriteBits( asc, 0, 2 ); /* epconfig 0 */
-      break;
-    default:
-      break;
+  case AOT_ER_AAC_LC:
+  case AOT_ER_AAC_LTP:
+  case AOT_ER_AAC_SCAL:
+  case AOT_ER_TWIN_VQ:
+  case AOT_ER_BSAC:
+  case AOT_ER_AAC_LD:
+  case AOT_ER_CELP:
+  case AOT_ER_HVXC:
+  case AOT_ER_HILN:
+  case AOT_ER_PARA:
+  case AOT_ER_AAC_ELD:
+    FDKwriteBits(asc, 0, 2); /* epconfig 0 */
+    break;
+  default:
+    break;
   }
 
   /* backward compatible explicit signaling of extension AOT */
-  if (config->sbrSignaling==SIG_EXPLICIT_BW_COMPATIBLE)
-  {
+  if (config->sbrSignaling == SIG_EXPLICIT_BW_COMPATIBLE) {
     TP_ASC_EXTENSION_ID ascExtId = ASCEXT_UNKOWN;
 
     if (config->sbrPresent) {
-      ascExtId=ASCEXT_SBR;
-      FDKwriteBits( asc, ascExtId, 11 );
+      ascExtId = ASCEXT_SBR;
+      FDKwriteBits(asc, ascExtId, 11);
       writeAot(asc, config->extAOT);
-      FDKwriteBits( asc, 1, 1 ); /* sbrPresentFlag=1 */
+      FDKwriteBits(asc, 1, 1); /* sbrPresentFlag=1 */
       writeSampleRate(asc, config->extSamplingRate);
       if (config->psPresent) {
-        ascExtId=ASCEXT_PS;
-        FDKwriteBits( asc, ascExtId, 11 );
-        FDKwriteBits( asc, 1, 1 ); /* psPresentFlag=1 */
+        ascExtId = ASCEXT_PS;
+        FDKwriteBits(asc, ascExtId, 11);
+        FDKwriteBits(asc, 1, 1); /* psPresentFlag=1 */
       }
     }
-
   }
 
   /* Make sure all bits are sync'ed */
-  FDKsyncCache( asc );
+  FDKsyncCache(asc);
 
   return 0;
 }

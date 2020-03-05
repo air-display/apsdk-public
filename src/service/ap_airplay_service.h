@@ -24,13 +24,11 @@ using namespace aps::network;
 
 namespace aps {
 namespace service {
-class ap_airplay_connection
-    : public xtxp_connection_base,
-      public ap_session,
-      public std::enable_shared_from_this<ap_airplay_connection> {
+class ap_airplay_connection : public xtxp_connection_base,
+                              public ap_session,
+                              public std::enable_shared_from_this<ap_airplay_connection> {
 public:
-  explicit ap_airplay_connection(asio::io_context &io_ctx,
-                                 ap_config_ptr &config, ap_handler_ptr &handler,
+  explicit ap_airplay_connection(asio::io_context &io_ctx, ap_config_ptr &config, ap_handler_ptr &handler,
                                  tcp_service_weak_ptr service);
 
   ~ap_airplay_connection();
@@ -41,8 +39,7 @@ public:
 
   virtual void disconnect() override;
 
-  virtual void
-  set_mirror_handler(ap_mirror_session_handler_ptr handler) override;
+  virtual void set_mirror_handler(ap_mirror_session_handler_ptr handler) override;
 
   virtual void set_video_handler(ap_video_session_handler_ptr handler) override;
 
@@ -119,13 +116,11 @@ protected:
 
   void initialize_request_handlers();
 
-  void send_fcup_request(int request_id, const std::string &url,
-                         const std::string &session_id);
+  void send_fcup_request(int request_id, const std::string &url, const std::string &session_id);
 
   void reverse_connection(const std::string &session);
 
 private:
-  bool is_reversed_;
   uint64_t session_id_;
   uint32_t session_type_;
   std::string agent_;
@@ -156,9 +151,7 @@ typedef std::weak_ptr<ap_airplay_connection> ap_airplay_connection_weak_ptr;
 /// <summary>
 /// Represents the HTTP & RTSP server of the AirPlay receiver.
 /// </summary>
-class ap_airplay_service
-    : public tcp_service_base,
-      public std::enable_shared_from_this<ap_airplay_service> {
+class ap_airplay_service : public tcp_service_base, public std::enable_shared_from_this<ap_airplay_service> {
 public:
   ap_airplay_service(ap_config_ptr &config, uint16_t port = 0);
 

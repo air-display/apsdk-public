@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+?Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -103,8 +103,7 @@ amm-info@iis.fraunhofer.de
 #define FDK_TOOLS_LIB_BUILD_TIME __TIME__
 #endif
 
-int FDK_toolsGetLibInfo(LIB_INFO *info)
-{
+int FDK_toolsGetLibInfo(LIB_INFO *info) {
   UINT v;
   int i;
 
@@ -114,19 +113,20 @@ int FDK_toolsGetLibInfo(LIB_INFO *info)
 
   /* search for next free tab */
   i = FDKlibInfo_lookup(info, FDK_TOOLS);
-  if (i<0) return -1;
+  if (i < 0)
+    return -1;
 
   info += i;
 
   v = LIB_VERSION(FDK_TOOLS_LIB_VL0, FDK_TOOLS_LIB_VL1, FDK_TOOLS_LIB_VL2);
 
-  FDKsprintf(info->versionStr, "%d.%d.%d", ((v >> 24) & 0xff), ((v >> 16) & 0xff), ((v >> 8 ) & 0xff));
+  FDKsprintf(info->versionStr, "%d.%d.%d", ((v >> 24) & 0xff), ((v >> 16) & 0xff), ((v >> 8) & 0xff));
 
   info->module_id = FDK_TOOLS;
   info->version = v;
   info->build_date = (char *)FDK_TOOLS_LIB_BUILD_DATE;
   info->build_time = (char *)FDK_TOOLS_LIB_BUILD_TIME;
-  info->title      = (char *)FDK_TOOLS_LIB_TITLE;
+  info->title = (char *)FDK_TOOLS_LIB_TITLE;
   info->flags = 0;
 
   return 0;

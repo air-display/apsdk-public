@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+?Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -84,15 +84,12 @@ amm-info@iis.fraunhofer.de
 /*!
   \file
   \brief Memory layout
-   
+
 
   This module declares all static and dynamic memory spaces
 */
 
 #include "sbr_ram.h"
-
-
-
 
 #define WORKBUFFER1_TAG 0
 #define WORKBUFFER2_TAG 1
@@ -111,23 +108,21 @@ C_ALLOC_MEM(Ram_SbrDecoder, struct SBR_DECODER_INSTANCE, 1)
 C_ALLOC_MEM2(Ram_SbrDecElement, SBR_DECODER_ELEMENT, 1, (8))
 /*! SBR Decoder individual channel data  <br>
   Dimension: (8) */
-C_ALLOC_MEM2(Ram_SbrDecChannel, SBR_CHANNEL, 1, (8)+1)
+C_ALLOC_MEM2(Ram_SbrDecChannel, SBR_CHANNEL, 1, (8) + 1)
 
 /*! Filter states for QMF-synthesis.  <br>
   Dimension: #(8) * (#QMF_FILTER_STATE_SYN_SIZE-#(64)) */
-C_AALLOC_MEM2_L(Ram_sbr_QmfStatesSynthesis, FIXP_QSS, (640)-(64), (8)+1, SECT_DATA_L1)
+C_AALLOC_MEM2_L(Ram_sbr_QmfStatesSynthesis, FIXP_QSS, (640) - (64), (8) + 1, SECT_DATA_L1)
 
 /*! Delayed spectral data needed for the dynamic framing of SBR.
   For mp3PRO, 1/3 of a frame is buffered (#(6) 6) */
-C_AALLOC_MEM2(Ram_sbr_OverlapBuffer, FIXP_DBL, 2 * (6) * (64), (8)+1)
+C_AALLOC_MEM2(Ram_sbr_OverlapBuffer, FIXP_DBL, 2 * (6) * (64), (8) + 1)
 
 /*! Static Data of PS */
 
 C_ALLOC_MEM(Ram_ps_dec, PS_DEC, 1)
 
-
 /* @} */
-
 
 /*!
   \name DynamicSbrData
@@ -184,11 +179,7 @@ C_ALLOC_MEM(Ram_ps_dec, PS_DEC, 1)
 
 */
 /* @{ */
-C_ALLOC_MEM_OVERLAY(Ram_SbrDecWorkBuffer1, FIXP_DBL, ((1024)/(32))*(64), SECT_DATA_L1, WORKBUFFER1_TAG)
-C_ALLOC_MEM_OVERLAY(Ram_SbrDecWorkBuffer2, FIXP_DBL, ((1024)/(32))*(64), SECT_DATA_L2, WORKBUFFER2_TAG)
+C_ALLOC_MEM_OVERLAY(Ram_SbrDecWorkBuffer1, FIXP_DBL, ((1024) / (32)) * (64), SECT_DATA_L1, WORKBUFFER1_TAG)
+C_ALLOC_MEM_OVERLAY(Ram_SbrDecWorkBuffer2, FIXP_DBL, ((1024) / (32)) * (64), SECT_DATA_L2, WORKBUFFER2_TAG)
 
 /* @} */
-
-
-
-

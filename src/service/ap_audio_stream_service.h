@@ -20,9 +20,7 @@ namespace aps {
 namespace service {
 class audio_udp_service : public aps::network::udp_service_base {
 public:
-  typedef std::function<void(const uint8_t *, const asio::error_code &,
-                             std::size_t)>
-      recv_from_handler;
+  typedef std::function<void(const uint8_t *, const asio::error_code &, std::size_t)> recv_from_handler;
 
   explicit audio_udp_service(const std::string &name);
 
@@ -30,12 +28,9 @@ public:
 
   virtual bool open() override;
 
-  void bind_recv_handler(recv_from_handler handler) {
-    recv_from_handler_ = handler;
-  }
+  void bind_recv_handler(recv_from_handler handler) { recv_from_handler_ = handler; }
 
-  virtual void on_recv_from(asio::ip::udp::endpoint &remote_endpoint,
-                            const asio::error_code &e,
+  virtual void on_recv_from(asio::ip::udp::endpoint &remote_endpoint, const asio::error_code &e,
                             std::size_t bytes_transferred) override;
 
 protected:
@@ -57,19 +52,14 @@ typedef cached_packet_s cached_packet_t;
 typedef std::shared_ptr<cached_packet_t> cached_packet_ptr;
 
 struct cmp {
-  bool operator()(const cached_packet_ptr &a, const cached_packet_ptr &b) {
-    return a->sequence > b->sequence;
-  }
+  bool operator()(const cached_packet_ptr &a, const cached_packet_ptr &b) { return a->sequence > b->sequence; }
 };
 
-typedef std::priority_queue<cached_packet_ptr, std::vector<cached_packet_ptr>,
-                            cmp>
-    cached_packet_queue;
+typedef std::priority_queue<cached_packet_ptr, std::vector<cached_packet_ptr>, cmp> cached_packet_queue;
 
 class ap_audio_stream_service {
 public:
-  explicit ap_audio_stream_service(aps::ap_crypto_ptr &crypto,
-                                   aps::ap_mirror_session_handler_ptr &handler);
+  explicit ap_audio_stream_service(aps::ap_crypto_ptr &crypto, aps::ap_mirror_session_handler_ptr &handler);
 
   ~ap_audio_stream_service();
 
@@ -82,13 +72,11 @@ public:
   void stop();
 
 protected:
-  void data_handler(const uint8_t *buf, const asio::error_code &e,
-                    std::size_t bytes_transferred);
+  void data_handler(const uint8_t *buf, const asio::error_code &e, std::size_t bytes_transferred);
 
   void audio_data_packet(rtp_audio_data_packet_t *packet, size_t length);
 
-  void control_handler(const uint8_t *buf, const asio::error_code &e,
-                       std::size_t bytes_transferred);
+  void control_handler(const uint8_t *buf, const asio::error_code &e, std::size_t bytes_transferred);
 
   void control_sync_packet(rtp_control_sync_packet_t *packet);
 

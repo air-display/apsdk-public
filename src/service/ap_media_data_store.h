@@ -76,11 +76,9 @@ public:
 
   void set_store_root(uint16_t port);
 
-  bool request_media_data(const std::string &primary_uri,
-                          const std::string &session_id);
+  bool request_media_data(const std::string &primary_uri, const std::string &session_id);
 
-  std::string process_media_data(const std::string &uri,
-                                 const std::string &data);
+  std::string process_media_data(const std::string &uri, const std::string &data);
 
   std::string query_media_data(const std::string &path);
 

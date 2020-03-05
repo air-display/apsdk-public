@@ -51,8 +51,7 @@ public:
   /// <remarks>
   /// THREAD_VIDEO_STREAM
   /// </remarks>
-  virtual void
-  on_mirror_stream_codec(const aps::sms_video_codec_packet_t *p) = 0;
+  virtual void on_mirror_stream_codec(const aps::sms_video_codec_packet_t *p) = 0;
 
   /// <summary>
   ///
@@ -92,8 +91,7 @@ public:
   /// <remarks>
   /// THREAD_AIRPLAY
   /// </remarks>
-  virtual void on_audio_set_progress(const float ratio, const uint64_t start,
-                                     const uint64_t current,
+  virtual void on_audio_set_progress(const float ratio, const uint64_t start, const uint64_t current,
                                      const uint64_t end) = 0;
 
   /// <summary>
@@ -105,8 +103,7 @@ public:
   /// <remarks>
   /// THREAD_AIRPLAY
   /// </remarks>
-  virtual void on_audio_set_cover(const std::string format, const void *data,
-                                  const uint32_t length) = 0;
+  virtual void on_audio_set_cover(const std::string format, const void *data, const uint32_t length) = 0;
 
   /// <summary>
   ///
@@ -116,8 +113,7 @@ public:
   /// <remarks>
   /// THREAD_AIRPLAY
   /// </remarks>
-  virtual void on_audio_set_meta_data(const void *data,
-                                      const uint32_t length) = 0;
+  virtual void on_audio_set_meta_data(const void *data, const uint32_t length) = 0;
 
   /// <summary>
   ///
@@ -125,8 +121,7 @@ public:
   /// <remarks>
   /// THREAD_AIRPLAY
   /// </remarks>
-  virtual void
-  on_audio_stream_started(const aps::audio_data_format_t format) = 0;
+  virtual void on_audio_stream_started(const aps::audio_data_format_t format) = 0;
 
   /// <summary>
   ///
@@ -136,8 +131,7 @@ public:
   /// <remarks>
   /// THREAD_AUDIO_STREAM
   /// </remarks>
-  virtual void on_audio_stream_data(const aps::rtp_audio_data_packet_t *p,
-                                    const uint32_t payload_length) = 0;
+  virtual void on_audio_stream_data(const aps::rtp_audio_data_packet_t *p, const uint32_t payload_length) = 0;
 
   /// <summary>
   ///
@@ -151,14 +145,12 @@ public:
 /// <summary>
 ///
 /// </summary>
-typedef std::shared_ptr<ap_mirror_session_handler>
-    ap_mirror_session_handler_ptr;
+typedef std::shared_ptr<ap_mirror_session_handler> ap_mirror_session_handler_ptr;
 
 /// <summary>
 ///
 /// </summary>
-typedef std::weak_ptr<ap_mirror_session_handler>
-    ap_mirror_session_handler_weakptr;
+typedef std::weak_ptr<ap_mirror_session_handler> ap_mirror_session_handler_weakptr;
 
 /// <summary>
 ///
@@ -275,9 +267,7 @@ public:
   /// <remarks>
   /// THREAD_AIRPLAY
   /// </remarks>
-  virtual void on_video_play(const uint64_t session_id,
-                             const std::string &location,
-                             const float start_pos) = 0;
+  virtual void on_video_play(const uint64_t session_id, const std::string &location, const float start_pos) = 0;
 
   /// <summary>
   ///
@@ -286,8 +276,7 @@ public:
   /// <remarks>
   /// THREAD_AIRPLAY
   /// </remarks>
-  virtual void on_video_scrub(const uint64_t session_id,
-                              const float position) = 0;
+  virtual void on_video_scrub(const uint64_t session_id, const float position) = 0;
 
   /// <summary>
   ///
@@ -313,8 +302,7 @@ public:
   /// <remarks>
   /// THREAD_AIRPLAY
   /// </remarks>
-  virtual void on_acquire_playback_info(const uint64_t session_id,
-                                        playback_info_t &playback_info) = 0;
+  virtual void on_acquire_playback_info(const uint64_t session_id, playback_info_t &playback_info) = 0;
 };
 
 /// <summary>
@@ -325,8 +313,7 @@ typedef std::shared_ptr<ap_video_session_handler> ap_video_session_handler_ptr;
 /// <summary>
 ///
 /// </summary>
-typedef std::weak_ptr<ap_video_session_handler>
-    ap_video_session_handler_weakptr;
+typedef std::weak_ptr<ap_video_session_handler> ap_video_session_handler_weakptr;
 
 enum session_type_e {
   mirror_session = 0,

@@ -2,8 +2,7 @@
 
 #include <service/ap_content_parser.h>
 
-bool aps::ap_content_parser::get_volume_value(float &value,
-                                              const char *content) {
+bool aps::ap_content_parser::get_volume_value(float &value, const char *content) {
   static std::regex pattern("volume: ([-+]?[0-9]+\\.[0-9]+)");
   std::cmatch groups;
 
@@ -17,9 +16,7 @@ bool aps::ap_content_parser::get_volume_value(float &value,
   return false;
 }
 
-bool aps::ap_content_parser::get_progress_values(uint64_t &start,
-                                                 uint64_t &current,
-                                                 uint64_t &end,
+bool aps::ap_content_parser::get_progress_values(uint64_t &start, uint64_t &current, uint64_t &end,
                                                  const char *content) {
   static std::regex pattern("progress: ([0-9]+)\\/([0-9]+)\\/([0-9]+)");
   std::cmatch groups;
@@ -36,11 +33,8 @@ bool aps::ap_content_parser::get_progress_values(uint64_t &start,
   return false;
 }
 
-bool aps::ap_content_parser::get_play_parameters(std::string &location,
-                                                 float &start,
-                                                 const char *content) {
-  static std::regex pattern(
-      "Content-Location: (.*)\\nStart-Position: ([-+]?[0-9]+\\.[0-9]+)");
+bool aps::ap_content_parser::get_play_parameters(std::string &location, float &start, const char *content) {
+  static std::regex pattern("Content-Location: (.*)\\nStart-Position: ([-+]?[0-9]+\\.[0-9]+)");
   std::cmatch groups;
 
   if (std::regex_search(content, groups, pattern)) {
@@ -54,8 +48,7 @@ bool aps::ap_content_parser::get_play_parameters(std::string &location,
   return false;
 }
 
-bool aps::ap_content_parser::get_scrub_position(float &postion,
-                                                const char *content) {
+bool aps::ap_content_parser::get_scrub_position(float &postion, const char *content) {
   static std::regex pattern("\\/scrub\\?position=([0-9]+\\.[0-9]+)");
   std::cmatch groups;
 
@@ -83,10 +76,9 @@ bool aps::ap_content_parser::get_rate_value(float &rate, const char *content) {
   return false;
 }
 
-void aps::ap_content_parser::get_user_agent_version(
-    std::string &agent, aps::agent_version_t &version, const char *content) {
-  static std::regex pattern(
-      "(.*)\\/([0-9]+)(?:\\.([0-9]+)(?:\\.([0-9]+)(?:\\.([0-9]+))?)?)?");
+void aps::ap_content_parser::get_user_agent_version(std::string &agent, aps::agent_version_t &version,
+                                                    const char *content) {
+  static std::regex pattern("(.*)\\/([0-9]+)(?:\\.([0-9]+)(?:\\.([0-9]+)(?:\\.([0-9]+))?)?)?");
   std::cmatch groups;
   memset(&version, 0, sizeof(aps::agent_version_t));
   if (std::regex_search(content, groups, pattern)) {

@@ -14,15 +14,15 @@
 typedef asio::thread aps_thread;
 
 #ifdef __GNUC__
-#ifdef ANDROID
+#ifdef __ANDROID__
 #include <endian.h>
 #define ntohll(n) ntohq(n)
 #define htonll(n) htonq(n)
+#elif __APPLE__
+#include <sys/_endian.h>
 #else
-#define ntohll(n)                                                              \
-  (((uint64_t)ntohl((uint32_t)n)) << 32) + ntohl(((uint64_t)n) >> 32)
-#define htonll(n)                                                              \
-  (((uint64_t)htonl((uint32_t)n)) << 32) + htonl(((uint64_t)n) >> 32)
+#define ntohll(n) (((uint64_t)ntohl((uint32_t)n)) << 32) + ntohl(((uint64_t)n) >> 32)
+#define htonll(n) (((uint64_t)htonl((uint32_t)n)) << 32) + htonl(((uint64_t)n) >> 32)
 #endif // ANDROID
 #endif // __GNUC__
 
@@ -67,9 +67,7 @@ inline double _htond(double d) {
   return value.d;
 }
 
-inline uint16_t swap_bytes(const uint16_t v) {
-  return ((v & 0x00ff) << 8) | ((v & 0xff00) >> 8);
-}
+inline uint16_t swap_bytes(const uint16_t v) { return ((v & 0x00ff) << 8) | ((v & 0xff00) >> 8); }
 
 inline uint32_t swap_bytes(const uint32_t v) {
   uint32_t r = 0;
@@ -133,8 +131,7 @@ std::string generate_mac_address();
 /// <summary>
 ///
 /// </summary>
-std::string string_replace(const std::string &str, const std::string &pattern,
-                           const std::string &with);
+std::string string_replace(const std::string &str, const std::string &pattern, const std::string &with);
 
 std::string generate_file_name();
 
@@ -147,8 +144,7 @@ typedef std::function<void()> thread_actoin;
 ///
 /// </summary>
 struct thread_guard_s {
-  thread_guard_s(thread_actoin start, thread_actoin stop)
-      : start_(start), stop_(stop) {
+  thread_guard_s(thread_actoin start, thread_actoin stop) : start_(start), stop_(stop) {
     if (start_)
       start_();
   }

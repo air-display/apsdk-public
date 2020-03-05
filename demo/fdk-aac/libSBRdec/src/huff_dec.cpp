@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+?Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -83,7 +83,7 @@ amm-info@iis.fraunhofer.de
 
 /*!
   \file
-  \brief  Huffman Decoder  
+  \brief  Huffman Decoder
 */
 
 #include "huff_dec.h"
@@ -101,20 +101,18 @@ amm-info@iis.fraunhofer.de
   \author
 
 ****************************************************************************/
-int
-DecodeHuffmanCW (Huffman h,                /*!< pointer to huffman codebook table */
-                 HANDLE_FDK_BITSTREAM hBs) /*!< Handle to Bitbuffer */
+int DecodeHuffmanCW(Huffman h,                /*!< pointer to huffman codebook table */
+                    HANDLE_FDK_BITSTREAM hBs) /*!< Handle to Bitbuffer */
 {
   SCHAR index = 0;
   int value, bit;
 
   while (index >= 0) {
-    bit = FDKreadBits (hBs, 1);
+    bit = FDKreadBits(hBs, 1);
     index = h[index][bit];
   }
 
-  value = index+64; /* Add offset */
-
+  value = index + 64; /* Add offset */
 
   return value;
 }

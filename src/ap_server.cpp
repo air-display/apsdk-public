@@ -15,8 +15,8 @@ namespace aps {
 class ap_server::implementation {
 public:
   implementation()
-      : airplay_net_service_("_airplay._tcp"), raop_net_service_("_raop._tcp"),
-        airplay_tcp_service_(0), ap_media_http_service_(0) {}
+      : airplay_net_service_("_airplay._tcp"), raop_net_service_("_raop._tcp"), airplay_tcp_service_(0),
+        ap_media_http_service_(0) {}
 
   ~implementation() { release_net_service(); }
 
@@ -41,8 +41,7 @@ public:
       LOGD() << "AP service running on " << airplay_tcp_service_->port();
     }
 
-    ap_media_http_service_ =
-        std::make_shared<ap_media_http_service>(ap_config_, 0);
+    ap_media_http_service_ = std::make_shared<ap_media_http_service>(ap_config_, 0);
 
     if (!ap_media_http_service_->start()) {
       LOGW() << "Failed to start media service";
@@ -83,8 +82,7 @@ protected:
     }
 
     airplay_net_service_.add_txt_record("deviceId", ap_config_->macAddress());
-    airplay_net_service_.add_txt_record("features",
-                                        ap_config_->features_hex_string());
+    airplay_net_service_.add_txt_record("features", ap_config_->features_hex_string());
     airplay_net_service_.add_txt_record("model", ap_config_->model());
     airplay_net_service_.add_txt_record("srcvers", ap_config_->serverVersion());
     airplay_net_service_.add_txt_record("vv", ap_config_->vv());
@@ -106,8 +104,7 @@ protected:
     raop_net_service_.add_txt_record("sf", "0x04");
 
     std::string airplay_service_name = ap_config_->name();
-    if (airplay_net_service_.publish(airplay_service_name,
-                                     airplay_tcp_service_->port())) {
+    if (airplay_net_service_.publish(airplay_service_name, airplay_tcp_service_->port())) {
       std::string rapo_name = ap_config_->deviceID();
       rapo_name += "@";
       rapo_name += airplay_service_name;
@@ -150,9 +147,7 @@ ap_server::~ap_server() { impl_.reset(); }
 
 void ap_server::set_config(ap_config_ptr &config) { impl_->set_config(config); }
 
-void ap_server::set_handler(ap_handler_ptr &hanlder) {
-  impl_->set_handler(hanlder);
-}
+void ap_server::set_handler(ap_handler_ptr &hanlder) { impl_->set_handler(hanlder); }
 
 bool aps::ap_server::start() { return impl_->start(); }
 

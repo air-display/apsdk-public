@@ -8,38 +8,33 @@
 
 namespace aps {
 namespace service {
-ap_mirror_stream_connection::ap_mirror_stream_connection(
-    asio::io_context &io_ctx, ap_crypto_ptr &crypto,
-    ap_mirror_session_handler_ptr handler /*= 0*/)
-    : network::tcp_connection_base(io_ctx), handler_(handler),
-      buffer_(SMS_BUFFER_SIZE), crypto_(crypto) {
+ap_mirror_stream_connection::ap_mirror_stream_connection(asio::io_context &io_ctx, ap_crypto_ptr &crypto,
+                                                         ap_mirror_session_handler_ptr handler /*= 0*/)
+    : network::tcp_connection_base(io_ctx), handler_(handler), crypto_(crypto), buffer_(SMS_BUFFER_SIZE) {
   header_ = (sms_packet_header_t *)buffer_.data();
   payload_ = buffer_.data() + sizeof(sms_packet_header_t);
 
-  LOGD() << "ap_video_stream_session(" << std::hex << this
-         << ") is allocating.";
+  LOGD() << "ap_video_stream_session(" << std::hex << this << ") is allocating.";
 }
 
 ap_mirror_stream_connection::~ap_mirror_stream_connection() {
-  LOGD() << "ap_video_stream_session(" << std::hex << this
-         << ") is destroying.";
+  LOGD() << "ap_video_stream_session(" << std::hex << this << ") is destroying.";
 }
 
 void ap_mirror_stream_connection::start() { post_receive_packet_header(); }
 
 void ap_mirror_stream_connection::post_receive_packet_header() {
   memset(header_, 0, sizeof(sms_packet_header_t));
-  asio::async_read(
-      socket_, asio::buffer(header_, sizeof(sms_packet_header_t)),
-      asio::bind_executor(
-          strand_,
-          std::bind(&ap_mirror_stream_connection::on_packet_header_received,
-                    shared_from_this(), // Keep the session alive
-                    std::placeholders::_1, std::placeholders::_2)));
+  asio::async_read(socket_,
+                   asio::buffer(header_, sizeof(sms_packet_header_t)),
+                   asio::bind_executor(strand_,
+                                       std::bind(&ap_mirror_stream_connection::on_packet_header_received,
+                                                 shared_from_this(), // Keep the session alive
+                                                 std::placeholders::_1,
+                                                 std::placeholders::_2)));
 }
 
-void ap_mirror_stream_connection::on_packet_header_received(
-    const asio::error_code &e, std::size_t bytes_transferred) {
+void ap_mirror_stream_connection::on_packet_header_received(const asio::error_code &e, std::size_t bytes_transferred) {
   if (e) {
     handle_socket_error(e);
     return;
@@ -62,17 +57,16 @@ void ap_mirror_stream_connection::on_packet_header_received(
 }
 
 void ap_mirror_stream_connection::post_receive_packet_payload() {
-  asio::async_read(
-      socket_, asio::buffer(payload_, header_->payload_size),
-      asio::bind_executor(
-          strand_,
-          std::bind(&ap_mirror_stream_connection::on_packet_payload_received,
-                    shared_from_this(), // Keep the session alive
-                    std::placeholders::_1, std::placeholders::_2)));
+  asio::async_read(socket_,
+                   asio::buffer(payload_, header_->payload_size),
+                   asio::bind_executor(strand_,
+                                       std::bind(&ap_mirror_stream_connection::on_packet_payload_received,
+                                                 shared_from_this(), // Keep the session alive
+                                                 std::placeholders::_1,
+                                                 std::placeholders::_2)));
 }
 
-void ap_mirror_stream_connection::on_packet_payload_received(
-    const asio::error_code &e, std::size_t bytes_transferred) {
+void ap_mirror_stream_connection::on_packet_payload_received(const asio::error_code &e, std::size_t bytes_transferred) {
   if (!e) {
     LOGV() << "mirror stream payload received, size: " << bytes_transferred;
 
@@ -85,8 +79,7 @@ void ap_mirror_stream_connection::on_packet_payload_received(
 }
 
 void ap_mirror_stream_connection::process_packet() {
-  if (sms_video_data == header_->payload_type ||
-      sms_payload_4096 == header_->payload_type) {
+  if (sms_video_data == header_->payload_type || sms_payload_4096 == header_->payload_type) {
     // Process the video packet
     LOGV() << "mirror VIDEO packet: " << header_->payload_size;
     sms_video_data_packet_t *p = (sms_video_data_packet_t *)header_;
@@ -113,8 +106,7 @@ void ap_mirror_stream_connection::process_packet() {
   }
 }
 
-void ap_mirror_stream_connection::handle_socket_error(
-    const asio::error_code &e) {
+void ap_mirror_stream_connection::handle_socket_error(const asio::error_code &e) {
   switch (e.value()) {
   case asio::error::eof:
     return;
@@ -152,21 +144,17 @@ void ap_mirror_stream_connection::handle_socket_error(
   LOGE() << "Socket error[" << e.value() << "]: " << e.message();
 }
 
-ap_mirror_stream_service::ap_mirror_stream_service(
-    ap_crypto_ptr &crypto, uint16_t port,
-    ap_mirror_session_handler_ptr &handler)
-    : network::tcp_service_base("ap_video_stream_service", port, true),
-      handler_(handler), crypto_(crypto) {
-  bind_thread_actions(
-      std::bind(&ap_mirror_stream_service::on_thread_start, this),
-      std::bind(&ap_mirror_stream_service::on_thread_stop, this));
+ap_mirror_stream_service::ap_mirror_stream_service(ap_crypto_ptr &crypto, uint16_t port,
+                                                   ap_mirror_session_handler_ptr &handler)
+    : network::tcp_service_base("ap_video_stream_service", port, true), handler_(handler), crypto_(crypto) {
+  bind_thread_actions(std::bind(&ap_mirror_stream_service::on_thread_start, this),
+                      std::bind(&ap_mirror_stream_service::on_thread_stop, this));
 }
 
 ap_mirror_stream_service::~ap_mirror_stream_service() {}
 
 network::tcp_connection_ptr ap_mirror_stream_service::prepare_new_connection() {
-  return std::make_shared<ap_mirror_stream_connection>(io_context(), crypto_,
-                                                       handler_);
+  return std::make_shared<ap_mirror_stream_connection>(io_context(), crypto_, handler_);
 }
 
 void ap_mirror_stream_service::on_thread_start() {

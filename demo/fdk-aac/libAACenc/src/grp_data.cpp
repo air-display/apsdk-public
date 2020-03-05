@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+?Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -87,43 +87,35 @@ amm-info@iis.fraunhofer.de
    contents/description: Short block grouping
 
 ******************************************************************************/
-#include "psy_const.h"
 #include "interface.h"
+#include "psy_const.h"
 
 /*
-* this routine does not work in-place
-*/
+ * this routine does not work in-place
+ */
 
 static inline FIXP_DBL nrgAddSaturate(const FIXP_DBL a, const FIXP_DBL b) {
-  return ( (a>=(FIXP_DBL)MAXVAL_DBL-b) ? (FIXP_DBL)MAXVAL_DBL : (a + b) );
+  return ((a >= (FIXP_DBL)MAXVAL_DBL - b) ? (FIXP_DBL)MAXVAL_DBL : (a + b));
 }
 
-void
-FDKaacEnc_groupShortData(FIXP_DBL      *mdctSpectrum,     /* in-out                           */
-               SFB_THRESHOLD *sfbThreshold,     /* in-out                           */
-               SFB_ENERGY    *sfbEnergy,        /* in-out                           */
-               SFB_ENERGY    *sfbEnergyMS,      /* in-out                           */
-               SFB_ENERGY    *sfbSpreadEnergy,
-               const INT      sfbCnt,
-               const INT      sfbActive,
-               const INT     *sfbOffset,
-               const FIXP_DBL *sfbMinSnrLdData,
-               INT           *groupedSfbOffset,       /* out */
-               INT           *maxSfbPerGroup,         /* out */
-               FIXP_DBL      *groupedSfbMinSnrLdData,
-               const INT      noOfGroups,
-               const INT     *groupLen,
-               const INT      granuleLength)
-{
-  INT i,j;
-  INT line;       /* counts through lines              */
-  INT sfb;        /* counts through scalefactor bands  */
-  INT grp;        /* counts through groups             */
-  INT wnd;        /* counts through windows in a group */
-  INT offset;     /* needed in sfbOffset grouping      */
+void FDKaacEnc_groupShortData(FIXP_DBL *mdctSpectrum,      /* in-out                           */
+                              SFB_THRESHOLD *sfbThreshold, /* in-out                           */
+                              SFB_ENERGY *sfbEnergy,       /* in-out                           */
+                              SFB_ENERGY *sfbEnergyMS,     /* in-out                           */
+                              SFB_ENERGY *sfbSpreadEnergy, const INT sfbCnt, const INT sfbActive, const INT *sfbOffset,
+                              const FIXP_DBL *sfbMinSnrLdData, INT *groupedSfbOffset, /* out */
+                              INT *maxSfbPerGroup,                                    /* out */
+                              FIXP_DBL *groupedSfbMinSnrLdData, const INT noOfGroups, const INT *groupLen,
+                              const INT granuleLength) {
+  INT i, j;
+  INT line;   /* counts through lines              */
+  INT sfb;    /* counts through scalefactor bands  */
+  INT grp;    /* counts through groups             */
+  INT wnd;    /* counts through windows in a group */
+  INT offset; /* needed in sfbOffset grouping      */
   INT highestSfb;
 
-  INT granuleLength_short = granuleLength/TRANS_FAC;
+  INT granuleLength_short = granuleLength / TRANS_FAC;
 
   /* for short blocks: regroup spectrum and */
   /* group energies and thresholds according to grouping */
@@ -131,142 +123,121 @@ FDKaacEnc_groupShortData(FIXP_DBL      *mdctSpectrum,     /* in-out             
 
   /* calculate maxSfbPerGroup */
   highestSfb = 0;
-  for (wnd = 0; wnd < TRANS_FAC; wnd++)
-  {
-    for (sfb = sfbActive-1; sfb >= highestSfb; sfb--)
-    {
-      for (line = sfbOffset[sfb+1]-1; line >= sfbOffset[sfb]; line--)
-      {
-        if ( mdctSpectrum[wnd*granuleLength_short+line] != FL2FXCONST_SPC(0.0) ) break; /* this band is not completely zero */
+  for (wnd = 0; wnd < TRANS_FAC; wnd++) {
+    for (sfb = sfbActive - 1; sfb >= highestSfb; sfb--) {
+      for (line = sfbOffset[sfb + 1] - 1; line >= sfbOffset[sfb]; line--) {
+        if (mdctSpectrum[wnd * granuleLength_short + line] != FL2FXCONST_SPC(0.0))
+          break; /* this band is not completely zero */
       }
-      if (line >= sfbOffset[sfb]) break;                                      /* this band was not completely zero */
+      if (line >= sfbOffset[sfb])
+        break; /* this band was not completely zero */
     }
     highestSfb = fixMax(highestSfb, sfb);
   }
   highestSfb = highestSfb > 0 ? highestSfb : 0;
-  *maxSfbPerGroup = highestSfb+1;
+  *maxSfbPerGroup = highestSfb + 1;
 
   /* calculate groupedSfbOffset */
   i = 0;
   offset = 0;
-  for (grp = 0; grp < noOfGroups; grp++)
-  {
-      for (sfb = 0; sfb < sfbActive+1; sfb++)
-      {
-          groupedSfbOffset[i++] = offset + sfbOffset[sfb] * groupLen[grp];
-      }
-      i +=  sfbCnt-sfb;
-      offset += groupLen[grp] * granuleLength_short;
+  for (grp = 0; grp < noOfGroups; grp++) {
+    for (sfb = 0; sfb < sfbActive + 1; sfb++) {
+      groupedSfbOffset[i++] = offset + sfbOffset[sfb] * groupLen[grp];
+    }
+    i += sfbCnt - sfb;
+    offset += groupLen[grp] * granuleLength_short;
   }
   groupedSfbOffset[i++] = granuleLength;
 
   /* calculate groupedSfbMinSnr */
   i = 0;
-  for (grp = 0; grp < noOfGroups; grp++)
-  {
-    for (sfb = 0; sfb < sfbActive; sfb++)
-    {
+  for (grp = 0; grp < noOfGroups; grp++) {
+    for (sfb = 0; sfb < sfbActive; sfb++) {
       groupedSfbMinSnrLdData[i++] = sfbMinSnrLdData[sfb];
     }
-    i +=  sfbCnt-sfb;
+    i += sfbCnt - sfb;
   }
 
   /* sum up sfbThresholds */
   wnd = 0;
   i = 0;
-  for (grp = 0; grp < noOfGroups; grp++)
-  {
-    for (sfb = 0; sfb < sfbActive; sfb++)
-    {
+  for (grp = 0; grp < noOfGroups; grp++) {
+    for (sfb = 0; sfb < sfbActive; sfb++) {
       FIXP_DBL thresh = sfbThreshold->Short[wnd][sfb];
-      for (j=1; j<groupLen[grp]; j++)
-      {
-        thresh = nrgAddSaturate(thresh, sfbThreshold->Short[wnd+j][sfb]);
+      for (j = 1; j < groupLen[grp]; j++) {
+        thresh = nrgAddSaturate(thresh, sfbThreshold->Short[wnd + j][sfb]);
       }
       sfbThreshold->Long[i++] = thresh;
     }
-    i +=  sfbCnt-sfb;
+    i += sfbCnt - sfb;
     wnd += groupLen[grp];
   }
 
   /* sum up sfbEnergies left/right */
   wnd = 0;
   i = 0;
-  for (grp = 0; grp < noOfGroups; grp++)
-  {
-    for (sfb = 0; sfb < sfbActive; sfb++)
-    {
+  for (grp = 0; grp < noOfGroups; grp++) {
+    for (sfb = 0; sfb < sfbActive; sfb++) {
       FIXP_DBL energy = sfbEnergy->Short[wnd][sfb];
-      for (j=1; j<groupLen[grp]; j++)
-      {
-        energy = nrgAddSaturate(energy, sfbEnergy->Short[wnd+j][sfb]);
+      for (j = 1; j < groupLen[grp]; j++) {
+        energy = nrgAddSaturate(energy, sfbEnergy->Short[wnd + j][sfb]);
       }
       sfbEnergy->Long[i++] = energy;
     }
-    i +=  sfbCnt-sfb;
+    i += sfbCnt - sfb;
     wnd += groupLen[grp];
   }
 
   /* sum up sfbEnergies mid/side */
   wnd = 0;
   i = 0;
-  for (grp = 0; grp < noOfGroups; grp++)
-  {
-    for (sfb = 0; sfb < sfbActive; sfb++)
-    {
+  for (grp = 0; grp < noOfGroups; grp++) {
+    for (sfb = 0; sfb < sfbActive; sfb++) {
       FIXP_DBL energy = sfbEnergyMS->Short[wnd][sfb];
-      for (j=1; j<groupLen[grp]; j++)
-      {
-        energy = nrgAddSaturate(energy, sfbEnergyMS->Short[wnd+j][sfb]);
+      for (j = 1; j < groupLen[grp]; j++) {
+        energy = nrgAddSaturate(energy, sfbEnergyMS->Short[wnd + j][sfb]);
       }
       sfbEnergyMS->Long[i++] = energy;
     }
-    i +=  sfbCnt-sfb;
+    i += sfbCnt - sfb;
     wnd += groupLen[grp];
   }
 
   /* sum up sfbSpreadEnergies */
   wnd = 0;
   i = 0;
-  for (grp = 0; grp < noOfGroups; grp++)
-  {
-    for (sfb = 0; sfb < sfbActive; sfb++)
-    {
+  for (grp = 0; grp < noOfGroups; grp++) {
+    for (sfb = 0; sfb < sfbActive; sfb++) {
       FIXP_DBL energy = sfbSpreadEnergy->Short[wnd][sfb];
-      for (j=1; j<groupLen[grp]; j++)
-      {
-         energy = nrgAddSaturate(energy, sfbSpreadEnergy->Short[wnd+j][sfb]);
+      for (j = 1; j < groupLen[grp]; j++) {
+        energy = nrgAddSaturate(energy, sfbSpreadEnergy->Short[wnd + j][sfb]);
       }
       sfbSpreadEnergy->Long[i++] = energy;
     }
-    i +=  sfbCnt-sfb;
+    i += sfbCnt - sfb;
     wnd += groupLen[grp];
   }
 
   /* re-group spectrum */
   wnd = 0;
   i = 0;
-  for (grp = 0; grp < noOfGroups; grp++)
-  {
-    for (sfb = 0; sfb < sfbActive; sfb++)
-    {
-      int width = sfbOffset[sfb+1]-sfbOffset[sfb];
-      FIXP_DBL *pMdctSpectrum = &mdctSpectrum[sfbOffset[sfb]] + wnd*granuleLength_short;
-      for (j = 0; j < groupLen[grp]; j++)
-      {
+  for (grp = 0; grp < noOfGroups; grp++) {
+    for (sfb = 0; sfb < sfbActive; sfb++) {
+      int width = sfbOffset[sfb + 1] - sfbOffset[sfb];
+      FIXP_DBL *pMdctSpectrum = &mdctSpectrum[sfbOffset[sfb]] + wnd * granuleLength_short;
+      for (j = 0; j < groupLen[grp]; j++) {
         FIXP_DBL *pTmp = pMdctSpectrum;
-        for (line = width; line > 0; line--)
-        {
+        for (line = width; line > 0; line--) {
           tmpSpectrum[i++] = *pTmp++;
         }
         pMdctSpectrum += granuleLength_short;
       }
     }
-    i +=  (groupLen[grp]*(sfbOffset[sfbCnt]-sfbOffset[sfb]));
+    i += (groupLen[grp] * (sfbOffset[sfbCnt] - sfbOffset[sfb]));
     wnd += groupLen[grp];
   }
 
-  FDKmemcpy(mdctSpectrum, tmpSpectrum, granuleLength*sizeof(FIXP_DBL));
+  FDKmemcpy(mdctSpectrum, tmpSpectrum, granuleLength * sizeof(FIXP_DBL));
 
   C_ALLOC_SCRATCH_END(tmpSpectrum, FIXP_DBL, (1024))
 }

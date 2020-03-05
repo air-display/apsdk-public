@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+ï¿½ Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Fï¿½rderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -93,6 +93,7 @@ amm-info@iis.fraunhofer.de
 
 
 #include "qc_data.h"
+#include "aacenc.h"
 
 AAC_ENCODER_ERROR FDKaacEnc_DetermineBandWidth(INT* bandWidth,
                                                INT proposedBandwidth,

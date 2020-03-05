@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+?Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -81,28 +81,27 @@ www.iis.fraunhofer.de/amm
 amm-info@iis.fraunhofer.de
 ----------------------------------------------------------------------------------------------------------- */
 
- /******************************** MPEG Audio Encoder **************************
+/******************************** MPEG Audio Encoder **************************
 
-   Initial author:       M. Werner
-   contents/description: Bitstream encoder
+  Initial author:       M. Werner
+  contents/description: Bitstream encoder
 
 ******************************************************************************/
 
 #include "bitenc.h"
+#include "aacEnc_ram.h"
 #include "bit_cnt.h"
 #include "dyn_bits.h"
-#include "qc_data.h"
 #include "interface.h"
-#include "aacEnc_ram.h"
-
+#include "qc_data.h"
 
 #include "tpenc_lib.h"
 
-#include "FDK_tools_rom.h"  /* needed for the bitstream syntax tables */
+#include "FDK_tools_rom.h" /* needed for the bitstream syntax tables */
 
 static const int globalGainOffset = 100;
-static const int icsReservedBit   = 0;
-static const int noiseOffset      = 90;
+static const int icsReservedBit = 0;
+static const int noiseOffset = 90;
 
 /*****************************************************************************
 
@@ -113,30 +112,24 @@ static const int noiseOffset      = 90;
     output:
 
 *****************************************************************************/
-static INT FDKaacEnc_encodeSpectralData(INT                    *sfbOffset,
-                                        SECTION_DATA           *sectionData,
-                                        SHORT                  *quantSpectrum,
-                                        HANDLE_FDK_BITSTREAM    hBitStream)
-{
-  INT i,sfb;
+static INT FDKaacEnc_encodeSpectralData(INT *sfbOffset, SECTION_DATA *sectionData, SHORT *quantSpectrum,
+                                        HANDLE_FDK_BITSTREAM hBitStream) {
+  INT i, sfb;
   INT dbgVal = FDKgetValidBits(hBitStream);
 
-  for(i=0;i<sectionData->noOfSections;i++)
-  {
-    if(sectionData->huffsection[i].codeBook != CODE_BOOK_PNS_NO)
-    {
+  for (i = 0; i < sectionData->noOfSections; i++) {
+    if (sectionData->huffsection[i].codeBook != CODE_BOOK_PNS_NO) {
       /* huffencode spectral data for this huffsection */
-      INT tmp = sectionData->huffsection[i].sfbStart+sectionData->huffsection[i].sfbCnt;
-      for(sfb=sectionData->huffsection[i].sfbStart; sfb<tmp; sfb++)
-      {
-        FDKaacEnc_codeValues(quantSpectrum+sfbOffset[sfb],
-                             sfbOffset[sfb+1]-sfbOffset[sfb],
+      INT tmp = sectionData->huffsection[i].sfbStart + sectionData->huffsection[i].sfbCnt;
+      for (sfb = sectionData->huffsection[i].sfbStart; sfb < tmp; sfb++) {
+        FDKaacEnc_codeValues(quantSpectrum + sfbOffset[sfb],
+                             sfbOffset[sfb + 1] - sfbOffset[sfb],
                              sectionData->huffsection[i].codeBook,
                              hBitStream);
       }
     }
   }
-  return(FDKgetValidBits(hBitStream)-dbgVal);
+  return (FDKgetValidBits(hBitStream) - dbgVal);
 }
 
 /*****************************************************************************
@@ -148,17 +141,12 @@ static INT FDKaacEnc_encodeSpectralData(INT                    *sfbOffset,
     output:
 
 *****************************************************************************/
-static INT FDKaacEnc_encodeGlobalGain(INT globalGain,
-                                      INT scalefac,
-                                      HANDLE_FDK_BITSTREAM hBitStream,
-                                      INT mdctScale)
-{
+static INT FDKaacEnc_encodeGlobalGain(INT globalGain, INT scalefac, HANDLE_FDK_BITSTREAM hBitStream, INT mdctScale) {
   if (hBitStream != NULL) {
-    FDKwriteBits(hBitStream,globalGain - scalefac + globalGainOffset-4*(LOG_NORM_PCM-mdctScale),8);
+    FDKwriteBits(hBitStream, globalGain - scalefac + globalGainOffset - 4 * (LOG_NORM_PCM - mdctScale), 8);
   }
   return (8);
 }
-
 
 /*****************************************************************************
 
@@ -170,13 +158,8 @@ static INT FDKaacEnc_encodeGlobalGain(INT globalGain,
 
 *****************************************************************************/
 
-static INT FDKaacEnc_encodeIcsInfo(INT blockType,
-                                   INT windowShape,
-                                   INT groupingMask,
-                                   INT maxSfbPerGroup,
-                                   HANDLE_FDK_BITSTREAM  hBitStream,
-                                   UINT syntaxFlags)
-{
+static INT FDKaacEnc_encodeIcsInfo(INT blockType, INT windowShape, INT groupingMask, INT maxSfbPerGroup,
+                                   HANDLE_FDK_BITSTREAM hBitStream, UINT syntaxFlags) {
   INT statBits;
 
   if (blockType == SHORT_WINDOW) {
@@ -184,37 +167,36 @@ static INT FDKaacEnc_encodeIcsInfo(INT blockType,
   } else {
     if (syntaxFlags & AC_ELD) {
       statBits = 6;
-    } else
-    {
+    } else {
       statBits = (!(syntaxFlags & AC_SCALABLE)) ? 11 : 10;
     }
   }
 
   if (hBitStream != NULL) {
 
-    if (!(syntaxFlags & AC_ELD)){
-      FDKwriteBits(hBitStream,icsReservedBit,1);
-      FDKwriteBits(hBitStream,blockType,2);
-      FDKwriteBits(hBitStream, (windowShape == LOL_WINDOW) ? KBD_WINDOW : windowShape,1);
+    if (!(syntaxFlags & AC_ELD)) {
+      FDKwriteBits(hBitStream, icsReservedBit, 1);
+      FDKwriteBits(hBitStream, blockType, 2);
+      FDKwriteBits(hBitStream, (windowShape == LOL_WINDOW) ? KBD_WINDOW : windowShape, 1);
     }
 
-    switch(blockType){
+    switch (blockType) {
     case LONG_WINDOW:
     case START_WINDOW:
     case STOP_WINDOW:
-      FDKwriteBits(hBitStream,maxSfbPerGroup,6);
+      FDKwriteBits(hBitStream, maxSfbPerGroup, 6);
 
-      if (!(syntaxFlags & (AC_SCALABLE|AC_ELD)) ) { /* If not scalable syntax then ... */
+      if (!(syntaxFlags & (AC_SCALABLE | AC_ELD))) { /* If not scalable syntax then ... */
         /* No predictor data present */
         FDKwriteBits(hBitStream, 0, 1);
       }
       break;
 
     case SHORT_WINDOW:
-      FDKwriteBits(hBitStream,maxSfbPerGroup,4);
+      FDKwriteBits(hBitStream, maxSfbPerGroup, 4);
 
       /* Write grouping bits */
-      FDKwriteBits(hBitStream,groupingMask,TRANS_FAC-1);
+      FDKwriteBits(hBitStream, groupingMask, TRANS_FAC - 1);
       break;
     }
   }
@@ -232,50 +214,44 @@ static INT FDKaacEnc_encodeIcsInfo(INT blockType,
     output:
 
 *****************************************************************************/
-static INT FDKaacEnc_encodeSectionData(SECTION_DATA *sectionData,
-                                       HANDLE_FDK_BITSTREAM hBitStream,
-                                       UINT useVCB11)
-{
+static INT FDKaacEnc_encodeSectionData(SECTION_DATA *sectionData, HANDLE_FDK_BITSTREAM hBitStream, UINT useVCB11) {
   if (hBitStream != NULL) {
-    INT sectEscapeVal=0,sectLenBits=0;
+    INT sectEscapeVal = 0, sectLenBits = 0;
     INT sectLen;
     INT i;
-    INT dbgVal=FDKgetValidBits(hBitStream);
+    INT dbgVal = FDKgetValidBits(hBitStream);
     INT sectCbBits = 4;
 
-    switch(sectionData->blockType)
-    {
+    switch (sectionData->blockType) {
     case LONG_WINDOW:
     case START_WINDOW:
     case STOP_WINDOW:
       sectEscapeVal = SECT_ESC_VAL_LONG;
-      sectLenBits   = SECT_BITS_LONG;
+      sectLenBits = SECT_BITS_LONG;
       break;
 
     case SHORT_WINDOW:
       sectEscapeVal = SECT_ESC_VAL_SHORT;
-      sectLenBits   = SECT_BITS_SHORT;
+      sectLenBits = SECT_BITS_SHORT;
       break;
     }
 
-    for(i=0;i<sectionData->noOfSections;i++)
-    {
+    for (i = 0; i < sectionData->noOfSections; i++) {
       INT codeBook = sectionData->huffsection[i].codeBook;
 
-      FDKwriteBits(hBitStream,codeBook,sectCbBits);
+      FDKwriteBits(hBitStream, codeBook, sectCbBits);
 
       {
         sectLen = sectionData->huffsection[i].sfbCnt;
 
-        while(sectLen >= sectEscapeVal)
-        {
-          FDKwriteBits(hBitStream,sectEscapeVal,sectLenBits);
-          sectLen-=sectEscapeVal;
+        while (sectLen >= sectEscapeVal) {
+          FDKwriteBits(hBitStream, sectEscapeVal, sectLenBits);
+          sectLen -= sectEscapeVal;
         }
-        FDKwriteBits(hBitStream,sectLen,sectLenBits);
+        FDKwriteBits(hBitStream, sectLen, sectLenBits);
       }
     }
-    return(FDKgetValidBits(hBitStream)-dbgVal);
+    return (FDKgetValidBits(hBitStream) - dbgVal);
   }
   return (0);
 }
@@ -289,16 +265,11 @@ static INT FDKaacEnc_encodeSectionData(SECTION_DATA *sectionData,
     output:
 
 *****************************************************************************/
-static INT FDKaacEnc_encodeScaleFactorData(UINT                  *maxValueInSfb,
-                                           SECTION_DATA          *sectionData,
-                                           INT                   *scalefac,
-                                           HANDLE_FDK_BITSTREAM   hBitStream,
-                                           INT                   *RESTRICT noiseNrg,
-                                           const INT             *isScale,
-                                           INT                    globalGain)
-{
+static INT FDKaacEnc_encodeScaleFactorData(UINT *maxValueInSfb, SECTION_DATA *sectionData, INT *scalefac,
+                                           HANDLE_FDK_BITSTREAM hBitStream, INT *RESTRICT noiseNrg, const INT *isScale,
+                                           INT globalGain) {
   if (hBitStream != NULL) {
-    INT i,j,lastValScf,deltaScf;
+    INT i, j, lastValScf, deltaScf;
     INT deltaPns;
     INT lastValPns = 0;
     INT noisePCMFlag = TRUE;
@@ -306,65 +277,61 @@ static INT FDKaacEnc_encodeScaleFactorData(UINT                  *maxValueInSfb,
 
     INT dbgVal = FDKgetValidBits(hBitStream);
 
-    lastValScf=scalefac[sectionData->firstScf];
-    lastValPns = globalGain-scalefac[sectionData->firstScf]+globalGainOffset-4*LOG_NORM_PCM-noiseOffset;
-    lastValIs  = 0;
+    lastValScf = scalefac[sectionData->firstScf];
+    lastValPns = globalGain - scalefac[sectionData->firstScf] + globalGainOffset - 4 * LOG_NORM_PCM - noiseOffset;
+    lastValIs = 0;
 
-    for(i=0; i<sectionData->noOfSections; i++){
+    for (i = 0; i < sectionData->noOfSections; i++) {
       if (sectionData->huffsection[i].codeBook != CODE_BOOK_ZERO_NO) {
 
         if ((sectionData->huffsection[i].codeBook == CODE_BOOK_IS_OUT_OF_PHASE_NO) ||
-            (sectionData->huffsection[i].codeBook == CODE_BOOK_IS_IN_PHASE_NO))
-        {
+            (sectionData->huffsection[i].codeBook == CODE_BOOK_IS_IN_PHASE_NO)) {
           INT sfbStart = sectionData->huffsection[i].sfbStart;
           INT tmp = sfbStart + sectionData->huffsection[i].sfbCnt;
-          for(j=sfbStart; j<tmp; j++) {
-            INT deltaIs   = isScale[j]-lastValIs;
+          for (j = sfbStart; j < tmp; j++) {
+            INT deltaIs = isScale[j] - lastValIs;
             lastValIs = isScale[j];
-            if(FDKaacEnc_codeScalefactorDelta(deltaIs,hBitStream)) {
-                return(1);
+            if (FDKaacEnc_codeScalefactorDelta(deltaIs, hBitStream)) {
+              return (1);
             }
           } /* sfb */
-        }
-        else if(sectionData->huffsection[i].codeBook == CODE_BOOK_PNS_NO) {
+        } else if (sectionData->huffsection[i].codeBook == CODE_BOOK_PNS_NO) {
           INT sfbStart = sectionData->huffsection[i].sfbStart;
           INT tmp = sfbStart + sectionData->huffsection[i].sfbCnt;
-          for(j=sfbStart; j<tmp; j++) {
-            deltaPns   = noiseNrg[j]-lastValPns;
+          for (j = sfbStart; j < tmp; j++) {
+            deltaPns = noiseNrg[j] - lastValPns;
             lastValPns = noiseNrg[j];
 
-            if(noisePCMFlag){
-              FDKwriteBits(hBitStream,deltaPns+(1<<(PNS_PCM_BITS-1)),PNS_PCM_BITS);
+            if (noisePCMFlag) {
+              FDKwriteBits(hBitStream, deltaPns + (1 << (PNS_PCM_BITS - 1)), PNS_PCM_BITS);
               noisePCMFlag = FALSE;
-            }
-            else {
-              if(FDKaacEnc_codeScalefactorDelta(deltaPns,hBitStream)) {
-                return(1);
+            } else {
+              if (FDKaacEnc_codeScalefactorDelta(deltaPns, hBitStream)) {
+                return (1);
               }
             }
           } /* sfb */
-        }
-        else {
-          INT tmp = sectionData->huffsection[i].sfbStart+sectionData->huffsection[i].sfbCnt;
-          for(j=sectionData->huffsection[i].sfbStart; j<tmp; j++){
+        } else {
+          INT tmp = sectionData->huffsection[i].sfbStart + sectionData->huffsection[i].sfbCnt;
+          for (j = sectionData->huffsection[i].sfbStart; j < tmp; j++) {
             /*
               check if we can repeat the last value to save bits
             */
-            if(maxValueInSfb[j] == 0)
+            if (maxValueInSfb[j] == 0)
               deltaScf = 0;
-            else{
-              deltaScf = -(scalefac[j]-lastValScf);
+            else {
+              deltaScf = -(scalefac[j] - lastValScf);
               lastValScf = scalefac[j];
             }
-            if(FDKaacEnc_codeScalefactorDelta(deltaScf,hBitStream)){
-              return(1);
+            if (FDKaacEnc_codeScalefactorDelta(deltaScf, hBitStream)) {
+              return (1);
             }
           } /* sfb */
-        } /* code scalefactor */
-      } /* sectionData->huffsection[i].codeBook != CODE_BOOK_ZERO_NO */
-    } /* section loop */
+        }   /* code scalefactor */
+      }     /* sectionData->huffsection[i].codeBook != CODE_BOOK_ZERO_NO */
+    }       /* section loop */
 
-    return(FDKgetValidBits(hBitStream)-dbgVal);
+    return (FDKgetValidBits(hBitStream) - dbgVal);
   } /* if (hBitStream != NULL) */
 
   return (0);
@@ -379,53 +346,42 @@ static INT FDKaacEnc_encodeScaleFactorData(UINT                  *maxValueInSfb,
     output:
 
 *****************************************************************************/
-static INT FDKaacEnc_encodeMSInfo(INT            sfbCnt,
-                                  INT            grpSfb,
-                                  INT            maxSfb,
-                                  INT            msDigest,
-                                  INT           *jsFlags,
-                                  HANDLE_FDK_BITSTREAM hBitStream)
-{
+static INT FDKaacEnc_encodeMSInfo(INT sfbCnt, INT grpSfb, INT maxSfb, INT msDigest, INT *jsFlags,
+                                  HANDLE_FDK_BITSTREAM hBitStream) {
   INT sfb, sfbOff, msBits = 0;
 
-  if (hBitStream != NULL)
-  {
-    switch(msDigest)
-    {
+  if (hBitStream != NULL) {
+    switch (msDigest) {
     case MS_NONE:
-      FDKwriteBits(hBitStream,SI_MS_MASK_NONE,2);
+      FDKwriteBits(hBitStream, SI_MS_MASK_NONE, 2);
       msBits += 2;
       break;
 
     case MS_ALL:
-      FDKwriteBits(hBitStream,SI_MS_MASK_ALL,2);
+      FDKwriteBits(hBitStream, SI_MS_MASK_ALL, 2);
       msBits += 2;
       break;
 
     case MS_SOME:
-      FDKwriteBits(hBitStream,SI_MS_MASK_SOME,2);
+      FDKwriteBits(hBitStream, SI_MS_MASK_SOME, 2);
       msBits += 2;
-      for(sfbOff = 0; sfbOff < sfbCnt; sfbOff+=grpSfb)
-      {
-        for(sfb=0; sfb<maxSfb; sfb++)
-        {
-          if(jsFlags[sfbOff+sfb] & MS_ON){
-            FDKwriteBits(hBitStream,1,1);
-          }
-          else{
-            FDKwriteBits(hBitStream,0,1);
+      for (sfbOff = 0; sfbOff < sfbCnt; sfbOff += grpSfb) {
+        for (sfb = 0; sfb < maxSfb; sfb++) {
+          if (jsFlags[sfbOff + sfb] & MS_ON) {
+            FDKwriteBits(hBitStream, 1, 1);
+          } else {
+            FDKwriteBits(hBitStream, 0, 1);
           }
           msBits += 1;
         }
       }
       break;
     }
-  }
-  else {
+  } else {
     msBits += 2;
     if (msDigest == MS_SOME) {
-      for(sfbOff = 0; sfbOff < sfbCnt; sfbOff+=grpSfb) {
-        for(sfb=0; sfb<maxSfb; sfb++) {
+      for (sfbOff = 0; sfbOff < sfbCnt; sfbOff += grpSfb) {
+        for (sfb = 0; sfb < maxSfb; sfb++) {
           msBits += 1;
         }
       }
@@ -443,26 +399,22 @@ static INT FDKaacEnc_encodeMSInfo(INT            sfbCnt,
     output:
 
 *****************************************************************************/
-static INT FDKaacEnc_encodeTnsDataPresent(TNS_INFO *tnsInfo,
-                                          INT blockType,
-                                          HANDLE_FDK_BITSTREAM hBitStream)
-{
-  if ( (hBitStream!=NULL) && (tnsInfo!=NULL) )
-  {
+static INT FDKaacEnc_encodeTnsDataPresent(TNS_INFO *tnsInfo, INT blockType, HANDLE_FDK_BITSTREAM hBitStream) {
+  if ((hBitStream != NULL) && (tnsInfo != NULL)) {
     INT i, tnsPresent = 0;
-    INT numOfWindows = (blockType==SHORT_WINDOW?TRANS_FAC:1);
+    INT numOfWindows = (blockType == SHORT_WINDOW ? TRANS_FAC : 1);
 
-    for (i=0; i<numOfWindows; i++) {
-      if (tnsInfo->numOfFilters[i]!=0) {
-        tnsPresent=1;
+    for (i = 0; i < numOfWindows; i++) {
+      if (tnsInfo->numOfFilters[i] != 0) {
+        tnsPresent = 1;
         break;
       }
     }
 
-    if (tnsPresent==0) {
-      FDKwriteBits(hBitStream,0,1);
+    if (tnsPresent == 0) {
+      FDKwriteBits(hBitStream, 0, 1);
     } else {
-      FDKwriteBits(hBitStream,1,1);
+      FDKwriteBits(hBitStream, 1, 1);
     }
   }
   return (1);
@@ -477,106 +429,98 @@ static INT FDKaacEnc_encodeTnsDataPresent(TNS_INFO *tnsInfo,
     output:
 
 *****************************************************************************/
-static INT FDKaacEnc_encodeTnsData(TNS_INFO *tnsInfo,
-                                   INT blockType,
-                                   HANDLE_FDK_BITSTREAM hBitStream)
-{
+static INT FDKaacEnc_encodeTnsData(TNS_INFO *tnsInfo, INT blockType, HANDLE_FDK_BITSTREAM hBitStream) {
   INT tnsBits = 0;
 
-  if (tnsInfo!=NULL) {
+  if (tnsInfo != NULL) {
 
-    INT i,j,k;
+    INT i, j, k;
     INT tnsPresent = 0;
     INT coefBits;
-    INT numOfWindows=(blockType==SHORT_WINDOW?TRANS_FAC:1);
+    INT numOfWindows = (blockType == SHORT_WINDOW ? TRANS_FAC : 1);
 
-    for (i=0; i<numOfWindows; i++) {
-      if (tnsInfo->numOfFilters[i]!=0) {
-        tnsPresent=1;
+    for (i = 0; i < numOfWindows; i++) {
+      if (tnsInfo->numOfFilters[i] != 0) {
+        tnsPresent = 1;
       }
     }
 
-    if (hBitStream != NULL)
-    {
-      if (tnsPresent==1) { /* there is data to be written*/
-        for (i=0; i<numOfWindows; i++) {
-          FDKwriteBits(hBitStream,tnsInfo->numOfFilters[i],(blockType==SHORT_WINDOW?1:2));
-          tnsBits += (blockType==SHORT_WINDOW?1:2);
+    if (hBitStream != NULL) {
+      if (tnsPresent == 1) { /* there is data to be written*/
+        for (i = 0; i < numOfWindows; i++) {
+          FDKwriteBits(hBitStream, tnsInfo->numOfFilters[i], (blockType == SHORT_WINDOW ? 1 : 2));
+          tnsBits += (blockType == SHORT_WINDOW ? 1 : 2);
           if (tnsInfo->numOfFilters[i]) {
-            FDKwriteBits(hBitStream,(tnsInfo->coefRes[i]==4?1:0),1);
+            FDKwriteBits(hBitStream, (tnsInfo->coefRes[i] == 4 ? 1 : 0), 1);
             tnsBits += 1;
           }
-          for (j=0; j<tnsInfo->numOfFilters[i]; j++) {
-            FDKwriteBits(hBitStream,tnsInfo->length[i][j],(blockType==SHORT_WINDOW?4:6));
-            tnsBits += (blockType==SHORT_WINDOW?4:6);
+          for (j = 0; j < tnsInfo->numOfFilters[i]; j++) {
+            FDKwriteBits(hBitStream, tnsInfo->length[i][j], (blockType == SHORT_WINDOW ? 4 : 6));
+            tnsBits += (blockType == SHORT_WINDOW ? 4 : 6);
             FDK_ASSERT(tnsInfo->order[i][j] <= 12);
-            FDKwriteBits(hBitStream,tnsInfo->order[i][j],(blockType==SHORT_WINDOW?3:5));
-            tnsBits += (blockType==SHORT_WINDOW?3:5);
-            if (tnsInfo->order[i][j]){
-              FDKwriteBits(hBitStream,tnsInfo->direction[i][j],1);
-              tnsBits +=1; /*direction*/
-              if(tnsInfo->coefRes[i] == 4) {
+            FDKwriteBits(hBitStream, tnsInfo->order[i][j], (blockType == SHORT_WINDOW ? 3 : 5));
+            tnsBits += (blockType == SHORT_WINDOW ? 3 : 5);
+            if (tnsInfo->order[i][j]) {
+              FDKwriteBits(hBitStream, tnsInfo->direction[i][j], 1);
+              tnsBits += 1; /*direction*/
+              if (tnsInfo->coefRes[i] == 4) {
                 coefBits = 3;
-                for(k=0; k<tnsInfo->order[i][j]; k++) {
-                  if (tnsInfo->coef[i][j][k]> 3 ||
-                    tnsInfo->coef[i][j][k]< -4) {
+                for (k = 0; k < tnsInfo->order[i][j]; k++) {
+                  if (tnsInfo->coef[i][j][k] > 3 || tnsInfo->coef[i][j][k] < -4) {
                     coefBits = 4;
                     break;
                   }
                 }
               } else {
                 coefBits = 2;
-                for(k=0; k<tnsInfo->order[i][j]; k++) {
-                  if ( tnsInfo->coef[i][j][k]> 1
-                    || tnsInfo->coef[i][j][k]< -2) {
+                for (k = 0; k < tnsInfo->order[i][j]; k++) {
+                  if (tnsInfo->coef[i][j][k] > 1 || tnsInfo->coef[i][j][k] < -2) {
                     coefBits = 3;
                     break;
                   }
                 }
               }
-              FDKwriteBits(hBitStream,-(coefBits - tnsInfo->coefRes[i]),1); /*coef_compres*/
-              tnsBits +=1; /*coef_compression */
-              for (k=0; k<tnsInfo->order[i][j]; k++ ) {
-                static const INT rmask[] = {0,1,3,7,15};
-                FDKwriteBits(hBitStream,tnsInfo->coef[i][j][k] & rmask[coefBits],coefBits);
+              FDKwriteBits(hBitStream, -(coefBits - tnsInfo->coefRes[i]), 1); /*coef_compres*/
+              tnsBits += 1;                                                   /*coef_compression */
+              for (k = 0; k < tnsInfo->order[i][j]; k++) {
+                static const INT rmask[] = {0, 1, 3, 7, 15};
+                FDKwriteBits(hBitStream, tnsInfo->coef[i][j][k] & rmask[coefBits], coefBits);
                 tnsBits += coefBits;
               }
             }
           }
         }
       }
-    }
-    else {
+    } else {
       if (tnsPresent != 0) {
-        for (i=0; i<numOfWindows; i++) {
-          tnsBits += (blockType==SHORT_WINDOW?1:2);
+        for (i = 0; i < numOfWindows; i++) {
+          tnsBits += (blockType == SHORT_WINDOW ? 1 : 2);
           if (tnsInfo->numOfFilters[i]) {
             tnsBits += 1;
-            for (j=0; j<tnsInfo->numOfFilters[i]; j++) {
-              tnsBits += (blockType==SHORT_WINDOW?4:6);
-              tnsBits += (blockType==SHORT_WINDOW?3:5);
+            for (j = 0; j < tnsInfo->numOfFilters[i]; j++) {
+              tnsBits += (blockType == SHORT_WINDOW ? 4 : 6);
+              tnsBits += (blockType == SHORT_WINDOW ? 3 : 5);
               if (tnsInfo->order[i][j]) {
-                tnsBits +=1; /*direction*/
-                tnsBits +=1; /*coef_compression */
+                tnsBits += 1; /*direction*/
+                tnsBits += 1; /*coef_compression */
                 if (tnsInfo->coefRes[i] == 4) {
-                  coefBits=3;
-                  for (k=0; k<tnsInfo->order[i][j]; k++) {
-                    if (tnsInfo->coef[i][j][k]> 3 || tnsInfo->coef[i][j][k]< -4) {
+                  coefBits = 3;
+                  for (k = 0; k < tnsInfo->order[i][j]; k++) {
+                    if (tnsInfo->coef[i][j][k] > 3 || tnsInfo->coef[i][j][k] < -4) {
                       coefBits = 4;
                       break;
                     }
                   }
-                }
-                else {
+                } else {
                   coefBits = 2;
-                  for (k=0; k<tnsInfo->order[i][j]; k++) {
-                    if (tnsInfo->coef[i][j][k]> 1 || tnsInfo->coef[i][j][k]< -2) {
+                  for (k = 0; k < tnsInfo->order[i][j]; k++) {
+                    if (tnsInfo->coef[i][j][k] > 1 || tnsInfo->coef[i][j][k] < -2) {
                       coefBits = 3;
                       break;
                     }
                   }
                 }
-                for (k=0; k<tnsInfo->order[i][j]; k++) {
+                for (k = 0; k < tnsInfo->order[i][j]; k++) {
                   tnsBits += coefBits;
                 }
               }
@@ -599,10 +543,9 @@ static INT FDKaacEnc_encodeTnsData(TNS_INFO *tnsInfo,
     output:
 
 *****************************************************************************/
-static INT FDKaacEnc_encodeGainControlData(HANDLE_FDK_BITSTREAM hBitStream)
-{
+static INT FDKaacEnc_encodeGainControlData(HANDLE_FDK_BITSTREAM hBitStream) {
   if (hBitStream != NULL) {
-    FDKwriteBits(hBitStream,0,1);
+    FDKwriteBits(hBitStream, 0, 1);
   }
   return (1);
 }
@@ -616,14 +559,12 @@ static INT FDKaacEnc_encodeGainControlData(HANDLE_FDK_BITSTREAM hBitStream)
     output:
 
 *****************************************************************************/
-static INT FDKaacEnc_encodePulseData(HANDLE_FDK_BITSTREAM hBitStream)
-{
+static INT FDKaacEnc_encodePulseData(HANDLE_FDK_BITSTREAM hBitStream) {
   if (hBitStream != NULL) {
-    FDKwriteBits(hBitStream,0,1);
+    FDKwriteBits(hBitStream, 0, 1);
   }
   return (1);
 }
-
 
 /*****************************************************************************
 
@@ -634,21 +575,16 @@ static INT FDKaacEnc_encodePulseData(HANDLE_FDK_BITSTREAM hBitStream)
     output:
 
 *****************************************************************************/
-static INT FDKaacEnc_writeExtensionPayload( HANDLE_FDK_BITSTREAM  hBitStream,
-                                            EXT_PAYLOAD_TYPE      extPayloadType,
-                                            const UCHAR          *extPayloadData,
-                                            INT                   extPayloadBits
-                                          )
-{
-  #define EXT_TYPE_BITS         ( 4 )
-  #define DATA_EL_VERSION_BITS  ( 4 )
-  #define FILL_NIBBLE_BITS      ( 4 )
+static INT FDKaacEnc_writeExtensionPayload(HANDLE_FDK_BITSTREAM hBitStream, EXT_PAYLOAD_TYPE extPayloadType,
+                                           const UCHAR *extPayloadData, INT extPayloadBits) {
+#define EXT_TYPE_BITS (4)
+#define DATA_EL_VERSION_BITS (4)
+#define FILL_NIBBLE_BITS (4)
 
-  INT  extBitsUsed = 0;
+  INT extBitsUsed = 0;
 
-  if (extPayloadBits >= EXT_TYPE_BITS)
-  {
-    UCHAR  fillByte = 0x00;  /* for EXT_FIL and EXT_FILL_DATA */
+  if (extPayloadBits >= EXT_TYPE_BITS) {
+    UCHAR fillByte = 0x00; /* for EXT_FIL and EXT_FILL_DATA */
 
     if (hBitStream != NULL) {
       FDKwriteBits(hBitStream, extPayloadType, EXT_TYPE_BITS);
@@ -656,72 +592,69 @@ static INT FDKaacEnc_writeExtensionPayload( HANDLE_FDK_BITSTREAM  hBitStream,
     extBitsUsed += EXT_TYPE_BITS;
 
     switch (extPayloadType) {
-      case EXT_DYNAMIC_RANGE:
-      /* case EXT_SAC_DATA: */
-      case EXT_SBR_DATA:
-      case EXT_SBR_DATA_CRC:
-        if (hBitStream != NULL) {
-          int i, writeBits = extPayloadBits;
-          for (i=0; writeBits >= 8; i++) {
-            FDKwriteBits(hBitStream, extPayloadData[i], 8);
-            writeBits -= 8;
-          }
-          if (writeBits > 0) {
-            FDKwriteBits(hBitStream, extPayloadData[i]>>(8-writeBits), writeBits);
-          }
+    case EXT_DYNAMIC_RANGE:
+    /* case EXT_SAC_DATA: */
+    case EXT_SBR_DATA:
+    case EXT_SBR_DATA_CRC:
+      if (hBitStream != NULL) {
+        int i, writeBits = extPayloadBits;
+        for (i = 0; writeBits >= 8; i++) {
+          FDKwriteBits(hBitStream, extPayloadData[i], 8);
+          writeBits -= 8;
         }
-        extBitsUsed += extPayloadBits;
-        break;
-
-      case EXT_DATA_ELEMENT:
-        {
-          INT dataElementLength = (extPayloadBits+7)>>3;
-          INT cnt = dataElementLength;
-          int loopCounter = 1;
-
-          while (dataElementLength >= 255) {
-            loopCounter++;
-            dataElementLength -= 255;
-          }
-
-          if (hBitStream != NULL) {
-            int i;
-            FDKwriteBits(hBitStream, 0x00, DATA_EL_VERSION_BITS);  /* data_element_version = ANC_DATA */
-
-            for (i=1; i<loopCounter; i++) {
-              FDKwriteBits(hBitStream, 255, 8);
-            }
-            FDKwriteBits(hBitStream, dataElementLength, 8);
-
-            for (i=0; i<cnt; i++) {
-              FDKwriteBits(hBitStream, extPayloadData[i], 8);
-            }
-          }
-          extBitsUsed += DATA_EL_VERSION_BITS + (loopCounter*8) + (cnt*8);
+        if (writeBits > 0) {
+          FDKwriteBits(hBitStream, extPayloadData[i] >> (8 - writeBits), writeBits);
         }
-        break;
+      }
+      extBitsUsed += extPayloadBits;
+      break;
 
-      case EXT_FILL_DATA:
-        fillByte = 0xA5;
-      case EXT_FIL:
-      default:
-        if (hBitStream != NULL) {
-          int writeBits = extPayloadBits;
-          FDKwriteBits(hBitStream, 0x00, FILL_NIBBLE_BITS);
-          writeBits -= 8;  /* acount for the extension type and the fill nibble */
-          while (writeBits >= 8) {
-            FDKwriteBits(hBitStream, fillByte, 8);
-            writeBits -= 8;
-          }
+    case EXT_DATA_ELEMENT: {
+      INT dataElementLength = (extPayloadBits + 7) >> 3;
+      INT cnt = dataElementLength;
+      int loopCounter = 1;
+
+      while (dataElementLength >= 255) {
+        loopCounter++;
+        dataElementLength -= 255;
+      }
+
+      if (hBitStream != NULL) {
+        int i;
+        FDKwriteBits(hBitStream, 0x00, DATA_EL_VERSION_BITS); /* data_element_version = ANC_DATA */
+
+        for (i = 1; i < loopCounter; i++) {
+          FDKwriteBits(hBitStream, 255, 8);
         }
-        extBitsUsed += FILL_NIBBLE_BITS + (extPayloadBits & ~0x7) - 8;
-        break;
+        FDKwriteBits(hBitStream, dataElementLength, 8);
+
+        for (i = 0; i < cnt; i++) {
+          FDKwriteBits(hBitStream, extPayloadData[i], 8);
+        }
+      }
+      extBitsUsed += DATA_EL_VERSION_BITS + (loopCounter * 8) + (cnt * 8);
+    } break;
+
+    case EXT_FILL_DATA:
+      fillByte = 0xA5;
+    case EXT_FIL:
+    default:
+      if (hBitStream != NULL) {
+        int writeBits = extPayloadBits;
+        FDKwriteBits(hBitStream, 0x00, FILL_NIBBLE_BITS);
+        writeBits -= 8; /* acount for the extension type and the fill nibble */
+        while (writeBits >= 8) {
+          FDKwriteBits(hBitStream, fillByte, 8);
+          writeBits -= 8;
+        }
+      }
+      extBitsUsed += FILL_NIBBLE_BITS + (extPayloadBits & ~0x7) - 8;
+      break;
     }
   }
 
   return (extBitsUsed);
 }
-
 
 /*****************************************************************************
 
@@ -732,39 +665,33 @@ static INT FDKaacEnc_writeExtensionPayload( HANDLE_FDK_BITSTREAM  hBitStream,
     output:
 
 ******************************************************************************/
-static INT FDKaacEnc_writeDataStreamElement( HANDLE_TRANSPORTENC  hTpEnc,
-                                             INT    elementInstanceTag,
-                                             INT    dataPayloadBytes,
-                                             UCHAR *dataBuffer,
-                                             UINT   alignAnchor )
-{
-  #define DATA_BYTE_ALIGN_FLAG      ( 0 )
+static INT FDKaacEnc_writeDataStreamElement(HANDLE_TRANSPORTENC hTpEnc, INT elementInstanceTag, INT dataPayloadBytes,
+                                            UCHAR *dataBuffer, UINT alignAnchor) {
+#define DATA_BYTE_ALIGN_FLAG (0)
 
-  #define EL_INSTANCE_TAG_BITS      ( 4 )
-  #define DATA_BYTE_ALIGN_FLAG_BITS ( 1 )
-  #define DATA_LEN_COUNT_BITS       ( 8 )
-  #define DATA_LEN_ESC_COUNT_BITS   ( 8 )
+#define EL_INSTANCE_TAG_BITS (4)
+#define DATA_BYTE_ALIGN_FLAG_BITS (1)
+#define DATA_LEN_COUNT_BITS (8)
+#define DATA_LEN_ESC_COUNT_BITS (8)
 
-  #define MAX_DATA_ALIGN_BITS       ( 7 )
-  #define MAX_DSE_DATA_BYTES        ( 510 )
+#define MAX_DATA_ALIGN_BITS (7)
+#define MAX_DSE_DATA_BYTES (510)
 
-  INT  dseBitsUsed = 0;
+  INT dseBitsUsed = 0;
 
-  while (dataPayloadBytes > 0)
-  {
+  while (dataPayloadBytes > 0) {
     int esc_count = -1;
     int cnt = 0;
     INT crcReg = -1;
 
-    dseBitsUsed += EL_ID_BITS + EL_INSTANCE_TAG_BITS
-                +  DATA_BYTE_ALIGN_FLAG_BITS + DATA_LEN_COUNT_BITS;
+    dseBitsUsed += EL_ID_BITS + EL_INSTANCE_TAG_BITS + DATA_BYTE_ALIGN_FLAG_BITS + DATA_LEN_COUNT_BITS;
 
     if (DATA_BYTE_ALIGN_FLAG) {
       dseBitsUsed += MAX_DATA_ALIGN_BITS;
     }
 
     cnt = fixMin(MAX_DSE_DATA_BYTES, dataPayloadBytes);
-    if ( cnt >= 255 ) {
+    if (cnt >= 255) {
       esc_count = cnt - 255;
       dseBitsUsed += DATA_LEN_ESC_COUNT_BITS;
     }
@@ -784,7 +711,7 @@ static INT FDKaacEnc_writeDataStreamElement( HANDLE_TRANSPORTENC  hTpEnc,
       FDKwriteBits(hBitStream, DATA_BYTE_ALIGN_FLAG, DATA_BYTE_ALIGN_FLAG_BITS);
 
       /* write length field(s) */
-      if ( esc_count >= 0 ) {
+      if (esc_count >= 0) {
         FDKwriteBits(hBitStream, 255, DATA_LEN_COUNT_BITS);
         FDKwriteBits(hBitStream, esc_count, DATA_LEN_ESC_COUNT_BITS);
       } else {
@@ -799,7 +726,7 @@ static INT FDKaacEnc_writeDataStreamElement( HANDLE_TRANSPORTENC  hTpEnc,
       }
 
       /* write payload */
-      for (i=0; i<cnt; i++) {
+      for (i = 0; i < cnt; i++) {
         FDKwriteBits(hBitStream, dataBuffer[i], 8);
       }
       transportEnc_CrcEndReg(hTpEnc, crcReg);
@@ -808,7 +735,6 @@ static INT FDKaacEnc_writeDataStreamElement( HANDLE_TRANSPORTENC  hTpEnc,
 
   return (dseBitsUsed);
 }
-
 
 /*****************************************************************************
 
@@ -819,18 +745,13 @@ static INT FDKaacEnc_writeDataStreamElement( HANDLE_TRANSPORTENC  hTpEnc,
     output:
 
 *****************************************************************************/
-INT FDKaacEnc_writeExtensionData( HANDLE_TRANSPORTENC  hTpEnc,
-                                  QC_OUT_EXTENSION    *pExtension,
-                                  INT                  elInstanceTag, /* for DSE only */
-                                  UINT                 alignAnchor,   /* for DSE only */
-                                  UINT                 syntaxFlags,
-                                  AUDIO_OBJECT_TYPE    aot,
-                                  SCHAR                epConfig
-                                )
-{
-  #define FILL_EL_COUNT_BITS      ( 4 )
-  #define FILL_EL_ESC_COUNT_BITS  ( 8 )
-  #define MAX_FILL_DATA_BYTES     ( 269 )
+INT FDKaacEnc_writeExtensionData(HANDLE_TRANSPORTENC hTpEnc, QC_OUT_EXTENSION *pExtension,
+                                 INT elInstanceTag, /* for DSE only */
+                                 UINT alignAnchor,  /* for DSE only */
+                                 UINT syntaxFlags, AUDIO_OBJECT_TYPE aot, SCHAR epConfig) {
+#define FILL_EL_COUNT_BITS (4)
+#define FILL_EL_ESC_COUNT_BITS (8)
+#define MAX_FILL_DATA_BYTES (269)
 
   HANDLE_FDK_BITSTREAM hBitStream = NULL;
   INT payloadBits = pExtension->nPayloadBits;
@@ -840,106 +761,90 @@ INT FDKaacEnc_writeExtensionData( HANDLE_TRANSPORTENC  hTpEnc,
     hBitStream = transportEnc_GetBitstream(hTpEnc);
   }
 
-  if (syntaxFlags & (AC_SCALABLE|AC_ER))
-  {
-    if ( syntaxFlags & AC_DRM )
-    { /* CAUTION: The caller has to assure that fill
-                  data is written before the SBR payload. */
+  if (syntaxFlags & (AC_SCALABLE | AC_ER)) {
+    if (syntaxFlags & AC_DRM) { /* CAUTION: The caller has to assure that fill
+                                            data is written before the SBR payload. */
       UCHAR *extPayloadData = pExtension->pPayload;
 
-      switch (pExtension->type)
-      {
-        case EXT_SBR_DATA:
-        case EXT_SBR_DATA_CRC:
-          /* SBR payload is written in reverse */
-          if (hBitStream != NULL) {
-            int   i, writeBits = payloadBits;
+      switch (pExtension->type) {
+      case EXT_SBR_DATA:
+      case EXT_SBR_DATA_CRC:
+        /* SBR payload is written in reverse */
+        if (hBitStream != NULL) {
+          int i, writeBits = payloadBits;
 
-            FDKpushFor(hBitStream, payloadBits-1);  /* Does a cache sync internally */
+          FDKpushFor(hBitStream, payloadBits - 1); /* Does a cache sync internally */
 
-            for (i=0; writeBits >= 8; i++) {
-              FDKwriteBitsBwd(hBitStream, extPayloadData[i], 8);
-              writeBits -= 8;
-            }
-            if (writeBits > 0) {
-              FDKwriteBitsBwd(hBitStream, extPayloadData[i]>>(8-writeBits), writeBits);
-            }
-
-            FDKsyncCacheBwd (hBitStream);
-            FDKpushFor (hBitStream, payloadBits+1);
+          for (i = 0; writeBits >= 8; i++) {
+            FDKwriteBitsBwd(hBitStream, extPayloadData[i], 8);
+            writeBits -= 8;
           }
-          extBitsUsed += payloadBits;
-          break;
-
-        case EXT_FILL_DATA:
-        case EXT_FIL:
-        default:
-          if (hBitStream != NULL) {
-            int writeBits = payloadBits;
-            while (writeBits >= 8) {
-              FDKwriteBits(hBitStream, 0x00, 8);
-              writeBits -= 8;
-            }
-            FDKwriteBits(hBitStream, 0x00, writeBits);
+          if (writeBits > 0) {
+            FDKwriteBitsBwd(hBitStream, extPayloadData[i] >> (8 - writeBits), writeBits);
           }
-          extBitsUsed += payloadBits;
-          break;
+
+          FDKsyncCacheBwd(hBitStream);
+          FDKpushFor(hBitStream, payloadBits + 1);
+        }
+        extBitsUsed += payloadBits;
+        break;
+
+      case EXT_FILL_DATA:
+      case EXT_FIL:
+      default:
+        if (hBitStream != NULL) {
+          int writeBits = payloadBits;
+          while (writeBits >= 8) {
+            FDKwriteBits(hBitStream, 0x00, 8);
+            writeBits -= 8;
+          }
+          FDKwriteBits(hBitStream, 0x00, writeBits);
+        }
+        extBitsUsed += payloadBits;
+        break;
       }
-    }
-    else {
-      if ( (syntaxFlags & AC_ELD) && ((pExtension->type==EXT_SBR_DATA) || (pExtension->type==EXT_SBR_DATA_CRC)) ) {
+    } else {
+      if ((syntaxFlags & AC_ELD) && ((pExtension->type == EXT_SBR_DATA) || (pExtension->type == EXT_SBR_DATA_CRC))) {
 
         if (hBitStream != NULL) {
           int i, writeBits = payloadBits;
           UCHAR *extPayloadData = pExtension->pPayload;
 
-          for (i=0; writeBits >= 8; i++) {
+          for (i = 0; writeBits >= 8; i++) {
             FDKwriteBits(hBitStream, extPayloadData[i], 8);
             writeBits -= 8;
           }
           if (writeBits > 0) {
-            FDKwriteBits(hBitStream, extPayloadData[i]>>(8-writeBits), writeBits);
+            FDKwriteBits(hBitStream, extPayloadData[i] >> (8 - writeBits), writeBits);
           }
         }
         extBitsUsed += payloadBits;
-      }
-      else
-      {
+      } else {
         /* ER or scalable syntax -> write extension en bloc */
-        extBitsUsed += FDKaacEnc_writeExtensionPayload( hBitStream,
-                                                        pExtension->type,
-                                                        pExtension->pPayload,
-                                                        payloadBits );
+        extBitsUsed += FDKaacEnc_writeExtensionPayload(hBitStream, pExtension->type, pExtension->pPayload, payloadBits);
       }
     }
-  }
-  else {
+  } else {
     /* We have normal GA bitstream payload (AOT 2,5,29) so pack
        the data into a fill elements or DSEs */
 
-    if ( pExtension->type == EXT_DATA_ELEMENT )
-    {
-      extBitsUsed += FDKaacEnc_writeDataStreamElement( hTpEnc,
-                                                       elInstanceTag,
-                                                       pExtension->nPayloadBits>>3,
-                                                       pExtension->pPayload,
-                                                       alignAnchor );
-    }
-    else {
+    if (pExtension->type == EXT_DATA_ELEMENT) {
+      extBitsUsed += FDKaacEnc_writeDataStreamElement(
+          hTpEnc, elInstanceTag, pExtension->nPayloadBits >> 3, pExtension->pPayload, alignAnchor);
+    } else {
       while (payloadBits >= (EL_ID_BITS + FILL_EL_COUNT_BITS)) {
-        INT cnt, esc_count=-1, alignBits=7;
+        INT cnt, esc_count = -1, alignBits = 7;
 
-        if ( (pExtension->type == EXT_FILL_DATA) || (pExtension->type == EXT_FIL) )
-        {
+        if ((pExtension->type == EXT_FILL_DATA) || (pExtension->type == EXT_FIL)) {
           payloadBits -= EL_ID_BITS + FILL_EL_COUNT_BITS;
-          if (payloadBits >= 15*8) {
+          if (payloadBits >= 15 * 8) {
             payloadBits -= FILL_EL_ESC_COUNT_BITS;
-            esc_count = 0;  /* write esc_count even if cnt becomes smaller 15 */
+            esc_count = 0; /* write esc_count even if cnt becomes smaller 15 */
           }
           alignBits = 0;
         }
 
-        cnt = fixMin(MAX_FILL_DATA_BYTES, (payloadBits+alignBits)>>3);
+        cnt = fixMin(MAX_FILL_DATA_BYTES, (payloadBits + alignBits) >> 3);
 
         if (cnt >= 15) {
           esc_count = cnt - 15 + 1;
@@ -956,13 +861,10 @@ INT FDKaacEnc_writeExtensionData( HANDLE_TRANSPORTENC  hTpEnc,
           }
         }
 
-        extBitsUsed += EL_ID_BITS + FILL_EL_COUNT_BITS + ((esc_count>=0) ? FILL_EL_ESC_COUNT_BITS : 0);
+        extBitsUsed += EL_ID_BITS + FILL_EL_COUNT_BITS + ((esc_count >= 0) ? FILL_EL_ESC_COUNT_BITS : 0);
 
-        cnt = fixMin(cnt*8, payloadBits);  /* convert back to bits */
-        extBitsUsed += FDKaacEnc_writeExtensionPayload( hBitStream,
-                                                        pExtension->type,
-                                                        pExtension->pPayload,
-                                                        cnt );
+        cnt = fixMin(cnt * 8, payloadBits); /* convert back to bits */
+        extBitsUsed += FDKaacEnc_writeExtensionPayload(hBitStream, pExtension->type, pExtension->pPayload, cnt);
         payloadBits -= cnt;
       }
     }
@@ -970,7 +872,6 @@ INT FDKaacEnc_writeExtensionData( HANDLE_TRANSPORTENC  hTpEnc,
 
   return (extBitsUsed);
 }
-
 
 /*****************************************************************************
 
@@ -981,37 +882,28 @@ INT FDKaacEnc_writeExtensionData( HANDLE_TRANSPORTENC  hTpEnc,
     output:
 
 *****************************************************************************/
-static void FDKaacEnc_ByteAlignment(HANDLE_FDK_BITSTREAM hBitStream, int alignBits)
-{
+static void FDKaacEnc_ByteAlignment(HANDLE_FDK_BITSTREAM hBitStream, int alignBits) {
   FDKwriteBits(hBitStream, 0, alignBits);
 }
 
-AAC_ENCODER_ERROR FDKaacEnc_ChannelElementWrite( HANDLE_TRANSPORTENC  hTpEnc,
-                                                 ELEMENT_INFO        *pElInfo,
-                                                 QC_OUT_CHANNEL      *qcOutChannel[(2)],
-                                                 PSY_OUT_ELEMENT     *psyOutElement,
-                                                 PSY_OUT_CHANNEL     *psyOutChannel[(2)],
-                                                 UINT                 syntaxFlags,
-                                                 AUDIO_OBJECT_TYPE    aot,
-                                                 SCHAR                epConfig,
-                                                 INT                 *pBitDemand,
-                                                 UCHAR                minCnt
-                                               )
-{
+AAC_ENCODER_ERROR FDKaacEnc_ChannelElementWrite(HANDLE_TRANSPORTENC hTpEnc, ELEMENT_INFO *pElInfo,
+                                                QC_OUT_CHANNEL *qcOutChannel[(2)], PSY_OUT_ELEMENT *psyOutElement,
+                                                PSY_OUT_CHANNEL *psyOutChannel[(2)], UINT syntaxFlags,
+                                                AUDIO_OBJECT_TYPE aot, SCHAR epConfig, INT *pBitDemand, UCHAR minCnt) {
   AAC_ENCODER_ERROR error = AAC_ENC_OK;
   HANDLE_FDK_BITSTREAM hBitStream = NULL;
-  INT    bitDemand = 0;
-  const  element_list_t *list;
-  int    i, ch, decision_bit;
-  INT    crcReg1 = -1, crcReg2 = -1;
-  UCHAR  numberOfChannels;
+  INT bitDemand = 0;
+  const element_list_t *list;
+  int i, ch, decision_bit;
+  INT crcReg1 = -1, crcReg2 = -1;
+  UCHAR numberOfChannels;
 
   if (hTpEnc != NULL) {
     /* Get bitstream handle */
     hBitStream = transportEnc_GetBitstream(hTpEnc);
   }
 
-  if ( (pElInfo->elType==ID_SCE) || (pElInfo->elType==ID_LFE) ) {
+  if ((pElInfo->elType == ID_SCE) || (pElInfo->elType == ID_LFE)) {
     numberOfChannels = 1;
   } else {
     numberOfChannels = 2;
@@ -1024,7 +916,7 @@ AAC_ENCODER_ERROR FDKaacEnc_ChannelElementWrite( HANDLE_TRANSPORTENC  hTpEnc,
     goto bail;
   }
 
-  if (!(syntaxFlags & (AC_SCALABLE|AC_ER))) {
+  if (!(syntaxFlags & (AC_SCALABLE | AC_ER))) {
     if (hBitStream != NULL) {
       FDKwriteBits(hBitStream, pElInfo->elType, EL_ID_BITS);
     }
@@ -1038,43 +930,41 @@ AAC_ENCODER_ERROR FDKaacEnc_ChannelElementWrite( HANDLE_TRANSPORTENC  hTpEnc,
   do {
     /* some tmp values */
     SECTION_DATA *pChSectionData = NULL;
-    INT  *pChScf           = NULL;
+    INT *pChScf = NULL;
     UINT *pChMaxValueInSfb = NULL;
-    TNS_INFO *pTnsInfo     = NULL;
-    INT   chGlobalGain     = 0;
-    INT   chBlockType      = 0;
-    INT   chMaxSfbPerGrp   = 0;
-    INT   chSfbPerGrp      = 0;
-    INT   chSfbCnt         = 0;
-    INT   chFirstScf       = 0;
+    TNS_INFO *pTnsInfo = NULL;
+    INT chGlobalGain = 0;
+    INT chBlockType = 0;
+    INT chMaxSfbPerGrp = 0;
+    INT chSfbPerGrp = 0;
+    INT chSfbCnt = 0;
+    INT chFirstScf = 0;
 
-    if (minCnt==0) {
-      if ( qcOutChannel!=NULL ) {
-        pChSectionData   = &(qcOutChannel[ch]->sectionData);
-        pChScf           =  qcOutChannel[ch]->scf;
-        chGlobalGain     =  qcOutChannel[ch]->globalGain;
-        pChMaxValueInSfb =  qcOutChannel[ch]->maxValueInSfb;
-        chBlockType      =  pChSectionData->blockType;
-        chMaxSfbPerGrp   =  pChSectionData->maxSfbPerGroup;
-        chSfbPerGrp      =  pChSectionData->sfbPerGroup;
-        chSfbCnt         =  pChSectionData->sfbCnt;
-        chFirstScf       =  pChScf[pChSectionData->firstScf];
-      }
-      else {
+    if (minCnt == 0) {
+      if (qcOutChannel != NULL) {
+        pChSectionData = &(qcOutChannel[ch]->sectionData);
+        pChScf = qcOutChannel[ch]->scf;
+        chGlobalGain = qcOutChannel[ch]->globalGain;
+        pChMaxValueInSfb = qcOutChannel[ch]->maxValueInSfb;
+        chBlockType = pChSectionData->blockType;
+        chMaxSfbPerGrp = pChSectionData->maxSfbPerGroup;
+        chSfbPerGrp = pChSectionData->sfbPerGroup;
+        chSfbCnt = pChSectionData->sfbCnt;
+        chFirstScf = pChScf[pChSectionData->firstScf];
+      } else {
         /* get values from PSY */
-        chSfbCnt       = psyOutChannel[ch]->sfbCnt;
-        chSfbPerGrp    = psyOutChannel[ch]->sfbPerGroup;
+        chSfbCnt = psyOutChannel[ch]->sfbCnt;
+        chSfbPerGrp = psyOutChannel[ch]->sfbPerGroup;
         chMaxSfbPerGrp = psyOutChannel[ch]->maxSfbPerGroup;
       }
       pTnsInfo = &psyOutChannel[ch]->tnsInfo;
     } /* minCnt==0 */
 
-    if ( qcOutChannel==NULL ) {
-      chBlockType    = psyOutChannel[ch]->lastWindowSequence;
+    if (qcOutChannel == NULL) {
+      chBlockType = psyOutChannel[ch]->lastWindowSequence;
     }
 
-    switch (list->id[i])
-    {
+    switch (list->id[i]) {
     case element_instance_tag:
       /* Write element instance tag */
       if (hBitStream != NULL) {
@@ -1094,12 +984,12 @@ AAC_ENCODER_ERROR FDKaacEnc_ChannelElementWrite( HANDLE_TRANSPORTENC  hTpEnc,
 
     case ics_info:
       /* Write individual channel info */
-      bitDemand += FDKaacEnc_encodeIcsInfo( chBlockType,
-                                            psyOutChannel[ch]->windowShape,
-                                            psyOutChannel[ch]->groupingMask,
-                                            chMaxSfbPerGrp,
-                                            hBitStream,
-                                            syntaxFlags);
+      bitDemand += FDKaacEnc_encodeIcsInfo(chBlockType,
+                                           psyOutChannel[ch]->windowShape,
+                                           psyOutChannel[ch]->groupingMask,
+                                           chMaxSfbPerGrp,
+                                           hBitStream,
+                                           syntaxFlags);
       break;
 
     case ltp_data_present:
@@ -1117,49 +1007,42 @@ AAC_ENCODER_ERROR FDKaacEnc_ChannelElementWrite( HANDLE_TRANSPORTENC  hTpEnc,
 
     case ms:
       /* Write MS info */
-      bitDemand += FDKaacEnc_encodeMSInfo( chSfbCnt,
-                                           chSfbPerGrp,
-                                           chMaxSfbPerGrp,
-                                           (minCnt==0) ? psyOutElement->toolsInfo.msDigest : MS_NONE,
-                                           psyOutElement->toolsInfo.msMask,
-                                           hBitStream);
+      bitDemand += FDKaacEnc_encodeMSInfo(chSfbCnt,
+                                          chSfbPerGrp,
+                                          chMaxSfbPerGrp,
+                                          (minCnt == 0) ? psyOutElement->toolsInfo.msDigest : MS_NONE,
+                                          psyOutElement->toolsInfo.msMask,
+                                          hBitStream);
       break;
 
     case global_gain:
-      bitDemand += FDKaacEnc_encodeGlobalGain( chGlobalGain,
-                                               chFirstScf,
-                                               hBitStream,
-                                               psyOutChannel[ch]->mdctScale );
+      bitDemand += FDKaacEnc_encodeGlobalGain(chGlobalGain, chFirstScf, hBitStream, psyOutChannel[ch]->mdctScale);
       break;
 
-    case section_data:
-      {
-        INT siBits = FDKaacEnc_encodeSectionData(pChSectionData, hBitStream, (syntaxFlags & AC_ER_VCB11)?1:0);
-        if (hBitStream != NULL) {
-          if (siBits != qcOutChannel[ch]->sectionData.sideInfoBits) {
-            error = AAC_ENC_WRITE_SEC_ERROR;
-          }
+    case section_data: {
+      INT siBits = FDKaacEnc_encodeSectionData(pChSectionData, hBitStream, (syntaxFlags & AC_ER_VCB11) ? 1 : 0);
+      if (hBitStream != NULL) {
+        if (siBits != qcOutChannel[ch]->sectionData.sideInfoBits) {
+          error = AAC_ENC_WRITE_SEC_ERROR;
         }
-        bitDemand += siBits;
       }
-      break;
+      bitDemand += siBits;
+    } break;
 
-    case scale_factor_data:
-      {
-        INT sfDataBits = FDKaacEnc_encodeScaleFactorData( pChMaxValueInSfb,
-                                                          pChSectionData,
-                                                          pChScf,
-                                                          hBitStream,
-                                                          psyOutChannel[ch]->noiseNrg,
-                                                          psyOutChannel[ch]->isScale,
-                                                          chGlobalGain );
-        if ( (hBitStream != NULL)
-          && (sfDataBits != (qcOutChannel[ch]->sectionData.scalefacBits + qcOutChannel[ch]->sectionData.noiseNrgBits)) ) {
-           error = AAC_ENC_WRITE_SCAL_ERROR;
-        }
-        bitDemand += sfDataBits;
+    case scale_factor_data: {
+      INT sfDataBits = FDKaacEnc_encodeScaleFactorData(pChMaxValueInSfb,
+                                                       pChSectionData,
+                                                       pChScf,
+                                                       hBitStream,
+                                                       psyOutChannel[ch]->noiseNrg,
+                                                       psyOutChannel[ch]->isScale,
+                                                       chGlobalGain);
+      if ((hBitStream != NULL) &&
+          (sfDataBits != (qcOutChannel[ch]->sectionData.scalefacBits + qcOutChannel[ch]->sectionData.noiseNrgBits))) {
+        error = AAC_ENC_WRITE_SCAL_ERROR;
       }
-      break;
+      bitDemand += sfDataBits;
+    } break;
 
     case esc2_rvlc:
       if (syntaxFlags & AC_ER_RVLC) {
@@ -1175,15 +1058,11 @@ AAC_ENCODER_ERROR FDKaacEnc_ChannelElementWrite( HANDLE_TRANSPORTENC  hTpEnc,
 
     case tns_data_present:
       /* Write TNS data present flag */
-      bitDemand += FDKaacEnc_encodeTnsDataPresent(pTnsInfo,
-                                                  chBlockType,
-                                                  hBitStream);
+      bitDemand += FDKaacEnc_encodeTnsDataPresent(pTnsInfo, chBlockType, hBitStream);
       break;
     case tns_data:
       /* Write TNS data */
-      bitDemand += FDKaacEnc_encodeTnsData(pTnsInfo,
-                                           chBlockType,
-                                           hBitStream);
+      bitDemand += FDKaacEnc_encodeTnsData(pTnsInfo, chBlockType, hBitStream);
       break;
 
     case gain_control_data:
@@ -1194,23 +1073,18 @@ AAC_ENCODER_ERROR FDKaacEnc_ChannelElementWrite( HANDLE_TRANSPORTENC  hTpEnc,
       bitDemand += FDKaacEnc_encodeGainControlData(hBitStream);
       break;
 
-
     case esc1_hcr:
-      if (syntaxFlags & AC_ER_HCR)
-      {
+      if (syntaxFlags & AC_ER_HCR) {
         error = AAC_ENC_UNKNOWN;
       }
       break;
 
     case spectral_data:
-      if (hBitStream != NULL)
-      {
+      if (hBitStream != NULL) {
         INT spectralBits = 0;
 
-          spectralBits = FDKaacEnc_encodeSpectralData( psyOutChannel[ch]->sfbOffsets,
-                                                       pChSectionData,
-                                                       qcOutChannel[ch]->quantSpec,
-                                                       hBitStream );
+        spectralBits = FDKaacEnc_encodeSpectralData(
+            psyOutChannel[ch]->sfbOffsets, pChSectionData, qcOutChannel[ch]->quantSpec, hBitStream);
 
         if (spectralBits != qcOutChannel[ch]->sectionData.huffmanBits) {
           return AAC_ENC_WRITE_SPEC_ERROR;
@@ -1251,7 +1125,7 @@ AAC_ENCODER_ERROR FDKaacEnc_ChannelElementWrite( HANDLE_TRANSPORTENC  hTpEnc,
       break;
     case link_sequence:
       list = list->next[decision_bit];
-      i=-1;
+      i = -1;
       break;
 
     default:
@@ -1275,24 +1149,16 @@ bail:
   return error;
 }
 
-
 //-----------------------------------------------------------------------------------------------
 
-AAC_ENCODER_ERROR FDKaacEnc_WriteBitstream(HANDLE_TRANSPORTENC hTpEnc,
-                                           CHANNEL_MAPPING *channelMapping,
-                                           QC_OUT *qcOut,
-                                           PSY_OUT* psyOut,
-                                           QC_STATE *qcKernel,
-                                           AUDIO_OBJECT_TYPE  aot,
-                                           UINT  syntaxFlags,
-                                           SCHAR  epConfig
-                                          )
-{
+AAC_ENCODER_ERROR FDKaacEnc_WriteBitstream(HANDLE_TRANSPORTENC hTpEnc, CHANNEL_MAPPING *channelMapping, QC_OUT *qcOut,
+                                           PSY_OUT *psyOut, QC_STATE *qcKernel, AUDIO_OBJECT_TYPE aot, UINT syntaxFlags,
+                                           SCHAR epConfig) {
   HANDLE_FDK_BITSTREAM hBs = transportEnc_GetBitstream(hTpEnc);
   AAC_ENCODER_ERROR ErrorStatus = AAC_ENC_OK;
-  int   i, n, doByteAlign = 1;
-  INT   bitMarkUp;
-  INT   frameBits;
+  int i, n, doByteAlign = 1;
+  INT bitMarkUp;
+  INT frameBits;
   /* Get first bit of raw data block.
      In case of ADTS+PCE, AU would start at PCE.
      This is okay because PCE assures alignment. */
@@ -1300,118 +1166,93 @@ AAC_ENCODER_ERROR FDKaacEnc_WriteBitstream(HANDLE_TRANSPORTENC hTpEnc,
 
   frameBits = bitMarkUp = alignAnchor;
 
-
   /* Channel element loop */
-  for (i=0; i<channelMapping->nElements; i++) {
+  for (i = 0; i < channelMapping->nElements; i++) {
 
     ELEMENT_INFO elInfo = channelMapping->elInfo[i];
     INT elementUsedBits = 0;
 
-    switch (elInfo.elType)
+    switch (elInfo.elType) {
+    case ID_SCE: /* single channel */
+    case ID_CPE: /* channel pair */
+    case ID_LFE: /* low freq effects channel */
     {
-        case ID_SCE:      /* single channel */
-        case ID_CPE:      /* channel pair */
-        case ID_LFE:      /* low freq effects channel */
-        {
-          if ( AAC_ENC_OK != (ErrorStatus = FDKaacEnc_ChannelElementWrite( hTpEnc,
-                                                      &elInfo,
-                                                       qcOut->qcElement[i]->qcOutChannel,
-                                                       psyOut->psyOutElement[i],
-                                                       psyOut->psyOutElement[i]->psyOutChannel,
-                                                       syntaxFlags,   /* syntaxFlags (ER tools ...) */
-                                                       aot,           /* aot: AOT_AAC_LC, AOT_SBR, AOT_PS */
-                                                       epConfig,      /* epConfig -1, 0, 1 */
-                                                       NULL,
-                                                       0 )) )
-          {
-            return ErrorStatus;
-          }
+      if (AAC_ENC_OK != (ErrorStatus = FDKaacEnc_ChannelElementWrite(hTpEnc,
+                                                                     &elInfo,
+                                                                     qcOut->qcElement[i]->qcOutChannel,
+                                                                     psyOut->psyOutElement[i],
+                                                                     psyOut->psyOutElement[i]->psyOutChannel,
+                                                                     syntaxFlags, /* syntaxFlags (ER tools ...) */
+                                                                     aot,         /* aot: AOT_AAC_LC, AOT_SBR, AOT_PS */
+                                                                     epConfig,    /* epConfig -1, 0, 1 */
+                                                                     NULL,
+                                                                     0))) {
+        return ErrorStatus;
+      }
 
-          if ( !(syntaxFlags & AC_ER) )
-          {
-            /* Write associated extension payload */
-            for (n = 0; n < qcOut->qcElement[i]->nExtensions; n++) {
-              FDKaacEnc_writeExtensionData( hTpEnc,
-                                           &qcOut->qcElement[i]->extension[n],
-                                            0,
-                                            alignAnchor,
-                                            syntaxFlags,
-                                            aot,
-                                            epConfig );
-            }
-          }
+      if (!(syntaxFlags & AC_ER)) {
+        /* Write associated extension payload */
+        for (n = 0; n < qcOut->qcElement[i]->nExtensions; n++) {
+          FDKaacEnc_writeExtensionData(
+              hTpEnc, &qcOut->qcElement[i]->extension[n], 0, alignAnchor, syntaxFlags, aot, epConfig);
         }
-        break;
+      }
+    } break;
 
-        /* In FDK, DSE signalling explicit done in elDSE. See channel_map.cpp */
-        default:
-          return AAC_ENC_INVALID_ELEMENTINFO_TYPE;
+    /* In FDK, DSE signalling explicit done in elDSE. See channel_map.cpp */
+    default:
+      return AAC_ENC_INVALID_ELEMENTINFO_TYPE;
 
-    }   /* switch */
+    } /* switch */
 
-    if(elInfo.elType != ID_DSE) {
+    if (elInfo.elType != ID_DSE) {
       elementUsedBits -= bitMarkUp;
-      bitMarkUp        = FDKgetValidBits(hBs);
+      bitMarkUp = FDKgetValidBits(hBs);
       elementUsedBits += bitMarkUp;
-      frameBits       += elementUsedBits;
+      frameBits += elementUsedBits;
     }
 
   } /* for (i=0; i<channelMapping.nElements; i++) */
 
-  if ( (syntaxFlags & AC_ER) && !(syntaxFlags & AC_DRM) )
-  {
+  if ((syntaxFlags & AC_ER) && !(syntaxFlags & AC_DRM)) {
     UCHAR channelElementExtensionWritten[(8)][(1)]; /* 0: extension not touched, 1: extension already written */
 
     FDKmemclear(channelElementExtensionWritten, sizeof(channelElementExtensionWritten));
 
-    if ( syntaxFlags & AC_ELD ) {
+    if (syntaxFlags & AC_ELD) {
 
-      for (i=0; i<channelMapping->nElements; i++) {
+      for (i = 0; i < channelMapping->nElements; i++) {
         for (n = 0; n < qcOut->qcElement[i]->nExtensions; n++) {
 
-          if ( (qcOut->qcElement[i]->extension[n].type==EXT_SBR_DATA)
-            || (qcOut->qcElement[i]->extension[n].type==EXT_SBR_DATA_CRC) )
-          {
+          if ((qcOut->qcElement[i]->extension[n].type == EXT_SBR_DATA) ||
+              (qcOut->qcElement[i]->extension[n].type == EXT_SBR_DATA_CRC)) {
             /* Write sbr extension payload */
-            FDKaacEnc_writeExtensionData( hTpEnc,
-                                         &qcOut->qcElement[i]->extension[n],
-                                          0,
-                                          alignAnchor,
-                                          syntaxFlags,
-                                          aot,
-                                          epConfig );
+            FDKaacEnc_writeExtensionData(
+                hTpEnc, &qcOut->qcElement[i]->extension[n], 0, alignAnchor, syntaxFlags, aot, epConfig);
 
             channelElementExtensionWritten[i][n] = 1;
           } /* SBR */
-        } /* n */
-      } /* i */
-    } /* AC_ELD */
+        }   /* n */
+      }     /* i */
+    }       /* AC_ELD */
 
-    for (i=0; i<channelMapping->nElements; i++) {
+    for (i = 0; i < channelMapping->nElements; i++) {
       for (n = 0; n < qcOut->qcElement[i]->nExtensions; n++) {
 
-        if (channelElementExtensionWritten[i][n]==0)
-        {
+        if (channelElementExtensionWritten[i][n] == 0) {
           /* Write all ramaining extension payloads in element */
-          FDKaacEnc_writeExtensionData( hTpEnc,
-                                       &qcOut->qcElement[i]->extension[n],
-                                        0,
-                                        alignAnchor,
-                                        syntaxFlags,
-                                        aot,
-                                        epConfig );
+          FDKaacEnc_writeExtensionData(
+              hTpEnc, &qcOut->qcElement[i]->extension[n], 0, alignAnchor, syntaxFlags, aot, epConfig);
         }
       } /* n */
-    } /* i */
-  } /* if AC_ER */
+    }   /* i */
+  }     /* if AC_ER */
 
   /* Extend global extension payload table with fill bits */
-  if ( syntaxFlags & AC_DRM )
-  {
+  if (syntaxFlags & AC_DRM) {
     /* Exception for Drm */
     for (n = 0; n < qcOut->nExtensions; n++) {
-      if ( (qcOut->extension[n].type == EXT_SBR_DATA)
-        || (qcOut->extension[n].type == EXT_SBR_DATA_CRC) ) {
+      if ((qcOut->extension[n].type == EXT_SBR_DATA) || (qcOut->extension[n].type == EXT_SBR_DATA_CRC)) {
         /* SBR data must be the last extension! */
         FDKmemcpy(&qcOut->extension[qcOut->nExtensions], &qcOut->extension[n], sizeof(QC_OUT_EXTENSION));
         break;
@@ -1419,7 +1260,7 @@ AAC_ENCODER_ERROR FDKaacEnc_WriteBitstream(HANDLE_TRANSPORTENC hTpEnc,
     }
     /* Do byte alignment after AAC (+ MPS) payload.
        Assure that MPS has been written as channel assigned extension payload! */
-    if (((FDKgetValidBits(hBs)-alignAnchor+(UINT)qcOut->totFillBits)&0x7)!=(UINT)qcOut->alignBits) {
+    if (((FDKgetValidBits(hBs) - alignAnchor + (UINT)qcOut->totFillBits) & 0x7) != (UINT)qcOut->alignBits) {
       return AAC_ENC_WRITTEN_BITS_ERROR;
     }
     FDKaacEnc_ByteAlignment(hBs, qcOut->alignBits);
@@ -1434,26 +1275,19 @@ AAC_ENCODER_ERROR FDKaacEnc_WriteBitstream(HANDLE_TRANSPORTENC hTpEnc,
   qcOut->nExtensions++;
 
   /* Write global extension payload and fill data */
-  for (n = 0; (n < qcOut->nExtensions) && (n < (2+2)); n++)
-  {
-    FDKaacEnc_writeExtensionData( hTpEnc,
-                                 &qcOut->extension[n],
-                                  0,
-                                  alignAnchor,
-                                  syntaxFlags,
-                                  aot,
-                                  epConfig );
+  for (n = 0; (n < qcOut->nExtensions) && (n < (2 + 2)); n++) {
+    FDKaacEnc_writeExtensionData(hTpEnc, &qcOut->extension[n], 0, alignAnchor, syntaxFlags, aot, epConfig);
 
     /* For EXT_FIL or EXT_FILL_DATA we could do an additional sanity check here */
   }
 
-  if (!(syntaxFlags & (AC_SCALABLE|AC_ER))) {
+  if (!(syntaxFlags & (AC_SCALABLE | AC_ER))) {
     FDKwriteBits(hBs, ID_END, EL_ID_BITS);
   }
 
   if (doByteAlign) {
     /* Assure byte alignment*/
-    if (((alignAnchor-FDKgetValidBits(hBs))&0x7)!=(UINT)qcOut->alignBits) {
+    if (((alignAnchor - FDKgetValidBits(hBs)) & 0x7) != (UINT)qcOut->alignBits) {
       return AAC_ENC_WRITTEN_BITS_ERROR;
     }
 
@@ -1465,10 +1299,9 @@ AAC_ENCODER_ERROR FDKaacEnc_WriteBitstream(HANDLE_TRANSPORTENC hTpEnc,
 
   transportEnc_EndAccessUnit(hTpEnc, &frameBits);
 
-  if (frameBits != qcOut->totalBits + qcKernel->globHdrBits){
+  if (frameBits != qcOut->totalBits + qcKernel->globHdrBits) {
     return AAC_ENC_WRITTEN_BITS_ERROR;
   }
 
   return ErrorStatus;
 }
-

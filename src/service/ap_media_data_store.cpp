@@ -8,12 +8,9 @@
 
 #if defined(WIN32) && !defined(NDEBUG)
 #include <filesystem>
-void create_serssion_folder(const std::string &session) {
-  std::filesystem::create_directory(session);
-}
+void create_serssion_folder(const std::string &session) { std::filesystem::create_directory(session); }
 
-void create_resource_file(const std::string &session, const std::string &uri,
-                          const std::string &data) {
+void create_resource_file(const std::string &session, const std::string &uri, const std::string &data) {
   std::string fn = generate_file_name();
   fn += string_replace(uri, "/|\\\\", "-");
   std::string path = session + "/" + fn;
@@ -42,8 +39,7 @@ void ap_media_data_store::set_store_root(uint16_t port) {
   host_ = oss.str();
 }
 
-bool ap_media_data_store::request_media_data(const std::string &primary_uri,
-                                             const std::string &session_id) {
+bool ap_media_data_store::request_media_data(const std::string &primary_uri, const std::string &session_id) {
   reset();
 
   app_id id = get_appi_id(primary_uri);
@@ -63,8 +59,7 @@ bool ap_media_data_store::request_media_data(const std::string &primary_uri,
   return false;
 }
 
-std::string ap_media_data_store::process_media_data(const std::string &uri,
-                                                    const std::string &data) {
+std::string ap_media_data_store::process_media_data(const std::string &uri, const std::string &data) {
   std::string media_data;
 
   if (is_primary_data_uri(uri)) {
@@ -132,8 +127,7 @@ void ap_media_data_store::reset() {
   media_data_.clear();
 }
 
-ap_media_data_store::app_id
-ap_media_data_store::get_appi_id(const std::string &uri) {
+ap_media_data_store::app_id ap_media_data_store::get_appi_id(const std::string &uri) {
   // Youtube
   if (0 == uri.find(MLHLS_SCHEME))
     return e_app_youtube;
@@ -145,8 +139,7 @@ ap_media_data_store::get_appi_id(const std::string &uri) {
   return e_app_unknown;
 }
 
-void ap_media_data_store::add_media_data(const std::string &uri,
-                                         const std::string &data) {
+void ap_media_data_store::add_media_data(const std::string &uri, const std::string &data) {
   {
     std::lock_guard<std::mutex> l(mtx_);
     media_data_[uri] = data;
@@ -238,8 +231,7 @@ std::string ap_media_data_store::extrac_uri_path(const std::string &uri) {
   return s;
 }
 
-std::string
-ap_media_data_store::adjust_primary_media_data(const std::string &data) {
+std::string ap_media_data_store::adjust_primary_media_data(const std::string &data) {
   switch (app_id_) {
   case e_app_youtube:
     return adjust_mlhls_data(data);
@@ -251,12 +243,10 @@ ap_media_data_store::adjust_primary_media_data(const std::string &data) {
   return data;
 }
 
-std::string
-ap_media_data_store::adjust_secondary_meida_data(const std::string &data) {
+std::string ap_media_data_store::adjust_secondary_meida_data(const std::string &data) {
   std::string result = data;
 
-  static std::regex youtube_pattern(
-      "#YT-EXT-CONDENSED-URL:BASE-URI=\"(.*)\",PARAMS=.*PREFIX=\"(.*)\"");
+  static std::regex youtube_pattern("#YT-EXT-CONDENSED-URL:BASE-URI=\"(.*)\",PARAMS=.*PREFIX=\"(.*)\"");
   std::cmatch groups;
 
   std::string base;

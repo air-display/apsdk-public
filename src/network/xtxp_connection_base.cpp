@@ -34,8 +34,7 @@ void request_route_table::register_request_route(const request_route_t &route) {
   }
 }
 
-request_hanlder request_route_table::query_handler(const request &req,
-                                                   error_code &ec) {
+request_hanlder request_route_table::query_handler(const request &req, error_code &ec) {
   std::lock_guard<std::mutex> l(mtx_);
 
   std::string scheme;
@@ -92,8 +91,7 @@ xtxp_connection_base::xtxp_connection_base(asio::io_context &io_ctx)
 
 xtxp_connection_base::~xtxp_connection_base() {}
 
-void xtxp_connection_base::register_request_route(
-    const request_route_t &route) {
+void xtxp_connection_base::register_request_route(const request_route_t &route) {
   route_table_.register_request_route(route);
 }
 
@@ -108,30 +106,28 @@ bool xtxp_connection_base::is_reversed() { return is_reversed_; }
 
 void xtxp_connection_base::reverse() { is_reversed_ = true; }
 
-void xtxp_connection_base::add_common_header(const request &req,
-                                             response &res) {}
+void xtxp_connection_base::add_common_header(const request &req, response &res) {}
 
 void xtxp_connection_base::post_receive_message_head() {
-  asio::async_read_until(
-      socket_, in_stream_, RNRN_LINE_BREAK,
-      asio::bind_executor(
-          strand_, std::bind(&xtxp_connection_base::on_message_head_received,
-                             shared_from_self(), std::placeholders::_1,
-                             std::placeholders::_2)));
+  asio::async_read_until(socket_,
+                         in_stream_,
+                         RNRN_LINE_BREAK,
+                         asio::bind_executor(strand_,
+                                             std::bind(&xtxp_connection_base::on_message_head_received,
+                                                       shared_from_self(),
+                                                       std::placeholders::_1,
+                                                       std::placeholders::_2)));
 }
 
-void xtxp_connection_base::method_not_found_handler(const request &req,
-                                                    response &res) {
-  LOGE() << "***** Method Not Allowed " << request_.method << " "
-         << request_.uri;
+void xtxp_connection_base::method_not_found_handler(const request &req, response &res) {
+  LOGE() << "***** Method Not Allowed " << request_.method << " " << request_.uri;
 
   // Method not found
   // res.with_status(method_not_allowed);
   res.with_status(ok);
 }
 
-void xtxp_connection_base::path_not_found_handler(const request &req,
-                                                  response &res) {
+void xtxp_connection_base::path_not_found_handler(const request &req, response &res) {
   LOGE() << "***** Path Not Found " << request_.method << " " << request_.uri;
 
   // Path not found
@@ -139,8 +135,7 @@ void xtxp_connection_base::path_not_found_handler(const request &req,
   res.with_status(ok);
 }
 
-void xtxp_connection_base::on_message_head_received(
-    const asio::error_code &e, std::size_t bytes_transferred) {
+void xtxp_connection_base::on_message_head_received(const asio::error_code &e, std::size_t bytes_transferred) {
   // If error then return
   if (e) {
     handle_socket_error(e);
@@ -148,8 +143,7 @@ void xtxp_connection_base::on_message_head_received(
   }
 
   std::string head_data(asio::buffers_begin(in_stream_.data()),
-                        asio::buffers_begin(in_stream_.data()) +
-                            bytes_transferred);
+                        asio::buffers_begin(in_stream_.data()) + bytes_transferred);
   in_stream_.consume(bytes_transferred);
 
   bool parse_result = false;
@@ -167,8 +161,7 @@ void xtxp_connection_base::on_message_head_received(
     return;
   }
 
-  int content_length =
-      is_reversed_ ? response_.content_length : request_.content_length;
+  int content_length = is_reversed_ ? response_.content_length : request_.content_length;
 
   if (content_length == 0) {
     // This is a head only message, process and prepare to read next one
@@ -194,8 +187,7 @@ void xtxp_connection_base::on_message_head_received(
       response_.content.resize(response_.content_length, 0);
 
       response_.content.assign(asio::buffers_begin(in_stream_.data()),
-                               asio::buffers_begin(in_stream_.data()) +
-                                   in_stream_.size());
+                               asio::buffers_begin(in_stream_.data()) + in_stream_.size());
     }
   } else {
     // No more data to be read just build the message
@@ -204,8 +196,7 @@ void xtxp_connection_base::on_message_head_received(
       request_.content.resize(request_.content_length, 0);
 
       request_.content.assign(asio::buffers_begin(in_stream_.data()),
-                              asio::buffers_begin(in_stream_.data()) +
-                                  in_stream_.size());
+                              asio::buffers_begin(in_stream_.data()) + in_stream_.size());
     }
   }
   in_stream_.consume(in_stream_.size());
@@ -226,19 +217,20 @@ void xtxp_connection_base::post_receive_message_content() {
     request_.content.clear();
   }
 
-  asio::async_read(
-      socket_, in_stream_,
-      std::bind(&xtxp_connection_base::body_completion_condition,
-                shared_from_self(), std::placeholders::_1,
-                std::placeholders::_2),
-      asio::bind_executor(
-          strand_, std::bind(&xtxp_connection_base::on_message_content_received,
-                             shared_from_self(), std::placeholders::_1,
-                             std::placeholders::_2)));
+  asio::async_read(socket_,
+                   in_stream_,
+                   std::bind(&xtxp_connection_base::body_completion_condition,
+                             shared_from_self(),
+                             std::placeholders::_1,
+                             std::placeholders::_2),
+                   asio::bind_executor(strand_,
+                                       std::bind(&xtxp_connection_base::on_message_content_received,
+                                                 shared_from_self(),
+                                                 std::placeholders::_1,
+                                                 std::placeholders::_2)));
 }
 
-void xtxp_connection_base::on_message_content_received(
-    const asio::error_code &e, std::size_t bytes_transferred) {
+void xtxp_connection_base::on_message_content_received(const asio::error_code &e, std::size_t bytes_transferred) {
   if (e) {
     handle_socket_error(e);
     return;
@@ -246,13 +238,11 @@ void xtxp_connection_base::on_message_content_received(
 
   if (is_reversed_) {
     response_.content.assign(asio::buffers_begin(in_stream_.data()),
-                             asio::buffers_begin(in_stream_.data()) +
-                                 in_stream_.size());
+                             asio::buffers_begin(in_stream_.data()) + in_stream_.size());
     in_stream_.consume(in_stream_.size());
   } else {
     request_.content.assign(asio::buffers_begin(in_stream_.data()),
-                            asio::buffers_begin(in_stream_.data()) +
-                                in_stream_.size());
+                            asio::buffers_begin(in_stream_.data()) + in_stream_.size());
     in_stream_.consume(in_stream_.size());
   }
 
@@ -267,16 +257,16 @@ void xtxp_connection_base::on_message_content_received(
 void xtxp_connection_base::post_send_response(const response &res) {
   std::ostream os(&out_stream_);
   os << res.serialize();
-  asio::async_write(
-      socket_, out_stream_,
-      asio::bind_executor(strand_,
-                          std::bind(&xtxp_connection_base::on_response_sent,
-                                    shared_from_self(), std::placeholders::_1,
-                                    std::placeholders::_2)));
+  asio::async_write(socket_,
+                    out_stream_,
+                    asio::bind_executor(strand_,
+                                        std::bind(&xtxp_connection_base::on_response_sent,
+                                                  shared_from_self(),
+                                                  std::placeholders::_1,
+                                                  std::placeholders::_2)));
 }
 
-void xtxp_connection_base::on_response_sent(const asio::error_code &e,
-                                            std::size_t bytes_transferred) {
+void xtxp_connection_base::on_response_sent(const asio::error_code &e, std::size_t bytes_transferred) {
   if (e) {
     return handle_socket_error(e);
   }
@@ -321,9 +311,8 @@ void xtxp_connection_base::handle_socket_error(const asio::error_code &e) {
   LOGE() << "Socket error[" << e.value() << "]: " << e.message();
 }
 
-std::size_t
-xtxp_connection_base::body_completion_condition(const asio::error_code &error,
-                                                std::size_t bytes_transferred) {
+std::size_t xtxp_connection_base::body_completion_condition(const asio::error_code &error,
+                                                            std::size_t bytes_transferred) {
   return request_.content_length - in_stream_.size();
 }
 

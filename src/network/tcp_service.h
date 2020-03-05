@@ -42,8 +42,7 @@ typedef std::weak_ptr<tcp_service> tcp_service_weak_ptr;
 
 class tcp_connection_base : public tcp_connection {
 public:
-  explicit tcp_connection_base(asio::io_context &io_ctx)
-      : socket_(io_ctx), strand_(io_ctx){};
+  explicit tcp_connection_base(asio::io_context &io_ctx) : socket_(io_ctx), strand_(io_ctx){};
 
   virtual ~tcp_connection_base() {}
 
@@ -63,17 +62,13 @@ protected:
 
 class tcp_service_base : public tcp_service {
 public:
-  tcp_service_base(const std::string &name, uint16_t port = 0,
-                   bool single_session = false)
-      : single_session_(single_session), service_name_(name), io_context_(),
-        io_work_(io_context_), acceptor_(io_context_),
-        local_endpoint_(asio::ip::tcp::v6(), port), worker_thread_(0) {}
+  tcp_service_base(const std::string &name, uint16_t port = 0, bool single_session = false)
+      : single_session_(single_session), service_name_(name), io_context_(), io_work_(io_context_),
+        acceptor_(io_context_), local_endpoint_(asio::ip::tcp::v6(), port), worker_thread_(0) {}
 
   ~tcp_service_base() { cleanup(); }
 
-  virtual const uint16_t port() const override {
-    return local_endpoint_.port();
-  }
+  virtual const uint16_t port() const override { return local_endpoint_.port(); }
 
   virtual bool start() override {
     // Setup the resources
@@ -101,9 +96,8 @@ protected:
     new_session_ = prepare_new_connection();
 
     // Perform accept operation on the new client session
-    acceptor_.async_accept(
-        new_session_->socket(),
-        std::bind(&tcp_service_base::on_accept, this, std::placeholders::_1));
+    acceptor_.async_accept(new_session_->socket(),
+                           std::bind(&tcp_service_base::on_accept, this, std::placeholders::_1));
 
     LOGD() << "Session (" << std::hex << new_session_.get() << ") is waiting";
   }
@@ -113,8 +107,7 @@ protected:
       // Start the new session
       new_session_->start();
 
-      LOGD() << "Session (" << std::hex << new_session_.get()
-             << ") accepted and started";
+      LOGD() << "Session (" << std::hex << new_session_.get() << ") accepted and started";
 
       if (single_session_)
         return;

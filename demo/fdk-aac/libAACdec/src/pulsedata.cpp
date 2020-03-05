@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+?Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -90,31 +90,23 @@ amm-info@iis.fraunhofer.de
 
 #include "pulsedata.h"
 
-
 #include "channelinfo.h"
 
-
-INT CPulseData_Read(
-        HANDLE_FDK_BITSTREAM bs,
-        CPulseData *const PulseData,
-        const SHORT *sfb_startlines,
-        const void *pIcsInfo,
-        const SHORT frame_length
-        )
-{
-  int i, k=0;
-  const UINT MaxSfBands = GetScaleFactorBandsTransmitted((CIcsInfo*)pIcsInfo);
+INT CPulseData_Read(HANDLE_FDK_BITSTREAM bs, CPulseData *const PulseData, const SHORT *sfb_startlines,
+                    const void *pIcsInfo, const SHORT frame_length) {
+  int i, k = 0;
+  const UINT MaxSfBands = GetScaleFactorBandsTransmitted((CIcsInfo *)pIcsInfo);
 
   /* reset pulse data flag */
   PulseData->PulseDataPresent = 0;
 
-  if ((PulseData->PulseDataPresent = (UCHAR) FDKreadBit(bs)) != 0) {
-    if (!IsLongBlock((CIcsInfo*)pIcsInfo)) {
+  if ((PulseData->PulseDataPresent = (UCHAR)FDKreadBit(bs)) != 0) {
+    if (!IsLongBlock((CIcsInfo *)pIcsInfo)) {
       return AAC_DEC_DECODE_FRAME_ERROR;
     }
 
-    PulseData->NumberPulse = (UCHAR) FDKreadBits(bs,2);
-    PulseData->PulseStartBand = (UCHAR) FDKreadBits(bs,6);
+    PulseData->NumberPulse = (UCHAR)FDKreadBits(bs, 2);
+    PulseData->PulseStartBand = (UCHAR)FDKreadBits(bs, 6);
 
     if (PulseData->PulseStartBand >= MaxSfBands) {
       return AAC_DEC_DECODE_FRAME_ERROR;
@@ -122,37 +114,35 @@ INT CPulseData_Read(
 
     k = sfb_startlines[PulseData->PulseStartBand];
 
-    for (i=0; i<=PulseData->NumberPulse; i++) {
-      PulseData->PulseOffset[i] = (UCHAR) FDKreadBits(bs,5);
-      PulseData->PulseAmp[i] = (UCHAR) FDKreadBits(bs,4);
+    for (i = 0; i <= PulseData->NumberPulse; i++) {
+      PulseData->PulseOffset[i] = (UCHAR)FDKreadBits(bs, 5);
+      PulseData->PulseAmp[i] = (UCHAR)FDKreadBits(bs, 4);
       k += PulseData->PulseOffset[i];
     }
 
     if (k >= frame_length) {
-        return AAC_DEC_DECODE_FRAME_ERROR;
+      return AAC_DEC_DECODE_FRAME_ERROR;
     }
   }
-
 
   return 0;
 }
 
 void CPulseData_Apply(CPulseData *PulseData,                /*!< pointer to pulse data side info */
                       const short *pScaleFactorBandOffsets, /*!< pointer to scalefactor band offsets */
-                      FIXP_DBL *coef)                     /*!< pointer to spectrum */
+                      FIXP_DBL *coef)                       /*!< pointer to spectrum */
 {
-  int i,k;
+  int i, k;
 
-  if (PulseData->PulseDataPresent)
-  {
+  if (PulseData->PulseDataPresent) {
     k = pScaleFactorBandOffsets[PulseData->PulseStartBand];
 
-    for (i=0; i<=PulseData->NumberPulse; i++)
-    {
+    for (i = 0; i <= PulseData->NumberPulse; i++) {
       k += PulseData->PulseOffset[i];
-      if (coef [k] > (FIXP_DBL)0) coef[k] += (FIXP_DBL)(int)PulseData->PulseAmp[i];
-      else                          coef[k] -= (FIXP_DBL)(int)PulseData->PulseAmp[i];
+      if (coef[k] > (FIXP_DBL)0)
+        coef[k] += (FIXP_DBL)(int)PulseData->PulseAmp[i];
+      else
+        coef[k] -= (FIXP_DBL)(int)PulseData->PulseAmp[i];
     }
   }
 }
-

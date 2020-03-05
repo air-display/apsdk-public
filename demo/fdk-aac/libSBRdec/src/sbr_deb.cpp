@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+?Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -83,8 +83,7 @@ amm-info@iis.fraunhofer.de
 
 /*!
   \file
-  \brief  Print selected debug messages   
+  \brief  Print selected debug messages
 */
 
 #include "sbr_deb.h"
-

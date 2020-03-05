@@ -1,4 +1,12 @@
-project(aps)
+# public headers
+file(GLOB PUB_HEADERS
+    aps.h
+    ap_config.h
+    ap_handler.h
+    ap_server.h
+    ap_session.h
+    ap_types.h
+)
 
 # Source files
 file(GLOB SRC_AP
@@ -24,7 +32,7 @@ file(GLOB SRC_MDNS
     mdns/*.h
     mdns/*.cpp
 )
-if (WIN32)
+if (WINDOWS)
     list(APPEND SRC_MDNS
         mdns/dns_sd.h
         mdns/Windows/net_service_impl.cpp
@@ -77,7 +85,7 @@ endif()
 source_group("utils" FILES ${SRC_UTILS})
 
 # Output
-add_library(aps STATIC
+add_library(${PROJECT_NAME}
     ${SRC_AP}
     ${SRC_CRYPTO}
     ${SRC_NETWORK}
@@ -86,7 +94,14 @@ add_library(aps STATIC
     ${SRC_UTILS}
 )
 
-target_link_libraries(aps PUBLIC
+if (APPLE)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        FRAMEWORK TRUE
+        PUBLIC_HEADER "${PUB_HEADERS}"
+    )
+endif()
+
+target_link_libraries(${PROJECT_NAME} PUBLIC
     curve25519
     ed25519
     hlsparser
@@ -100,12 +115,12 @@ if (APPLE)
     if (NOT FOUNDATION_FX)
         message(FATAL_ERROR "Foundation.Framework not found")
     endif()
-    target_link_libraries(aps PUBLIC ${FOUNDATION_FX})
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${FOUNDATION_FX})
 elseif (ANDROID)
-    target_link_libraries(aps PUBLIC mdnssd)
+    target_link_libraries(${PROJECT_NAME} PUBLIC mdnssd)
 elseif (LINUX)
     # pthread is required by asio standalone
-    target_link_libraries(aps PUBLIC 
+    target_link_libraries(${PROJECT_NAME} PUBLIC 
         pthread
         dns_sd
     )

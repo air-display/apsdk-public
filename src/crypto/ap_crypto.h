@@ -31,15 +31,13 @@ public:
   ap_crypto();
   ~ap_crypto();
 
-  void init_client_public_keys(const uint8_t *pcurve, uint64_t curve_len,
-                               const uint8_t *ped, uint64_t ed_len);
+  void init_client_public_keys(const uint8_t *pcurve, uint64_t curve_len, const uint8_t *ped, uint64_t ed_len);
 
   void init_pair_verify_aes();
 
   void fp_setup(const uint8_t mode, uint8_t *content);
 
-  void fp_handshake(uint8_t *content, const uint8_t *request,
-                    const uint32_t len);
+  void fp_handshake(uint8_t *content, const uint8_t *request, const uint32_t len);
 
   void fp_decrypt(const uint8_t *key, uint8_t *out);
 
@@ -47,11 +45,9 @@ public:
 
   bool verify_pair_signature(const uint8_t *p, uint64_t len);
 
-  void init_video_stream_aes_ctr(const uint64_t video_stream_id,
-                                 const agent_version_t version);
+  void init_video_stream_aes_ctr(const uint64_t video_stream_id, const agent_version_t version);
 
-  void init_client_aes_info(const uint8_t *piv, uint64_t iv_len,
-                            const uint8_t *pkey, uint64_t key_len);
+  void init_client_aes_info(const uint8_t *piv, uint64_t iv_len, const uint8_t *pkey, uint64_t key_len);
 
   void init_audio_stream_aes_cbc();
 

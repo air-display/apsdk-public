@@ -30,15 +30,12 @@ typedef std::shared_ptr<asio::ip::udp::endpoint> udp_endpoint_ptr;
 class udp_service_base : public udp_service {
 public:
   udp_service_base(const std::string &name, uint16_t port = 0)
-      : service_name_(name), io_context_(), io_work_(io_context_),
-        socket_(io_context_), local_endpoint_(asio::ip::udp::v6(), port),
-        worker_thread_(0) {}
+      : service_name_(name), io_context_(), io_work_(io_context_), socket_(io_context_),
+        local_endpoint_(asio::ip::udp::v6(), port), worker_thread_(0) {}
 
   ~udp_service_base() { close(); }
 
-  virtual const uint16_t port() const override {
-    return local_endpoint_.port();
-  }
+  virtual const uint16_t port() const override { return local_endpoint_.port(); }
 
   virtual bool open() override {
     // Create the worker thread
@@ -68,44 +65,40 @@ public:
     }
   }
 
-  virtual void post_send_to(std::vector<uint8_t> buf,
-                            asio::ip::udp::endpoint remote_endpoint) {
-    socket_.async_send_to(asio::buffer(buf.data(), buf.size()), remote_endpoint,
-                          std::bind(&udp_service_base::on_send_to, this,
-                                    remote_endpoint, std::placeholders::_1,
-                                    std::placeholders::_2));
+  virtual void post_send_to(std::vector<uint8_t> buf, asio::ip::udp::endpoint remote_endpoint) {
+    socket_.async_send_to(
+        asio::buffer(buf.data(), buf.size()),
+        remote_endpoint,
+        std::bind(&udp_service_base::on_send_to, this, remote_endpoint, std::placeholders::_1, std::placeholders::_2));
   }
 
-  virtual void post_send_to(uint8_t *buf, size_t length,
-                            asio::ip::udp::endpoint remote_endpoint) {
-    socket_.async_send_to(asio::buffer(buf, length), remote_endpoint,
-                          std::bind(&udp_service_base::on_send_to, this,
-                                    remote_endpoint, std::placeholders::_1,
-                                    std::placeholders::_2));
+  virtual void post_send_to(uint8_t *buf, size_t length, asio::ip::udp::endpoint remote_endpoint) {
+    socket_.async_send_to(
+        asio::buffer(buf, length),
+        remote_endpoint,
+        std::bind(&udp_service_base::on_send_to, this, remote_endpoint, std::placeholders::_1, std::placeholders::_2));
   }
 
-  virtual void on_send_to(asio::ip::udp::endpoint remote_endpoint,
-                          const asio::error_code &e,
+  virtual void on_send_to(asio::ip::udp::endpoint remote_endpoint, const asio::error_code &e,
                           std::size_t bytes_transferred) {}
 
-  virtual void post_recv_from(std::vector<uint8_t> &buf,
-                              asio::ip::udp::endpoint &remote_endpoint) {
+  virtual void post_recv_from(std::vector<uint8_t> &buf, asio::ip::udp::endpoint &remote_endpoint) {
     socket_.async_receive_from(
-        asio::buffer(buf.data(), buf.size()), remote_endpoint,
-        std::bind(&udp_service_base::on_recv_from, this, remote_endpoint,
-                  std::placeholders::_1, std::placeholders::_2));
+        asio::buffer(buf.data(), buf.size()),
+        remote_endpoint,
+        std::bind(
+            &udp_service_base::on_recv_from, this, remote_endpoint, std::placeholders::_1, std::placeholders::_2));
   }
 
-  virtual void post_recv_from(uint8_t *buf, size_t length,
-                              asio::ip::udp::endpoint &remote_endpoint) {
-    socket_.async_receive_from(asio::buffer(buf, length), remote_endpoint,
-                               std::bind(&udp_service_base::on_recv_from, this,
-                                         remote_endpoint, std::placeholders::_1,
-                                         std::placeholders::_2));
+  virtual void post_recv_from(uint8_t *buf, size_t length, asio::ip::udp::endpoint &remote_endpoint) {
+    socket_.async_receive_from(
+        asio::buffer(buf, length),
+        remote_endpoint,
+        std::bind(
+            &udp_service_base::on_recv_from, this, remote_endpoint, std::placeholders::_1, std::placeholders::_2));
   }
 
-  virtual void on_recv_from(asio::ip::udp::endpoint &remote_endpoint,
-                            const asio::error_code &e,
+  virtual void on_recv_from(asio::ip::udp::endpoint &remote_endpoint, const asio::error_code &e,
                             std::size_t bytes_transferred) {}
 
   virtual asio::io_context &io_context() override { return io_context_; }

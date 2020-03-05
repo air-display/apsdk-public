@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+?Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -89,17 +89,12 @@ amm-info@iis.fraunhofer.de
 ******************************************************************************/
 
 #include "channelinfo.h"
-#include "aac_rom.h"
-#include "aac_ram.h"
 #include "FDK_bitstream.h"
+#include "aac_ram.h"
+#include "aac_rom.h"
 
-
-AAC_DECODER_ERROR IcsReadMaxSfb (
-        HANDLE_FDK_BITSTREAM bs,
-        CIcsInfo *pIcsInfo,
-        const SamplingRateInfo *pSamplingRateInfo
-        )
-{
+AAC_DECODER_ERROR IcsReadMaxSfb(HANDLE_FDK_BITSTREAM bs, CIcsInfo *pIcsInfo,
+                                const SamplingRateInfo *pSamplingRateInfo) {
   AAC_DECODER_ERROR ErrorStatus = AAC_DEC_OK;
   int nbits;
 
@@ -110,36 +105,30 @@ AAC_DECODER_ERROR IcsReadMaxSfb (
     nbits = 4;
     pIcsInfo->TotalSfBands = pSamplingRateInfo->NumberOfScaleFactorBands_Short;
   }
-  pIcsInfo->MaxSfBands = (UCHAR) FDKreadBits(bs, nbits);
+  pIcsInfo->MaxSfBands = (UCHAR)FDKreadBits(bs, nbits);
 
-  if (pIcsInfo->MaxSfBands > pIcsInfo->TotalSfBands){
+  if (pIcsInfo->MaxSfBands > pIcsInfo->TotalSfBands) {
     ErrorStatus = AAC_DEC_PARSE_ERROR;
   }
 
   return ErrorStatus;
 }
 
-
-
-AAC_DECODER_ERROR IcsRead(HANDLE_FDK_BITSTREAM bs,
-                          CIcsInfo *pIcsInfo,
-                          const SamplingRateInfo* pSamplingRateInfo,
-                          const UINT flags)
-{
+AAC_DECODER_ERROR IcsRead(HANDLE_FDK_BITSTREAM bs, CIcsInfo *pIcsInfo, const SamplingRateInfo *pSamplingRateInfo,
+                          const UINT flags) {
   AAC_DECODER_ERROR ErrorStatus = AAC_DEC_OK;
 
   pIcsInfo->Valid = 0;
 
-  if (flags & AC_ELD){
+  if (flags & AC_ELD) {
     pIcsInfo->WindowSequence = OnlyLongSequence;
     pIcsInfo->WindowShape = 0;
-  }
-  else {
-    if ( !(flags & (AC_USAC|AC_RSVD50)) ) {
-      FDKreadBits(bs,1);
+  } else {
+    if (!(flags & (AC_USAC | AC_RSVD50))) {
+      FDKreadBits(bs, 1);
     }
-    pIcsInfo->WindowSequence = (UCHAR) FDKreadBits(bs,2);
-    pIcsInfo->WindowShape = (UCHAR) FDKreadBits(bs,1);
+    pIcsInfo->WindowSequence = (UCHAR)FDKreadBits(bs, 2);
+    pIcsInfo->WindowShape = (UCHAR)FDKreadBits(bs, 1);
     if (flags & AC_LD) {
       if (pIcsInfo->WindowShape) {
         pIcsInfo->WindowShape = 2; /* select low overlap instead of KBD */
@@ -148,7 +137,7 @@ AAC_DECODER_ERROR IcsRead(HANDLE_FDK_BITSTREAM bs,
   }
 
   /* Sanity check */
-  if ( (flags & (AC_ELD|AC_LD)) && pIcsInfo->WindowSequence != OnlyLongSequence) {
+  if ((flags & (AC_ELD | AC_LD)) && pIcsInfo->WindowSequence != OnlyLongSequence) {
     pIcsInfo->WindowSequence = OnlyLongSequence;
     ErrorStatus = AAC_DEC_PARSE_ERROR;
     goto bail;
@@ -159,11 +148,11 @@ AAC_DECODER_ERROR IcsRead(HANDLE_FDK_BITSTREAM bs,
     goto bail;
   }
 
-  if (IsLongBlock(pIcsInfo))
-  {
-    if ( !(flags & (AC_ELD|AC_SCALABLE|AC_BSAC|AC_USAC|AC_RSVD50)) ) /* If not ELD nor Scalable nor BSAC nor USAC syntax then ... */
+  if (IsLongBlock(pIcsInfo)) {
+    if (!(flags & (AC_ELD | AC_SCALABLE | AC_BSAC | AC_USAC |
+                   AC_RSVD50))) /* If not ELD nor Scalable nor BSAC nor USAC syntax then ... */
     {
-      if ((UCHAR)FDKreadBits(bs,1) != 0 ) /* UCHAR PredictorDataPresent */
+      if ((UCHAR)FDKreadBits(bs, 1) != 0) /* UCHAR PredictorDataPresent */
       {
         ErrorStatus = AAC_DEC_UNSUPPORTED_PREDICTION;
         goto bail;
@@ -172,36 +161,29 @@ AAC_DECODER_ERROR IcsRead(HANDLE_FDK_BITSTREAM bs,
 
     pIcsInfo->WindowGroups = 1;
     pIcsInfo->WindowGroupLength[0] = 1;
-  }
-  else
-  {
+  } else {
     INT i;
     UINT mask;
 
-    pIcsInfo->ScaleFactorGrouping = (UCHAR) FDKreadBits(bs,7);
+    pIcsInfo->ScaleFactorGrouping = (UCHAR)FDKreadBits(bs, 7);
 
-    pIcsInfo->WindowGroups = 0 ;
+    pIcsInfo->WindowGroups = 0;
 
-    for (i=0; i < (8-1); i++)
-    {
+    for (i = 0; i < (8 - 1); i++) {
       mask = 1 << (6 - i);
       pIcsInfo->WindowGroupLength[i] = 1;
 
-      if (pIcsInfo->ScaleFactorGrouping & mask)
-      {
+      if (pIcsInfo->ScaleFactorGrouping & mask) {
         pIcsInfo->WindowGroupLength[pIcsInfo->WindowGroups]++;
-      }
-      else
-      {
+      } else {
         pIcsInfo->WindowGroups++;
       }
     }
 
     /* loop runs to i < 7 only */
-    pIcsInfo->WindowGroupLength[8-1] = 1;
+    pIcsInfo->WindowGroupLength[8 - 1] = 1;
     pIcsInfo->WindowGroups++;
   }
-
 
 bail:
   if (ErrorStatus == AAC_DEC_OK)
@@ -209,7 +191,6 @@ bail:
 
   return ErrorStatus;
 }
-
 
 /*
   interleave codebooks the following way
@@ -224,20 +205,13 @@ bail:
      (270w)     (271w)
 */
 
-
 /*
   Table entries are sorted as following:
   | num_swb_long_window | sfbands_long | num_swb_short_window | sfbands_short |
 */
-AAC_DECODER_ERROR getSamplingRateInfo(
-        SamplingRateInfo *t,
-        UINT samplesPerFrame,
-        UINT samplingRateIndex,
-        UINT samplingRate
-        )
-{
+AAC_DECODER_ERROR getSamplingRateInfo(SamplingRateInfo *t, UINT samplesPerFrame, UINT samplingRateIndex,
+                                      UINT samplingRate) {
   int index = 0;
-
 
   t->samplingRateIndex = samplingRateIndex;
   t->samplingRate = samplingRate;
@@ -270,7 +244,8 @@ AAC_DECODER_ERROR getSamplingRateInfo(
   }
 
   FDK_ASSERT(t->ScaleFactorBands_Long[t->NumberOfScaleFactorBands_Long] == samplesPerFrame);
-  FDK_ASSERT(t->ScaleFactorBands_Short == NULL || t->ScaleFactorBands_Short[t->NumberOfScaleFactorBands_Short]*8 == samplesPerFrame);
+  FDK_ASSERT(t->ScaleFactorBands_Short == NULL ||
+             t->ScaleFactorBands_Short[t->NumberOfScaleFactorBands_Short] * 8 == samplesPerFrame);
 
   return AAC_DEC_OK;
 }

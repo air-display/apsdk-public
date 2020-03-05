@@ -23,8 +23,7 @@ bool audio_udp_service::open() {
   return false;
 }
 
-void audio_udp_service::on_recv_from(asio::ip::udp::endpoint &remote_endpoint,
-                                     const asio::error_code &e,
+void audio_udp_service::on_recv_from(asio::ip::udp::endpoint &remote_endpoint, const asio::error_code &e,
                                      std::size_t bytes_transferred) {
   if (recv_from_handler_)
     recv_from_handler_(recv_buf_.data(), e, bytes_transferred);
@@ -72,40 +71,36 @@ void audio_udp_service::handle_socket_error(const asio::error_code &e) {
   LOGE() << "Socket error[" << e.value() << "]: " << e.message();
 }
 
-ap_audio_stream_service::ap_audio_stream_service(
-    aps::ap_crypto_ptr &crypto, aps::ap_mirror_session_handler_ptr &handler)
+ap_audio_stream_service::ap_audio_stream_service(aps::ap_crypto_ptr &crypto,
+                                                 aps::ap_mirror_session_handler_ptr &handler)
     : handler_(handler), crypto_(crypto), data_service_("audio_data_service"),
       control_service_("audio_control_service"), expected_seq_(0) {
-  data_service_.bind_recv_handler(std::bind(
-      &ap_audio_stream_service::data_handler, this, std::placeholders::_1,
-      std::placeholders::_2, std::placeholders::_3));
-  data_service_.bind_thread_actions(
-      std::bind(&ap_audio_stream_service::on_thread_start, this),
-      std::bind(&ap_audio_stream_service::on_thread_stop, this));
+  data_service_.bind_recv_handler(std::bind(&ap_audio_stream_service::data_handler,
+                                            this,
+                                            std::placeholders::_1,
+                                            std::placeholders::_2,
+                                            std::placeholders::_3));
+  data_service_.bind_thread_actions(std::bind(&ap_audio_stream_service::on_thread_start, this),
+                                    std::bind(&ap_audio_stream_service::on_thread_stop, this));
 
-  control_service_.bind_recv_handler(std::bind(
-      &ap_audio_stream_service::control_handler, this, std::placeholders::_1,
-      std::placeholders::_2, std::placeholders::_3));
-  control_service_.bind_thread_actions(
-      std::bind(&ap_audio_stream_service::on_thread_start, this),
-      std::bind(&ap_audio_stream_service::on_thread_stop, this));
+  control_service_.bind_recv_handler(std::bind(&ap_audio_stream_service::control_handler,
+                                               this,
+                                               std::placeholders::_1,
+                                               std::placeholders::_2,
+                                               std::placeholders::_3));
+  control_service_.bind_thread_actions(std::bind(&ap_audio_stream_service::on_thread_start, this),
+                                       std::bind(&ap_audio_stream_service::on_thread_stop, this));
 
-  LOGD() << "ap_audio_stream_service (" << std::hex << this
-         << ") is being created";
+  LOGD() << "ap_audio_stream_service (" << std::hex << this << ") is being created";
 }
 
 ap_audio_stream_service::~ap_audio_stream_service() {
-  LOGD() << "ap_audio_stream_service (" << std::hex << this
-         << ") is being destroyed";
+  LOGD() << "ap_audio_stream_service (" << std::hex << this << ") is being destroyed";
 }
 
-uint16_t ap_audio_stream_service::data_port() const {
-  return data_service_.port();
-}
+uint16_t ap_audio_stream_service::data_port() const { return data_service_.port(); }
 
-uint16_t ap_audio_stream_service::control_port() const {
-  return control_service_.port();
-}
+uint16_t ap_audio_stream_service::control_port() const { return control_service_.port(); }
 
 bool ap_audio_stream_service::start() {
   if (!data_service_.open())
@@ -124,8 +119,7 @@ void ap_audio_stream_service::stop() {
   data_service_.close();
 }
 
-void ap_audio_stream_service::data_handler(const uint8_t *buf,
-                                           const asio::error_code &e,
+void ap_audio_stream_service::data_handler(const uint8_t *buf, const asio::error_code &e,
                                            std::size_t bytes_transferred) {
   if (!e) {
     if (bytes_transferred < RTP_PACKET_MIN_LEN) {
@@ -175,10 +169,8 @@ void ap_audio_stream_service::data_handler(const uint8_t *buf,
   }
 }
 
-void ap_audio_stream_service::audio_data_packet(rtp_audio_data_packet_t *packet,
-                                                size_t length) {
-  LOGV() << "VALID RTP PACKET: " << length
-         << ", sequence: " << packet->sequence;
+void ap_audio_stream_service::audio_data_packet(rtp_audio_data_packet_t *packet, size_t length) {
+  LOGV() << "VALID RTP PACKET: " << length << ", sequence: " << packet->sequence;
 
   if (handler_) {
     uint32_t payload_length = length - sizeof(rtp_audio_data_packet_t);
@@ -190,8 +182,7 @@ void ap_audio_stream_service::audio_data_packet(rtp_audio_data_packet_t *packet,
   }
 }
 
-void ap_audio_stream_service::control_handler(const uint8_t *buf,
-                                              const asio::error_code &e,
+void ap_audio_stream_service::control_handler(const uint8_t *buf, const asio::error_code &e,
                                               std::size_t bytes_transferred) {
   if (!e) {
     if (bytes_transferred < RTP_PACKET_MIN_LEN) {
@@ -204,28 +195,22 @@ void ap_audio_stream_service::control_handler(const uint8_t *buf,
     rtp_packet_header_t *header = (rtp_packet_header_t *)buf;
     header->sequence = ntohs(header->sequence);
     header->timestamp = ntohl(header->timestamp);
-    if (header->payload_type == rtp_ctrl_timing_sync &&
-        bytes_transferred == sizeof(rtp_control_sync_packet_t)) {
+    if (header->payload_type == rtp_ctrl_timing_sync && bytes_transferred == sizeof(rtp_control_sync_packet_t)) {
       control_sync_packet((rtp_control_sync_packet_t *)header);
     } else if (header->payload_type == rtp_ctrl_retransmit_reply &&
-               bytes_transferred ==
-                   sizeof(rtp_control_retransmit_reply_packet_t)) {
-      control_retransmit_packet(
-          (rtp_control_retransmit_reply_packet_t *)header);
+               bytes_transferred == sizeof(rtp_control_retransmit_reply_packet_t)) {
+      control_retransmit_packet((rtp_control_retransmit_reply_packet_t *)header);
     } else {
-      LOGE() << "Unknown RTP control packet, type: " << header->payload_type
-             << " size: " << bytes_transferred;
+      LOGE() << "Unknown RTP control packet, type: " << header->payload_type << " size: " << bytes_transferred;
     }
   }
 }
 
-void ap_audio_stream_service::control_sync_packet(
-    rtp_control_sync_packet_t *packet) {
+void ap_audio_stream_service::control_sync_packet(rtp_control_sync_packet_t *packet) {
   LOGI() << "audio CONTROL SYNC packet";
 }
 
-void ap_audio_stream_service::control_retransmit_packet(
-    rtp_control_retransmit_reply_packet_t *packet) {
+void ap_audio_stream_service::control_retransmit_packet(rtp_control_retransmit_reply_packet_t *packet) {
   LOGI() << "audio CONTROL RETRANSMIT packet";
 }
 
@@ -241,9 +226,7 @@ void ap_audio_stream_service::on_thread_stop() {
   }
 }
 
-void ap_audio_stream_service::cache_packet(const uint16_t seq,
-                                           const uint8_t *buf,
-                                           std::size_t length) {
+void ap_audio_stream_service::cache_packet(const uint16_t seq, const uint8_t *buf, std::size_t length) {
   cached_packet_ptr pk = std::make_shared<cached_packet_t>();
   pk->sequence = seq;
   pk->data.assign(buf, buf + length);
@@ -255,8 +238,7 @@ void ap_audio_stream_service::process_cached_packet(bool flush /* = false*/) {
     auto p = cached_queue_.top();
     if (flush || p->sequence == expected_seq_) {
       cached_queue_.pop();
-      rtp_audio_data_packet_t *header =
-          (rtp_audio_data_packet_t *)p->data.data();
+      rtp_audio_data_packet_t *header = (rtp_audio_data_packet_t *)p->data.data();
       audio_data_packet(header, p->data.size());
       expected_seq_ = p->sequence + 1;
     } else {

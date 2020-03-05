@@ -28,8 +28,7 @@ static const char *HEADER_ALLOW_HEADER = "Access-Control-Allow-Headers";
 // Content type
 static const char *APPLICATION_MPEGURL = "application/x-mpegURL; charset=utf-8";
 static const char *APPLICATION_OCTET_STREAM = "application/octet-stream";
-static const char *APPLICATION_BINARY_PLIST =
-    "application/x-apple-binary-plist";
+static const char *APPLICATION_BINARY_PLIST = "application/x-apple-binary-plist";
 static const char *APPLICATION_DMAP_TAGGED = "application/x-dmap-tagged";
 static const char *TEXT_APPLE_PLIST_XML = "text/x-apple-plist+xml";
 static const char *TEXT_PARAMETERS = "text/parameters";
@@ -76,8 +75,7 @@ public:
 
   request();
 
-  request(const std::string &scheme_ver, const std::string &methot,
-          const std::string &uri);
+  request(const std::string &scheme_ver, const std::string &methot, const std::string &uri);
 
   std::string serialize() const;
 
@@ -126,8 +124,7 @@ public:
 #if defined(NDEBUG)
 #define DUMP_REQUEST_WITH_CONNECTION(x)
 #else
-#define DUMP_REQUEST_WITH_CONNECTION(x)                                        \
-  x.dump("[" + std::to_string((long long)this) + "]")
+#define DUMP_REQUEST_WITH_CONNECTION(x) x.dump("[" + std::to_string((long long)this) + "]")
 #endif // _DEBUG
 
 /// <summary>

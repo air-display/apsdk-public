@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+?Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -83,18 +83,16 @@ amm-info@iis.fraunhofer.de
 
 /*!
   \file
-  \brief  parametric stereo decoder  
+  \brief  parametric stereo decoder
 */
 
 #include "psdec.h"
 
-
-
 #include "FDK_bitbuffer.h"
 #include "psdec_hybrid.h"
 
-#include "sbr_rom.h"
 #include "sbr_ram.h"
+#include "sbr_rom.h"
 
 #include "FDK_tools_rom.h"
 
@@ -102,29 +100,25 @@ amm-info@iis.fraunhofer.de
 
 #include "FDK_trigFcts.h"
 
-
 /********************************************************************/
 /*                       MLQUAL DEFINES                             */
 /********************************************************************/
 
-  #define FRACT_ZERO FRACT_BITS-1
+#define FRACT_ZERO FRACT_BITS - 1
 /********************************************************************/
 
-SBR_ERROR ResetPsDec( HANDLE_PS_DEC h_ps_d );
+SBR_ERROR ResetPsDec(HANDLE_PS_DEC h_ps_d);
 
-void ResetPsDeCor( HANDLE_PS_DEC h_ps_d );
-
+void ResetPsDeCor(HANDLE_PS_DEC h_ps_d);
 
 /***** HELPERS *****/
 
-static void assignTimeSlotsPS (FIXP_DBL *bufAdr, FIXP_DBL **bufPtr, const int numSlots, const int numChan);
-
-
+static void assignTimeSlotsPS(FIXP_DBL *bufAdr, FIXP_DBL **bufPtr, const int numSlots, const int numChan);
 
 /*******************/
 
-#define DIV3 FL2FXCONST_DBL(1.f/3.f)     /* division 3.0 */
-#define DIV1_5 FL2FXCONST_DBL(2.f/3.f)   /* division 1.5 */
+#define DIV3 FL2FXCONST_DBL(1.f / 3.f)   /* division 3.0 */
+#define DIV1_5 FL2FXCONST_DBL(2.f / 3.f) /* division 1.5 */
 
 /***************************************************************************/
 /*!
@@ -133,13 +127,10 @@ static void assignTimeSlotsPS (FIXP_DBL *bufAdr, FIXP_DBL **bufPtr, const int nu
   \return Error info
 
 ****************************************************************************/
-int
-CreatePsDec( HANDLE_PS_DEC *h_PS_DEC,   /*!< pointer to the module state */
-             int aacSamplesPerFrame
-           )
-{
+int CreatePsDec(HANDLE_PS_DEC *h_PS_DEC, /*!< pointer to the module state */
+                int aacSamplesPerFrame) {
   SBR_ERROR errorInfo = SBRDEC_OK;
-  HANDLE_PS_DEC  h_ps_d;
+  HANDLE_PS_DEC h_ps_d;
   int i;
 
   if (*h_PS_DEC == NULL) {
@@ -154,47 +145,42 @@ CreatePsDec( HANDLE_PS_DEC *h_PS_DEC,   /*!< pointer to the module state */
     h_ps_d = *h_PS_DEC;
   }
 
-   /* initialisation */
+  /* initialisation */
   switch (aacSamplesPerFrame) {
   case 960:
-    h_ps_d->noSubSamples = 30;              /* col */
+    h_ps_d->noSubSamples = 30; /* col */
     break;
   case 1024:
-    h_ps_d->noSubSamples = 32;              /* col */
+    h_ps_d->noSubSamples = 32; /* col */
     break;
   default:
     h_ps_d->noSubSamples = -1;
     break;
   }
 
-  if (h_ps_d->noSubSamples >  MAX_NUM_COL
-   || h_ps_d->noSubSamples <= 0)
-  {
+  if (h_ps_d->noSubSamples > MAX_NUM_COL || h_ps_d->noSubSamples <= 0) {
     goto bail;
   }
-  h_ps_d->noChannels   = NO_QMF_CHANNELS;   /* row */
+  h_ps_d->noChannels = NO_QMF_CHANNELS; /* row */
 
-  h_ps_d->psDecodedPrv   =  0;
+  h_ps_d->psDecodedPrv = 0;
   h_ps_d->procFrameBased = -1;
-  for (i = 0; i < (1)+1; i++) {
-    h_ps_d->bPsDataAvail[i]  =  ppt_none;
+  for (i = 0; i < (1) + 1; i++) {
+    h_ps_d->bPsDataAvail[i] = ppt_none;
   }
 
-
-  for (i = 0; i < (1)+1; i++) {
+  for (i = 0; i < (1) + 1; i++) {
     FDKmemclear(&h_ps_d->bsData[i].mpeg, sizeof(MPEG_PS_BS_DATA));
   }
 
-  errorInfo = ResetPsDec( h_ps_d );
+  errorInfo = ResetPsDec(h_ps_d);
 
-  if ( errorInfo != SBRDEC_OK )
+  if (errorInfo != SBRDEC_OK)
     goto bail;
 
-  ResetPsDeCor( h_ps_d );
+  ResetPsDeCor(h_ps_d);
 
   *h_PS_DEC = h_ps_d;
-
-
 
   return 0;
 
@@ -211,16 +197,13 @@ bail:
   \return Error info
 
 ****************************************************************************/
-int
-DeletePsDec( HANDLE_PS_DEC *h_PS_DEC)  /*!< pointer to the module state */
+int DeletePsDec(HANDLE_PS_DEC *h_PS_DEC) /*!< pointer to the module state */
 {
   if (*h_PS_DEC == NULL) {
     return -1;
   }
 
-
   FreeRam_ps_dec(h_PS_DEC);
-
 
   return 0;
 } /*END DeletePsDec */
@@ -232,7 +215,7 @@ DeletePsDec( HANDLE_PS_DEC *h_PS_DEC)  /*!< pointer to the module state */
   \return
 
 ****************************************************************************/
-SBR_ERROR ResetPsDec( HANDLE_PS_DEC h_ps_d )  /*!< pointer to the module state */
+SBR_ERROR ResetPsDec(HANDLE_PS_DEC h_ps_d) /*!< pointer to the module state */
 {
   SBR_ERROR errorInfo = SBRDEC_OK;
   INT i;
@@ -240,53 +223,48 @@ SBR_ERROR ResetPsDec( HANDLE_PS_DEC h_ps_d )  /*!< pointer to the module state *
   const UCHAR noQmfBandsInHybrid20 = 3;
   /* const UCHAR noQmfBandsInHybrid34 = 5; */
 
-  const UCHAR aHybridResolution20[] = { HYBRID_8_CPLX,
-                                        HYBRID_2_REAL,
-                                        HYBRID_2_REAL };
+  const UCHAR aHybridResolution20[] = {HYBRID_8_CPLX, HYBRID_2_REAL, HYBRID_2_REAL};
 
-  h_ps_d->specificTo.mpeg.delayBufIndex   = 0;
+  h_ps_d->specificTo.mpeg.delayBufIndex = 0;
 
   /* explicitly init state variables to safe values (until first ps header arrives) */
 
-  h_ps_d->specificTo.mpeg.lastUsb        =  0;
+  h_ps_d->specificTo.mpeg.lastUsb = 0;
 
-  h_ps_d->specificTo.mpeg.scaleFactorPsDelayBuffer = -(DFRACT_BITS-1);
+  h_ps_d->specificTo.mpeg.scaleFactorPsDelayBuffer = -(DFRACT_BITS - 1);
 
-  FDKmemclear(h_ps_d->specificTo.mpeg.aDelayBufIndexDelayQmf, (NO_QMF_CHANNELS-FIRST_DELAY_SB)*sizeof(UCHAR));
+  FDKmemclear(h_ps_d->specificTo.mpeg.aDelayBufIndexDelayQmf, (NO_QMF_CHANNELS - FIRST_DELAY_SB) * sizeof(UCHAR));
   h_ps_d->specificTo.mpeg.noSampleDelay = delayIndexQmf[0];
 
-  for (i=0 ; i < NO_SERIAL_ALLPASS_LINKS; i++) {
+  for (i = 0; i < NO_SERIAL_ALLPASS_LINKS; i++) {
     h_ps_d->specificTo.mpeg.aDelayRBufIndexSer[i] = 0;
   }
 
   h_ps_d->specificTo.mpeg.pAaRealDelayBufferQmf[0] = h_ps_d->specificTo.mpeg.aaQmfDelayBufReal;
 
-  assignTimeSlotsPS ( h_ps_d->specificTo.mpeg.pAaRealDelayBufferQmf[0] + (NO_QMF_CHANNELS-FIRST_DELAY_SB),
-                     &h_ps_d->specificTo.mpeg.pAaRealDelayBufferQmf[1],
-                      h_ps_d->specificTo.mpeg.noSampleDelay-1,
-                      (NO_DELAY_BUFFER_BANDS-FIRST_DELAY_SB));
+  assignTimeSlotsPS(h_ps_d->specificTo.mpeg.pAaRealDelayBufferQmf[0] + (NO_QMF_CHANNELS - FIRST_DELAY_SB),
+                    &h_ps_d->specificTo.mpeg.pAaRealDelayBufferQmf[1],
+                    h_ps_d->specificTo.mpeg.noSampleDelay - 1,
+                    (NO_DELAY_BUFFER_BANDS - FIRST_DELAY_SB));
 
   h_ps_d->specificTo.mpeg.pAaImagDelayBufferQmf[0] = h_ps_d->specificTo.mpeg.aaQmfDelayBufImag;
 
-  assignTimeSlotsPS ( h_ps_d->specificTo.mpeg.pAaImagDelayBufferQmf[0] + (NO_QMF_CHANNELS-FIRST_DELAY_SB),
-                     &h_ps_d->specificTo.mpeg.pAaImagDelayBufferQmf[1],
-                      h_ps_d->specificTo.mpeg.noSampleDelay-1,
-                      (NO_DELAY_BUFFER_BANDS-FIRST_DELAY_SB));
+  assignTimeSlotsPS(h_ps_d->specificTo.mpeg.pAaImagDelayBufferQmf[0] + (NO_QMF_CHANNELS - FIRST_DELAY_SB),
+                    &h_ps_d->specificTo.mpeg.pAaImagDelayBufferQmf[1],
+                    h_ps_d->specificTo.mpeg.noSampleDelay - 1,
+                    (NO_DELAY_BUFFER_BANDS - FIRST_DELAY_SB));
 
   /* Hybrid Filter Bank 1 creation. */
-  errorInfo = InitHybridFilterBank ( &h_ps_d->specificTo.mpeg.hybrid,
-                                      h_ps_d->noSubSamples,
-                                      noQmfBandsInHybrid20,
-                                      aHybridResolution20 );
+  errorInfo = InitHybridFilterBank(
+      &h_ps_d->specificTo.mpeg.hybrid, h_ps_d->noSubSamples, noQmfBandsInHybrid20, aHybridResolution20);
 
-  for ( i = 0; i < NO_IID_GROUPS; i++ )
-  {
+  for (i = 0; i < NO_IID_GROUPS; i++) {
     h_ps_d->specificTo.mpeg.h11rPrev[i] = FL2FXCONST_DBL(0.5f);
     h_ps_d->specificTo.mpeg.h12rPrev[i] = FL2FXCONST_DBL(0.5f);
   }
 
-  FDKmemclear( h_ps_d->specificTo.mpeg.h21rPrev, sizeof( h_ps_d->specificTo.mpeg.h21rPrev ) );
-  FDKmemclear( h_ps_d->specificTo.mpeg.h22rPrev, sizeof( h_ps_d->specificTo.mpeg.h22rPrev ) );
+  FDKmemclear(h_ps_d->specificTo.mpeg.h21rPrev, sizeof(h_ps_d->specificTo.mpeg.h21rPrev));
+  FDKmemclear(h_ps_d->specificTo.mpeg.h22rPrev, sizeof(h_ps_d->specificTo.mpeg.h22rPrev));
 
   return errorInfo;
 }
@@ -298,61 +276,48 @@ SBR_ERROR ResetPsDec( HANDLE_PS_DEC h_ps_d )  /*!< pointer to the module state *
   \return
 
 ****************************************************************************/
-void ResetPsDeCor( HANDLE_PS_DEC h_ps_d )  /*!< pointer to the module state */
+void ResetPsDeCor(HANDLE_PS_DEC h_ps_d) /*!< pointer to the module state */
 {
   INT i;
 
-  FDKmemclear(h_ps_d->specificTo.mpeg.aPeakDecayFastBin, NO_MID_RES_BINS*sizeof(FIXP_DBL));
-  FDKmemclear(h_ps_d->specificTo.mpeg.aPrevNrgBin, NO_MID_RES_BINS*sizeof(FIXP_DBL));
-  FDKmemclear(h_ps_d->specificTo.mpeg.aPrevPeakDiffBin, NO_MID_RES_BINS*sizeof(FIXP_DBL));
-  FDKmemclear(h_ps_d->specificTo.mpeg.aPowerPrevScal, NO_MID_RES_BINS*sizeof(SCHAR));
+  FDKmemclear(h_ps_d->specificTo.mpeg.aPeakDecayFastBin, NO_MID_RES_BINS * sizeof(FIXP_DBL));
+  FDKmemclear(h_ps_d->specificTo.mpeg.aPrevNrgBin, NO_MID_RES_BINS * sizeof(FIXP_DBL));
+  FDKmemclear(h_ps_d->specificTo.mpeg.aPrevPeakDiffBin, NO_MID_RES_BINS * sizeof(FIXP_DBL));
+  FDKmemclear(h_ps_d->specificTo.mpeg.aPowerPrevScal, NO_MID_RES_BINS * sizeof(SCHAR));
 
-  for (i=0 ; i < FIRST_DELAY_SB ; i++) {
-    FDKmemclear(h_ps_d->specificTo.mpeg.aaaRealDelayRBufferSerQmf[i], NO_DELAY_LENGTH_VECTORS*sizeof(FIXP_DBL));
-    FDKmemclear(h_ps_d->specificTo.mpeg.aaaImagDelayRBufferSerQmf[i], NO_DELAY_LENGTH_VECTORS*sizeof(FIXP_DBL));
+  for (i = 0; i < FIRST_DELAY_SB; i++) {
+    FDKmemclear(h_ps_d->specificTo.mpeg.aaaRealDelayRBufferSerQmf[i], NO_DELAY_LENGTH_VECTORS * sizeof(FIXP_DBL));
+    FDKmemclear(h_ps_d->specificTo.mpeg.aaaImagDelayRBufferSerQmf[i], NO_DELAY_LENGTH_VECTORS * sizeof(FIXP_DBL));
   }
-  for (i=0 ; i < NO_SUB_QMF_CHANNELS ; i++) {
-    FDKmemclear(h_ps_d->specificTo.mpeg.aaaRealDelayRBufferSerSubQmf[i], NO_DELAY_LENGTH_VECTORS*sizeof(FIXP_DBL));
-    FDKmemclear(h_ps_d->specificTo.mpeg.aaaImagDelayRBufferSerSubQmf[i], NO_DELAY_LENGTH_VECTORS*sizeof(FIXP_DBL));
+  for (i = 0; i < NO_SUB_QMF_CHANNELS; i++) {
+    FDKmemclear(h_ps_d->specificTo.mpeg.aaaRealDelayRBufferSerSubQmf[i], NO_DELAY_LENGTH_VECTORS * sizeof(FIXP_DBL));
+    FDKmemclear(h_ps_d->specificTo.mpeg.aaaImagDelayRBufferSerSubQmf[i], NO_DELAY_LENGTH_VECTORS * sizeof(FIXP_DBL));
   }
-
 }
 
 /*******************************************************************************/
 
 /* slot based funcion prototypes */
 
-static void deCorrelateSlotBased( HANDLE_PS_DEC h_ps_d,
+static void deCorrelateSlotBased(HANDLE_PS_DEC h_ps_d,
 
-                                  FIXP_DBL    *mHybridRealLeft,
-                                  FIXP_DBL    *mHybridImagLeft,
-                                  SCHAR        sf_mHybridLeft,
+                                 FIXP_DBL *mHybridRealLeft, FIXP_DBL *mHybridImagLeft, SCHAR sf_mHybridLeft,
 
-                                  FIXP_DBL    *rIntBufferLeft,
-                                  FIXP_DBL    *iIntBufferLeft,
-                                  SCHAR        sf_IntBuffer,
+                                 FIXP_DBL *rIntBufferLeft, FIXP_DBL *iIntBufferLeft, SCHAR sf_IntBuffer,
 
-                                  FIXP_DBL    *mHybridRealRight,
-                                  FIXP_DBL    *mHybridImagRight,
+                                 FIXP_DBL *mHybridRealRight, FIXP_DBL *mHybridImagRight,
 
-                                  FIXP_DBL    *rIntBufferRight,
-                                  FIXP_DBL    *iIntBufferRight );
+                                 FIXP_DBL *rIntBufferRight, FIXP_DBL *iIntBufferRight);
 
-static void applySlotBasedRotation( HANDLE_PS_DEC h_ps_d,
+static void applySlotBasedRotation(HANDLE_PS_DEC h_ps_d,
 
-                                    FIXP_DBL  *mHybridRealLeft,
-                                    FIXP_DBL  *mHybridImagLeft,
+                                   FIXP_DBL *mHybridRealLeft, FIXP_DBL *mHybridImagLeft,
 
-                                    FIXP_DBL  *QmfLeftReal,
-                                    FIXP_DBL  *QmfLeftImag,
+                                   FIXP_DBL *QmfLeftReal, FIXP_DBL *QmfLeftImag,
 
-                                    FIXP_DBL  *mHybridRealRight,
-                                    FIXP_DBL  *mHybridImagRight,
+                                   FIXP_DBL *mHybridRealRight, FIXP_DBL *mHybridImagRight,
 
-                                    FIXP_DBL  *QmfRightReal,
-                                    FIXP_DBL  *QmfRightImag
-                                  );
-
+                                   FIXP_DBL *QmfRightReal, FIXP_DBL *QmfRightImag);
 
 /***************************************************************************/
 /*!
@@ -361,44 +326,43 @@ static void applySlotBasedRotation( HANDLE_PS_DEC h_ps_d,
   \return
 
 ****************************************************************************/
-static
-int getScaleFactorPsStatesBuffer(HANDLE_PS_DEC   h_ps_d)
-{
+static int getScaleFactorPsStatesBuffer(HANDLE_PS_DEC h_ps_d) {
   INT i;
-  int scale = DFRACT_BITS-1;
+  int scale = DFRACT_BITS - 1;
 
-  for (i=0; i<NO_QMF_BANDS_HYBRID20; i++) {
+  for (i = 0; i < NO_QMF_BANDS_HYBRID20; i++) {
     scale = fMin(scale, getScalefactor(h_ps_d->specificTo.mpeg.hybrid.mQmfBufferRealSlot[i], NO_SUB_QMF_CHANNELS));
     scale = fMin(scale, getScalefactor(h_ps_d->specificTo.mpeg.hybrid.mQmfBufferImagSlot[i], NO_SUB_QMF_CHANNELS));
   }
 
-  for (i=0; i<NO_SAMPLE_DELAY_ALLPASS; i++) {
+  for (i = 0; i < NO_SAMPLE_DELAY_ALLPASS; i++) {
     scale = fMin(scale, getScalefactor(h_ps_d->specificTo.mpeg.aaRealDelayBufferQmf[i], FIRST_DELAY_SB));
     scale = fMin(scale, getScalefactor(h_ps_d->specificTo.mpeg.aaImagDelayBufferQmf[i], FIRST_DELAY_SB));
   }
 
-  for (i=0; i<NO_SAMPLE_DELAY_ALLPASS; i++) {
+  for (i = 0; i < NO_SAMPLE_DELAY_ALLPASS; i++) {
     scale = fMin(scale, getScalefactor(h_ps_d->specificTo.mpeg.aaRealDelayBufferSubQmf[i], NO_SUB_QMF_CHANNELS));
     scale = fMin(scale, getScalefactor(h_ps_d->specificTo.mpeg.aaImagDelayBufferSubQmf[i], NO_SUB_QMF_CHANNELS));
   }
 
-  for (i=0; i<FIRST_DELAY_SB; i++) {
+  for (i = 0; i < FIRST_DELAY_SB; i++) {
     scale = fMin(scale, getScalefactor(h_ps_d->specificTo.mpeg.aaaRealDelayRBufferSerQmf[i], NO_DELAY_LENGTH_VECTORS));
     scale = fMin(scale, getScalefactor(h_ps_d->specificTo.mpeg.aaaImagDelayRBufferSerQmf[i], NO_DELAY_LENGTH_VECTORS));
   }
 
-  for (i=0; i<NO_SUB_QMF_CHANNELS; i++) {
-    scale = fMin(scale, getScalefactor(h_ps_d->specificTo.mpeg.aaaRealDelayRBufferSerSubQmf[i], NO_DELAY_LENGTH_VECTORS));
-    scale = fMin(scale, getScalefactor(h_ps_d->specificTo.mpeg.aaaImagDelayRBufferSerSubQmf[i], NO_DELAY_LENGTH_VECTORS));
+  for (i = 0; i < NO_SUB_QMF_CHANNELS; i++) {
+    scale =
+        fMin(scale, getScalefactor(h_ps_d->specificTo.mpeg.aaaRealDelayRBufferSerSubQmf[i], NO_DELAY_LENGTH_VECTORS));
+    scale =
+        fMin(scale, getScalefactor(h_ps_d->specificTo.mpeg.aaaImagDelayRBufferSerSubQmf[i], NO_DELAY_LENGTH_VECTORS));
   }
 
-  for (i=0; i<MAX_DELAY_BUFFER_SIZE; i++)
-  {
+  for (i = 0; i < MAX_DELAY_BUFFER_SIZE; i++) {
     INT len;
-    if (i==0)
-      len = NO_QMF_CHANNELS-FIRST_DELAY_SB;
+    if (i == 0)
+      len = NO_QMF_CHANNELS - FIRST_DELAY_SB;
     else
-      len = NO_DELAY_BUFFER_BANDS-FIRST_DELAY_SB;
+      len = NO_DELAY_BUFFER_BANDS - FIRST_DELAY_SB;
 
     scale = fMin(scale, getScalefactor(h_ps_d->specificTo.mpeg.pAaRealDelayBufferQmf[i], len));
     scale = fMin(scale, getScalefactor(h_ps_d->specificTo.mpeg.pAaImagDelayBufferQmf[i], len));
@@ -414,58 +378,55 @@ int getScaleFactorPsStatesBuffer(HANDLE_PS_DEC   h_ps_d)
   \return
 
 ****************************************************************************/
-static
-void scalePsStatesBuffer(HANDLE_PS_DEC h_ps_d,
-                         int           scale)
-{
+static void scalePsStatesBuffer(HANDLE_PS_DEC h_ps_d, int scale) {
   INT i;
 
   if (scale < 0)
-    scale = fixMax((INT)scale,(INT)-(DFRACT_BITS-1));
+    scale = fixMax((INT)scale, (INT) - (DFRACT_BITS - 1));
   else
-    scale = fixMin((INT)scale,(INT)DFRACT_BITS-1);
+    scale = fixMin((INT)scale, (INT)DFRACT_BITS - 1);
 
-  for (i=0; i<NO_QMF_BANDS_HYBRID20; i++) {
-    scaleValues( h_ps_d->specificTo.mpeg.hybrid.mQmfBufferRealSlot[i], NO_SUB_QMF_CHANNELS, scale );
-    scaleValues( h_ps_d->specificTo.mpeg.hybrid.mQmfBufferImagSlot[i], NO_SUB_QMF_CHANNELS, scale );
+  for (i = 0; i < NO_QMF_BANDS_HYBRID20; i++) {
+    scaleValues(h_ps_d->specificTo.mpeg.hybrid.mQmfBufferRealSlot[i], NO_SUB_QMF_CHANNELS, scale);
+    scaleValues(h_ps_d->specificTo.mpeg.hybrid.mQmfBufferImagSlot[i], NO_SUB_QMF_CHANNELS, scale);
   }
 
-  for (i=0; i<NO_SAMPLE_DELAY_ALLPASS; i++) {
-    scaleValues( h_ps_d->specificTo.mpeg.aaRealDelayBufferQmf[i], FIRST_DELAY_SB, scale );
-    scaleValues( h_ps_d->specificTo.mpeg.aaImagDelayBufferQmf[i], FIRST_DELAY_SB, scale );
+  for (i = 0; i < NO_SAMPLE_DELAY_ALLPASS; i++) {
+    scaleValues(h_ps_d->specificTo.mpeg.aaRealDelayBufferQmf[i], FIRST_DELAY_SB, scale);
+    scaleValues(h_ps_d->specificTo.mpeg.aaImagDelayBufferQmf[i], FIRST_DELAY_SB, scale);
   }
 
-  for (i=0; i<NO_SAMPLE_DELAY_ALLPASS; i++) {
-    scaleValues( h_ps_d->specificTo.mpeg.aaRealDelayBufferSubQmf[i], NO_SUB_QMF_CHANNELS, scale );
-    scaleValues( h_ps_d->specificTo.mpeg.aaImagDelayBufferSubQmf[i], NO_SUB_QMF_CHANNELS, scale );
+  for (i = 0; i < NO_SAMPLE_DELAY_ALLPASS; i++) {
+    scaleValues(h_ps_d->specificTo.mpeg.aaRealDelayBufferSubQmf[i], NO_SUB_QMF_CHANNELS, scale);
+    scaleValues(h_ps_d->specificTo.mpeg.aaImagDelayBufferSubQmf[i], NO_SUB_QMF_CHANNELS, scale);
   }
 
-  for (i=0; i<FIRST_DELAY_SB; i++) {
-    scaleValues( h_ps_d->specificTo.mpeg.aaaRealDelayRBufferSerQmf[i], NO_DELAY_LENGTH_VECTORS, scale );
-    scaleValues( h_ps_d->specificTo.mpeg.aaaImagDelayRBufferSerQmf[i], NO_DELAY_LENGTH_VECTORS, scale );
+  for (i = 0; i < FIRST_DELAY_SB; i++) {
+    scaleValues(h_ps_d->specificTo.mpeg.aaaRealDelayRBufferSerQmf[i], NO_DELAY_LENGTH_VECTORS, scale);
+    scaleValues(h_ps_d->specificTo.mpeg.aaaImagDelayRBufferSerQmf[i], NO_DELAY_LENGTH_VECTORS, scale);
   }
 
-  for (i=0; i<NO_SUB_QMF_CHANNELS; i++) {
-    scaleValues( h_ps_d->specificTo.mpeg.aaaRealDelayRBufferSerSubQmf[i], NO_DELAY_LENGTH_VECTORS, scale );
-    scaleValues( h_ps_d->specificTo.mpeg.aaaImagDelayRBufferSerSubQmf[i], NO_DELAY_LENGTH_VECTORS, scale );
+  for (i = 0; i < NO_SUB_QMF_CHANNELS; i++) {
+    scaleValues(h_ps_d->specificTo.mpeg.aaaRealDelayRBufferSerSubQmf[i], NO_DELAY_LENGTH_VECTORS, scale);
+    scaleValues(h_ps_d->specificTo.mpeg.aaaImagDelayRBufferSerSubQmf[i], NO_DELAY_LENGTH_VECTORS, scale);
   }
 
-  for (i=0; i<MAX_DELAY_BUFFER_SIZE; i++) {
+  for (i = 0; i < MAX_DELAY_BUFFER_SIZE; i++) {
     INT len;
-    if (i==0)
-      len = NO_QMF_CHANNELS-FIRST_DELAY_SB;
+    if (i == 0)
+      len = NO_QMF_CHANNELS - FIRST_DELAY_SB;
     else
-      len = NO_DELAY_BUFFER_BANDS-FIRST_DELAY_SB;
+      len = NO_DELAY_BUFFER_BANDS - FIRST_DELAY_SB;
 
-    scaleValues( h_ps_d->specificTo.mpeg.pAaRealDelayBufferQmf[i], len, scale );
-    scaleValues( h_ps_d->specificTo.mpeg.pAaImagDelayBufferQmf[i], len, scale );
+    scaleValues(h_ps_d->specificTo.mpeg.pAaRealDelayBufferQmf[i], len, scale);
+    scaleValues(h_ps_d->specificTo.mpeg.pAaImagDelayBufferQmf[i], len, scale);
   }
 
   scale <<= 1;
 
-  scaleValues( h_ps_d->specificTo.mpeg.aPeakDecayFastBin, NO_MID_RES_BINS, scale );
-  scaleValues( h_ps_d->specificTo.mpeg.aPrevPeakDiffBin, NO_MID_RES_BINS, scale );
-  scaleValues( h_ps_d->specificTo.mpeg.aPrevNrgBin, NO_MID_RES_BINS, scale );
+  scaleValues(h_ps_d->specificTo.mpeg.aPeakDecayFastBin, NO_MID_RES_BINS, scale);
+  scaleValues(h_ps_d->specificTo.mpeg.aPrevPeakDiffBin, NO_MID_RES_BINS, scale);
+  scaleValues(h_ps_d->specificTo.mpeg.aPrevNrgBin, NO_MID_RES_BINS, scale);
 }
 
 /***************************************************************************/
@@ -477,67 +438,58 @@ void scalePsStatesBuffer(HANDLE_PS_DEC h_ps_d,
 
 ****************************************************************************/
 
-void scalFilterBankValues( HANDLE_PS_DEC   h_ps_d,
-                           FIXP_DBL      **fixpQmfReal,
-                           FIXP_DBL      **fixpQmfImag,
-                           int             lsb,
-                           int             scaleFactorLowBandSplitLow,
-                           int             scaleFactorLowBandSplitHigh,
-                           SCHAR          *scaleFactorLowBand_lb,
-                           SCHAR          *scaleFactorLowBand_hb,
-                           int             scaleFactorHighBands,
-                           INT            *scaleFactorHighBand,
-                           INT             noCols
-                         )
-{
+void scalFilterBankValues(HANDLE_PS_DEC h_ps_d, FIXP_DBL **fixpQmfReal, FIXP_DBL **fixpQmfImag, int lsb,
+                          int scaleFactorLowBandSplitLow, int scaleFactorLowBandSplitHigh, SCHAR *scaleFactorLowBand_lb,
+                          SCHAR *scaleFactorLowBand_hb, int scaleFactorHighBands, INT *scaleFactorHighBand,
+                          INT noCols) {
   INT maxScal;
 
   INT i;
 
-  scaleFactorHighBands        =  -scaleFactorHighBands;
-  scaleFactorLowBandSplitLow  =  -scaleFactorLowBandSplitLow;
-  scaleFactorLowBandSplitHigh =  -scaleFactorLowBandSplitHigh;
+  scaleFactorHighBands = -scaleFactorHighBands;
+  scaleFactorLowBandSplitLow = -scaleFactorLowBandSplitLow;
+  scaleFactorLowBandSplitHigh = -scaleFactorLowBandSplitHigh;
 
   /* get max scale factor */
-  maxScal = fixMax(scaleFactorHighBands,fixMax(scaleFactorLowBandSplitLow, scaleFactorLowBandSplitHigh ));
+  maxScal = fixMax(scaleFactorHighBands, fixMax(scaleFactorLowBandSplitLow, scaleFactorLowBandSplitHigh));
 
   {
-    int headroom  = getScaleFactorPsStatesBuffer(h_ps_d);
-    maxScal   = fixMax(maxScal,(INT)(h_ps_d->specificTo.mpeg.scaleFactorPsDelayBuffer-headroom));
-    maxScal  += 1;
+    int headroom = getScaleFactorPsStatesBuffer(h_ps_d);
+    maxScal = fixMax(maxScal, (INT)(h_ps_d->specificTo.mpeg.scaleFactorPsDelayBuffer - headroom));
+    maxScal += 1;
   }
 
   /* scale whole left channel to the same scale factor */
 
   /* low band ( overlap buffer ) */
-  if ( maxScal != scaleFactorLowBandSplitLow ) {
+  if (maxScal != scaleFactorLowBandSplitLow) {
     INT scale = scaleFactorLowBandSplitLow - maxScal;
-    for ( i=0; i<(6); i++ ) {
-      scaleValues( fixpQmfReal[i], lsb, scale );
-      scaleValues( fixpQmfImag[i], lsb, scale );
+    for (i = 0; i < (6); i++) {
+      scaleValues(fixpQmfReal[i], lsb, scale);
+      scaleValues(fixpQmfImag[i], lsb, scale);
     }
   }
   /* low band ( current frame ) */
-  if ( maxScal != scaleFactorLowBandSplitHigh ) {
+  if (maxScal != scaleFactorLowBandSplitHigh) {
     INT scale = scaleFactorLowBandSplitHigh - maxScal;
     /* for ( i=(6); i<(6)+MAX_NUM_COL; i++ ) { */
-    for ( i=(6); i<(6)+noCols; i++ ) {
-      scaleValues( fixpQmfReal[i], lsb, scale );
-      scaleValues( fixpQmfImag[i], lsb, scale );
+    for (i = (6); i < (6) + noCols; i++) {
+      scaleValues(fixpQmfReal[i], lsb, scale);
+      scaleValues(fixpQmfImag[i], lsb, scale);
     }
   }
   /* high band */
-  if ( maxScal != scaleFactorHighBands ) {
+  if (maxScal != scaleFactorHighBands) {
     INT scale = scaleFactorHighBands - maxScal;
     /* for ( i=0; i<MAX_NUM_COL; i++ ) { */
-    for ( i=0; i<noCols; i++ ) {
-      scaleValues( &fixpQmfReal[i][lsb], (64)-lsb, scale );
-      scaleValues( &fixpQmfImag[i][lsb], (64)-lsb, scale );
+    for (i = 0; i < noCols; i++) {
+      scaleValues(&fixpQmfReal[i][lsb], (64) - lsb, scale);
+      scaleValues(&fixpQmfImag[i][lsb], (64) - lsb, scale);
     }
   }
 
-  if ( maxScal != h_ps_d->specificTo.mpeg.scaleFactorPsDelayBuffer )
-    scalePsStatesBuffer(h_ps_d,(h_ps_d->specificTo.mpeg.scaleFactorPsDelayBuffer-maxScal));
+  if (maxScal != h_ps_d->specificTo.mpeg.scaleFactorPsDelayBuffer)
+    scalePsStatesBuffer(h_ps_d, (h_ps_d->specificTo.mpeg.scaleFactorPsDelayBuffer - maxScal));
 
   h_ps_d->specificTo.mpeg.hybrid.sf_mQmfBuffer = maxScal;
   h_ps_d->specificTo.mpeg.scaleFactorPsDelayBuffer = maxScal;
@@ -551,17 +503,16 @@ void scalFilterBankValues( HANDLE_PS_DEC   h_ps_d,
   *scaleFactorLowBand_hb += maxScal - scaleFactorLowBandSplitHigh;
 }
 
-void rescalFilterBankValues( HANDLE_PS_DEC   h_ps_d,                      /* parametric stereo decoder handle     */
-                             FIXP_DBL      **QmfBufferReal,               /* qmf filterbank values                */
-                             FIXP_DBL      **QmfBufferImag,               /* qmf filterbank values                */
-                             int             lsb,                         /* sbr start subband                    */
-                             INT             noCols)
-{
+void rescalFilterBankValues(HANDLE_PS_DEC h_ps_d,     /* parametric stereo decoder handle     */
+                            FIXP_DBL **QmfBufferReal, /* qmf filterbank values                */
+                            FIXP_DBL **QmfBufferImag, /* qmf filterbank values                */
+                            int lsb,                  /* sbr start subband                    */
+                            INT noCols) {
   int i;
   /* scale back 6 timeslots look ahead for hybrid filterbank to original value */
-  for ( i=noCols; i<noCols + (6); i++ ) {
-    scaleValues( QmfBufferReal[i], lsb, h_ps_d->rescal );
-    scaleValues( QmfBufferImag[i], lsb, h_ps_d->rescal );
+  for (i = noCols; i < noCols + (6); i++) {
+    scaleValues(QmfBufferReal[i], lsb, h_ps_d->rescal);
+    scaleValues(QmfBufferImag[i], lsb, h_ps_d->rescal);
   }
 }
 
@@ -572,25 +523,24 @@ void rescalFilterBankValues( HANDLE_PS_DEC   h_ps_d,                      /* par
   \return
 
 ****************************************************************************/
-static void
-deCorrelateSlotBased( HANDLE_PS_DEC h_ps_d,            /*!< pointer to the module state */
+static void deCorrelateSlotBased(HANDLE_PS_DEC h_ps_d, /*!< pointer to the module state */
 
-                      FIXP_DBL    *mHybridRealLeft,    /*!< left (mono) hybrid values real */
-                      FIXP_DBL    *mHybridImagLeft,    /*!< left (mono) hybrid values imag */
-                      SCHAR        sf_mHybridLeft,     /*!< scalefactor for left (mono) hybrid bands */
+                                 FIXP_DBL *mHybridRealLeft, /*!< left (mono) hybrid values real */
+                                 FIXP_DBL *mHybridImagLeft, /*!< left (mono) hybrid values imag */
+                                 SCHAR sf_mHybridLeft,      /*!< scalefactor for left (mono) hybrid bands */
 
-                      FIXP_DBL    *rIntBufferLeft,     /*!< real qmf bands left (mono) (38x64) */
-                      FIXP_DBL    *iIntBufferLeft,     /*!< real qmf bands left (mono) (38x64) */
-                      SCHAR        sf_IntBuffer,       /*!< scalefactor for all left and right qmf bands   */
+                                 FIXP_DBL *rIntBufferLeft, /*!< real qmf bands left (mono) (38x64) */
+                                 FIXP_DBL *iIntBufferLeft, /*!< real qmf bands left (mono) (38x64) */
+                                 SCHAR sf_IntBuffer,       /*!< scalefactor for all left and right qmf bands   */
 
-                      FIXP_DBL    *mHybridRealRight,   /*!< right (decorrelated) hybrid values real */
-                      FIXP_DBL    *mHybridImagRight,   /*!< right (decorrelated) hybrid values imag */
+                                 FIXP_DBL *mHybridRealRight, /*!< right (decorrelated) hybrid values real */
+                                 FIXP_DBL *mHybridImagRight, /*!< right (decorrelated) hybrid values imag */
 
-                      FIXP_DBL    *rIntBufferRight,    /*!< real qmf bands right (decorrelated) (38x64) */
-                      FIXP_DBL    *iIntBufferRight )   /*!< real qmf bands right (decorrelated) (38x64) */
+                                 FIXP_DBL *rIntBufferRight, /*!< real qmf bands right (decorrelated) (38x64) */
+                                 FIXP_DBL *iIntBufferRight) /*!< real qmf bands right (decorrelated) (38x64) */
 {
 
-  INT  i, m, sb, gr, bin;
+  INT i, m, sb, gr, bin;
 
   FIXP_DBL peakDiff, nrg, transRatio;
 
@@ -606,124 +556,124 @@ deCorrelateSlotBased( HANDLE_PS_DEC h_ps_d,            /*!< pointer to the modul
   C_ALLOC_SCRATCH_START(aaPowerSlot, FIXP_DBL, NO_MID_RES_BINS);
   C_ALLOC_SCRATCH_START(aaTransRatioSlot, FIXP_DBL, NO_MID_RES_BINS);
 
-/*!
-<pre>
-   parameter index       qmf bands             hybrid bands
-  ----------------------------------------------------------------------------
-         0                   0                      0,7
-         1                   0                      1,6
-         2                   0                      2
-         3                   0                      3           HYBRID BANDS
-         4                   1                      9
-         5                   1                      8
-         6                   2                     10
-         7                   2                     11
-  ----------------------------------------------------------------------------
-         8                   3
-         9                   4
-        10                   5
-        11                   6
-        12                   7
-        13                   8
-        14                   9,10      (2 )                      QMF BANDS
-        15                   11 - 13   (3 )
-        16                   14 - 17   (4 )
-        17                   18 - 22   (5 )
-        18                   23 - 34   (12)
-        19                   35 - 63   (29)
-  ----------------------------------------------------------------------------
-</pre>
-*/
+  /*!
+  <pre>
+     parameter index       qmf bands             hybrid bands
+    ----------------------------------------------------------------------------
+           0                   0                      0,7
+           1                   0                      1,6
+           2                   0                      2
+           3                   0                      3           HYBRID BANDS
+           4                   1                      9
+           5                   1                      8
+           6                   2                     10
+           7                   2                     11
+    ----------------------------------------------------------------------------
+           8                   3
+           9                   4
+          10                   5
+          11                   6
+          12                   7
+          13                   8
+          14                   9,10      (2 )                      QMF BANDS
+          15                   11 - 13   (3 )
+          16                   14 - 17   (4 )
+          17                   18 - 22   (5 )
+          18                   23 - 34   (12)
+          19                   35 - 63   (29)
+    ----------------------------------------------------------------------------
+  </pre>
+  */
 
-  #define FLTR_SCALE 3
+#define FLTR_SCALE 3
 
   /* hybrid bands (parameter index 0 - 7) */
-  aaLeftReal  = mHybridRealLeft;
-  aaLeftImag  = mHybridImagLeft;
+  aaLeftReal = mHybridRealLeft;
+  aaLeftImag = mHybridImagLeft;
 
-  aaPowerSlot[0] = ( fMultAddDiv2( fMultDiv2(aaLeftReal[0],  aaLeftReal[0]),  aaLeftImag[0],  aaLeftImag[0] ) >> FLTR_SCALE ) +
-                   ( fMultAddDiv2( fMultDiv2(aaLeftReal[7],  aaLeftReal[7]),  aaLeftImag[7],  aaLeftImag[7] ) >> FLTR_SCALE );
+  aaPowerSlot[0] = (fMultAddDiv2(fMultDiv2(aaLeftReal[0], aaLeftReal[0]), aaLeftImag[0], aaLeftImag[0]) >> FLTR_SCALE) +
+                   (fMultAddDiv2(fMultDiv2(aaLeftReal[7], aaLeftReal[7]), aaLeftImag[7], aaLeftImag[7]) >> FLTR_SCALE);
 
-  aaPowerSlot[1] = ( fMultAddDiv2( fMultDiv2(aaLeftReal[1],  aaLeftReal[1]),  aaLeftImag[1],  aaLeftImag[1] ) >> FLTR_SCALE ) +
-                   ( fMultAddDiv2( fMultDiv2(aaLeftReal[6],  aaLeftReal[6]),  aaLeftImag[6],  aaLeftImag[6] ) >> FLTR_SCALE );
+  aaPowerSlot[1] = (fMultAddDiv2(fMultDiv2(aaLeftReal[1], aaLeftReal[1]), aaLeftImag[1], aaLeftImag[1]) >> FLTR_SCALE) +
+                   (fMultAddDiv2(fMultDiv2(aaLeftReal[6], aaLeftReal[6]), aaLeftImag[6], aaLeftImag[6]) >> FLTR_SCALE);
 
-  aaPowerSlot[2] =   fMultAddDiv2( fMultDiv2(aaLeftReal[2],  aaLeftReal[2]),  aaLeftImag[2],  aaLeftImag[2] ) >> FLTR_SCALE;
-  aaPowerSlot[3] =   fMultAddDiv2( fMultDiv2(aaLeftReal[3],  aaLeftReal[3]),  aaLeftImag[3],  aaLeftImag[3] ) >> FLTR_SCALE;
+  aaPowerSlot[2] = fMultAddDiv2(fMultDiv2(aaLeftReal[2], aaLeftReal[2]), aaLeftImag[2], aaLeftImag[2]) >> FLTR_SCALE;
+  aaPowerSlot[3] = fMultAddDiv2(fMultDiv2(aaLeftReal[3], aaLeftReal[3]), aaLeftImag[3], aaLeftImag[3]) >> FLTR_SCALE;
 
-  aaPowerSlot[4] =   fMultAddDiv2( fMultDiv2(aaLeftReal[9],  aaLeftReal[9]),  aaLeftImag[9],  aaLeftImag[9] ) >> FLTR_SCALE;
-  aaPowerSlot[5] =   fMultAddDiv2( fMultDiv2(aaLeftReal[8],  aaLeftReal[8]),  aaLeftImag[8],  aaLeftImag[8] ) >> FLTR_SCALE;
+  aaPowerSlot[4] = fMultAddDiv2(fMultDiv2(aaLeftReal[9], aaLeftReal[9]), aaLeftImag[9], aaLeftImag[9]) >> FLTR_SCALE;
+  aaPowerSlot[5] = fMultAddDiv2(fMultDiv2(aaLeftReal[8], aaLeftReal[8]), aaLeftImag[8], aaLeftImag[8]) >> FLTR_SCALE;
 
-  aaPowerSlot[6] =   fMultAddDiv2( fMultDiv2(aaLeftReal[10], aaLeftReal[10]), aaLeftImag[10], aaLeftImag[10] ) >> FLTR_SCALE;
-  aaPowerSlot[7] =   fMultAddDiv2( fMultDiv2(aaLeftReal[11], aaLeftReal[11]), aaLeftImag[11], aaLeftImag[11] ) >> FLTR_SCALE;
+  aaPowerSlot[6] =
+      fMultAddDiv2(fMultDiv2(aaLeftReal[10], aaLeftReal[10]), aaLeftImag[10], aaLeftImag[10]) >> FLTR_SCALE;
+  aaPowerSlot[7] =
+      fMultAddDiv2(fMultDiv2(aaLeftReal[11], aaLeftReal[11]), aaLeftImag[11], aaLeftImag[11]) >> FLTR_SCALE;
 
   /* qmf bands (parameter index 8 - 19) */
-  for ( bin = 8; bin < NO_MID_RES_BINS; bin++ ) {
+  for (bin = 8; bin < NO_MID_RES_BINS; bin++) {
     FIXP_DBL slotNrg = FL2FXCONST_DBL(0.f);
 
-    for ( i = groupBorders20[bin+2]; i < groupBorders20[bin+3]; i++ ) {  /* max loops: 29 */
-      slotNrg += fMultAddDiv2 ( fMultDiv2(rIntBufferLeft[i], rIntBufferLeft[i]), iIntBufferLeft[i], iIntBufferLeft[i]) >> FLTR_SCALE;
+    for (i = groupBorders20[bin + 2]; i < groupBorders20[bin + 3]; i++) { /* max loops: 29 */
+      slotNrg += fMultAddDiv2(fMultDiv2(rIntBufferLeft[i], rIntBufferLeft[i]), iIntBufferLeft[i], iIntBufferLeft[i]) >>
+                 FLTR_SCALE;
     }
     aaPowerSlot[bin] = slotNrg;
-
   }
 
-
   /* calculation of transient ratio */
-  for (bin=0; bin < NO_MID_RES_BINS; bin++) {   /* noBins = 20 ( BASELINE_PS ) */
+  for (bin = 0; bin < NO_MID_RES_BINS; bin++) { /* noBins = 20 ( BASELINE_PS ) */
 
-    h_ps_d->specificTo.mpeg.aPeakDecayFastBin[bin] = fMult( h_ps_d->specificTo.mpeg.aPeakDecayFastBin[bin], PEAK_DECAY_FACTOR );
+    h_ps_d->specificTo.mpeg.aPeakDecayFastBin[bin] =
+        fMult(h_ps_d->specificTo.mpeg.aPeakDecayFastBin[bin], PEAK_DECAY_FACTOR);
 
     if (h_ps_d->specificTo.mpeg.aPeakDecayFastBin[bin] < aaPowerSlot[bin]) {
       h_ps_d->specificTo.mpeg.aPeakDecayFastBin[bin] = aaPowerSlot[bin];
     }
 
     /* calculate PSmoothPeakDecayDiffNrg */
-    peakDiff = fMultAdd ( (h_ps_d->specificTo.mpeg.aPrevPeakDiffBin[bin]>>1),
-                 INT_FILTER_COEFF, h_ps_d->specificTo.mpeg.aPeakDecayFastBin[bin] - aaPowerSlot[bin] - h_ps_d->specificTo.mpeg.aPrevPeakDiffBin[bin]);
+    peakDiff = fMultAdd((h_ps_d->specificTo.mpeg.aPrevPeakDiffBin[bin] >> 1),
+                        INT_FILTER_COEFF,
+                        h_ps_d->specificTo.mpeg.aPeakDecayFastBin[bin] - aaPowerSlot[bin] -
+                            h_ps_d->specificTo.mpeg.aPrevPeakDiffBin[bin]);
 
     /* save peakDiff for the next frame */
     h_ps_d->specificTo.mpeg.aPrevPeakDiffBin[bin] = peakDiff;
 
-    nrg = h_ps_d->specificTo.mpeg.aPrevNrgBin[bin] + fMult( INT_FILTER_COEFF, aaPowerSlot[bin] - h_ps_d->specificTo.mpeg.aPrevNrgBin[bin] );
+    nrg = h_ps_d->specificTo.mpeg.aPrevNrgBin[bin] +
+          fMult(INT_FILTER_COEFF, aaPowerSlot[bin] - h_ps_d->specificTo.mpeg.aPrevNrgBin[bin]);
 
     /* Negative energies don't exist. But sometimes they appear due to rounding. */
 
-    nrg = fixMax(nrg,FL2FXCONST_DBL(0.f));
+    nrg = fixMax(nrg, FL2FXCONST_DBL(0.f));
 
     /* save nrg for the next frame */
     h_ps_d->specificTo.mpeg.aPrevNrgBin[bin] = nrg;
 
-    nrg = fMult( nrg, TRANSIENT_IMPACT_FACTOR );
+    nrg = fMult(nrg, TRANSIENT_IMPACT_FACTOR);
 
     /* save transient impact factor */
-    if ( peakDiff <= nrg || peakDiff == FL2FXCONST_DBL(0.0) ) {
+    if (peakDiff <= nrg || peakDiff == FL2FXCONST_DBL(0.0)) {
       aaTransRatioSlot[bin] = (FIXP_DBL)MAXVAL_DBL /* FL2FXCONST_DBL(1.0f)*/;
-    }
-    else if ( nrg <= FL2FXCONST_DBL(0.0f) ) {
-        aaTransRatioSlot[bin] = FL2FXCONST_DBL(0.f);
-      }
-    else {
+    } else if (nrg <= FL2FXCONST_DBL(0.0f)) {
+      aaTransRatioSlot[bin] = FL2FXCONST_DBL(0.f);
+    } else {
       /* scale to denominator */
       INT scale_left = fixMax(0, CntLeadingZeros(peakDiff) - 1);
-      aaTransRatioSlot[bin] = schur_div( nrg<<scale_left, peakDiff<<scale_left, 16);
+      aaTransRatioSlot[bin] = schur_div(nrg << scale_left, peakDiff << scale_left, 16);
     }
   } /* bin */
 
-
-
-
-  #define DELAY_GROUP_OFFSET    20
-  #define NR_OF_DELAY_GROUPS     2
+#define DELAY_GROUP_OFFSET 20
+#define NR_OF_DELAY_GROUPS 2
 
   FIXP_DBL rTmp, iTmp, rTmp0, iTmp0, rR0, iR0;
 
-  INT TempDelay     = h_ps_d->specificTo.mpeg.delayBufIndex;  /* set delay indices */
+  INT TempDelay = h_ps_d->specificTo.mpeg.delayBufIndex; /* set delay indices */
 
   pRealDelayBuffer = h_ps_d->specificTo.mpeg.aaRealDelayBufferSubQmf[TempDelay];
   pImagDelayBuffer = h_ps_d->specificTo.mpeg.aaImagDelayBufferSubQmf[TempDelay];
 
-  aaLeftReal  = mHybridRealLeft;
-  aaLeftImag  = mHybridImagLeft;
+  aaLeftReal = mHybridRealLeft;
+  aaLeftImag = mHybridImagLeft;
   aaRightReal = mHybridRealRight;
   aaRightImag = mHybridImagRight;
 
@@ -732,7 +682,7 @@ deCorrelateSlotBased( HANDLE_PS_DEC h_ps_d,            /*!< pointer to the modul
   /************************/
 
   /* gr = ICC groups */
-  for (gr=0; gr < SUBQMF_GROUPS; gr++) {
+  for (gr = 0; gr < SUBQMF_GROUPS; gr++) {
 
     transRatio = aaTransRatioSlot[bins2groupMap20[gr]];
 
@@ -747,14 +697,15 @@ deCorrelateSlotBased( HANDLE_PS_DEC h_ps_d,            /*!< pointer to the modul
     pImagDelayBuffer[sb] = aaLeftImag[sb];
 
     /* delay by fraction */
-    cplxMultDiv2(&rR0, &iR0, rTmp0, iTmp0, aaFractDelayPhaseFactorReSubQmf20[sb], aaFractDelayPhaseFactorImSubQmf20[sb]);
-    rR0<<=1;
-    iR0<<=1;
+    cplxMultDiv2(
+        &rR0, &iR0, rTmp0, iTmp0, aaFractDelayPhaseFactorReSubQmf20[sb], aaFractDelayPhaseFactorImSubQmf20[sb]);
+    rR0 <<= 1;
+    iR0 <<= 1;
 
     FIXP_DBL *pAaaRealDelayRBufferSerSubQmf = h_ps_d->specificTo.mpeg.aaaRealDelayRBufferSerSubQmf[sb];
     FIXP_DBL *pAaaImagDelayRBufferSerSubQmf = h_ps_d->specificTo.mpeg.aaaImagDelayRBufferSerSubQmf[sb];
 
-    for (m=0; m<NO_SERIAL_ALLPASS_LINKS ; m++) {
+    for (m = 0; m < NO_SERIAL_ALLPASS_LINKS; m++) {
 
       INT tmpDelayRSer = h_ps_d->specificTo.mpeg.aDelayRBufIndexSer[m];
 
@@ -763,7 +714,12 @@ deCorrelateSlotBased( HANDLE_PS_DEC h_ps_d,            /*!< pointer to the modul
       iTmp0 = pAaaImagDelayRBufferSerSubQmf[tmpDelayRSer];
 
       /* delay by fraction */
-      cplxMultDiv2(&rTmp, &iTmp, rTmp0, iTmp0, aaFractDelayPhaseFactorSerReSubQmf20[sb][m], aaFractDelayPhaseFactorSerImSubQmf20[sb][m]);
+      cplxMultDiv2(&rTmp,
+                   &iTmp,
+                   rTmp0,
+                   iTmp0,
+                   aaFractDelayPhaseFactorSerReSubQmf20[sb][m],
+                   aaFractDelayPhaseFactorSerImSubQmf20[sb][m]);
 
       rTmp = (rTmp - fMultDiv2(aAllpassLinkDecaySer[m], rR0)) << 1;
       iTmp = (iTmp - fMultDiv2(aAllpassLinkDecaySer[m], iR0)) << 1;
@@ -785,17 +741,15 @@ deCorrelateSlotBased( HANDLE_PS_DEC h_ps_d,            /*!< pointer to the modul
 
   } /* gr */
 
-
-  scaleValues( mHybridRealLeft,  NO_SUB_QMF_CHANNELS, -SCAL_HEADROOM );
-  scaleValues( mHybridImagLeft,  NO_SUB_QMF_CHANNELS, -SCAL_HEADROOM );
-  scaleValues( mHybridRealRight, NO_SUB_QMF_CHANNELS, -SCAL_HEADROOM );
-  scaleValues( mHybridImagRight, NO_SUB_QMF_CHANNELS, -SCAL_HEADROOM );
-
+  scaleValues(mHybridRealLeft, NO_SUB_QMF_CHANNELS, -SCAL_HEADROOM);
+  scaleValues(mHybridImagLeft, NO_SUB_QMF_CHANNELS, -SCAL_HEADROOM);
+  scaleValues(mHybridRealRight, NO_SUB_QMF_CHANNELS, -SCAL_HEADROOM);
+  scaleValues(mHybridImagRight, NO_SUB_QMF_CHANNELS, -SCAL_HEADROOM);
 
   /************************/
 
-  aaLeftReal  = rIntBufferLeft;
-  aaLeftImag  = iIntBufferLeft;
+  aaLeftReal = rIntBufferLeft;
+  aaLeftImag = iIntBufferLeft;
   aaRightReal = rIntBufferRight;
   aaRightImag = iIntBufferRight;
 
@@ -806,14 +760,13 @@ deCorrelateSlotBased( HANDLE_PS_DEC h_ps_d,            /*!< pointer to the modul
   /* ICC groups : 10 - 19 */
   /************************/
 
-
   /* gr = ICC groups */
-  for (gr=SUBQMF_GROUPS; gr < NO_IID_GROUPS - NR_OF_DELAY_GROUPS; gr++) {
+  for (gr = SUBQMF_GROUPS; gr < NO_IID_GROUPS - NR_OF_DELAY_GROUPS; gr++) {
 
     transRatio = aaTransRatioSlot[bins2groupMap20[gr]];
 
     /* sb = subQMF/QMF subband */
-    for (sb = groupBorders20[gr]; sb < groupBorders20[gr+1]; sb++) {
+    for (sb = groupBorders20[gr]; sb < groupBorders20[gr + 1]; sb++) {
       FIXP_DBL resR, resI;
 
       /* decayScaleFactor = 1.0f + decay_cutoff * DECAY_SLOPE - DECAY_SLOPE * sb; DECAY_SLOPE = 0.05 */
@@ -828,8 +781,8 @@ deCorrelateSlotBased( HANDLE_PS_DEC h_ps_d,            /*!< pointer to the modul
 
       /* delay by fraction */
       cplxMultDiv2(&rR0, &iR0, rTmp0, iTmp0, aaFractDelayPhaseFactorReQmf[sb], aaFractDelayPhaseFactorImQmf[sb]);
-      rR0<<=1;
-      iR0<<=1;
+      rR0 <<= 1;
+      iR0 <<= 1;
 
       resR = fMult(decayScaleFactor, rR0);
       resI = fMult(decayScaleFactor, iR0);
@@ -837,7 +790,7 @@ deCorrelateSlotBased( HANDLE_PS_DEC h_ps_d,            /*!< pointer to the modul
       FIXP_DBL *pAaaRealDelayRBufferSerQmf = h_ps_d->specificTo.mpeg.aaaRealDelayRBufferSerQmf[sb];
       FIXP_DBL *pAaaImagDelayRBufferSerQmf = h_ps_d->specificTo.mpeg.aaaImagDelayRBufferSerQmf[sb];
 
-      for (m=0; m<NO_SERIAL_ALLPASS_LINKS ; m++) {
+      for (m = 0; m < NO_SERIAL_ALLPASS_LINKS; m++) {
 
         INT tmpDelayRSer = h_ps_d->specificTo.mpeg.aDelayRBufIndexSer[m];
 
@@ -846,10 +799,11 @@ deCorrelateSlotBased( HANDLE_PS_DEC h_ps_d,            /*!< pointer to the modul
         iTmp0 = pAaaImagDelayRBufferSerQmf[tmpDelayRSer];
 
         /* delay by fraction */
-        cplxMultDiv2(&rTmp, &iTmp, rTmp0, iTmp0, aaFractDelayPhaseFactorSerReQmf[sb][m], aaFractDelayPhaseFactorSerImQmf[sb][m]);
+        cplxMultDiv2(
+            &rTmp, &iTmp, rTmp0, iTmp0, aaFractDelayPhaseFactorSerReQmf[sb][m], aaFractDelayPhaseFactorSerImQmf[sb][m]);
 
-        rTmp = (rTmp - fMultDiv2(aAllpassLinkDecaySer[m], resR))<<1;
-        iTmp = (iTmp - fMultDiv2(aAllpassLinkDecaySer[m], resI))<<1;
+        rTmp = (rTmp - fMultDiv2(aAllpassLinkDecaySer[m], resR)) << 1;
+        iTmp = (iTmp - fMultDiv2(aAllpassLinkDecaySer[m], resI)) << 1;
 
         resR = fMult(decayScaleFactor, rTmp);
         resI = fMult(decayScaleFactor, iTmp);
@@ -870,20 +824,19 @@ deCorrelateSlotBased( HANDLE_PS_DEC h_ps_d,            /*!< pointer to the modul
       aaRightImag[sb] = fMult(transRatio, iR0);
 
     } /* sb */
-  } /* gr */
+  }   /* gr */
 
   /************************/
   /* ICC groups : 20,  21 */
   /************************/
 
-
   /* gr = ICC groups */
-  for (gr=DELAY_GROUP_OFFSET; gr < NO_IID_GROUPS; gr++) {
+  for (gr = DELAY_GROUP_OFFSET; gr < NO_IID_GROUPS; gr++) {
 
     INT sbStart = groupBorders20[gr];
-    INT sbStop  = groupBorders20[gr+1];
+    INT sbStop = groupBorders20[gr + 1];
 
-    UCHAR *pDelayBufIdx = &h_ps_d->specificTo.mpeg.aDelayBufIndexDelayQmf[sbStart-FIRST_DELAY_SB];
+    UCHAR *pDelayBufIdx = &h_ps_d->specificTo.mpeg.aDelayBufIndexDelayQmf[sbStart - FIRST_DELAY_SB];
 
     transRatio = aaTransRatioSlot[bins2groupMap20[gr]];
 
@@ -891,11 +844,11 @@ deCorrelateSlotBased( HANDLE_PS_DEC h_ps_d,            /*!< pointer to the modul
     for (sb = sbStart; sb < sbStop; sb++) {
 
       /* Update delay buffers */
-      rR0 = h_ps_d->specificTo.mpeg.pAaRealDelayBufferQmf[*pDelayBufIdx][sb-FIRST_DELAY_SB];
-      iR0 = h_ps_d->specificTo.mpeg.pAaImagDelayBufferQmf[*pDelayBufIdx][sb-FIRST_DELAY_SB];
+      rR0 = h_ps_d->specificTo.mpeg.pAaRealDelayBufferQmf[*pDelayBufIdx][sb - FIRST_DELAY_SB];
+      iR0 = h_ps_d->specificTo.mpeg.pAaImagDelayBufferQmf[*pDelayBufIdx][sb - FIRST_DELAY_SB];
 
-      h_ps_d->specificTo.mpeg.pAaRealDelayBufferQmf[*pDelayBufIdx][sb-FIRST_DELAY_SB] = aaLeftReal[sb];
-      h_ps_d->specificTo.mpeg.pAaImagDelayBufferQmf[*pDelayBufIdx][sb-FIRST_DELAY_SB] = aaLeftImag[sb];
+      h_ps_d->specificTo.mpeg.pAaRealDelayBufferQmf[*pDelayBufIdx][sb - FIRST_DELAY_SB] = aaLeftReal[sb];
+      h_ps_d->specificTo.mpeg.pAaImagDelayBufferQmf[*pDelayBufIdx][sb - FIRST_DELAY_SB] = aaLeftImag[sb];
 
       /* duck if a past transient is found */
       aaRightReal[sb] = fMult(transRatio, rR0);
@@ -907,71 +860,66 @@ deCorrelateSlotBased( HANDLE_PS_DEC h_ps_d,            /*!< pointer to the modul
       pDelayBufIdx++;
 
     } /* sb */
-  } /* gr */
-
+  }   /* gr */
 
   /* Update delay buffer index */
   if (++h_ps_d->specificTo.mpeg.delayBufIndex >= NO_SAMPLE_DELAY_ALLPASS)
     h_ps_d->specificTo.mpeg.delayBufIndex = 0;
 
-  for (m=0; m<NO_SERIAL_ALLPASS_LINKS ; m++) {
+  for (m = 0; m < NO_SERIAL_ALLPASS_LINKS; m++) {
     if (++h_ps_d->specificTo.mpeg.aDelayRBufIndexSer[m] >= aAllpassLinkDelaySer[m])
       h_ps_d->specificTo.mpeg.aDelayRBufIndexSer[m] = 0;
   }
 
-
-  scaleValues( &rIntBufferLeft[NO_QMF_BANDS_HYBRID20],  NO_QMF_CHANNELS-NO_QMF_BANDS_HYBRID20, -SCAL_HEADROOM );
-  scaleValues( &iIntBufferLeft[NO_QMF_BANDS_HYBRID20],  NO_QMF_CHANNELS-NO_QMF_BANDS_HYBRID20, -SCAL_HEADROOM );
-  scaleValues( &rIntBufferRight[NO_QMF_BANDS_HYBRID20], NO_QMF_CHANNELS-NO_QMF_BANDS_HYBRID20, -SCAL_HEADROOM );
-  scaleValues( &iIntBufferRight[NO_QMF_BANDS_HYBRID20], NO_QMF_CHANNELS-NO_QMF_BANDS_HYBRID20, -SCAL_HEADROOM );
+  scaleValues(&rIntBufferLeft[NO_QMF_BANDS_HYBRID20], NO_QMF_CHANNELS - NO_QMF_BANDS_HYBRID20, -SCAL_HEADROOM);
+  scaleValues(&iIntBufferLeft[NO_QMF_BANDS_HYBRID20], NO_QMF_CHANNELS - NO_QMF_BANDS_HYBRID20, -SCAL_HEADROOM);
+  scaleValues(&rIntBufferRight[NO_QMF_BANDS_HYBRID20], NO_QMF_CHANNELS - NO_QMF_BANDS_HYBRID20, -SCAL_HEADROOM);
+  scaleValues(&iIntBufferRight[NO_QMF_BANDS_HYBRID20], NO_QMF_CHANNELS - NO_QMF_BANDS_HYBRID20, -SCAL_HEADROOM);
 
   /* free memory on scratch */
   C_ALLOC_SCRATCH_END(aaTransRatioSlot, FIXP_DBL, NO_MID_RES_BINS);
   C_ALLOC_SCRATCH_END(aaPowerSlot, FIXP_DBL, NO_MID_RES_BINS);
 }
 
+void initSlotBasedRotation(HANDLE_PS_DEC h_ps_d, /*!< pointer to the module state */
+                           int env, int usb) {
 
-void initSlotBasedRotation( HANDLE_PS_DEC h_ps_d, /*!< pointer to the module state */
-                            int env,
-                            int usb
-                            ) {
+  INT group = 0;
+  INT bin = 0;
+  INT noIidSteps;
 
-  INT     group = 0;
-  INT     bin =  0;
-  INT     noIidSteps;
+  /*  const UCHAR *pQuantizedIIDs;*/
 
-/*  const UCHAR *pQuantizedIIDs;*/
+  FIXP_SGL invL;
+  FIXP_DBL ScaleL, ScaleR;
+  FIXP_DBL Alpha, Beta;
+  FIXP_DBL h11r, h12r, h21r, h22r;
 
-  FIXP_SGL  invL;
-  FIXP_DBL  ScaleL, ScaleR;
-  FIXP_DBL  Alpha, Beta;
-  FIXP_DBL  h11r, h12r, h21r, h22r;
-
-  const FIXP_DBL  *PScaleFactors;
+  const FIXP_DBL *PScaleFactors;
 
   /* Overwrite old values in delay buffers when upper subband is higher than in last frame */
   if (env == 0) {
 
     if ((usb > h_ps_d->specificTo.mpeg.lastUsb) && h_ps_d->specificTo.mpeg.lastUsb) {
 
-      INT i,k,length;
+      INT i, k, length;
 
-      for (i=h_ps_d->specificTo.mpeg.lastUsb ; i < FIRST_DELAY_SB; i++) {
-        FDKmemclear(h_ps_d->specificTo.mpeg.aaaRealDelayRBufferSerQmf[i], NO_DELAY_LENGTH_VECTORS*sizeof(FIXP_DBL));
-        FDKmemclear(h_ps_d->specificTo.mpeg.aaaImagDelayRBufferSerQmf[i], NO_DELAY_LENGTH_VECTORS*sizeof(FIXP_DBL));
+      for (i = h_ps_d->specificTo.mpeg.lastUsb; i < FIRST_DELAY_SB; i++) {
+        FDKmemclear(h_ps_d->specificTo.mpeg.aaaRealDelayRBufferSerQmf[i], NO_DELAY_LENGTH_VECTORS * sizeof(FIXP_DBL));
+        FDKmemclear(h_ps_d->specificTo.mpeg.aaaImagDelayRBufferSerQmf[i], NO_DELAY_LENGTH_VECTORS * sizeof(FIXP_DBL));
       }
 
-      for (k=0 ; k<NO_SAMPLE_DELAY_ALLPASS; k++) {
-        FDKmemclear(h_ps_d->specificTo.mpeg.pAaRealDelayBufferQmf[k], FIRST_DELAY_SB*sizeof(FIXP_DBL));
+      for (k = 0; k < NO_SAMPLE_DELAY_ALLPASS; k++) {
+        FDKmemclear(h_ps_d->specificTo.mpeg.pAaRealDelayBufferQmf[k], FIRST_DELAY_SB * sizeof(FIXP_DBL));
       }
-      length = (usb-FIRST_DELAY_SB)*sizeof(FIXP_DBL);
-      if(length>0) {
+      length = (usb - FIRST_DELAY_SB) * sizeof(FIXP_DBL);
+      if (length > 0) {
         FDKmemclear(h_ps_d->specificTo.mpeg.pAaRealDelayBufferQmf[0], length);
         FDKmemclear(h_ps_d->specificTo.mpeg.pAaImagDelayBufferQmf[0], length);
       }
-      length = (fixMin(NO_DELAY_BUFFER_BANDS,(INT)usb)-FIRST_DELAY_SB)*sizeof(FIXP_DBL);
-      if(length>0) {
-        for (k=1 ; k < h_ps_d->specificTo.mpeg.noSampleDelay; k++) {
+      length = (fixMin(NO_DELAY_BUFFER_BANDS, (INT)usb) - FIRST_DELAY_SB) * sizeof(FIXP_DBL);
+      if (length > 0) {
+        for (k = 1; k < h_ps_d->specificTo.mpeg.noSampleDelay; k++) {
           FDKmemclear(h_ps_d->specificTo.mpeg.pAaRealDelayBufferQmf[k], length);
           FDKmemclear(h_ps_d->specificTo.mpeg.pAaImagDelayBufferQmf[k], length);
         }
@@ -980,23 +928,20 @@ void initSlotBasedRotation( HANDLE_PS_DEC h_ps_d, /*!< pointer to the module sta
     h_ps_d->specificTo.mpeg.lastUsb = usb;
   } /* env == 0 */
 
-  if (h_ps_d->bsData[h_ps_d->processSlot].mpeg.bFineIidQ)
-  {
+  if (h_ps_d->bsData[h_ps_d->processSlot].mpeg.bFineIidQ) {
     PScaleFactors = ScaleFactorsFine; /* values are shiftet right by one */
     noIidSteps = NO_IID_STEPS_FINE;
     /*pQuantizedIIDs = quantizedIIDsFine;*/
   }
 
-  else
-  {
+  else {
     PScaleFactors = ScaleFactors; /* values are shiftet right by one */
     noIidSteps = NO_IID_STEPS;
     /*pQuantizedIIDs = quantizedIIDs;*/
   }
 
-
   /* dequantize and decode */
-  for ( group = 0; group < NO_IID_GROUPS; group++ ) {
+  for (group = 0; group < NO_IID_GROUPS; group++) {
 
     bin = bins2groupMap20[group];
 
@@ -1015,8 +960,9 @@ void initSlotBasedRotation( HANDLE_PS_DEC h_ps_d, /*!< pointer to the module sta
     ScaleR = PScaleFactors[noIidSteps + h_ps_d->specificTo.mpeg.coef.aaIidIndexMapped[env][bin]];
     ScaleL = PScaleFactors[noIidSteps - h_ps_d->specificTo.mpeg.coef.aaIidIndexMapped[env][bin]];
 
-    Beta   = fMult (fMult( Alphas[h_ps_d->specificTo.mpeg.coef.aaIccIndexMapped[env][bin]], ( ScaleR - ScaleL )), FIXP_SQRT05);
-    Alpha  = Alphas[h_ps_d->specificTo.mpeg.coef.aaIccIndexMapped[env][bin]]>>1;
+    Beta =
+        fMult(fMult(Alphas[h_ps_d->specificTo.mpeg.coef.aaIccIndexMapped[env][bin]], (ScaleR - ScaleL)), FIXP_SQRT05);
+    Alpha = Alphas[h_ps_d->specificTo.mpeg.coef.aaIccIndexMapped[env][bin]] >> 1;
 
     /* Alpha and Beta are now both scaled by 2 shifts right */
 
@@ -1027,10 +973,10 @@ void initSlotBasedRotation( HANDLE_PS_DEC h_ps_d, /*!< pointer to the module sta
       FIXP_DBL trigData[4];
 
       inline_fixp_cos_sin(Beta + Alpha, Beta - Alpha, 2, trigData);
-      h11r = fMult( ScaleL, trigData[0]);
-      h12r = fMult( ScaleR, trigData[2]);
-      h21r = fMult( ScaleL, trigData[1]);
-      h22r = fMult( ScaleR, trigData[3]);
+      h11r = fMult(ScaleL, trigData[0]);
+      h12r = fMult(ScaleR, trigData[2]);
+      h21r = fMult(ScaleL, trigData[1]);
+      h22r = fMult(ScaleR, trigData[3]);
     }
     /*****************************************************************************************/
     /* Interpolation of the matrices H11... H22:                                             */
@@ -1040,17 +986,18 @@ void initSlotBasedRotation( HANDLE_PS_DEC h_ps_d, /*!< pointer to the module sta
     /*****************************************************************************************/
 
     /* invL = 1/(length of envelope) */
-    invL = FX_DBL2FX_SGL(GetInvInt(h_ps_d->bsData[h_ps_d->processSlot].mpeg.aEnvStartStop[env + 1] - h_ps_d->bsData[h_ps_d->processSlot].mpeg.aEnvStartStop[env]));
+    invL = FX_DBL2FX_SGL(GetInvInt(h_ps_d->bsData[h_ps_d->processSlot].mpeg.aEnvStartStop[env + 1] -
+                                   h_ps_d->bsData[h_ps_d->processSlot].mpeg.aEnvStartStop[env]));
 
-    h_ps_d->specificTo.mpeg.coef.H11r[group]  = h_ps_d->specificTo.mpeg.h11rPrev[group];
-    h_ps_d->specificTo.mpeg.coef.H12r[group]  = h_ps_d->specificTo.mpeg.h12rPrev[group];
-    h_ps_d->specificTo.mpeg.coef.H21r[group]  = h_ps_d->specificTo.mpeg.h21rPrev[group];
-    h_ps_d->specificTo.mpeg.coef.H22r[group]  = h_ps_d->specificTo.mpeg.h22rPrev[group];
+    h_ps_d->specificTo.mpeg.coef.H11r[group] = h_ps_d->specificTo.mpeg.h11rPrev[group];
+    h_ps_d->specificTo.mpeg.coef.H12r[group] = h_ps_d->specificTo.mpeg.h12rPrev[group];
+    h_ps_d->specificTo.mpeg.coef.H21r[group] = h_ps_d->specificTo.mpeg.h21rPrev[group];
+    h_ps_d->specificTo.mpeg.coef.H22r[group] = h_ps_d->specificTo.mpeg.h22rPrev[group];
 
-    h_ps_d->specificTo.mpeg.coef.DeltaH11r[group]  = fMult ( h11r - h_ps_d->specificTo.mpeg.coef.H11r[group], invL );
-    h_ps_d->specificTo.mpeg.coef.DeltaH12r[group]  = fMult ( h12r - h_ps_d->specificTo.mpeg.coef.H12r[group], invL );
-    h_ps_d->specificTo.mpeg.coef.DeltaH21r[group]  = fMult ( h21r - h_ps_d->specificTo.mpeg.coef.H21r[group], invL );
-    h_ps_d->specificTo.mpeg.coef.DeltaH22r[group]  = fMult ( h22r - h_ps_d->specificTo.mpeg.coef.H22r[group], invL );
+    h_ps_d->specificTo.mpeg.coef.DeltaH11r[group] = fMult(h11r - h_ps_d->specificTo.mpeg.coef.H11r[group], invL);
+    h_ps_d->specificTo.mpeg.coef.DeltaH12r[group] = fMult(h12r - h_ps_d->specificTo.mpeg.coef.H12r[group], invL);
+    h_ps_d->specificTo.mpeg.coef.DeltaH21r[group] = fMult(h21r - h_ps_d->specificTo.mpeg.coef.H21r[group], invL);
+    h_ps_d->specificTo.mpeg.coef.DeltaH22r[group] = fMult(h22r - h_ps_d->specificTo.mpeg.coef.H22r[group], invL);
 
     /* update prev coefficients for interpolation in next envelope */
 
@@ -1062,24 +1009,22 @@ void initSlotBasedRotation( HANDLE_PS_DEC h_ps_d, /*!< pointer to the module sta
   } /* group loop */
 }
 
+static void applySlotBasedRotation(HANDLE_PS_DEC h_ps_d, /*!< pointer to the module state */
 
-static void applySlotBasedRotation( HANDLE_PS_DEC h_ps_d,        /*!< pointer to the module state */
+                                   FIXP_DBL *mHybridRealLeft, /*!< hybrid values real left  */
+                                   FIXP_DBL *mHybridImagLeft, /*!< hybrid values imag left  */
 
-                                    FIXP_DBL  *mHybridRealLeft,  /*!< hybrid values real left  */
-                                    FIXP_DBL  *mHybridImagLeft,  /*!< hybrid values imag left  */
+                                   FIXP_DBL *QmfLeftReal, /*!< real bands left qmf channel */
+                                   FIXP_DBL *QmfLeftImag, /*!< imag bands left qmf channel */
 
-                                    FIXP_DBL  *QmfLeftReal,      /*!< real bands left qmf channel */
-                                    FIXP_DBL  *QmfLeftImag,      /*!< imag bands left qmf channel */
+                                   FIXP_DBL *mHybridRealRight, /*!< hybrid values real right  */
+                                   FIXP_DBL *mHybridImagRight, /*!< hybrid values imag right  */
 
-                                    FIXP_DBL  *mHybridRealRight, /*!< hybrid values real right  */
-                                    FIXP_DBL  *mHybridImagRight, /*!< hybrid values imag right  */
-
-                                    FIXP_DBL  *QmfRightReal,     /*!< real bands right qmf channel */
-                                    FIXP_DBL  *QmfRightImag      /*!< imag bands right qmf channel */
-                                   )
-{
-  INT     group;
-  INT     subband;
+                                   FIXP_DBL *QmfRightReal, /*!< real bands right qmf channel */
+                                   FIXP_DBL *QmfRightImag  /*!< imag bands right qmf channel */
+) {
+  INT group;
+  INT subband;
 
   FIXP_DBL *RESTRICT HybrLeftReal;
   FIXP_DBL *RESTRICT HybrLeftImag;
@@ -1087,7 +1032,6 @@ static void applySlotBasedRotation( HANDLE_PS_DEC h_ps_d,        /*!< pointer to
   FIXP_DBL *RESTRICT HybrRightImag;
 
   FIXP_DBL tmpLeft, tmpRight;
-
 
   /**********************************************************************************************/
   /*!
@@ -1129,7 +1073,6 @@ static void applySlotBasedRotation( HANDLE_PS_DEC h_ps_d,        /*!< pointer to
   is used.
   ************************************************************************************************/
 
-
   /************************************************************************************************/
   /*!
   <h2>Phase parameters </h2>
@@ -1146,10 +1089,9 @@ static void applySlotBasedRotation( HANDLE_PS_DEC h_ps_d,        /*!< pointer to
   this loop includes the interpolation of the coefficients Hxx
   ************************************************************************************************/
 
-
   /* loop thru all groups ... */
-  HybrLeftReal  = mHybridRealLeft;
-  HybrLeftImag  = mHybridImagLeft;
+  HybrLeftReal = mHybridRealLeft;
+  HybrLeftImag = mHybridImagLeft;
   HybrRightReal = mHybridRealRight;
   HybrRightImag = mHybridImagRight;
 
@@ -1159,7 +1101,7 @@ static void applySlotBasedRotation( HANDLE_PS_DEC h_ps_d,        /*!< pointer to
   /* l_k(n) = H11(k,n) s_k(n) + H21(k,n) d_k(n)         */
   /* r_k(n) = H12(k,n) s_k(n) + H22(k,n) d_k(n)         */
   /******************************************************/
-  for ( group = 0; group < SUBQMF_GROUPS; group++ ) {
+  for (group = 0; group < SUBQMF_GROUPS; group++) {
 
     h_ps_d->specificTo.mpeg.coef.H11r[group] += h_ps_d->specificTo.mpeg.coef.DeltaH11r[group];
     h_ps_d->specificTo.mpeg.coef.H12r[group] += h_ps_d->specificTo.mpeg.coef.DeltaH12r[group];
@@ -1168,46 +1110,60 @@ static void applySlotBasedRotation( HANDLE_PS_DEC h_ps_d,        /*!< pointer to
 
     subband = groupBorders20[group];
 
-    tmpLeft  = fMultAddDiv2( fMultDiv2(h_ps_d->specificTo.mpeg.coef.H11r[group], HybrLeftReal[subband]), h_ps_d->specificTo.mpeg.coef.H21r[group], HybrRightReal[subband]);
-    tmpRight = fMultAddDiv2( fMultDiv2(h_ps_d->specificTo.mpeg.coef.H12r[group], HybrLeftReal[subband]), h_ps_d->specificTo.mpeg.coef.H22r[group], HybrRightReal[subband]);
-    HybrLeftReal [subband] = tmpLeft<<1;
-    HybrRightReal[subband] = tmpRight<<1;
+    tmpLeft = fMultAddDiv2(fMultDiv2(h_ps_d->specificTo.mpeg.coef.H11r[group], HybrLeftReal[subband]),
+                           h_ps_d->specificTo.mpeg.coef.H21r[group],
+                           HybrRightReal[subband]);
+    tmpRight = fMultAddDiv2(fMultDiv2(h_ps_d->specificTo.mpeg.coef.H12r[group], HybrLeftReal[subband]),
+                            h_ps_d->specificTo.mpeg.coef.H22r[group],
+                            HybrRightReal[subband]);
+    HybrLeftReal[subband] = tmpLeft << 1;
+    HybrRightReal[subband] = tmpRight << 1;
 
-    tmpLeft  = fMultAdd( fMultDiv2(h_ps_d->specificTo.mpeg.coef.H11r[group], HybrLeftImag[subband]), h_ps_d->specificTo.mpeg.coef.H21r[group], HybrRightImag[subband]);
-    tmpRight = fMultAdd( fMultDiv2(h_ps_d->specificTo.mpeg.coef.H12r[group], HybrLeftImag[subband]), h_ps_d->specificTo.mpeg.coef.H22r[group], HybrRightImag[subband]);
-    HybrLeftImag [subband] = tmpLeft;
+    tmpLeft = fMultAdd(fMultDiv2(h_ps_d->specificTo.mpeg.coef.H11r[group], HybrLeftImag[subband]),
+                       h_ps_d->specificTo.mpeg.coef.H21r[group],
+                       HybrRightImag[subband]);
+    tmpRight = fMultAdd(fMultDiv2(h_ps_d->specificTo.mpeg.coef.H12r[group], HybrLeftImag[subband]),
+                        h_ps_d->specificTo.mpeg.coef.H22r[group],
+                        HybrRightImag[subband]);
+    HybrLeftImag[subband] = tmpLeft;
     HybrRightImag[subband] = tmpRight;
   }
 
   /* continue in the qmf buffers */
-  HybrLeftReal  = QmfLeftReal;
-  HybrLeftImag  = QmfLeftImag;
+  HybrLeftReal = QmfLeftReal;
+  HybrLeftImag = QmfLeftImag;
   HybrRightReal = QmfRightReal;
   HybrRightImag = QmfRightImag;
 
-  for (; group < NO_IID_GROUPS; group++ ) {
+  for (; group < NO_IID_GROUPS; group++) {
 
     h_ps_d->specificTo.mpeg.coef.H11r[group] += h_ps_d->specificTo.mpeg.coef.DeltaH11r[group];
     h_ps_d->specificTo.mpeg.coef.H12r[group] += h_ps_d->specificTo.mpeg.coef.DeltaH12r[group];
     h_ps_d->specificTo.mpeg.coef.H21r[group] += h_ps_d->specificTo.mpeg.coef.DeltaH21r[group];
     h_ps_d->specificTo.mpeg.coef.H22r[group] += h_ps_d->specificTo.mpeg.coef.DeltaH22r[group];
 
-    for ( subband = groupBorders20[group]; subband < groupBorders20[group + 1]; subband++ )
-    {
-      tmpLeft  = fMultAdd( fMultDiv2(h_ps_d->specificTo.mpeg.coef.H11r[group], HybrLeftReal[subband]), h_ps_d->specificTo.mpeg.coef.H21r[group], HybrRightReal[subband]);
-      tmpRight = fMultAdd( fMultDiv2(h_ps_d->specificTo.mpeg.coef.H12r[group], HybrLeftReal[subband]), h_ps_d->specificTo.mpeg.coef.H22r[group], HybrRightReal[subband]);
-      HybrLeftReal [subband] = tmpLeft;
+    for (subband = groupBorders20[group]; subband < groupBorders20[group + 1]; subband++) {
+      tmpLeft = fMultAdd(fMultDiv2(h_ps_d->specificTo.mpeg.coef.H11r[group], HybrLeftReal[subband]),
+                         h_ps_d->specificTo.mpeg.coef.H21r[group],
+                         HybrRightReal[subband]);
+      tmpRight = fMultAdd(fMultDiv2(h_ps_d->specificTo.mpeg.coef.H12r[group], HybrLeftReal[subband]),
+                          h_ps_d->specificTo.mpeg.coef.H22r[group],
+                          HybrRightReal[subband]);
+      HybrLeftReal[subband] = tmpLeft;
       HybrRightReal[subband] = tmpRight;
 
-      tmpLeft  = fMultAdd( fMultDiv2(h_ps_d->specificTo.mpeg.coef.H11r[group], HybrLeftImag[subband]), h_ps_d->specificTo.mpeg.coef.H21r[group], HybrRightImag[subband]);
-      tmpRight = fMultAdd( fMultDiv2(h_ps_d->specificTo.mpeg.coef.H12r[group], HybrLeftImag[subband]), h_ps_d->specificTo.mpeg.coef.H22r[group], HybrRightImag[subband]);
-      HybrLeftImag [subband] = tmpLeft;
+      tmpLeft = fMultAdd(fMultDiv2(h_ps_d->specificTo.mpeg.coef.H11r[group], HybrLeftImag[subband]),
+                         h_ps_d->specificTo.mpeg.coef.H21r[group],
+                         HybrRightImag[subband]);
+      tmpRight = fMultAdd(fMultDiv2(h_ps_d->specificTo.mpeg.coef.H12r[group], HybrLeftImag[subband]),
+                          h_ps_d->specificTo.mpeg.coef.H22r[group],
+                          HybrRightImag[subband]);
+      HybrLeftImag[subband] = tmpLeft;
       HybrRightImag[subband] = tmpRight;
 
     } /* subband */
   }
 }
-
 
 /***************************************************************************/
 /*!
@@ -1216,14 +1172,12 @@ static void applySlotBasedRotation( HANDLE_PS_DEC h_ps_d,        /*!< pointer to
   \return none
 
 ****************************************************************************/
-void
-ApplyPsSlot( HANDLE_PS_DEC h_ps_d,         /*!< handle PS_DEC*/
-             FIXP_DBL  **rIntBufferLeft,   /*!< real bands left qmf channel (38x64)  */
-             FIXP_DBL  **iIntBufferLeft,   /*!< imag bands left qmf channel (38x64)  */
-             FIXP_DBL  *rIntBufferRight,   /*!< real bands right qmf channel (38x64) */
-             FIXP_DBL  *iIntBufferRight    /*!< imag bands right qmf channel (38x64) */
-           )
-{
+void ApplyPsSlot(HANDLE_PS_DEC h_ps_d,      /*!< handle PS_DEC*/
+                 FIXP_DBL **rIntBufferLeft, /*!< real bands left qmf channel (38x64)  */
+                 FIXP_DBL **iIntBufferLeft, /*!< imag bands left qmf channel (38x64)  */
+                 FIXP_DBL *rIntBufferRight, /*!< real bands right qmf channel (38x64) */
+                 FIXP_DBL *iIntBufferRight  /*!< imag bands right qmf channel (38x64) */
+) {
 
   /*!
   The 64-band QMF representation of the monaural signal generated by the SBR tool
@@ -1266,14 +1220,13 @@ ApplyPsSlot( HANDLE_PS_DEC h_ps_d,         /*!< handle PS_DEC*/
   C_ALLOC_SCRATCH_START(hybridRealRight, FIXP_DBL, NO_SUB_QMF_CHANNELS);
   C_ALLOC_SCRATCH_START(hybridImagRight, FIXP_DBL, NO_SUB_QMF_CHANNELS);
 
-  SCHAR sf_IntBuffer     = h_ps_d->sf_IntBuffer;
+  SCHAR sf_IntBuffer = h_ps_d->sf_IntBuffer;
 
   /* clear workbuffer */
-  FDKmemclear(hybridRealLeft,  NO_SUB_QMF_CHANNELS*sizeof(FIXP_DBL));
-  FDKmemclear(hybridImagLeft,  NO_SUB_QMF_CHANNELS*sizeof(FIXP_DBL));
-  FDKmemclear(hybridRealRight, NO_SUB_QMF_CHANNELS*sizeof(FIXP_DBL));
-  FDKmemclear(hybridImagRight, NO_SUB_QMF_CHANNELS*sizeof(FIXP_DBL));
-
+  FDKmemclear(hybridRealLeft, NO_SUB_QMF_CHANNELS * sizeof(FIXP_DBL));
+  FDKmemclear(hybridImagLeft, NO_SUB_QMF_CHANNELS * sizeof(FIXP_DBL));
+  FDKmemclear(hybridRealRight, NO_SUB_QMF_CHANNELS * sizeof(FIXP_DBL));
+  FDKmemclear(hybridImagRight, NO_SUB_QMF_CHANNELS * sizeof(FIXP_DBL));
 
   /*!
   Hybrid analysis filterbank:
@@ -1284,29 +1237,26 @@ ApplyPsSlot( HANDLE_PS_DEC h_ps_d,         /*!< handle PS_DEC*/
   4th. (See figures 8.20 and 8.22 of ISO/IEC 14496-3:2001/FDAM 2:2004(E) )
   */
 
-
-  if (h_ps_d->procFrameBased == 1)    /* If we have switched from frame to slot based processing  */
-  {                                   /* fill hybrid delay buffer.                                */
+  if (h_ps_d->procFrameBased == 1) /* If we have switched from frame to slot based processing  */
+  {                                /* fill hybrid delay buffer.                                */
     h_ps_d->procFrameBased = 0;
 
-    fillHybridDelayLine( rIntBufferLeft,
-                         iIntBufferLeft,
-                         hybridRealLeft,
-                         hybridImagLeft,
-                         hybridRealRight,
-                         hybridImagRight,
-                        &h_ps_d->specificTo.mpeg.hybrid );
+    fillHybridDelayLine(rIntBufferLeft,
+                        iIntBufferLeft,
+                        hybridRealLeft,
+                        hybridImagLeft,
+                        hybridRealRight,
+                        hybridImagRight,
+                        &h_ps_d->specificTo.mpeg.hybrid);
   }
 
-  slotBasedHybridAnalysis ( rIntBufferLeft[HYBRID_FILTER_DELAY], /* qmf filterbank values                         */
-                            iIntBufferLeft[HYBRID_FILTER_DELAY], /* qmf filterbank values                         */
-                            hybridRealLeft,                      /* hybrid filterbank values                      */
-                            hybridImagLeft,                      /* hybrid filterbank values                      */
-                           &h_ps_d->specificTo.mpeg.hybrid);          /* hybrid filterbank handle                      */
-
+  slotBasedHybridAnalysis(rIntBufferLeft[HYBRID_FILTER_DELAY], /* qmf filterbank values                         */
+                          iIntBufferLeft[HYBRID_FILTER_DELAY], /* qmf filterbank values                         */
+                          hybridRealLeft,                      /* hybrid filterbank values                      */
+                          hybridImagLeft,                      /* hybrid filterbank values                      */
+                          &h_ps_d->specificTo.mpeg.hybrid);    /* hybrid filterbank handle                      */
 
   SCHAR hybridScal = h_ps_d->specificTo.mpeg.hybrid.sf_mQmfBuffer;
-
 
   /*!
   Decorrelation:
@@ -1316,19 +1266,17 @@ ApplyPsSlot( HANDLE_PS_DEC h_ps_d,         /*!< handle PS_DEC*/
   - n: time index
   */
 
-  deCorrelateSlotBased( h_ps_d,              /* parametric stereo decoder handle       */
-                        hybridRealLeft,      /* left hybrid time slot                  */
-                        hybridImagLeft,
-                        hybridScal,      /* scale factor of left hybrid time slot  */
-                        rIntBufferLeft[0],   /* left qmf time slot                     */
-                        iIntBufferLeft[0],
-                        sf_IntBuffer,        /* scale factor of left and right qmf time slot */
-                        hybridRealRight,     /* right hybrid time slot                 */
-                        hybridImagRight,
-                        rIntBufferRight,     /* right qmf time slot                    */
-                        iIntBufferRight );
-
-
+  deCorrelateSlotBased(h_ps_d,         /* parametric stereo decoder handle       */
+                       hybridRealLeft, /* left hybrid time slot                  */
+                       hybridImagLeft,
+                       hybridScal,        /* scale factor of left hybrid time slot  */
+                       rIntBufferLeft[0], /* left qmf time slot                     */
+                       iIntBufferLeft[0],
+                       sf_IntBuffer,    /* scale factor of left and right qmf time slot */
+                       hybridRealRight, /* right hybrid time slot                 */
+                       hybridImagRight,
+                       rIntBufferRight, /* right qmf time slot                    */
+                       iIntBufferRight);
 
   /*!
   Stereo Processing:
@@ -1336,19 +1284,15 @@ ApplyPsSlot( HANDLE_PS_DEC h_ps_d,         /*!< handle PS_DEC*/
   the stereo cues which are defined per stereo band.
   */
 
-
-  applySlotBasedRotation( h_ps_d,            /* parametric stereo decoder handle       */
-                          hybridRealLeft,    /* left hybrid time slot                  */
-                          hybridImagLeft,
-                          rIntBufferLeft[0], /* left qmf time slot                     */
-                          iIntBufferLeft[0],
-                          hybridRealRight,   /* right hybrid time slot                 */
-                          hybridImagRight,
-                          rIntBufferRight,   /* right qmf time slot                    */
-                          iIntBufferRight );
-
-
-
+  applySlotBasedRotation(h_ps_d,         /* parametric stereo decoder handle       */
+                         hybridRealLeft, /* left hybrid time slot                  */
+                         hybridImagLeft,
+                         rIntBufferLeft[0], /* left qmf time slot                     */
+                         iIntBufferLeft[0],
+                         hybridRealRight, /* right hybrid time slot                 */
+                         hybridImagRight,
+                         rIntBufferRight, /* right qmf time slot                    */
+                         iIntBufferRight);
 
   /*!
   Hybrid synthesis filterbank:
@@ -1359,26 +1303,19 @@ ApplyPsSlot( HANDLE_PS_DEC h_ps_d,         /*!< handle PS_DEC*/
   computed seperatly for the left and right channel.
   */
 
-
   /* left channel */
-  slotBasedHybridSynthesis ( hybridRealLeft,         /* one timeslot of hybrid filterbank values */
-                             hybridImagLeft,
-                             rIntBufferLeft[0],      /* one timeslot of qmf filterbank values    */
-                             iIntBufferLeft[0],
-                            &h_ps_d->specificTo.mpeg.hybrid );      /* hybrid filterbank handle                 */
+  slotBasedHybridSynthesis(hybridRealLeft, /* one timeslot of hybrid filterbank values */
+                           hybridImagLeft,
+                           rIntBufferLeft[0], /* one timeslot of qmf filterbank values    */
+                           iIntBufferLeft[0],
+                           &h_ps_d->specificTo.mpeg.hybrid); /* hybrid filterbank handle                 */
 
   /* right channel */
-  slotBasedHybridSynthesis ( hybridRealRight,        /* one timeslot of hybrid filterbank values */
-                             hybridImagRight,
-                             rIntBufferRight,        /* one timeslot of qmf filterbank values    */
-                             iIntBufferRight,
-                            &h_ps_d->specificTo.mpeg.hybrid );      /* hybrid filterbank handle                 */
-
-
-
-
-
-
+  slotBasedHybridSynthesis(hybridRealRight, /* one timeslot of hybrid filterbank values */
+                           hybridImagRight,
+                           rIntBufferRight, /* one timeslot of qmf filterbank values    */
+                           iIntBufferRight,
+                           &h_ps_d->specificTo.mpeg.hybrid); /* hybrid filterbank handle                 */
 
   /* free temporary hybrid qmf values of one timeslot */
   C_ALLOC_SCRATCH_END(hybridImagRight, FIXP_DBL, NO_SUB_QMF_CHANNELS);
@@ -1386,8 +1323,7 @@ ApplyPsSlot( HANDLE_PS_DEC h_ps_d,         /*!< handle PS_DEC*/
   C_ALLOC_SCRATCH_END(hybridImagLeft, FIXP_DBL, NO_SUB_QMF_CHANNELS);
   C_ALLOC_SCRATCH_END(hybridRealLeft, FIXP_DBL, NO_SUB_QMF_CHANNELS);
 
-}/* END ApplyPsSlot */
-
+} /* END ApplyPsSlot */
 
 /***************************************************************************/
 /*!
@@ -1398,17 +1334,12 @@ ApplyPsSlot( HANDLE_PS_DEC h_ps_d,         /*!< handle PS_DEC*/
 
 ****************************************************************************/
 
-static void assignTimeSlotsPS (FIXP_DBL *bufAdr,
-                               FIXP_DBL **bufPtr,
-                               const int numSlots,
-                               const int numChan)
-{
-  FIXP_DBL  *ptr;
+static void assignTimeSlotsPS(FIXP_DBL *bufAdr, FIXP_DBL **bufPtr, const int numSlots, const int numChan) {
+  FIXP_DBL *ptr;
   int slot;
   ptr = bufAdr;
-  for(slot=0; slot < numSlots; slot++) {
-   bufPtr [slot] = ptr;
+  for (slot = 0; slot < numSlots; slot++) {
+    bufPtr[slot] = ptr;
     ptr += numChan;
   }
 }
-

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+?Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -83,7 +83,7 @@ amm-info@iis.fraunhofer.de
 
 /*!
   \file
-  \brief  CRC check coutines  
+  \brief  CRC check coutines
 */
 
 #include "sbr_crc.h"
@@ -91,15 +91,13 @@ amm-info@iis.fraunhofer.de
 #include "FDK_bitstream.h"
 #include "transcendent.h"
 
-#define MAXCRCSTEP    16
-#define MAXCRCSTEP_LD  4
+#define MAXCRCSTEP 16
+#define MAXCRCSTEP_LD 4
 
 /*!
   \brief     crc calculation
 */
-static ULONG
-calcCRC (HANDLE_CRC hCrcBuf, ULONG bValue, int nBits)
-{
+static ULONG calcCRC(HANDLE_CRC hCrcBuf, ULONG bValue, int nBits) {
   int i;
   ULONG bMask = (1UL << (nBits - 1));
 
@@ -116,45 +114,39 @@ calcCRC (HANDLE_CRC hCrcBuf, ULONG bValue, int nBits)
   return (hCrcBuf->crcState);
 }
 
-
 /*!
   \brief     crc
 */
-static int
-getCrc (HANDLE_FDK_BITSTREAM hBs, ULONG NrBits)
-{
+static int getCrc(HANDLE_FDK_BITSTREAM hBs, ULONG NrBits) {
   int i;
   CRC_BUFFER CrcBuf;
 
   CrcBuf.crcState = SBR_CRC_START;
-  CrcBuf.crcPoly  = SBR_CRC_POLY;
-  CrcBuf.crcMask  = SBR_CRC_MASK;
+  CrcBuf.crcPoly = SBR_CRC_POLY;
+  CrcBuf.crcMask = SBR_CRC_MASK;
 
-  int CrcStep = NrBits>>MAXCRCSTEP_LD;
+  int CrcStep = NrBits >> MAXCRCSTEP_LD;
 
   int CrcNrBitsRest = (NrBits - CrcStep * MAXCRCSTEP);
   ULONG bValue;
 
   for (i = 0; i < CrcStep; i++) {
-    bValue = FDKreadBits (hBs, MAXCRCSTEP);
-    calcCRC (&CrcBuf, bValue, MAXCRCSTEP);
+    bValue = FDKreadBits(hBs, MAXCRCSTEP);
+    calcCRC(&CrcBuf, bValue, MAXCRCSTEP);
   }
 
-  bValue = FDKreadBits (hBs, CrcNrBitsRest);
-  calcCRC (&CrcBuf, bValue, CrcNrBitsRest);
+  bValue = FDKreadBits(hBs, CrcNrBitsRest);
+  calcCRC(&CrcBuf, bValue, CrcNrBitsRest);
 
   return (CrcBuf.crcState & SBR_CRC_RANGE);
-
 }
-
 
 /*!
   \brief   crc interface
   \return  1: CRC OK, 0: CRC check failure
 */
-int
-SbrCrcCheck (HANDLE_FDK_BITSTREAM hBs, /*!< handle to bit-buffer  */
-             LONG NrBits)              /*!< max. CRC length       */
+int SbrCrcCheck(HANDLE_FDK_BITSTREAM hBs, /*!< handle to bit-buffer  */
+                LONG NrBits)              /*!< max. CRC length       */
 {
   int crcResult = 1;
   ULONG NrCrcBits;
@@ -162,18 +154,17 @@ SbrCrcCheck (HANDLE_FDK_BITSTREAM hBs, /*!< handle to bit-buffer  */
   LONG NrBitsAvailable;
   ULONG crcCheckSum;
 
-  crcCheckSum = FDKreadBits (hBs, 10);
+  crcCheckSum = FDKreadBits(hBs, 10);
 
   NrBitsAvailable = FDKgetValidBits(hBs);
-  if (NrBitsAvailable <= 0){
+  if (NrBitsAvailable <= 0) {
     return 0;
   }
 
-  NrCrcBits = fixMin ((INT)NrBits, (INT)NrBitsAvailable);
+  NrCrcBits = fixMin((INT)NrBits, (INT)NrBitsAvailable);
 
-  crcCheckResult = getCrc (hBs, NrCrcBits);
-  FDKpushBack(hBs, (NrBitsAvailable - FDKgetValidBits(hBs)) );
-
+  crcCheckResult = getCrc(hBs, NrCrcBits);
+  FDKpushBack(hBs, (NrBitsAvailable - FDKgetValidBits(hBs)));
 
   if (crcCheckResult != crcCheckSum) {
     crcResult = 0;

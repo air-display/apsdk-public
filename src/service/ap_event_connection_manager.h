@@ -13,8 +13,7 @@ namespace service {
 /// Represents the manager of the reversed HTTP connections.
 /// </summary>
 class ap_event_connection_manager {
-  typedef std::map<std::string, xtxp_connection_base_weak_ptr>
-      event_connection_map;
+  typedef std::map<std::string, xtxp_connection_base_weak_ptr> event_connection_map;
 
 public:
   static ap_event_connection_manager &get();

@@ -90,23 +90,19 @@ public:
 
   virtual void post_receive_message_head();
 
-  virtual void on_message_head_received(const asio::error_code &e,
-                                        std::size_t bytes_transferred);
+  virtual void on_message_head_received(const asio::error_code &e, std::size_t bytes_transferred);
 
   virtual void post_receive_message_content();
 
-  virtual void on_message_content_received(const asio::error_code &e,
-                                           std::size_t bytes_transferred);
+  virtual void on_message_content_received(const asio::error_code &e, std::size_t bytes_transferred);
 
   virtual void post_send_response(const response &res);
 
-  virtual void on_response_sent(const asio::error_code &e,
-                                std::size_t bytes_transferred);
+  virtual void on_response_sent(const asio::error_code &e, std::size_t bytes_transferred);
 
   virtual void handle_socket_error(const asio::error_code &e);
 
-  std::size_t body_completion_condition(const asio::error_code &error,
-                                        std::size_t bytes_transferred);
+  std::size_t body_completion_condition(const asio::error_code &error, std::size_t bytes_transferred);
 
   virtual void process_request();
 

@@ -15,9 +15,8 @@ using namespace aps::network;
 
 namespace aps {
 namespace service {
-class ap_media_http_connection
-    : public xtxp_connection_base,
-      public std::enable_shared_from_this<ap_media_http_connection> {
+class ap_media_http_connection : public xtxp_connection_base,
+                                 public std::enable_shared_from_this<ap_media_http_connection> {
 public:
   ap_media_http_connection(asio::io_context &io_ctx);
   ~ap_media_http_connection();
@@ -35,12 +34,9 @@ private:
 };
 
 typedef std::shared_ptr<ap_media_http_connection> ap_media_http_connection_ptr;
-typedef std::weak_ptr<ap_media_http_connection>
-    ap_media_http_connection_weak_ptr;
+typedef std::weak_ptr<ap_media_http_connection> ap_media_http_connection_weak_ptr;
 
-class ap_media_http_service
-    : public tcp_service_base,
-      public std::enable_shared_from_this<ap_media_http_service> {
+class ap_media_http_service : public tcp_service_base, public std::enable_shared_from_this<ap_media_http_service> {
 public:
   ap_media_http_service(ap_config_ptr &config, uint16_t port = 0);
 

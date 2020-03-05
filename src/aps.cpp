@@ -4,10 +4,10 @@
 
 //#include <utils/logger.h>
 
-//struct initializer {
+// struct initializer {
 //  initializer() { logger::init_logger(true, LL_DEBUG); }
 //
 //  ~initializer() {}
 //};
 //
-//static initializer _init;
+// static initializer _init;

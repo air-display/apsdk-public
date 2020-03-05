@@ -1,8 +1,7 @@
 #include "net_service.h"
 #include "net_service_impl.h"
 
-net_service::net_service(const std::string &type)
-    : impl_(implementation::get(type)) {}
+net_service::net_service(const std::string &type) : impl_(implementation::get(type)) {}
 
 net_service::~net_service() {}
 

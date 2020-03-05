@@ -21,38 +21,26 @@ aps::server_key_chain::server_key_chain() {
   ed_private_key_.resize(64, 0);
   ed_public_key_.resize(32, 0);
   ed25519_create_seed(seed.data());
-  ed25519_create_keypair(ed_public_key_.data(), ed_private_key_.data(),
-                         seed.data());
+  ed25519_create_keypair(ed_public_key_.data(), ed_private_key_.data(), seed.data());
 }
 
 aps::server_key_chain::~server_key_chain() {}
 
-const std::vector<uint8_t> &aps::server_key_chain::ed_public_key() const {
-  return ed_public_key_;
-}
+const std::vector<uint8_t> &aps::server_key_chain::ed_public_key() const { return ed_public_key_; }
 
-const std::vector<uint8_t> &aps::server_key_chain::ed_private_key() const {
-  return ed_private_key_;
-}
+const std::vector<uint8_t> &aps::server_key_chain::ed_private_key() const { return ed_private_key_; }
 
-const std::vector<uint8_t> &aps::server_key_chain::curve_public_key() const {
-  return curve_public_key_;
-}
+const std::vector<uint8_t> &aps::server_key_chain::curve_public_key() const { return curve_public_key_; }
 
-const std::vector<uint8_t> &aps::server_key_chain::curve_private_key() const {
-  return curve_private_key_;
-}
+const std::vector<uint8_t> &aps::server_key_chain::curve_private_key() const { return curve_private_key_; }
 
 aps::ap_crypto::ap_crypto()
-    : pair_verifyed_(false), fp_key_message_(164), client_aes_key_(16),
-      client_aes_iv_(16), client_curve_public_key_(32),
-      client_ed_public_key_(32), shared_secret_(32) {}
+    : pair_verifyed_(false), fp_key_message_(164), shared_secret_(32), client_aes_key_(16), client_aes_iv_(16),
+      client_ed_public_key_(32), client_curve_public_key_(32) {}
 
 aps::ap_crypto::~ap_crypto() {}
 
-void aps::ap_crypto::init_client_public_keys(const uint8_t *pcurve,
-                                             uint64_t curve_len,
-                                             const uint8_t *ped,
+void aps::ap_crypto::init_client_public_keys(const uint8_t *pcurve, uint64_t curve_len, const uint8_t *ped,
                                              uint64_t ed_len) {
   if (pcurve && curve_len) {
     this->client_curve_public_key_.assign(pcurve, pcurve + curve_len);
@@ -69,8 +57,7 @@ void aps::ap_crypto::init_pair_verify_aes() {
   static const char *AES_IV = "Pair-Verify-AES-IV";
 
   shared_secret_.resize(32, 0);
-  curve25519_donna(shared_secret_.data(), server_.curve_private_key().data(),
-                   client_curve_public_key_.data());
+  curve25519_donna(shared_secret_.data(), server_.curve_private_key().data(), client_curve_public_key_.data());
 
   sha512_context_ sha512_context;
   std::array<uint8_t, 64> sha512_hash;
@@ -104,8 +91,11 @@ void aps::ap_crypto::sign_pair_signature(std::vector<uint8_t> &sig) {
   memcpy(message.data() + 32, client_curve_public_key_.data(), 32);
 
   std::array<uint8_t, 64> signature;
-  ed25519_sign(signature.data(), message.data(), message.size(),
-               server_.ed_public_key().data(), server_.ed_private_key().data());
+  ed25519_sign(signature.data(),
+               message.data(),
+               message.size(),
+               server_.ed_public_key().data(),
+               server_.ed_private_key().data());
 
   pair_verify_aes_ctr_.xcrypt_buffer(signature.data(), signature.size());
 
@@ -117,15 +107,12 @@ bool aps::ap_crypto::verify_pair_signature(const uint8_t *p, uint64_t len) {
   encrypted_signature.assign(p, p + len);
 
   std::vector<uint8_t> plain_signature = encrypted_signature;
-  pair_verify_aes_ctr_.xcrypt_buffer(plain_signature.data(),
-                                     plain_signature.size());
+  pair_verify_aes_ctr_.xcrypt_buffer(plain_signature.data(), plain_signature.size());
 
   std::vector<uint8_t> message = client_curve_public_key_;
-  std::copy(server_.curve_public_key().begin(),
-            server_.curve_public_key().end(), std::back_inserter(message));
+  std::copy(server_.curve_public_key().begin(), server_.curve_public_key().end(), std::back_inserter(message));
 
-  return ed25519_verify(plain_signature.data(), message.data(), message.size(),
-                        client_ed_public_key_.data());
+  return ed25519_verify(plain_signature.data(), message.data(), message.size(), client_ed_public_key_.data());
 }
 
 void aps::ap_crypto::fp_setup(const uint8_t mode, uint8_t *content) {
@@ -133,8 +120,7 @@ void aps::ap_crypto::fp_setup(const uint8_t mode, uint8_t *content) {
   memcpy(content, pos, 142);
 }
 
-void aps::ap_crypto::fp_handshake(uint8_t *content, const uint8_t *keymsg,
-                                  const uint32_t len) {
+void aps::ap_crypto::fp_handshake(uint8_t *content, const uint8_t *keymsg, const uint32_t len) {
   if (!keymsg)
     return;
 
@@ -149,9 +135,7 @@ void aps::ap_crypto::fp_decrypt(const uint8_t *key, uint8_t *out) {
   playfair_decrypt(fp_key_message_.data(), (uint8_t *)key, out);
 }
 
-void aps::ap_crypto::init_client_aes_info(const uint8_t *piv, uint64_t iv_len,
-                                          const uint8_t *pkey,
-                                          uint64_t key_len) {
+void aps::ap_crypto::init_client_aes_info(const uint8_t *piv, uint64_t iv_len, const uint8_t *pkey, uint64_t key_len) {
   if (piv && iv_len) {
     this->client_aes_iv_.assign(piv, piv + iv_len);
   }
@@ -167,14 +151,12 @@ void aps::ap_crypto::init_client_aes_info(const uint8_t *piv, uint64_t iv_len,
       sha512_update(&sha512_context, (uint8_t *)client_aes_key_.data(), 16);
       sha512_update(&sha512_context, shared_secret_.data(), 32);
       sha512_final(&sha512_context, sha512_hash.data());
-      std::copy(sha512_hash.begin(), sha512_hash.begin() + 16,
-                std::back_inserter(client_aes_key_));
+      std::copy(sha512_hash.begin(), sha512_hash.begin() + 16, std::back_inserter(client_aes_key_));
     }
   }
 }
 
-void aps::ap_crypto::init_video_stream_aes_ctr(const uint64_t video_stream_id,
-                                               const agent_version_t version) {
+void aps::ap_crypto::init_video_stream_aes_ctr(const uint64_t video_stream_id, const agent_version_t version) {
   sha512_context_ sha512_context;
   std::array<uint8_t, 64> sha512_hash;
 
@@ -186,8 +168,7 @@ void aps::ap_crypto::init_video_stream_aes_ctr(const uint64_t video_stream_id,
   sha512_hash.fill(0);
   sha512_init(&sha512_context);
   sha512_update(&sha512_context, (uint8_t *)source.c_str(), source.length());
-  sha512_update(&sha512_context, client_aes_key_.data(),
-                client_aes_key_.size());
+  sha512_update(&sha512_context, client_aes_key_.data(), client_aes_key_.size());
   sha512_final(&sha512_context, sha512_hash.data());
   std::array<uint8_t, 16> aes_key;
   memcpy(aes_key.data(), sha512_hash.data(), 16);
@@ -198,8 +179,7 @@ void aps::ap_crypto::init_video_stream_aes_ctr(const uint64_t video_stream_id,
   sha512_hash.fill(0);
   sha512_init(&sha512_context);
   sha512_update(&sha512_context, (uint8_t *)source.c_str(), source.length());
-  sha512_update(&sha512_context, client_aes_key_.data(),
-                client_aes_key_.size());
+  sha512_update(&sha512_context, client_aes_key_.data(), client_aes_key_.size());
   sha512_final(&sha512_context, sha512_hash.data());
   std::array<uint8_t, 16> aes_iv;
   memcpy(aes_iv.data(), sha512_hash.data(), 16);
@@ -214,35 +194,20 @@ void aps::ap_crypto::decrypt_video_frame(uint8_t *frame, uint32_t len) {
 }
 
 void aps::ap_crypto::decrypt_audio_data(uint8_t *data, uint32_t len) {
-  audio_stream_aes_cbc_.set_de_key_iv(client_aes_key_.data(),
-                                      client_aes_iv_.data());
+  audio_stream_aes_cbc_.set_de_key_iv(client_aes_key_.data(), client_aes_iv_.data());
   audio_stream_aes_cbc_.decrypt_buffer(data, len);
 }
 
-const std::vector<uint8_t> &aps::ap_crypto::fp_key_message() const {
-  return fp_key_message_;
-}
+const std::vector<uint8_t> &aps::ap_crypto::fp_key_message() const { return fp_key_message_; }
 
-const std::vector<uint8_t> &aps::ap_crypto::shared_secret() const {
-  return shared_secret_;
-}
+const std::vector<uint8_t> &aps::ap_crypto::shared_secret() const { return shared_secret_; }
 
-const std::vector<uint8_t> &aps::ap_crypto::client_aes_key() const {
-  return client_aes_key_;
-}
+const std::vector<uint8_t> &aps::ap_crypto::client_aes_key() const { return client_aes_key_; }
 
-const std::vector<uint8_t> &aps::ap_crypto::client_aes_iv() const {
-  return client_aes_iv_;
-}
+const std::vector<uint8_t> &aps::ap_crypto::client_aes_iv() const { return client_aes_iv_; }
 
-const std::vector<uint8_t> &aps::ap_crypto::client_ed_public_key() const {
-  return client_ed_public_key_;
-}
+const std::vector<uint8_t> &aps::ap_crypto::client_ed_public_key() const { return client_ed_public_key_; }
 
-const std::vector<uint8_t> &aps::ap_crypto::client_curve_public_key() const {
-  return client_curve_public_key_;
-}
+const std::vector<uint8_t> &aps::ap_crypto::client_curve_public_key() const { return client_curve_public_key_; }
 
-const aps::server_key_chain &aps::ap_crypto::server_keys() const {
-  return server_;
-}
+const aps::server_key_chain &aps::ap_crypto::server_keys() const { return server_; }

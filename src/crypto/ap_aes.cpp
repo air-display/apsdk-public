@@ -14,8 +14,7 @@ void ap_aes_ctr128::set_key_iv(uint8_t *key, uint8_t *iv) {
 }
 
 void ap_aes_ctr128::xcrypt_buffer(uint8_t *buffer, uint32_t length) {
-  AES_ctr128_encrypt(buffer, buffer, length, &ctx_, iv_.data(), ec_.data(),
-                     &number);
+  AES_ctr128_encrypt(buffer, buffer, length, &ctx_, iv_.data(), ec_.data(), &number);
 }
 
 void ap_aes_ctr128::reset() {

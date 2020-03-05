@@ -46,8 +46,7 @@ struct plist_object_s {
   } value;
 };
 
-static int parse_integer(const uint8_t *data, uint64_t dataidx, uint8_t length,
-                         int64_t *value) {
+static int parse_integer(const uint8_t *data, uint64_t dataidx, uint8_t length, int64_t *value) {
   assert(data);
   assert(value);
 
@@ -96,8 +95,7 @@ static int parse_integer(const uint8_t *data, uint64_t dataidx, uint8_t length,
   return length;
 }
 
-static int serialize_integer(uint8_t *data, uint64_t *dataidx, uint8_t length,
-                             int64_t value) {
+static int serialize_integer(uint8_t *data, uint64_t *dataidx, uint8_t length, int64_t value) {
   switch (length) {
   case sizeof(uint8_t):
     data[(*dataidx)++] = (uint8_t)value;
@@ -140,8 +138,7 @@ static int serialize_integer(uint8_t *data, uint64_t *dataidx, uint8_t length,
   return length;
 }
 
-static int parse_real(const uint8_t *data, uint64_t dataidx, uint64_t length,
-                      double *value) {
+static int parse_real(const uint8_t *data, uint64_t dataidx, uint64_t length, double *value) {
   assert(data);
   assert(value);
 
@@ -183,8 +180,7 @@ static uint8_t blist_integer_length(int64_t value) {
   }
 }
 
-static void bplist_analyze(plist_object_t *object, uint64_t *objects,
-                           uint64_t *bytes, uint64_t *refs) {
+static void bplist_analyze(plist_object_t *object, uint64_t *objects, uint64_t *bytes, uint64_t *refs) {
   uint64_t i;
 
   *objects += 1;
@@ -244,8 +240,7 @@ static void bplist_analyze(plist_object_t *object, uint64_t *objects,
   }
 }
 
-static int64_t bplist_serialize_string(int64_t *reftab, uint64_t *reftabidx,
-                                       uint8_t *data, uint64_t *dataidx,
+static int64_t bplist_serialize_string(int64_t *reftab, uint64_t *reftabidx, uint8_t *data, uint64_t *dataidx,
                                        char *value) {
   int64_t length;
   int64_t objectid;
@@ -267,10 +262,8 @@ static int64_t bplist_serialize_string(int64_t *reftab, uint64_t *reftabidx,
   return objectid;
 }
 
-static int64_t bplist_serialize_object(int64_t *reftab, uint64_t *reftabidx,
-                                       uint8_t reflen, uint8_t *data,
-                                       uint64_t *dataidx,
-                                       plist_object_t *object) {
+static int64_t bplist_serialize_object(int64_t *reftab, uint64_t *reftabidx, uint8_t reflen, uint8_t *data,
+                                       uint64_t *dataidx, plist_object_t *object) {
   int64_t objectid;
   uint64_t i;
 
@@ -329,8 +322,7 @@ static int64_t bplist_serialize_object(int64_t *reftab, uint64_t *reftabidx,
     *dataidx += size * reflen;
     for (i = 0; i < size; i++) {
       int64_t valueid =
-          bplist_serialize_object(reftab, reftabidx, reflen, data, dataidx,
-                                  object->value.value_array.values[i]);
+          bplist_serialize_object(reftab, reftabidx, reflen, data, dataidx, object->value.value_array.values[i]);
       serialize_integer(data, &valueidx, reflen, valueid);
     }
   } else if (object->type == PLIST_TYPE_DICT) {
@@ -355,11 +347,8 @@ static int64_t bplist_serialize_object(int64_t *reftab, uint64_t *reftabidx,
       int64_t keyid = 0;
       int64_t valueid = 0;
 
-      keyid = bplist_serialize_string(reftab, reftabidx, data, dataidx,
-                                      object->value.value_dict.keys[i]);
-      valueid =
-          bplist_serialize_object(reftab, reftabidx, reflen, data, dataidx,
-                                  object->value.value_dict.values[i]);
+      keyid = bplist_serialize_string(reftab, reftabidx, data, dataidx, object->value.value_dict.keys[i]);
+      valueid = bplist_serialize_object(reftab, reftabidx, reflen, data, dataidx, object->value.value_dict.values[i]);
       serialize_integer(data, &keyidx, reflen, keyid);
       serialize_integer(data, &valueidx, reflen, valueid);
     }
@@ -367,11 +356,8 @@ static int64_t bplist_serialize_object(int64_t *reftab, uint64_t *reftabidx,
   return objectid;
 }
 
-static plist_object_t *bplist_parse_object(const int64_t *reftab,
-                                           uint64_t reftablen,
-                                           uint64_t reftabidx,
-                                           const uint8_t *data,
-                                           uint64_t datalen, uint8_t reflen) {
+static plist_object_t *bplist_parse_object(const int64_t *reftab, uint64_t reftablen, uint64_t reftabidx,
+                                           const uint8_t *data, uint64_t datalen, uint8_t reflen) {
   plist_object_t *object;
   uint64_t dataidx;
   uint8_t type;
@@ -425,8 +411,7 @@ static plist_object_t *bplist_parse_object(const int64_t *reftab,
       free(object);
       return NULL;
     }
-    ret = parse_integer(data, dataidx, (1 << length),
-                        &object->value.value_integer);
+    ret = parse_integer(data, dataidx, (1 << length), &object->value.value_integer);
     if (ret < 0) {
       free(object);
       return NULL;
@@ -436,8 +421,7 @@ static plist_object_t *bplist_parse_object(const int64_t *reftab,
       free(object);
       return NULL;
     }
-    ret = parse_real(data, dataidx, ((uint64_t)1 << length),
-                     &object->value.value_real);
+    ret = parse_real(data, dataidx, ((uint64_t)1 << length), &object->value.value_real);
     if (ret < 0) {
       free(object);
       return NULL;
@@ -511,8 +495,7 @@ static plist_object_t *bplist_parse_object(const int64_t *reftab,
       free(object);
       return NULL;
     }
-    values =
-        (plist_object_t **)calloc((size_t)length, sizeof(plist_object_t *));
+    values = (plist_object_t **)calloc((size_t)length, sizeof(plist_object_t *));
     if (!values) {
       free(object);
       return NULL;
@@ -528,8 +511,7 @@ static plist_object_t *bplist_parse_object(const int64_t *reftab,
         break;
       }
       dataidx += reflen;
-      values[i] = bplist_parse_object(reftab, reftablen, valueidx, data,
-                                      datalen, reflen);
+      values[i] = bplist_parse_object(reftab, reftablen, valueidx, data, datalen, reflen);
       if (!values[i]) {
         break;
       }
@@ -558,8 +540,7 @@ static plist_object_t *bplist_parse_object(const int64_t *reftab,
       free(object);
       return NULL;
     }
-    values =
-        (plist_object_t **)calloc((size_t)length, sizeof(plist_object_t *));
+    values = (plist_object_t **)calloc((size_t)length, sizeof(plist_object_t *));
     if (!values) {
       free(keys);
       free(object);
@@ -577,8 +558,7 @@ static plist_object_t *bplist_parse_object(const int64_t *reftab,
         break;
       }
       dataidx += reflen;
-      obj =
-          bplist_parse_object(reftab, reftablen, keyidx, data, datalen, reflen);
+      obj = bplist_parse_object(reftab, reftablen, keyidx, data, datalen, reflen);
       if (!obj) {
         break;
       }
@@ -600,8 +580,7 @@ static plist_object_t *bplist_parse_object(const int64_t *reftab,
         break;
       }
       dataidx += reflen;
-      values[vi] = bplist_parse_object(reftab, reftablen, valueidx, data,
-                                       datalen, reflen);
+      values[vi] = bplist_parse_object(reftab, reftablen, valueidx, data, datalen, reflen);
       if (!values[vi]) {
         break;
       }
@@ -810,8 +789,7 @@ uint8_t plist_object_get_type(const plist_object_t *object) {
   return object->type;
 }
 
-int plist_object_primitive_get_value(const plist_object_t *object,
-                                     uint8_t *value) {
+int plist_object_primitive_get_value(const plist_object_t *object, uint8_t *value) {
   if (!object || !value) {
     return -1;
   }
@@ -822,8 +800,7 @@ int plist_object_primitive_get_value(const plist_object_t *object,
   return 0;
 }
 
-int plist_object_integer_get_value(const plist_object_t *object,
-                                   int64_t *value) {
+int plist_object_integer_get_value(const plist_object_t *object, int64_t *value) {
   if (!object || !value) {
     return -1;
   }
@@ -845,8 +822,7 @@ int plist_object_real_get_value(const plist_object_t *object, double *value) {
   return 0;
 }
 
-int plist_object_data_get_value(const plist_object_t *object,
-                                const uint8_t **value, uint64_t *valuelen) {
+int plist_object_data_get_value(const plist_object_t *object, const uint8_t **value, uint64_t *valuelen) {
   if (!object || !value || !valuelen) {
     return -1;
   }
@@ -858,8 +834,7 @@ int plist_object_data_get_value(const plist_object_t *object,
   return 0;
 }
 
-int plist_object_string_get_value(const plist_object_t *object,
-                                  const char **value) {
+int plist_object_string_get_value(const plist_object_t *object, const char **value) {
   if (!object || !value) {
     return -1;
   }
@@ -870,8 +845,7 @@ int plist_object_string_get_value(const plist_object_t *object,
   return 0;
 }
 
-const plist_object_t *plist_object_array_get_value(const plist_object_t *object,
-                                                   uint32_t idx) {
+const plist_object_t *plist_object_array_get_value(const plist_object_t *object, uint32_t idx) {
   if (!object) {
     return NULL;
   }
@@ -884,8 +858,7 @@ const plist_object_t *plist_object_array_get_value(const plist_object_t *object,
   return object->value.value_array.values[idx];
 }
 
-const plist_object_t *plist_object_dict_get_value(const plist_object_t *object,
-                                                  const char *key) {
+const plist_object_t *plist_object_dict_get_value(const plist_object_t *object, const char *key) {
   int i;
 
   if (!object || !key) {
@@ -902,9 +875,7 @@ const plist_object_t *plist_object_dict_get_value(const plist_object_t *object,
   return NULL;
 }
 
-const plist_object_t *
-plist_object_dict_get_key_value(const plist_object_t *object, const char **pkey,
-                                uint32_t idx) {
+const plist_object_t *plist_object_dict_get_key_value(const plist_object_t *object, const char **pkey, uint32_t idx) {
   if (!object) {
     return NULL;
   }
@@ -923,8 +894,7 @@ plist_object_dict_get_key_value(const plist_object_t *object, const char **pkey,
   return NULL;
 }
 
-plist_object_t *plist_object_from_bplist(const uint8_t *data,
-                                         uint32_t datalen) {
+plist_object_t *plist_object_from_bplist(const uint8_t *data, uint32_t datalen) {
   plist_object_t *object;
   const uint8_t *trailer;
   uint8_t offlen, reflen;
@@ -951,8 +921,7 @@ plist_object_t *plist_object_from_bplist(const uint8_t *data,
   if (rootid < 0 || rootid >= objects) {
     return NULL;
   }
-  if (reftaboffset < BPLIST_HEADER_LEN ||
-      reftaboffset + objects * offlen > datalen) {
+  if (reftaboffset < BPLIST_HEADER_LEN || reftaboffset + objects * offlen > datalen) {
     return NULL;
   }
 
@@ -961,8 +930,7 @@ plist_object_t *plist_object_from_bplist(const uint8_t *data,
     return NULL;
   }
   for (i = 0; i < objects; i++) {
-    parse_integer(data, reftaboffset + i * (uint64_t)offlen, offlen,
-                  &reftab[i]);
+    parse_integer(data, reftaboffset + i * (uint64_t)offlen, offlen, &reftab[i]);
   }
   object = bplist_parse_object(reftab, objects, rootid, data, datalen, reflen);
   free(reftab);
@@ -970,8 +938,7 @@ plist_object_t *plist_object_from_bplist(const uint8_t *data,
   return object;
 }
 
-int plist_object_to_bplist(plist_object_t *object, uint8_t **data,
-                           uint64_t *datalen) {
+int plist_object_to_bplist(plist_object_t *object, uint8_t **data, uint64_t *datalen) {
   uint64_t objects, bytes, refs;
   uint8_t reflen, offlen;
   uint8_t *buf;

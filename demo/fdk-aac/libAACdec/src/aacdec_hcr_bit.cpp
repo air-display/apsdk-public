@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+?Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -90,7 +90,6 @@ amm-info@iis.fraunhofer.de
 
 #include "aacdec_hcr_bit.h"
 
-
 /*---------------------------------------------------------------------------------------------
         description:  This function toggles the read direction.
 -----------------------------------------------------------------------------------------------
@@ -98,16 +97,13 @@ amm-info@iis.fraunhofer.de
 -----------------------------------------------------------------------------------------------
         return:       new read direction
 -------------------------------------------------------------------------------------------- */
-UCHAR ToggleReadDirection(UCHAR readDirection)
-{
-  if ( readDirection == FROM_LEFT_TO_RIGHT ) {
+UCHAR ToggleReadDirection(UCHAR readDirection) {
+  if (readDirection == FROM_LEFT_TO_RIGHT) {
     return FROM_RIGHT_TO_LEFT;
-  }
-  else {
+  } else {
     return FROM_LEFT_TO_RIGHT;
   }
 }
-
 
 /*---------------------------------------------------------------------------------------------
      description:   This function returns a bit from the bitstream according to read direction.
@@ -121,27 +117,23 @@ UCHAR ToggleReadDirection(UCHAR readDirection)
 -----------------------------------------------------------------------------------------------
         return:   - bit from bitstream
 -------------------------------------------------------------------------------------------- */
-UINT HcrGetABitFromBitstream(HANDLE_FDK_BITSTREAM  bs,
-                             USHORT               *pLeftStartOfSegment,
-                             USHORT               *pRightStartOfSegment,
-                             UCHAR                 readDirection)
-{
-  UINT   bit;
-  INT    readBitOffset;
+UINT HcrGetABitFromBitstream(HANDLE_FDK_BITSTREAM bs, USHORT *pLeftStartOfSegment, USHORT *pRightStartOfSegment,
+                             UCHAR readDirection) {
+  UINT bit;
+  INT readBitOffset;
 
   if (readDirection == FROM_LEFT_TO_RIGHT) {
-    readBitOffset = *pLeftStartOfSegment-FDKgetBitCnt(bs);
-    if( readBitOffset ) {
+    readBitOffset = *pLeftStartOfSegment - FDKgetBitCnt(bs);
+    if (readBitOffset) {
       FDKpushBiDirectional(bs, readBitOffset);
     }
 
     bit = FDKreadBits(bs, 1);
 
     *pLeftStartOfSegment += 1;
-  }
-  else {
-    readBitOffset = *pRightStartOfSegment-FDKgetBitCnt(bs);
-    if( readBitOffset ) {
+  } else {
+    readBitOffset = *pRightStartOfSegment - FDKgetBitCnt(bs);
+    if (readBitOffset) {
       FDKpushBiDirectional(bs, readBitOffset);
     }
 
@@ -152,7 +144,6 @@ UINT HcrGetABitFromBitstream(HANDLE_FDK_BITSTREAM  bs,
     *pRightStartOfSegment -= 1;
   }
 
-
 #if ERROR_GENERATOR_BIT_STREAM_HCR
   static int a;
   if ((++a % MODULO_DIVISOR_HCR) == 0) {
@@ -162,4 +153,3 @@ UINT HcrGetABitFromBitstream(HANDLE_FDK_BITSTREAM  bs,
 
   return (bit);
 }
-

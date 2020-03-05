@@ -2,8 +2,7 @@
 
 namespace aps {
 namespace network {
-xtxp_message::xtxp_message(const std::string &scm_ver)
-    : scheme_version(scm_ver), content_length(0) {}
+xtxp_message::xtxp_message(const std::string &scm_ver) : scheme_version(scm_ver), content_length(0) {}
 
 xtxp_message::xtxp_message() {}
 
@@ -32,8 +31,7 @@ xtxp_message &xtxp_message::with_content(const uint8_t *data, int length) {
   return *this;
 }
 
-xtxp_message &xtxp_message::with_header(const std::string &name,
-                                        const std::string &value) {
+xtxp_message &xtxp_message::with_header(const std::string &name, const std::string &value) {
   headers[name] = value;
   return *this;
 }
@@ -43,22 +41,18 @@ std::string xtxp_message::serialize() const {
   for (auto &kv : headers)
     oss << kv.first << CHAR_COLON << CHAR_BLANK << kv.second << RN_LINE_BREAK;
 
-  oss << HEADER_CONTENT_LENGTH << CHAR_COLON << CHAR_BLANK << content_length
-      << RN_LINE_BREAK;
+  oss << HEADER_CONTENT_LENGTH << CHAR_COLON << CHAR_BLANK << content_length << RN_LINE_BREAK;
 
   if (!content_type.empty())
-    oss << HEADER_CONTENT_TYPE << CHAR_COLON << CHAR_BLANK << content_type
-        << RN_LINE_BREAK;
+    oss << HEADER_CONTENT_TYPE << CHAR_COLON << CHAR_BLANK << content_type << RN_LINE_BREAK;
 
   oss << RN_LINE_BREAK;
 
-  std::copy(content.begin(), content.end(),
-            std::ostream_iterator<uint8_t>(oss));
+  std::copy(content.begin(), content.end(), std::ostream_iterator<uint8_t>(oss));
   return oss.str();
 }
 
-request::request(const std::string &scheme_ver, const std::string &methot,
-                 const std::string &uri)
+request::request(const std::string &scheme_ver, const std::string &methot, const std::string &uri)
     : xtxp_message(scheme_ver), method(methot), uri(uri) {}
 
 request::request() {}
@@ -66,8 +60,7 @@ request::request() {}
 std::string request::serialize() const {
   std::vector<uint8_t> result;
   std::ostringstream oss;
-  oss << method << CHAR_BLANK << uri << CHAR_BLANK << scheme_version
-      << RN_LINE_BREAK;
+  oss << method << CHAR_BLANK << uri << CHAR_BLANK << scheme_version << RN_LINE_BREAK;
   oss << xtxp_message::serialize();
   return oss.str();
 }
@@ -75,8 +68,7 @@ std::string request::serialize() const {
 void request::dump(const std::string tag) const {
   std::ostringstream oss;
   oss << tag << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< " << std::endl
-      << "    Request: " << method << " " << uri << " " << scheme_version
-      << std::endl
+      << "    Request: " << method << " " << uri << " " << scheme_version << std::endl
       << "    Header:" << std::endl;
   for (auto &header : headers)
     oss << "        " << header.first << ": " << header.second << std::endl;
@@ -92,8 +84,7 @@ void request::dump(const std::string tag) const {
 }
 
 response::response(const std::string &scheme_ver)
-    : xtxp_message(scheme_ver), status_code(status_type_t::ok),
-      status_text("OK") {}
+    : xtxp_message(scheme_ver), status_code(status_type_t::ok), status_text("OK") {}
 
 response::response() : status_code(status_type_t::ok), status_text("OK") {}
 
@@ -111,8 +102,7 @@ response &response::with_status(status_type_t code) {
 
 std::string response::serialize() const {
   std::ostringstream oss;
-  oss << scheme_version << CHAR_BLANK << status_code << CHAR_BLANK
-      << status_text << RN_LINE_BREAK;
+  oss << scheme_version << CHAR_BLANK << status_code << CHAR_BLANK << status_text << RN_LINE_BREAK;
   oss << xtxp_message::serialize();
   return oss.str();
 }

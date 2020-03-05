@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+?Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -93,7 +93,6 @@ amm-info@iis.fraunhofer.de
 /* library version */
 #include "version"
 
-
 #include "tp_data.h"
 
 #include "tpdec_adts.h"
@@ -103,7 +102,6 @@ amm-info@iis.fraunhofer.de
 #include "tpdec_latm.h"
 
 #include "tpdec_drm.h"
-
 
 #define MODULE_NAME "transportDec"
 
@@ -118,51 +116,47 @@ typedef union {
 
 } transportdec_parser_t;
 
-struct TRANSPORTDEC
-{
-  TRANSPORT_TYPE transportFmt;     /*!< MPEG4 transportDec type. */
+struct TRANSPORTDEC {
+  TRANSPORT_TYPE transportFmt; /*!< MPEG4 transportDec type. */
 
-  CSTpCallBacks callbacks;         /*!< Struct holding callback and its data */
+  CSTpCallBacks callbacks; /*!< Struct holding callback and its data */
 
   FDK_BITSTREAM bitStream[2]; /* Bitstream reader */
-  UCHAR *bsBuffer;                 /* Internal bitstreamd data buffer (unallocated in case of TT_MP4_RAWPACKETS) */
+  UCHAR *bsBuffer;            /* Internal bitstreamd data buffer (unallocated in case of TT_MP4_RAWPACKETS) */
 
-  transportdec_parser_t parser;    /* Format specific parser structs. */
+  transportdec_parser_t parser; /* Format specific parser structs. */
 
-  CSAudioSpecificConfig asc[(1*2)]; /* Audio specific config from the last config found. */
-  UINT  globalFramePos;            /* Global transport frame reference bit position. */
-  UINT  accessUnitAnchor[2];    /* Current access unit start bit position. */
-  INT   auLength[2];            /* Length of current access unit. */
-  INT   numberOfRawDataBlocks;     /* Current number of raw data blocks contained remaining from the current transport frame. */
-  UINT  avgBitRate;                /* Average bit rate used for frame loss estimation. */
-  UINT  lastValidBufferFullness;   /* Last valid buffer fullness value for frame loss estimation */
-  INT   remainder;                 /* Reminder in division during lost access unit estimation. */
-  INT   missingAccessUnits;        /* Estimated missing access units. */
-  UINT  burstPeriod;               /* Data burst period in mili seconds. */
-  UINT  holdOffFrames;             /* Amount of frames that were already hold off due to buffer fullness condition not being met. */
-  UINT  flags;                     /* Flags. */
+  CSAudioSpecificConfig asc[(1 * 2)]; /* Audio specific config from the last config found. */
+  UINT globalFramePos;                /* Global transport frame reference bit position. */
+  UINT accessUnitAnchor[2];           /* Current access unit start bit position. */
+  INT auLength[2];                    /* Length of current access unit. */
+  INT numberOfRawDataBlocks; /* Current number of raw data blocks contained remaining from the current transport frame.
+                              */
+  UINT avgBitRate;           /* Average bit rate used for frame loss estimation. */
+  UINT lastValidBufferFullness; /* Last valid buffer fullness value for frame loss estimation */
+  INT remainder;                /* Reminder in division during lost access unit estimation. */
+  INT missingAccessUnits;       /* Estimated missing access units. */
+  UINT burstPeriod;             /* Data burst period in mili seconds. */
+  UINT holdOffFrames; /* Amount of frames that were already hold off due to buffer fullness condition not being met. */
+  UINT flags;         /* Flags. */
 };
 
 /* Flag bitmasks for "flags" member of struct TRANSPORTDEC */
-#define TPDEC_SYNCOK                1
-#define TPDEC_MINIMIZE_DELAY        2
+#define TPDEC_SYNCOK 1
+#define TPDEC_MINIMIZE_DELAY 2
 #define TPDEC_IGNORE_BUFFERFULLNESS 4
-#define TPDEC_EARLY_CONFIG          8
-#define TPDEC_LOST_FRAMES_PENDING  16
-#define TPDEC_CONFIG_FOUND         32
+#define TPDEC_EARLY_CONFIG 8
+#define TPDEC_LOST_FRAMES_PENDING 16
+#define TPDEC_CONFIG_FOUND 32
 
 C_ALLOC_MEM(Ram_TransportDecoder, TRANSPORTDEC, 1)
 C_ALLOC_MEM(Ram_TransportDecoderBuffer, UCHAR, TRANSPORTDEC_INBUF_SIZE)
 
-
-
-
-HANDLE_TRANSPORTDEC transportDec_Open( const TRANSPORT_TYPE transportFmt, const UINT flags)
-{
+HANDLE_TRANSPORTDEC transportDec_Open(const TRANSPORT_TYPE transportFmt, const UINT flags) {
   HANDLE_TRANSPORTDEC hInput;
 
   hInput = GetRam_TransportDecoder(0);
-  if ( hInput == NULL ) {
+  if (hInput == NULL) {
     return NULL;
   }
 
@@ -202,13 +196,13 @@ HANDLE_TRANSPORTDEC transportDec_Open( const TRANSPORT_TYPE transportFmt, const 
 
   if (hInput != NULL) {
     /* Create bitstream */
-    if ( TT_IS_PACKET(transportFmt) ) {
+    if (TT_IS_PACKET(transportFmt)) {
       hInput->bsBuffer = NULL;
     } else {
       hInput->bsBuffer = GetRam_TransportDecoderBuffer(0);
       if (hInput->bsBuffer == NULL) {
-          transportDec_Close( &hInput );
-          return NULL;
+        transportDec_Close(&hInput);
+        return NULL;
       }
       FDKinitBitStream(&hInput->bitStream[0], hInput->bsBuffer, TRANSPORTDEC_INBUF_SIZE, 0, BS_READER);
     }
@@ -219,57 +213,54 @@ HANDLE_TRANSPORTDEC transportDec_Open( const TRANSPORT_TYPE transportFmt, const 
   return hInput;
 }
 
-TRANSPORTDEC_ERROR transportDec_OutOfBandConfig(HANDLE_TRANSPORTDEC hTp, UCHAR *conf, const UINT length, UINT layer )
-{
-  TRANSPORTDEC_ERROR     err        = TRANSPORTDEC_OK;
+TRANSPORTDEC_ERROR transportDec_OutOfBandConfig(HANDLE_TRANSPORTDEC hTp, UCHAR *conf, const UINT length, UINT layer) {
+  TRANSPORTDEC_ERROR err = TRANSPORTDEC_OK;
 
   FDK_BITSTREAM bs;
-  HANDLE_FDK_BITSTREAM  hBs        = &bs;
+  HANDLE_FDK_BITSTREAM hBs = &bs;
 
-  FDKinitBitStream(hBs, conf, 0x10000000, length<<3, BS_READER);
+  FDKinitBitStream(hBs, conf, 0x10000000, length << 3, BS_READER);
 
   int fConfigFound = 0;
 
   /* config transport decoder */
   switch (hTp->transportFmt) {
-    case TT_MP4_LATM_MCP0:
-    case TT_MP4_LATM_MCP1:
-    case TT_MP4_LOAS:
-      {
-        if (layer != 0) {
-          return TRANSPORTDEC_INVALID_PARAMETER;
-        }
-        CLatmDemux *pLatmDemux = &hTp->parser.latm;
-        err = CLatmDemux_ReadStreamMuxConfig(hBs, pLatmDemux, &hTp->callbacks, hTp->asc, &fConfigFound);
-        if (err != TRANSPORTDEC_OK) {
-          return err;
-        }
-      }
-      break;
-    default:
-      fConfigFound = 1;
-      err = AudioSpecificConfig_Parse(&hTp->asc[layer], hBs, 1, &hTp->callbacks);
-      if (err == TRANSPORTDEC_OK) {
-        int errC;
+  case TT_MP4_LATM_MCP0:
+  case TT_MP4_LATM_MCP1:
+  case TT_MP4_LOAS: {
+    if (layer != 0) {
+      return TRANSPORTDEC_INVALID_PARAMETER;
+    }
+    CLatmDemux *pLatmDemux = &hTp->parser.latm;
+    err = CLatmDemux_ReadStreamMuxConfig(hBs, pLatmDemux, &hTp->callbacks, hTp->asc, &fConfigFound);
+    if (err != TRANSPORTDEC_OK) {
+      return err;
+    }
+  } break;
+  default:
+    fConfigFound = 1;
+    err = AudioSpecificConfig_Parse(&hTp->asc[layer], hBs, 1, &hTp->callbacks);
+    if (err == TRANSPORTDEC_OK) {
+      int errC;
 
-        errC = hTp->callbacks.cbUpdateConfig(hTp->callbacks.cbUpdateConfigData, &hTp->asc[layer]);
-        if (errC != 0) {
-          err = TRANSPORTDEC_PARSE_ERROR;
-        }
+      errC = hTp->callbacks.cbUpdateConfig(hTp->callbacks.cbUpdateConfigData, &hTp->asc[layer]);
+      if (errC != 0) {
+        err = TRANSPORTDEC_PARSE_ERROR;
       }
-      break;
-    case TT_DRM:
-      fConfigFound = 1;
-      err = DrmRawSdcAudioConfig_Parse(&hTp->asc[layer], hBs);
-      if (err == TRANSPORTDEC_OK) {
-        int errC;
+    }
+    break;
+  case TT_DRM:
+    fConfigFound = 1;
+    err = DrmRawSdcAudioConfig_Parse(&hTp->asc[layer], hBs);
+    if (err == TRANSPORTDEC_OK) {
+      int errC;
 
-        errC = hTp->callbacks.cbUpdateConfig(hTp->callbacks.cbUpdateConfigData, &hTp->asc[layer]);
-        if (errC != 0) {
-          err = TRANSPORTDEC_PARSE_ERROR;
-        }
+      errC = hTp->callbacks.cbUpdateConfig(hTp->callbacks.cbUpdateConfigData, &hTp->asc[layer]);
+      if (errC != 0) {
+        err = TRANSPORTDEC_PARSE_ERROR;
       }
-      break;
+    }
+    break;
   }
 
   if (err == TRANSPORTDEC_OK && fConfigFound) {
@@ -279,8 +270,8 @@ TRANSPORTDEC_ERROR transportDec_OutOfBandConfig(HANDLE_TRANSPORTDEC hTp, UCHAR *
   return err;
 }
 
-int transportDec_RegisterAscCallback( HANDLE_TRANSPORTDEC hTpDec, const cbUpdateConfig_t cbUpdateConfig, void* user_data)
-{
+int transportDec_RegisterAscCallback(HANDLE_TRANSPORTDEC hTpDec, const cbUpdateConfig_t cbUpdateConfig,
+                                     void *user_data) {
   if (hTpDec == NULL) {
     return -1;
   }
@@ -289,8 +280,7 @@ int transportDec_RegisterAscCallback( HANDLE_TRANSPORTDEC hTpDec, const cbUpdate
   return 0;
 }
 
-int transportDec_RegisterSscCallback( HANDLE_TRANSPORTDEC hTpDec, const cbSsc_t cbSsc, void* user_data)
-{
+int transportDec_RegisterSscCallback(HANDLE_TRANSPORTDEC hTpDec, const cbSsc_t cbSsc, void *user_data) {
   if (hTpDec == NULL) {
     return -1;
   }
@@ -299,8 +289,7 @@ int transportDec_RegisterSscCallback( HANDLE_TRANSPORTDEC hTpDec, const cbSsc_t 
   return 0;
 }
 
-int transportDec_RegisterSbrCallback( HANDLE_TRANSPORTDEC hTpDec, const cbSbr_t cbSbr, void* user_data)
-{
+int transportDec_RegisterSbrCallback(HANDLE_TRANSPORTDEC hTpDec, const cbSbr_t cbSbr, void *user_data) {
   if (hTpDec == NULL) {
     return -1;
   }
@@ -309,17 +298,11 @@ int transportDec_RegisterSbrCallback( HANDLE_TRANSPORTDEC hTpDec, const cbSbr_t 
   return 0;
 }
 
-TRANSPORTDEC_ERROR transportDec_FillData(
-        const HANDLE_TRANSPORTDEC  hTp,
-        UCHAR                     *pBuffer,
-        const UINT                 bufferSize,
-        UINT                      *pBytesValid,
-        const INT                  layer )
-{
+TRANSPORTDEC_ERROR transportDec_FillData(const HANDLE_TRANSPORTDEC hTp, UCHAR *pBuffer, const UINT bufferSize,
+                                         UINT *pBytesValid, const INT layer) {
   HANDLE_FDK_BITSTREAM hBs;
 
-  if ( (hTp == NULL)
-    || (layer >= 2) ) {
+  if ((hTp == NULL) || (layer >= 2)) {
     return TRANSPORTDEC_INVALID_PARAMETER;
   }
 
@@ -331,54 +314,51 @@ TRANSPORTDEC_ERROR transportDec_FillData(
   /* set bitbuffer shortcut */
   hBs = &hTp->bitStream[layer];
 
-  if ( TT_IS_PACKET(hTp->transportFmt) ) {
+  if (TT_IS_PACKET(hTp->transportFmt)) {
     if (hTp->numberOfRawDataBlocks == 0) {
-    /* For packet based transport, pass input buffer to bitbuffer without copying the data.
-       Unfortunately we do not know the actual buffer size. And the FDK bit buffer implementation
-       needs a number 2^x. So we assume the maximum of 48 channels with 6144 bits per channel
-       and round it up to the next power of 2 => 65536 bytes */
-    FDKinitBitStream(hBs, pBuffer, 0x10000, (*pBytesValid)<<3, BS_READER);
-    *pBytesValid = 0;
+      /* For packet based transport, pass input buffer to bitbuffer without copying the data.
+         Unfortunately we do not know the actual buffer size. And the FDK bit buffer implementation
+         needs a number 2^x. So we assume the maximum of 48 channels with 6144 bits per channel
+         and round it up to the next power of 2 => 65536 bytes */
+      FDKinitBitStream(hBs, pBuffer, 0x10000, (*pBytesValid) << 3, BS_READER);
+      *pBytesValid = 0;
     }
   } else {
     /* ... else feed bitbuffer with new stream data (append). */
     if (hTp->numberOfRawDataBlocks <= 0) {
-      FDKfeedBuffer (hBs, pBuffer, bufferSize, pBytesValid) ;
+      FDKfeedBuffer(hBs, pBuffer, bufferSize, pBytesValid);
     }
   }
 
   return TRANSPORTDEC_OK;
 }
 
-HANDLE_FDK_BITSTREAM transportDec_GetBitstream( const HANDLE_TRANSPORTDEC hTp, const UINT layer )
-{
+HANDLE_FDK_BITSTREAM transportDec_GetBitstream(const HANDLE_TRANSPORTDEC hTp, const UINT layer) {
   return &hTp->bitStream[layer];
 }
 
-TRANSPORT_TYPE transportDec_GetFormat( const HANDLE_TRANSPORTDEC hTp )
-{
-  return hTp->transportFmt;
-}
+TRANSPORT_TYPE transportDec_GetFormat(const HANDLE_TRANSPORTDEC hTp) { return hTp->transportFmt; }
 
-INT transportDec_GetBufferFullness( const HANDLE_TRANSPORTDEC hTp )
-{
+INT transportDec_GetBufferFullness(const HANDLE_TRANSPORTDEC hTp) {
   INT bufferFullness = -1;
 
   switch (hTp->transportFmt) {
-    case TT_MP4_ADTS:
-      if (hTp->parser.adts.bs.adts_fullness != 0x7ff) {
-        bufferFullness = hTp->parser.adts.bs.frame_length*8 + hTp->parser.adts.bs.adts_fullness * 32 * getNumberOfEffectiveChannels(hTp->parser.adts.bs.channel_config);
-      }
-      break;
-    case TT_MP4_LOAS:
-    case TT_MP4_LATM_MCP0:
-    case TT_MP4_LATM_MCP1:
-      if (hTp->parser.latm.m_linfo[0][0].m_bufferFullness != 0xff) {
-        bufferFullness = hTp->parser.latm.m_linfo[0][0].m_bufferFullness;
-      }
-      break;
-    default:
-      break;
+  case TT_MP4_ADTS:
+    if (hTp->parser.adts.bs.adts_fullness != 0x7ff) {
+      bufferFullness =
+          hTp->parser.adts.bs.frame_length * 8 +
+          hTp->parser.adts.bs.adts_fullness * 32 * getNumberOfEffectiveChannels(hTp->parser.adts.bs.channel_config);
+    }
+    break;
+  case TT_MP4_LOAS:
+  case TT_MP4_LATM_MCP0:
+  case TT_MP4_LATM_MCP1:
+    if (hTp->parser.latm.m_linfo[0][0].m_bufferFullness != 0xff) {
+      bufferFullness = hTp->parser.latm.m_linfo[0][0].m_bufferFullness;
+    }
+    break;
+  default:
+    break;
   }
 
   return bufferFullness;
@@ -389,76 +369,68 @@ INT transportDec_GetBufferFullness( const HANDLE_TRANSPORTDEC hTp )
  * \param hTp transport decoder handle.
  * \return error code.
  */
-static
-TRANSPORTDEC_ERROR transportDec_AdjustEndOfAccessUnit(HANDLE_TRANSPORTDEC hTp)
-{
+static TRANSPORTDEC_ERROR transportDec_AdjustEndOfAccessUnit(HANDLE_TRANSPORTDEC hTp) {
   HANDLE_FDK_BITSTREAM hBs = &hTp->bitStream[0];
   TRANSPORTDEC_ERROR err = TRANSPORTDEC_OK;
 
   switch (hTp->transportFmt) {
-    case TT_MP4_LOAS:
-    case TT_MP4_LATM_MCP0:
-    case TT_MP4_LATM_MCP1:
-      if ( hTp->numberOfRawDataBlocks == 0 )
-      {
-        /* Do byte align at the end of AudioMuxElement. */
-        FDKbyteAlign(hBs, hTp->globalFramePos);
+  case TT_MP4_LOAS:
+  case TT_MP4_LATM_MCP0:
+  case TT_MP4_LATM_MCP1:
+    if (hTp->numberOfRawDataBlocks == 0) {
+      /* Do byte align at the end of AudioMuxElement. */
+      FDKbyteAlign(hBs, hTp->globalFramePos);
 
-        /* Check global frame length */
-        if (hTp->transportFmt == TT_MP4_LOAS && hTp->parser.latm.m_audioMuxLengthBytes > 0)
-        {
-          int loasOffset;
+      /* Check global frame length */
+      if (hTp->transportFmt == TT_MP4_LOAS && hTp->parser.latm.m_audioMuxLengthBytes > 0) {
+        int loasOffset;
 
-          loasOffset = (hTp->parser.latm.m_audioMuxLengthBytes*8 + FDKgetValidBits(hBs)) - hTp->globalFramePos;
-          if (loasOffset != 0) {
-            FDKpushBiDirectional(hBs, loasOffset);
-            /* For ELD and other payloads there is an unknown amount of padding, so ignore unread bits, but
-               throw an error only if too many bits where read. */
-            if (loasOffset < 0) {
-              err = TRANSPORTDEC_PARSE_ERROR;
-            }
+        loasOffset = (hTp->parser.latm.m_audioMuxLengthBytes * 8 + FDKgetValidBits(hBs)) - hTp->globalFramePos;
+        if (loasOffset != 0) {
+          FDKpushBiDirectional(hBs, loasOffset);
+          /* For ELD and other payloads there is an unknown amount of padding, so ignore unread bits, but
+             throw an error only if too many bits where read. */
+          if (loasOffset < 0) {
+            err = TRANSPORTDEC_PARSE_ERROR;
           }
         }
       }
-      break;
+    }
+    break;
 
-    case TT_MP4_ADTS:
-      if (hTp->parser.adts.bs.protection_absent == 0)
-      {
+  case TT_MP4_ADTS:
+    if (hTp->parser.adts.bs.protection_absent == 0) {
+      int offset;
+
+      /* Calculate offset to end of AU */
+      offset = hTp->parser.adts.rawDataBlockDist[hTp->parser.adts.bs.num_raw_blocks - hTp->numberOfRawDataBlocks] << 3;
+      /* CAUTION: The PCE (if available) is declared to be a part of the header! */
+      offset -= hTp->accessUnitAnchor[0] - FDKgetValidBits(hBs) + 16 + hTp->parser.adts.bs.num_pce_bits;
+      FDKpushBiDirectional(hBs, offset);
+    }
+    if (hTp->parser.adts.bs.num_raw_blocks > 0 && hTp->parser.adts.bs.protection_absent == 0) {
+      /* Note this CRC read currently happens twice because of transportDec_CrcCheck() */
+      hTp->parser.adts.crcReadValue = FDKreadBits(hBs, 16);
+    }
+    if (hTp->numberOfRawDataBlocks == 0) {
+      /* Check global frame length */
+      if (hTp->parser.adts.bs.protection_absent == 0) {
         int offset;
 
-        /* Calculate offset to end of AU */
-        offset  = hTp->parser.adts.rawDataBlockDist[hTp->parser.adts.bs.num_raw_blocks-hTp->numberOfRawDataBlocks]<<3;
-        /* CAUTION: The PCE (if available) is declared to be a part of the header! */
-        offset -= hTp->accessUnitAnchor[0] - FDKgetValidBits(hBs) + 16 + hTp->parser.adts.bs.num_pce_bits;
-        FDKpushBiDirectional(hBs, offset);
-      }
-      if (hTp->parser.adts.bs.num_raw_blocks > 0 && hTp->parser.adts.bs.protection_absent == 0) {
-        /* Note this CRC read currently happens twice because of transportDec_CrcCheck() */
-        hTp->parser.adts.crcReadValue = FDKreadBits(hBs, 16);
-      }
-      if ( hTp->numberOfRawDataBlocks == 0 )
-      {
-        /* Check global frame length */
-        if (hTp->parser.adts.bs.protection_absent == 0)
-        {
-          int offset;
-
-          offset = (hTp->parser.adts.bs.frame_length*8 - ADTS_SYNCLENGTH + FDKgetValidBits(hBs)) - hTp->globalFramePos;
-          if (offset != 0) {
-            FDKpushBiDirectional(hBs, offset);
-          }
+        offset = (hTp->parser.adts.bs.frame_length * 8 - ADTS_SYNCLENGTH + FDKgetValidBits(hBs)) - hTp->globalFramePos;
+        if (offset != 0) {
+          FDKpushBiDirectional(hBs, offset);
         }
       }
-      break;
+    }
+    break;
 
-    default:
-      break;
+  default:
+    break;
   }
 
   return err;
 }
-
 
 /**
  * \brief Determine additional buffer fullness contraint due to burst data reception.
@@ -468,74 +440,59 @@ TRANSPORTDEC_ERROR transportDec_AdjustEndOfAccessUnit(HANDLE_TRANSPORTDEC hTp)
  * \param bitsAvail the amount of available bits at the end of the first frame to be decoded.
  * \return error code
  */
-static 
-TRANSPORTDEC_ERROR additionalHoldOffNeeded(
-        HANDLE_TRANSPORTDEC hTp,
-        INT                 bufferFullness,
-        INT                 bitsAvail
-        )
-{
+static TRANSPORTDEC_ERROR additionalHoldOffNeeded(HANDLE_TRANSPORTDEC hTp, INT bufferFullness, INT bitsAvail) {
   INT checkLengthBits, avgBitsPerFrame;
   INT maxAU; /* maximum number of frames per Master Frame */
   INT samplesPerFrame = hTp->asc->m_samplesPerFrame;
   INT samplingFrequency = (INT)hTp->asc->m_samplingFrequency;
 
-  if ( (hTp->avgBitRate == 0) || (hTp->burstPeriod == 0) ) {
+  if ((hTp->avgBitRate == 0) || (hTp->burstPeriod == 0)) {
     return TRANSPORTDEC_OK;
   }
-  if ( (samplesPerFrame == 0 ) || (samplingFrequency == 0) ) {
+  if ((samplesPerFrame == 0) || (samplingFrequency == 0)) {
     return TRANSPORTDEC_NOT_ENOUGH_BITS;
   }
 
   /* One Master Frame is sent every hTp->burstPeriod ms */
-  maxAU = hTp->burstPeriod * samplingFrequency + (samplesPerFrame*1000 - 1);
-  maxAU = maxAU / (samplesPerFrame*1000);
+  maxAU = hTp->burstPeriod * samplingFrequency + (samplesPerFrame * 1000 - 1);
+  maxAU = maxAU / (samplesPerFrame * 1000);
   /* Subtract number of frames which were already held off. */
   maxAU -= hTp->holdOffFrames;
 
-  avgBitsPerFrame = hTp->avgBitRate * samplesPerFrame + (samplingFrequency-1);
+  avgBitsPerFrame = hTp->avgBitRate * samplesPerFrame + (samplingFrequency - 1);
   avgBitsPerFrame = avgBitsPerFrame / samplingFrequency;
 
   /* Consider worst case of bufferFullness quantization. */
   switch (hTp->transportFmt) {
-    case TT_MP4_ADIF:
-    case TT_MP4_ADTS:
-    case TT_MP4_LOAS:
-    case TT_MP4_LATM_MCP0:
-    case TT_MP4_LATM_MCP1:
-      bufferFullness += 31;
-      break;
-    default:
-      break;
+  case TT_MP4_ADIF:
+  case TT_MP4_ADTS:
+  case TT_MP4_LOAS:
+  case TT_MP4_LATM_MCP0:
+  case TT_MP4_LATM_MCP1:
+    bufferFullness += 31;
+    break;
+  default:
+    break;
   }
 
-  checkLengthBits = bufferFullness + (maxAU-1)*avgBitsPerFrame;
+  checkLengthBits = bufferFullness + (maxAU - 1) * avgBitsPerFrame;
 
   /* Check if buffer is big enough to fullfill buffer fullness condition */
-  if ( (checkLengthBits /*+headerBits*/) > ((TRANSPORTDEC_INBUF_SIZE<<3)-7) ) {
+  if ((checkLengthBits /*+headerBits*/) > ((TRANSPORTDEC_INBUF_SIZE << 3) - 7)) {
     return TRANSPORTDEC_SYNC_ERROR;
   }
 
-  if ( bitsAvail < checkLengthBits ) {
+  if (bitsAvail < checkLengthBits) {
     return TRANSPORTDEC_NOT_ENOUGH_BITS;
-  }
-  else {
+  } else {
     return TRANSPORTDEC_OK;
   }
 }
 
-static TRANSPORTDEC_ERROR transportDec_readHeader(
-        HANDLE_TRANSPORTDEC hTp,
-        HANDLE_FDK_BITSTREAM hBs,
-        int syncLength,
-        int ignoreBufferFullness,
-        int *pRawDataBlockLength,
-        int *pfTraverseMoreFrames,
-        int *pSyncLayerFrameBits,
-        int *pfConfigFound,
-        int *pHeaderBits
-        )
-{
+static TRANSPORTDEC_ERROR transportDec_readHeader(HANDLE_TRANSPORTDEC hTp, HANDLE_FDK_BITSTREAM hBs, int syncLength,
+                                                  int ignoreBufferFullness, int *pRawDataBlockLength,
+                                                  int *pfTraverseMoreFrames, int *pSyncLayerFrameBits,
+                                                  int *pfConfigFound, int *pHeaderBits) {
   TRANSPORTDEC_ERROR err = TRANSPORTDEC_OK;
   int rawDataBlockLength = *pRawDataBlockLength;
   int fTraverseMoreFrames = (pfTraverseMoreFrames != NULL) ? *pfTraverseMoreFrames : 0;
@@ -546,104 +503,93 @@ static TRANSPORTDEC_ERROR transportDec_readHeader(
   startPos = FDKgetValidBits(hBs);
 
   switch (hTp->transportFmt) {
-    case TT_MP4_ADTS:
-      if (hTp->numberOfRawDataBlocks <= 0)
-      {
-        int errC;
+  case TT_MP4_ADTS:
+    if (hTp->numberOfRawDataBlocks <= 0) {
+      int errC;
 
-        hTp->globalFramePos = FDKgetValidBits(hBs);
+      hTp->globalFramePos = FDKgetValidBits(hBs);
 
-        /* Parse ADTS header */
-        err = adtsRead_DecodeHeader( &hTp->parser.adts, &hTp->asc[0], hBs, ignoreBufferFullness );
-        if (err != TRANSPORTDEC_OK) {
-          if (err != TRANSPORTDEC_NOT_ENOUGH_BITS) {
-            err = TRANSPORTDEC_SYNC_ERROR;
-          }
-        } else {
-          errC = hTp->callbacks.cbUpdateConfig(hTp->callbacks.cbUpdateConfigData, &hTp->asc[0]);
-          if (errC != 0) {
-            if (errC == TRANSPORTDEC_NEED_TO_RESTART) {
-              err = TRANSPORTDEC_NEED_TO_RESTART;
-              goto bail;
-            } else {
-              err = TRANSPORTDEC_SYNC_ERROR;
-            }
+      /* Parse ADTS header */
+      err = adtsRead_DecodeHeader(&hTp->parser.adts, &hTp->asc[0], hBs, ignoreBufferFullness);
+      if (err != TRANSPORTDEC_OK) {
+        if (err != TRANSPORTDEC_NOT_ENOUGH_BITS) {
+          err = TRANSPORTDEC_SYNC_ERROR;
+        }
+      } else {
+        errC = hTp->callbacks.cbUpdateConfig(hTp->callbacks.cbUpdateConfigData, &hTp->asc[0]);
+        if (errC != 0) {
+          if (errC == TRANSPORTDEC_NEED_TO_RESTART) {
+            err = TRANSPORTDEC_NEED_TO_RESTART;
+            goto bail;
           } else {
-            fConfigFound = 1;
-            hTp->numberOfRawDataBlocks = hTp->parser.adts.bs.num_raw_blocks+1;
-          }
-        }
-      }
-      else {
-        /* Reset CRC because the next bits are the beginning of a raw_data_block() */
-        FDKcrcReset(&hTp->parser.adts.crcInfo);
-        hTp->parser.adts.bs.num_pce_bits = 0;
-      }
-      if (err == TRANSPORTDEC_OK) {
-        hTp->numberOfRawDataBlocks--;
-        rawDataBlockLength = adtsRead_GetRawDataBlockLength(&hTp->parser.adts, (hTp->parser.adts.bs.num_raw_blocks-hTp->numberOfRawDataBlocks));
-        if (rawDataBlockLength <= 0) {
-          /* No further frame traversal possible. */
-          fTraverseMoreFrames = 0;
-        }
-        syncLayerFrameBits = (hTp->parser.adts.bs.frame_length<<3) - (startPos - FDKgetValidBits(hBs)) - syncLength;
-        if (syncLayerFrameBits <= 0) {
-          err = TRANSPORTDEC_SYNC_ERROR;
-        }
-      } else {
-        hTp->numberOfRawDataBlocks = 0;
-      }
-      break;
-    case TT_MP4_LOAS:
-      if (hTp->numberOfRawDataBlocks <= 0)
-      {
-        syncLayerFrameBits = FDKreadBits(hBs, 13);
-        hTp->parser.latm.m_audioMuxLengthBytes = syncLayerFrameBits;
-        syncLayerFrameBits <<= 3;
-      }
-    case TT_MP4_LATM_MCP1:
-    case TT_MP4_LATM_MCP0:
-      if (hTp->numberOfRawDataBlocks <= 0)
-      {
-        hTp->globalFramePos = FDKgetValidBits(hBs);
-
-        err = CLatmDemux_Read(
-                hBs,
-               &hTp->parser.latm,
-                hTp->transportFmt,
-               &hTp->callbacks,
-                hTp->asc,
-               &fConfigFound,
-                ignoreBufferFullness);
-
-        if (err != TRANSPORTDEC_OK) {
-          if (err != TRANSPORTDEC_NOT_ENOUGH_BITS) {
             err = TRANSPORTDEC_SYNC_ERROR;
           }
         } else {
-          hTp->numberOfRawDataBlocks = CLatmDemux_GetNrOfSubFrames(&hTp->parser.latm);
-          if (hTp->transportFmt == TT_MP4_LOAS) {
-            syncLayerFrameBits -= startPos - FDKgetValidBits(hBs) - (13);            
-          }
+          fConfigFound = 1;
+          hTp->numberOfRawDataBlocks = hTp->parser.adts.bs.num_raw_blocks + 1;
         }
-      } else {
-        err = CLatmDemux_ReadPayloadLengthInfo(hBs, &hTp->parser.latm);
-        if (err != TRANSPORTDEC_OK) {
+      }
+    } else {
+      /* Reset CRC because the next bits are the beginning of a raw_data_block() */
+      FDKcrcReset(&hTp->parser.adts.crcInfo);
+      hTp->parser.adts.bs.num_pce_bits = 0;
+    }
+    if (err == TRANSPORTDEC_OK) {
+      hTp->numberOfRawDataBlocks--;
+      rawDataBlockLength = adtsRead_GetRawDataBlockLength(
+          &hTp->parser.adts, (hTp->parser.adts.bs.num_raw_blocks - hTp->numberOfRawDataBlocks));
+      if (rawDataBlockLength <= 0) {
+        /* No further frame traversal possible. */
+        fTraverseMoreFrames = 0;
+      }
+      syncLayerFrameBits = (hTp->parser.adts.bs.frame_length << 3) - (startPos - FDKgetValidBits(hBs)) - syncLength;
+      if (syncLayerFrameBits <= 0) {
+        err = TRANSPORTDEC_SYNC_ERROR;
+      }
+    } else {
+      hTp->numberOfRawDataBlocks = 0;
+    }
+    break;
+  case TT_MP4_LOAS:
+    if (hTp->numberOfRawDataBlocks <= 0) {
+      syncLayerFrameBits = FDKreadBits(hBs, 13);
+      hTp->parser.latm.m_audioMuxLengthBytes = syncLayerFrameBits;
+      syncLayerFrameBits <<= 3;
+    }
+  case TT_MP4_LATM_MCP1:
+  case TT_MP4_LATM_MCP0:
+    if (hTp->numberOfRawDataBlocks <= 0) {
+      hTp->globalFramePos = FDKgetValidBits(hBs);
+
+      err = CLatmDemux_Read(
+          hBs, &hTp->parser.latm, hTp->transportFmt, &hTp->callbacks, hTp->asc, &fConfigFound, ignoreBufferFullness);
+
+      if (err != TRANSPORTDEC_OK) {
+        if (err != TRANSPORTDEC_NOT_ENOUGH_BITS) {
           err = TRANSPORTDEC_SYNC_ERROR;
         }
-      }
-      if (err == TRANSPORTDEC_OK) {
-        rawDataBlockLength = CLatmDemux_GetFrameLengthInBits(&hTp->parser.latm);
-        hTp->numberOfRawDataBlocks--;
       } else {
-        hTp->numberOfRawDataBlocks = 0;
+        hTp->numberOfRawDataBlocks = CLatmDemux_GetNrOfSubFrames(&hTp->parser.latm);
+        if (hTp->transportFmt == TT_MP4_LOAS) {
+          syncLayerFrameBits -= startPos - FDKgetValidBits(hBs) - (13);
+        }
       }
-      break;
-    default:
-      {
-        syncLayerFrameBits = 0;
+    } else {
+      err = CLatmDemux_ReadPayloadLengthInfo(hBs, &hTp->parser.latm);
+      if (err != TRANSPORTDEC_OK) {
+        err = TRANSPORTDEC_SYNC_ERROR;
       }
-      break;
+    }
+    if (err == TRANSPORTDEC_OK) {
+      rawDataBlockLength = CLatmDemux_GetFrameLengthInBits(&hTp->parser.latm);
+      hTp->numberOfRawDataBlocks--;
+    } else {
+      hTp->numberOfRawDataBlocks = 0;
+    }
+    break;
+  default: {
+    syncLayerFrameBits = 0;
+  } break;
   }
 
 bail:
@@ -660,7 +606,7 @@ bail:
   if (pfTraverseMoreFrames != NULL) {
     *pfTraverseMoreFrames = fTraverseMoreFrames;
   }
-  if  (pSyncLayerFrameBits != NULL) {
+  if (pSyncLayerFrameBits != NULL) {
     *pSyncLayerFrameBits = syncLayerFrameBits;
   }
   if (pfConfigFound != NULL) {
@@ -673,12 +619,7 @@ bail:
 /* How many bits to advance for synchronization search. */
 #define TPDEC_SYNCSKIP 8
 
-static
-TRANSPORTDEC_ERROR synchronization(
-        HANDLE_TRANSPORTDEC hTp,
-        INT                *pHeaderBits
-        )
-{
+static TRANSPORTDEC_ERROR synchronization(HANDLE_TRANSPORTDEC hTp, INT *pHeaderBits) {
   TRANSPORTDEC_ERROR err = TRANSPORTDEC_OK, errFirstFrame = TRANSPORTDEC_OK;
   HANDLE_FDK_BITSTREAM hBs = &hTp->bitStream[0];
 
@@ -686,14 +627,16 @@ TRANSPORTDEC_ERROR synchronization(
   INT rawDataBlockLength = 0, rawDataBlockLengthPrevious;
   INT totalBits;
   INT headerBits = 0, headerBitsFirstFrame = 0, headerBitsPrevious;
-  INT numFramesTraversed = 0, fTraverseMoreFrames, fConfigFound = (hTp->flags & TPDEC_CONFIG_FOUND), startPosFirstFrame = -1;
-  INT numRawDataBlocksFirstFrame = 0, numRawDataBlocksPrevious, globalFramePosFirstFrame = 0, rawDataBlockLengthFirstFrame = 0;
-  INT ignoreBufferFullness = hTp->flags & (TPDEC_LOST_FRAMES_PENDING|TPDEC_IGNORE_BUFFERFULLNESS|TPDEC_SYNCOK);
+  INT numFramesTraversed = 0, fTraverseMoreFrames, fConfigFound = (hTp->flags & TPDEC_CONFIG_FOUND),
+      startPosFirstFrame = -1;
+  INT numRawDataBlocksFirstFrame = 0, numRawDataBlocksPrevious, globalFramePosFirstFrame = 0,
+      rawDataBlockLengthFirstFrame = 0;
+  INT ignoreBufferFullness = hTp->flags & (TPDEC_LOST_FRAMES_PENDING | TPDEC_IGNORE_BUFFERFULLNESS | TPDEC_SYNCOK);
 
   /* Synch parameters */
-  INT syncLength;      /* Length of sync word in bits */
-  UINT syncWord;       /* Sync word to be found */
-  UINT syncMask;       /* Mask for sync word (for adding one bit, so comprising one bit less) */
+  INT syncLength; /* Length of sync word in bits */
+  UINT syncWord;  /* Sync word to be found */
+  UINT syncMask;  /* Mask for sync word (for adding one bit, so comprising one bit less) */
   C_ALLOC_SCRATCH_START(contextFirstFrame, transportdec_parser_t, 1);
 
   totalBits = (INT)FDKgetValidBits(hBs);
@@ -703,30 +646,30 @@ TRANSPORTDEC_ERROR synchronization(
     goto bail;
   }
 
-  fTraverseMoreFrames = (hTp->flags & (TPDEC_MINIMIZE_DELAY|TPDEC_EARLY_CONFIG)) && ! (hTp->flags & TPDEC_SYNCOK);
+  fTraverseMoreFrames = (hTp->flags & (TPDEC_MINIMIZE_DELAY | TPDEC_EARLY_CONFIG)) && !(hTp->flags & TPDEC_SYNCOK);
 
   /* Set transport specific sync parameters */
   switch (hTp->transportFmt) {
-    case TT_MP4_ADTS:
-      syncWord = ADTS_SYNCWORD;
-      syncLength = ADTS_SYNCLENGTH;
-      break;
-    case TT_MP4_LOAS:
-      syncWord = 0x2B7;
-      syncLength = 11;
-      break;
-    default:
-      syncWord = 0;
-      syncLength = 0;
-      break;
+  case TT_MP4_ADTS:
+    syncWord = ADTS_SYNCWORD;
+    syncLength = ADTS_SYNCLENGTH;
+    break;
+  case TT_MP4_LOAS:
+    syncWord = 0x2B7;
+    syncLength = 11;
+    break;
+  default:
+    syncWord = 0;
+    syncLength = 0;
+    break;
   }
 
-  syncMask = (1<<syncLength)-1;
+  syncMask = (1 << syncLength) - 1;
 
   do {
-    INT bitsAvail = 0;     /* Bits available in bitstream buffer    */
-    INT checkLengthBits;   /* Helper to check remaining bits and buffer boundaries */
-    UINT synch;            /* Current sync word read from bitstream */
+    INT bitsAvail = 0;   /* Bits available in bitstream buffer    */
+    INT checkLengthBits; /* Helper to check remaining bits and buffer boundaries */
+    UINT synch;          /* Current sync word read from bitstream */
 
     headerBitsPrevious = headerBits;
 
@@ -735,17 +678,17 @@ TRANSPORTDEC_ERROR synchronization(
     if (hTp->numberOfRawDataBlocks == 0) {
       /* search synchword */
 
-      FDK_ASSERT( (bitsAvail % TPDEC_SYNCSKIP) == 0);
+      FDK_ASSERT((bitsAvail % TPDEC_SYNCSKIP) == 0);
 
-      if ((bitsAvail-syncLength) < TPDEC_SYNCSKIP) {
+      if ((bitsAvail - syncLength) < TPDEC_SYNCSKIP) {
         err = TRANSPORTDEC_NOT_ENOUGH_BITS;
         headerBits = 0;
       } else {
 
         synch = FDKreadBits(hBs, syncLength);
 
-        if ( !(hTp->flags & TPDEC_SYNCOK) ) {
-          for (; (bitsAvail-syncLength) >= TPDEC_SYNCSKIP; bitsAvail-=TPDEC_SYNCSKIP) {
+        if (!(hTp->flags & TPDEC_SYNCOK)) {
+          for (; (bitsAvail - syncLength) >= TPDEC_SYNCSKIP; bitsAvail -= TPDEC_SYNCSKIP) {
             if (synch == syncWord) {
               break;
             }
@@ -770,34 +713,31 @@ TRANSPORTDEC_ERROR synchronization(
 
     /* Parse transport header (raw data block granularity) */
 
-    if (err == TRANSPORTDEC_OK )
-    {
-      err = transportDec_readHeader(
-              hTp,
-              hBs,
-              syncLength,
-              ignoreBufferFullness,
-             &rawDataBlockLength,
-             &fTraverseMoreFrames,
-             &syncLayerFrameBits,
-             &fConfigFound,
-             &headerBits
-              );
+    if (err == TRANSPORTDEC_OK) {
+      err = transportDec_readHeader(hTp,
+                                    hBs,
+                                    syncLength,
+                                    ignoreBufferFullness,
+                                    &rawDataBlockLength,
+                                    &fTraverseMoreFrames,
+                                    &syncLayerFrameBits,
+                                    &fConfigFound,
+                                    &headerBits);
     }
 
     bitsAvail -= headerBits;
 
-    checkLengthBits  = syncLayerFrameBits;
+    checkLengthBits = syncLayerFrameBits;
 
     /* Check if the whole frame would fit the bitstream buffer */
     if (err == TRANSPORTDEC_OK) {
-      if ( (checkLengthBits+headerBits) > ((TRANSPORTDEC_INBUF_SIZE<<3)-7) ) {
+      if ((checkLengthBits + headerBits) > ((TRANSPORTDEC_INBUF_SIZE << 3) - 7)) {
         /* We assume that the size of the transport bit buffer has been
            chosen to meet all system requirements, thus this condition
            is considered a synchronisation error. */
         err = TRANSPORTDEC_SYNC_ERROR;
       } else {
-        if ( bitsAvail < checkLengthBits ) {
+        if (bitsAvail < checkLengthBits) {
           err = TRANSPORTDEC_NOT_ENOUGH_BITS;
         }
       }
@@ -806,7 +746,6 @@ TRANSPORTDEC_ERROR synchronization(
     if (err == TRANSPORTDEC_NOT_ENOUGH_BITS) {
       break;
     }
-
 
     if (err == TRANSPORTDEC_SYNC_ERROR) {
       int bits;
@@ -823,16 +762,14 @@ TRANSPORTDEC_ERROR synchronization(
     }
 
     /* Frame traversal */
-    if ( fTraverseMoreFrames )
-    {
+    if (fTraverseMoreFrames) {
       /* Save parser context for early config discovery "rewind all frames" */
-      if ( (hTp->flags & TPDEC_EARLY_CONFIG) && !(hTp->flags & TPDEC_MINIMIZE_DELAY))
-      {
+      if ((hTp->flags & TPDEC_EARLY_CONFIG) && !(hTp->flags & TPDEC_MINIMIZE_DELAY)) {
         /* ignore buffer fullness if just traversing additional frames for ECD */
         ignoreBufferFullness = 1;
 
         /* Save context in order to return later */
-        if ( err == TRANSPORTDEC_OK && startPosFirstFrame == -1 ) {
+        if (err == TRANSPORTDEC_OK && startPosFirstFrame == -1) {
           startPosFirstFrame = FDKgetValidBits(hBs);
           numRawDataBlocksFirstFrame = hTp->numberOfRawDataBlocks;
           globalFramePosFirstFrame = hTp->globalFramePos;
@@ -843,11 +780,9 @@ TRANSPORTDEC_ERROR synchronization(
         }
 
         /* Break when config was found or it is not possible anymore to find a config */
-        if (startPosFirstFrame != -1 && (fConfigFound || err != TRANSPORTDEC_OK))
-        {
+        if (startPosFirstFrame != -1 && (fConfigFound || err != TRANSPORTDEC_OK)) {
           /* In case of ECD and sync error, do not rewind anywhere. */
-          if (err == TRANSPORTDEC_SYNC_ERROR)
-          {
+          if (err == TRANSPORTDEC_SYNC_ERROR) {
             startPosFirstFrame = -1;
             fConfigFound = 0;
             numFramesTraversed = 0;
@@ -864,10 +799,10 @@ TRANSPORTDEC_ERROR synchronization(
         transportDec_AdjustEndOfAccessUnit(hTp);
       }
     }
-  } while ( fTraverseMoreFrames || (err == TRANSPORTDEC_SYNC_ERROR && !(hTp->flags & TPDEC_SYNCOK)));
+  } while (fTraverseMoreFrames || (err == TRANSPORTDEC_SYNC_ERROR && !(hTp->flags & TPDEC_SYNCOK)));
 
   /* Restore context in case of ECD frame traversal */
-  if ( startPosFirstFrame != -1 && (fConfigFound || err != TRANSPORTDEC_OK) ) {
+  if (startPosFirstFrame != -1 && (fConfigFound || err != TRANSPORTDEC_OK)) {
     FDKpushBiDirectional(hBs, FDKgetValidBits(hBs) - startPosFirstFrame);
     FDKmemcpy(&hTp->parser, contextFirstFrame, sizeof(transportdec_parser_t));
     hTp->numberOfRawDataBlocks = numRawDataBlocksFirstFrame;
@@ -876,22 +811,22 @@ TRANSPORTDEC_ERROR synchronization(
     headerBits = headerBitsFirstFrame;
     err = errFirstFrame;
     numFramesTraversed = 0;
-  } 
+  }
 
   /* Additional burst data mode buffer fullness check. */
-  if ( !(hTp->flags & (TPDEC_LOST_FRAMES_PENDING|TPDEC_IGNORE_BUFFERFULLNESS|TPDEC_SYNCOK)) && err == TRANSPORTDEC_OK) {
+  if (!(hTp->flags & (TPDEC_LOST_FRAMES_PENDING | TPDEC_IGNORE_BUFFERFULLNESS | TPDEC_SYNCOK)) &&
+      err == TRANSPORTDEC_OK) {
     err = additionalHoldOffNeeded(hTp, transportDec_GetBufferFullness(hTp), FDKgetValidBits(hBs) - syncLayerFrameBits);
     if (err == TRANSPORTDEC_NOT_ENOUGH_BITS) {
       hTp->holdOffFrames++;
     }
   }
-  
+
   /* Rewind for retry because of not enough bits */
   if (err == TRANSPORTDEC_NOT_ENOUGH_BITS) {
     FDKpushBack(hBs, headerBits);
     headerBits = 0;
-  }
-  else {
+  } else {
     /* reset hold off frame counter */
     hTp->holdOffFrames = 0;
   }
@@ -911,8 +846,8 @@ bail:
 
   /* Detect pointless TRANSPORTDEC_NOT_ENOUGH_BITS error case, were the bit buffer is already full,
      or no new burst packet fits. Recover by advancing the bit buffer. */
-  if ( (TRANSPORTDEC_NOT_ENOUGH_BITS == err) &&  (FDKgetValidBits(hBs) >= ((TRANSPORTDEC_INBUF_SIZE*8 - ((hTp->avgBitRate*hTp->burstPeriod)/1000)) - 7)) )
-  {
+  if ((TRANSPORTDEC_NOT_ENOUGH_BITS == err) &&
+      (FDKgetValidBits(hBs) >= ((TRANSPORTDEC_INBUF_SIZE * 8 - ((hTp->avgBitRate * hTp->burstPeriod) / 1000)) - 7))) {
     FDKpushFor(hBs, TPDEC_SYNCSKIP);
     err = TRANSPORTDEC_SYNC_ERROR;
   }
@@ -942,9 +877,7 @@ bail:
  * \brief Synchronize to stream and estimate the amount of missing access units due
  *        to a current synchronization error in case of constant average bit rate.
  */
-static
-TRANSPORTDEC_ERROR transportDec_readStream ( HANDLE_TRANSPORTDEC hTp, const UINT layer )
-{
+static TRANSPORTDEC_ERROR transportDec_readStream(HANDLE_TRANSPORTDEC hTp, const UINT layer) {
 
   TRANSPORTDEC_ERROR error = TRANSPORTDEC_OK;
   HANDLE_FDK_BITSTREAM hBs = &hTp->bitStream[layer];
@@ -957,16 +890,12 @@ TRANSPORTDEC_ERROR transportDec_readStream ( HANDLE_TRANSPORTDEC hTp, const UINT
   error = synchronization(hTp, &headerBits);
   bitDistance -= FDKgetValidBits(hBs);
 
-
   FDK_ASSERT(bitDistance >= 0);
 
-  if (error == TRANSPORTDEC_SYNC_ERROR || (hTp->flags & TPDEC_LOST_FRAMES_PENDING))
-  {
+  if (error == TRANSPORTDEC_SYNC_ERROR || (hTp->flags & TPDEC_LOST_FRAMES_PENDING)) {
     /* Check if estimating lost access units is feasible. */
-    if (hTp->avgBitRate > 0 && hTp->asc[0].m_samplesPerFrame > 0 && hTp->asc[0].m_samplingFrequency > 0)
-    {
-      if (error == TRANSPORTDEC_OK)
-      {
+    if (hTp->avgBitRate > 0 && hTp->asc[0].m_samplesPerFrame > 0 && hTp->asc[0].m_samplingFrequency > 0) {
+      if (error == TRANSPORTDEC_OK) {
         int aj;
 
         aj = transportDec_GetBufferFullness(hTp);
@@ -983,10 +912,10 @@ TRANSPORTDEC_ERROR transportDec_readStream ( HANDLE_TRANSPORTDEC hTp, const UINT
            bufferfulness math. */
         bitDistance += hTp->auLength[0];
       } else {
-        if ( !(hTp->flags & TPDEC_LOST_FRAMES_PENDING) ) {
+        if (!(hTp->flags & TPDEC_LOST_FRAMES_PENDING)) {
           /* sync not ok: one of many bad access units. */
           hTp->flags |= TPDEC_LOST_FRAMES_PENDING;
-          bfDelta = - (INT)hTp->lastValidBufferFullness;
+          bfDelta = -(INT)hTp->lastValidBufferFullness;
         } else {
           bfDelta = 0;
         }
@@ -1005,19 +934,18 @@ TRANSPORTDEC_ERROR transportDec_readStream ( HANDLE_TRANSPORTDEC hTp, const UINT
           hTp->remainder = num;
         }
 
-        if (error == TRANSPORTDEC_OK)
-        {
+        if (error == TRANSPORTDEC_OK) {
           /* Final adjustment of remainder, taken -1 into account because current
              frame should not be skipped, thus substract -1 or do nothing instead
              of +1-1 accordingly. */
-          if ( (denom - hTp->remainder) >= hTp->remainder ) {
+          if ((denom - hTp->remainder) >= hTp->remainder) {
             nAU--;
           }
-            
+
           if (nAU < 0) {
             /* There was one frame too much concealed, so unfortunately we will have to skip one good frame. */
             transportDec_EndAccessUnit(hTp);
-            error = synchronization(hTp, &headerBits);             
+            error = synchronization(hTp, &headerBits);
             nAU = -1;
 #ifdef DEBUG
             FDKprintf("ERROR: Bufferfullness accounting failed. remainder=%d, nAU=%d\n", hTp->remainder, nAU);
@@ -1046,8 +974,7 @@ TRANSPORTDEC_ERROR transportDec_readStream ( HANDLE_TRANSPORTDEC hTp, const UINT
 }
 
 /* returns error code */
-TRANSPORTDEC_ERROR transportDec_ReadAccessUnit( const HANDLE_TRANSPORTDEC hTp, const UINT layer )
-{
+TRANSPORTDEC_ERROR transportDec_ReadAccessUnit(const HANDLE_TRANSPORTDEC hTp, const UINT layer) {
   TRANSPORTDEC_ERROR err = TRANSPORTDEC_OK;
   HANDLE_FDK_BITSTREAM hBs;
 
@@ -1063,69 +990,66 @@ TRANSPORTDEC_ERROR transportDec_ReadAccessUnit( const HANDLE_TRANSPORTDEC hTp, c
 
   switch (hTp->transportFmt) {
 
-    case TT_MP4_ADIF:
-      /* Read header if not already done */
-      if (!(hTp->flags & TPDEC_CONFIG_FOUND))
+  case TT_MP4_ADIF:
+    /* Read header if not already done */
+    if (!(hTp->flags & TPDEC_CONFIG_FOUND)) {
+      CProgramConfig *pce;
+
+      AudioSpecificConfig_Init(&hTp->asc[0]);
+      pce = &hTp->asc[0].m_progrConfigElement;
+      err = adifRead_DecodeHeader(&hTp->parser.adif, pce, hBs);
+      if (err)
+        goto bail;
+
+      /* Map adif header to ASC */
+      hTp->asc[0].m_aot = (AUDIO_OBJECT_TYPE)(pce->Profile + 1);
+      hTp->asc[0].m_samplingFrequencyIndex = pce->SamplingFrequencyIndex;
+      hTp->asc[0].m_samplingFrequency = SamplingRateTable[pce->SamplingFrequencyIndex];
+      hTp->asc[0].m_channelConfiguration = 0;
+      hTp->asc[0].m_samplesPerFrame = 1024;
+      hTp->avgBitRate = hTp->parser.adif.BitRate;
+
+      /* Call callback to decoder. */
       {
-        CProgramConfig *pce;
+        int errC;
 
-        AudioSpecificConfig_Init(&hTp->asc[0]);
-        pce = &hTp->asc[0].m_progrConfigElement;
-        err = adifRead_DecodeHeader(&hTp->parser.adif, pce, hBs);
-        if (err)
-          goto bail;
-
-        /* Map adif header to ASC */
-        hTp->asc[0].m_aot                    = (AUDIO_OBJECT_TYPE)(pce->Profile + 1);
-        hTp->asc[0].m_samplingFrequencyIndex = pce->SamplingFrequencyIndex;
-        hTp->asc[0].m_samplingFrequency      = SamplingRateTable[pce->SamplingFrequencyIndex];
-        hTp->asc[0].m_channelConfiguration   = 0;
-        hTp->asc[0].m_samplesPerFrame        = 1024;
-        hTp->avgBitRate                      = hTp->parser.adif.BitRate;
-
-        /* Call callback to decoder. */
-        {
-          int errC;
-
-          errC = hTp->callbacks.cbUpdateConfig(hTp->callbacks.cbUpdateConfigData, &hTp->asc[0]);
-          if (errC == 0) {
-            hTp->flags |= TPDEC_CONFIG_FOUND;
-          } else {
-            err = TRANSPORTDEC_PARSE_ERROR;
-            goto bail;
-          }
-        }
-      }
-      hTp->auLength[layer] = -1; /* Access Unit data length is unknown. */
-      break;
-
-    case TT_MP4_RAW:
-    case TT_DRM:
-      /* One Access Unit was filled into buffer.
-         So get the length out of the buffer. */
-      hTp->auLength[layer] = FDKgetValidBits(hBs);
-      hTp->flags |= TPDEC_SYNCOK;
-      break;
-
-    case TT_MP4_LATM_MCP0:
-    case TT_MP4_LATM_MCP1:
-      {
-        int fConfigFound = hTp->flags & TPDEC_CONFIG_FOUND;
-        err = transportDec_readHeader(hTp, hBs, 0, 1, &hTp->auLength[layer], NULL, NULL, &fConfigFound, NULL);
-        if (fConfigFound) {
+        errC = hTp->callbacks.cbUpdateConfig(hTp->callbacks.cbUpdateConfigData, &hTp->asc[0]);
+        if (errC == 0) {
           hTp->flags |= TPDEC_CONFIG_FOUND;
+        } else {
+          err = TRANSPORTDEC_PARSE_ERROR;
+          goto bail;
         }
       }
-      break;
+    }
+    hTp->auLength[layer] = -1; /* Access Unit data length is unknown. */
+    break;
 
-    case TT_MP4_ADTS:
-    case TT_MP4_LOAS:
-      err = transportDec_readStream(hTp, layer);
-      break;
+  case TT_MP4_RAW:
+  case TT_DRM:
+    /* One Access Unit was filled into buffer.
+       So get the length out of the buffer. */
+    hTp->auLength[layer] = FDKgetValidBits(hBs);
+    hTp->flags |= TPDEC_SYNCOK;
+    break;
 
-    default:
-      err = TRANSPORTDEC_UNSUPPORTED_FORMAT;
-      break;
+  case TT_MP4_LATM_MCP0:
+  case TT_MP4_LATM_MCP1: {
+    int fConfigFound = hTp->flags & TPDEC_CONFIG_FOUND;
+    err = transportDec_readHeader(hTp, hBs, 0, 1, &hTp->auLength[layer], NULL, NULL, &fConfigFound, NULL);
+    if (fConfigFound) {
+      hTp->flags |= TPDEC_CONFIG_FOUND;
+    }
+  } break;
+
+  case TT_MP4_ADTS:
+  case TT_MP4_LOAS:
+    err = transportDec_readStream(hTp, layer);
+    break;
+
+  default:
+    err = TRANSPORTDEC_UNSUPPORTED_FORMAT;
+    break;
   }
 
   if (err == TRANSPORTDEC_OK) {
@@ -1138,8 +1062,7 @@ bail:
   return err;
 }
 
-INT transportDec_GetAuBitsRemaining( const HANDLE_TRANSPORTDEC hTp, const UINT layer )
-{
+INT transportDec_GetAuBitsRemaining(const HANDLE_TRANSPORTDEC hTp, const UINT layer) {
   INT bits;
 
   if (hTp->accessUnitAnchor[layer] > 0 && hTp->auLength[layer] > 0) {
@@ -1151,115 +1074,102 @@ INT transportDec_GetAuBitsRemaining( const HANDLE_TRANSPORTDEC hTp, const UINT l
   return bits;
 }
 
-INT transportDec_GetAuBitsTotal( const HANDLE_TRANSPORTDEC hTp, const UINT layer )
-{
-  return hTp->auLength[layer];
-}
+INT transportDec_GetAuBitsTotal(const HANDLE_TRANSPORTDEC hTp, const UINT layer) { return hTp->auLength[layer]; }
 
-TRANSPORTDEC_ERROR transportDec_GetMissingAccessUnitCount ( INT *pNAccessUnits, HANDLE_TRANSPORTDEC hTp )
-{
+TRANSPORTDEC_ERROR transportDec_GetMissingAccessUnitCount(INT *pNAccessUnits, HANDLE_TRANSPORTDEC hTp) {
   *pNAccessUnits = hTp->missingAccessUnits;
 
   return TRANSPORTDEC_OK;
 }
 
 /* Inform the transportDec layer that reading of access unit has finished. */
-TRANSPORTDEC_ERROR transportDec_EndAccessUnit(HANDLE_TRANSPORTDEC hTp)
-{
+TRANSPORTDEC_ERROR transportDec_EndAccessUnit(HANDLE_TRANSPORTDEC hTp) {
   TRANSPORTDEC_ERROR err = TRANSPORTDEC_OK;
-
 
   err = transportDec_AdjustEndOfAccessUnit(hTp);
 
   switch (hTp->transportFmt) {
-    default:
-      break;
+  default:
+    break;
   }
 
   return err;
 }
 
-TRANSPORTDEC_ERROR transportDec_SetParam ( const HANDLE_TRANSPORTDEC hTp,
-                                           const TPDEC_PARAM        param,
-                                           const INT                value)
-{
+TRANSPORTDEC_ERROR transportDec_SetParam(const HANDLE_TRANSPORTDEC hTp, const TPDEC_PARAM param, const INT value) {
   TRANSPORTDEC_ERROR error = TRANSPORTDEC_OK;
 
   switch (param) {
-    case TPDEC_PARAM_MINIMIZE_DELAY:
-      if (value) {
-        hTp->flags |= TPDEC_MINIMIZE_DELAY;
-      } else {
-        hTp->flags &= ~TPDEC_MINIMIZE_DELAY;
-      }
-      break;
-    case TPDEC_PARAM_EARLY_CONFIG:
-      if (value) {
-        hTp->flags |= TPDEC_EARLY_CONFIG;
-      } else {
-        hTp->flags &= ~TPDEC_EARLY_CONFIG;
-      }
-      break;
-    case TPDEC_PARAM_IGNORE_BUFFERFULLNESS:
-      if (value) {
-        hTp->flags |= TPDEC_IGNORE_BUFFERFULLNESS;
-      } else {
-        hTp->flags &= ~TPDEC_IGNORE_BUFFERFULLNESS;
-      }
-      break;
-    case TPDEC_PARAM_SET_BITRATE:
-      hTp->avgBitRate = value;
-      break;
-    case TPDEC_PARAM_BURST_PERIOD:
-      hTp->burstPeriod = value;
-      break;
-    case TPDEC_PARAM_RESET:
-      {
-        int i;
+  case TPDEC_PARAM_MINIMIZE_DELAY:
+    if (value) {
+      hTp->flags |= TPDEC_MINIMIZE_DELAY;
+    } else {
+      hTp->flags &= ~TPDEC_MINIMIZE_DELAY;
+    }
+    break;
+  case TPDEC_PARAM_EARLY_CONFIG:
+    if (value) {
+      hTp->flags |= TPDEC_EARLY_CONFIG;
+    } else {
+      hTp->flags &= ~TPDEC_EARLY_CONFIG;
+    }
+    break;
+  case TPDEC_PARAM_IGNORE_BUFFERFULLNESS:
+    if (value) {
+      hTp->flags |= TPDEC_IGNORE_BUFFERFULLNESS;
+    } else {
+      hTp->flags &= ~TPDEC_IGNORE_BUFFERFULLNESS;
+    }
+    break;
+  case TPDEC_PARAM_SET_BITRATE:
+    hTp->avgBitRate = value;
+    break;
+  case TPDEC_PARAM_BURST_PERIOD:
+    hTp->burstPeriod = value;
+    break;
+  case TPDEC_PARAM_RESET: {
+    int i;
 
-        for (i=0; i<(1*2); i++) {
-          FDKresetBitbuffer(&hTp->bitStream[i]);
-          hTp->auLength[i] = 0;
-          hTp->accessUnitAnchor[i] = 0;
-        }
-        hTp->flags &= ~(TPDEC_SYNCOK|TPDEC_LOST_FRAMES_PENDING);
-        if (hTp->transportFmt != TT_MP4_ADIF) {
-          hTp->flags &= ~TPDEC_CONFIG_FOUND;
-        }
-        hTp->remainder = 0;
-        hTp->avgBitRate = 0;
-        hTp->missingAccessUnits = 0;
-        hTp->numberOfRawDataBlocks = 0;
-        hTp->globalFramePos = 0;
-        hTp->holdOffFrames = 0;
-      }
-      break;
+    for (i = 0; i < (1 * 2); i++) {
+      FDKresetBitbuffer(&hTp->bitStream[i]);
+      hTp->auLength[i] = 0;
+      hTp->accessUnitAnchor[i] = 0;
+    }
+    hTp->flags &= ~(TPDEC_SYNCOK | TPDEC_LOST_FRAMES_PENDING);
+    if (hTp->transportFmt != TT_MP4_ADIF) {
+      hTp->flags &= ~TPDEC_CONFIG_FOUND;
+    }
+    hTp->remainder = 0;
+    hTp->avgBitRate = 0;
+    hTp->missingAccessUnits = 0;
+    hTp->numberOfRawDataBlocks = 0;
+    hTp->globalFramePos = 0;
+    hTp->holdOffFrames = 0;
+  } break;
   }
 
   return error;
 }
 
-UINT transportDec_GetNrOfSubFrames(HANDLE_TRANSPORTDEC hTp)
-{
+UINT transportDec_GetNrOfSubFrames(HANDLE_TRANSPORTDEC hTp) {
   UINT nSubFrames = 0;
 
   if (hTp == NULL)
     return 0;
 
-  if (hTp->transportFmt==TT_MP4_LATM_MCP1 || hTp->transportFmt==TT_MP4_LATM_MCP0 || hTp->transportFmt==TT_MP4_LOAS)
+  if (hTp->transportFmt == TT_MP4_LATM_MCP1 || hTp->transportFmt == TT_MP4_LATM_MCP0 ||
+      hTp->transportFmt == TT_MP4_LOAS)
     nSubFrames = CLatmDemux_GetNrOfSubFrames(&hTp->parser.latm);
-  else if (hTp->transportFmt==TT_MP4_ADTS)
+  else if (hTp->transportFmt == TT_MP4_ADTS)
     nSubFrames = hTp->parser.adts.bs.num_raw_blocks;
 
   return nSubFrames;
 }
 
-void transportDec_Close(HANDLE_TRANSPORTDEC *phTp)
-{
-  if (phTp != NULL)
-  {
+void transportDec_Close(HANDLE_TRANSPORTDEC *phTp) {
+  if (phTp != NULL) {
     if (*phTp != NULL) {
-      if ( ! TT_IS_PACKET((*phTp)->transportFmt) ) {
+      if (!TT_IS_PACKET((*phTp)->transportFmt)) {
         FreeRam_TransportDecoderBuffer(&(*phTp)->bsBuffer);
       }
       if (*phTp != NULL) {
@@ -1269,8 +1179,7 @@ void transportDec_Close(HANDLE_TRANSPORTDEC *phTp)
   }
 }
 
-TRANSPORTDEC_ERROR transportDec_GetLibInfo( LIB_INFO *info )
-{
+TRANSPORTDEC_ERROR transportDec_GetLibInfo(LIB_INFO *info) {
   int i;
 
   if (info == NULL) {
@@ -1279,12 +1188,14 @@ TRANSPORTDEC_ERROR transportDec_GetLibInfo( LIB_INFO *info )
 
   /* search for next free tab */
   for (i = 0; i < FDK_MODULE_LAST; i++) {
-    if (info[i].module_id == FDK_NONE) break;
+    if (info[i].module_id == FDK_NONE)
+      break;
   }
-  if (i == FDK_MODULE_LAST) return TRANSPORTDEC_UNKOWN_ERROR;
+  if (i == FDK_MODULE_LAST)
+    return TRANSPORTDEC_UNKOWN_ERROR;
   info += i;
 
-  info->module_id  = FDK_TPDEC;
+  info->module_id = FDK_TPDEC;
 #ifdef __ANDROID__
   info->build_date = "";
   info->build_time = "";
@@ -1292,24 +1203,15 @@ TRANSPORTDEC_ERROR transportDec_GetLibInfo( LIB_INFO *info )
   info->build_date = __DATE__;
   info->build_time = __TIME__;
 #endif
-  info->title      = TP_LIB_TITLE;
-  info->version    = LIB_VERSION(TP_LIB_VL0, TP_LIB_VL1, TP_LIB_VL2);
+  info->title = TP_LIB_TITLE;
+  info->version = LIB_VERSION(TP_LIB_VL0, TP_LIB_VL1, TP_LIB_VL2);
   LIB_VERSION_STRING(info);
-  info->flags = 0
-    | CAPF_ADIF
-    | CAPF_ADTS
-    | CAPF_LATM
-    | CAPF_LOAS
-    | CAPF_RAWPACKETS
-    | CAPF_DRM
-    ;
+  info->flags = 0 | CAPF_ADIF | CAPF_ADTS | CAPF_LATM | CAPF_LOAS | CAPF_RAWPACKETS | CAPF_DRM;
 
   return TRANSPORTDEC_OK; /* FDKERR_NOERROR; */
 }
 
-
-int  transportDec_CrcStartReg(HANDLE_TRANSPORTDEC pTp, INT mBits)
-{
+int transportDec_CrcStartReg(HANDLE_TRANSPORTDEC pTp, INT mBits) {
   switch (pTp->transportFmt) {
   case TT_MP4_ADTS:
     return adtsRead_CrcStartReg(&pTp->parser.adts, &pTp->bitStream[0], mBits);
@@ -1320,8 +1222,7 @@ int  transportDec_CrcStartReg(HANDLE_TRANSPORTDEC pTp, INT mBits)
   }
 }
 
-void transportDec_CrcEndReg(HANDLE_TRANSPORTDEC pTp, INT reg)
-{
+void transportDec_CrcEndReg(HANDLE_TRANSPORTDEC pTp, INT reg) {
   switch (pTp->transportFmt) {
   case TT_MP4_ADTS:
     adtsRead_CrcEndReg(&pTp->parser.adts, &pTp->bitStream[0], reg);
@@ -1334,14 +1235,12 @@ void transportDec_CrcEndReg(HANDLE_TRANSPORTDEC pTp, INT reg)
   }
 }
 
-TRANSPORTDEC_ERROR transportDec_CrcCheck(HANDLE_TRANSPORTDEC pTp)
-{
+TRANSPORTDEC_ERROR transportDec_CrcCheck(HANDLE_TRANSPORTDEC pTp) {
   switch (pTp->transportFmt) {
   case TT_MP4_ADTS:
-    if ( (pTp->parser.adts.bs.num_raw_blocks > 0) && (pTp->parser.adts.bs.protection_absent == 0) )
-    {
+    if ((pTp->parser.adts.bs.num_raw_blocks > 0) && (pTp->parser.adts.bs.protection_absent == 0)) {
       HANDLE_FDK_BITSTREAM hBs = &pTp->bitStream[0];
-      
+
       transportDec_AdjustEndOfAccessUnit(pTp);
     }
     return adtsRead_CrcCheck(&pTp->parser.adts);

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+?Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -90,37 +90,29 @@ amm-info@iis.fraunhofer.de
 
 #include "tpenc_adts.h"
 
-
-#include "tpenc_lib.h"
 #include "tpenc_asc.h"
+#include "tpenc_lib.h"
 
-
-int adtsWrite_CrcStartReg(
-                                 HANDLE_ADTS pAdts,          /*!< pointer to adts stucture */
-                                 HANDLE_FDK_BITSTREAM hBs,   /*!< handle to current bit buffer structure */
-                                 int mBits                   /*!< number of bits in crc region */
-                                )
-{
+int adtsWrite_CrcStartReg(HANDLE_ADTS pAdts,        /*!< pointer to adts stucture */
+                          HANDLE_FDK_BITSTREAM hBs, /*!< handle to current bit buffer structure */
+                          int mBits                 /*!< number of bits in crc region */
+) {
   if (pAdts->protection_absent) {
     return 0;
   }
-  return ( FDKcrcStartReg(&pAdts->crcInfo, hBs, mBits) );
+  return (FDKcrcStartReg(&pAdts->crcInfo, hBs, mBits));
 }
 
-void adtsWrite_CrcEndReg(
-                                HANDLE_ADTS pAdts, /*!< pointer to adts crc info stucture */
-                                HANDLE_FDK_BITSTREAM hBs,   /*!< handle to current bit buffer structure */
-                                int reg                    /*!< crc region */
-                               )
-{
-  if (pAdts->protection_absent == 0)
-  {
+void adtsWrite_CrcEndReg(HANDLE_ADTS pAdts,        /*!< pointer to adts crc info stucture */
+                         HANDLE_FDK_BITSTREAM hBs, /*!< handle to current bit buffer structure */
+                         int reg                   /*!< crc region */
+) {
+  if (pAdts->protection_absent == 0) {
     FDKcrcEndReg(&pAdts->crcInfo, hBs, reg);
   }
 }
 
-int adtsWrite_GetHeaderBits( HANDLE_ADTS hAdts )
-{
+int adtsWrite_GetHeaderBits(HANDLE_ADTS hAdts) {
   int bits = 0;
 
   if (hAdts->currentBlock == 0) {
@@ -129,13 +121,13 @@ int adtsWrite_GetHeaderBits( HANDLE_ADTS hAdts )
     if (!hAdts->protection_absent) {
       /* Add header/ single raw data block CRC bits */
       bits += 16;
-      if (hAdts->num_raw_blocks>0) {
+      if (hAdts->num_raw_blocks > 0) {
         /* Add bits of raw data block position markers */
-        bits += (hAdts->num_raw_blocks)*16;
+        bits += (hAdts->num_raw_blocks) * 16;
       }
     }
   }
-  if (!hAdts->protection_absent && hAdts->num_raw_blocks>0) {
+  if (!hAdts->protection_absent && hAdts->num_raw_blocks > 0) {
     /* Add raw data block CRC bits. Not really part of the header, put they cause bit overhead to be accounted. */
     bits += 16;
   }
@@ -145,13 +137,9 @@ int adtsWrite_GetHeaderBits( HANDLE_ADTS hAdts )
   return bits;
 }
 
-INT adtsWrite_Init(HANDLE_ADTS hAdts, CODER_CONFIG *config)
-{
+INT adtsWrite_Init(HANDLE_ADTS hAdts, CODER_CONFIG *config) {
   /* Sanity checks */
-  if ( config->nSubFrames < 1
-    || config->nSubFrames > 4
-    || (int)config->aot > 4
-    || (int)config->aot < 1 ) {
+  if (config->nSubFrames < 1 || config->nSubFrames > 4 || (int)config->aot > 4 || (int)config->aot < 1) {
     return -1;
   }
 
@@ -161,41 +149,35 @@ INT adtsWrite_Init(HANDLE_ADTS hAdts, CODER_CONFIG *config)
   } else {
     hAdts->mpeg_id = 1; /* MPEG 2 */
   }
-  hAdts->layer=0;
-  hAdts->protection_absent = ! (config->flags & CC_PROTECTION);
+  hAdts->layer = 0;
+  hAdts->protection_absent = !(config->flags & CC_PROTECTION);
   hAdts->profile = ((int)config->aot) - 1;
   hAdts->sample_freq_index = getSamplingRateIndex(config->samplingRate);
   hAdts->sample_freq = config->samplingRate;
-  hAdts->private_bit=0;
+  hAdts->private_bit = 0;
   hAdts->channel_mode = config->channelMode;
-  hAdts->original=0;
-  hAdts->home=0;
+  hAdts->original = 0;
+  hAdts->home = 0;
   /* variable header */
-  hAdts->copyright_id=0;
-  hAdts->copyright_start=0;
+  hAdts->copyright_id = 0;
+  hAdts->copyright_start = 0;
 
-  hAdts->num_raw_blocks=config->nSubFrames-1; /* 0 means 1 raw data block */
+  hAdts->num_raw_blocks = config->nSubFrames - 1; /* 0 means 1 raw data block */
 
   FDKcrcInit(&hAdts->crcInfo, 0x8005, 0xFFFF, 16);
 
   hAdts->currentBlock = 0;
 
-
   return 0;
 }
 
-int adtsWrite_EncodeHeader(HANDLE_ADTS hAdts,
-                                 HANDLE_FDK_BITSTREAM hBitStream,
-                                 int buffer_fullness,
-                                 int frame_length)
-{
+int adtsWrite_EncodeHeader(HANDLE_ADTS hAdts, HANDLE_FDK_BITSTREAM hBitStream, int buffer_fullness, int frame_length) {
   INT crcIndex = 0;
-
 
   hAdts->headerBits = adtsWrite_GetHeaderBits(hAdts);
 
-  FDK_ASSERT(((frame_length+hAdts->headerBits)/8)<0x2000);      /*13 bit*/
-  FDK_ASSERT(buffer_fullness<0x800);    /* 11 bit   */
+  FDK_ASSERT(((frame_length + hAdts->headerBits) / 8) < 0x2000); /*13 bit*/
+  FDK_ASSERT(buffer_fullness < 0x800);                           /* 11 bit   */
 
   if (!hAdts->protection_absent) {
     FDKcrcReset(&hAdts->crcInfo);
@@ -208,8 +190,7 @@ int adtsWrite_EncodeHeader(HANDLE_ADTS hAdts,
   hAdts->subFrameStartBit = FDKgetValidBits(hBitStream);
 
   /* Skip new header if this is raw data block 1..n */
-  if (hAdts->currentBlock == 0)
-  {
+  if (hAdts->currentBlock == 0) {
     FDKresetBitbuffer(hBitStream, BS_WRITER);
 
     if (hAdts->num_raw_blocks == 0) {
@@ -230,7 +211,7 @@ int adtsWrite_EncodeHeader(HANDLE_ADTS hAdts,
     /* variable header */
     FDKwriteBits(hBitStream, hAdts->copyright_id, 1);
     FDKwriteBits(hBitStream, hAdts->copyright_start, 1);
-    FDKwriteBits(hBitStream, (frame_length + hAdts->headerBits)>>3, 13);
+    FDKwriteBits(hBitStream, (frame_length + hAdts->headerBits) >> 3, 13);
     FDKwriteBits(hBitStream, buffer_fullness, 11);
     FDKwriteBits(hBitStream, hAdts->num_raw_blocks, 2);
 
@@ -241,7 +222,7 @@ int adtsWrite_EncodeHeader(HANDLE_ADTS hAdts,
       if (hAdts->num_raw_blocks == 0) {
         adtsWrite_CrcEndReg(hAdts, hBitStream, crcIndex);
       } else {
-        for (i=0; i<hAdts->num_raw_blocks; i++) {
+        for (i = 0; i < hAdts->num_raw_blocks; i++) {
           FDKwriteBits(hBitStream, 0, 16);
         }
       }
@@ -252,10 +233,7 @@ int adtsWrite_EncodeHeader(HANDLE_ADTS hAdts,
   return 0;
 }
 
-void adtsWrite_EndRawDataBlock(HANDLE_ADTS hAdts,
-                          HANDLE_FDK_BITSTREAM hBs,
-                          int *pBits)
-{
+void adtsWrite_EndRawDataBlock(HANDLE_ADTS hAdts, HANDLE_FDK_BITSTREAM hBs, int *pBits) {
   if (!hAdts->protection_absent) {
     FDK_BITSTREAM bsWriter;
 
@@ -272,9 +250,9 @@ void adtsWrite_EndRawDataBlock(HANDLE_ADTS hAdts,
 
       /* Write distance to current data block */
       if (hAdts->currentBlock < hAdts->num_raw_blocks) {
-        FDKpushFor(&bsWriter, hAdts->currentBlock*16);
-        distance = FDKgetValidBits(hBs) - (56 + (hAdts->num_raw_blocks)*16 + 16);
-        FDKwriteBits(&bsWriter, distance>>3, 16);
+        FDKpushFor(&bsWriter, hAdts->currentBlock * 16);
+        distance = FDKgetValidBits(hBs) - (56 + (hAdts->num_raw_blocks) * 16 + 16);
+        FDKwriteBits(&bsWriter, distance >> 3, 16);
       }
     }
     FDKsyncCache(&bsWriter);
@@ -292,12 +270,12 @@ void adtsWrite_EndRawDataBlock(HANDLE_ADTS hAdts,
       crcIndex = FDKcrcStartReg(&hAdts->crcInfo, &bsWriter, 0);
     }
     /* Write total frame length */
-    FDKpushFor(&bsWriter, 56-28+2);
-    FDKwriteBits(&bsWriter, FDKgetValidBits(hBs)>>3, 13);
+    FDKpushFor(&bsWriter, 56 - 28 + 2);
+    FDKwriteBits(&bsWriter, FDKgetValidBits(hBs) >> 3, 13);
 
     /* Write header CRC */
     if (!hAdts->protection_absent) {
-      FDKpushFor(&bsWriter, 11+2 + (hAdts->num_raw_blocks)*16);
+      FDKpushFor(&bsWriter, 11 + 2 + (hAdts->num_raw_blocks) * 16);
       FDKcrcEndReg(&hAdts->crcInfo, &bsWriter, crcIndex);
       FDKwriteBits(&bsWriter, FDKcrcGetCRC(&hAdts->crcInfo), 16);
     }
@@ -312,4 +290,3 @@ void adtsWrite_EndRawDataBlock(HANDLE_ADTS hAdts,
   }
   hAdts->currentBlock++;
 }
-

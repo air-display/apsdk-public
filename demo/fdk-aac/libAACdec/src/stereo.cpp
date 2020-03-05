@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+?Copyright  1995 - 2013 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -90,121 +90,98 @@ amm-info@iis.fraunhofer.de
 
 #include "stereo.h"
 
-
-#include "aac_rom.h"
 #include "FDK_bitstream.h"
+#include "aac_rom.h"
 #include "channelinfo.h"
 
-enum
-{
-  L = 0,
-  R = 1
-};
+enum { L = 0, R = 1 };
 
+int CJointStereo_Read(HANDLE_FDK_BITSTREAM bs, CJointStereoData *pJointStereoData, const int windowGroups,
+                      const int scaleFactorBandsTransmitted, const UINT flags) {
+  int group, band;
 
-int CJointStereo_Read(
-        HANDLE_FDK_BITSTREAM bs,
-        CJointStereoData *pJointStereoData,
-        const int windowGroups,
-        const int scaleFactorBandsTransmitted,
-        const UINT flags
-        )
-{
-  int group,band;
+  pJointStereoData->MsMaskPresent = (UCHAR)FDKreadBits(bs, 2);
 
-  pJointStereoData->MsMaskPresent = (UCHAR) FDKreadBits(bs,2);
+  FDKmemclear(pJointStereoData->MsUsed, scaleFactorBandsTransmitted * sizeof(UCHAR));
 
-  FDKmemclear(pJointStereoData->MsUsed, scaleFactorBandsTransmitted*sizeof(UCHAR));
+  switch (pJointStereoData->MsMaskPresent) {
+  case 0: /* no M/S */
+    /* all flags are already cleared */
+    break;
 
-  switch (pJointStereoData->MsMaskPresent)
-  {
-    case 0 : /* no M/S */
-      /* all flags are already cleared */
-      break ;
+  case 1: /* read ms_used */
 
-    case 1 : /* read ms_used */
-
-      for (group=0; group<windowGroups; group++)
-      {
-        for (band=0; band<scaleFactorBandsTransmitted; band++)
-        {
-          pJointStereoData->MsUsed[band] |= (FDKreadBits(bs,1) << group);
-        }
+    for (group = 0; group < windowGroups; group++) {
+      for (band = 0; band < scaleFactorBandsTransmitted; band++) {
+        pJointStereoData->MsUsed[band] |= (FDKreadBits(bs, 1) << group);
       }
-      break ;
+    }
+    break;
 
-    case 2 : /* full spectrum M/S */
+  case 2: /* full spectrum M/S */
 
-      for (band=0; band<scaleFactorBandsTransmitted; band++)
-      {
-        pJointStereoData->MsUsed[band] = 255 ;  /* set all flags to 1 */
-      }
-      break ;
+    for (band = 0; band < scaleFactorBandsTransmitted; band++) {
+      pJointStereoData->MsUsed[band] = 255; /* set all flags to 1 */
+    }
+    break;
   }
 
   return 0;
 }
 
-void CJointStereo_ApplyMS(
-        CAacDecoderChannelInfo *pAacDecoderChannelInfo[2],
-        const SHORT *pScaleFactorBandOffsets,
-        const UCHAR *pWindowGroupLength,
-        const int windowGroups,
-        const int scaleFactorBandsTransmittedL,
-        const int scaleFactorBandsTransmittedR
-        )
-{
+void CJointStereo_ApplyMS(CAacDecoderChannelInfo *pAacDecoderChannelInfo[2], const SHORT *pScaleFactorBandOffsets,
+                          const UCHAR *pWindowGroupLength, const int windowGroups,
+                          const int scaleFactorBandsTransmittedL, const int scaleFactorBandsTransmittedR) {
   CJointStereoData *pJointStereoData = &pAacDecoderChannelInfo[L]->pComData->jointStereoData;
   int window, group, scaleFactorBandsTransmitted;
 
   FDK_ASSERT(scaleFactorBandsTransmittedL == scaleFactorBandsTransmittedR);
   scaleFactorBandsTransmitted = scaleFactorBandsTransmittedL;
-  for (window = 0, group = 0; group < windowGroups; group++)
-  {
+  for (window = 0, group = 0; group < windowGroups; group++) {
     UCHAR groupMask = 1 << group;
 
-    for (int groupwin=0; groupwin<pWindowGroupLength[group]; groupwin++, window++)
-    {
+    for (int groupwin = 0; groupwin < pWindowGroupLength[group]; groupwin++, window++) {
       int band;
       FIXP_DBL *leftSpectrum, *rightSpectrum;
-      SHORT *leftScale = &pAacDecoderChannelInfo[L]->pDynData->aSfbScale[window*16];
-      SHORT *rightScale = &pAacDecoderChannelInfo[R]->pDynData->aSfbScale[window*16];
+      SHORT *leftScale = &pAacDecoderChannelInfo[L]->pDynData->aSfbScale[window * 16];
+      SHORT *rightScale = &pAacDecoderChannelInfo[R]->pDynData->aSfbScale[window * 16];
 
-      leftSpectrum = SPEC(pAacDecoderChannelInfo[L]->pSpectralCoefficient, window, pAacDecoderChannelInfo[L]->granuleLength);
-      rightSpectrum = SPEC(pAacDecoderChannelInfo[R]->pSpectralCoefficient, window, pAacDecoderChannelInfo[R]->granuleLength);
+      leftSpectrum =
+          SPEC(pAacDecoderChannelInfo[L]->pSpectralCoefficient, window, pAacDecoderChannelInfo[L]->granuleLength);
+      rightSpectrum =
+          SPEC(pAacDecoderChannelInfo[R]->pSpectralCoefficient, window, pAacDecoderChannelInfo[R]->granuleLength);
 
-      for (band=0; band<scaleFactorBandsTransmitted; band++)
-      {
-        if (pJointStereoData->MsUsed[band] & groupMask)
-        {
-          int lScale=leftScale[band];
-          int rScale=rightScale[band];
-          int commonScale=lScale > rScale ? lScale:rScale;
+      for (band = 0; band < scaleFactorBandsTransmitted; band++) {
+        if (pJointStereoData->MsUsed[band] & groupMask) {
+          int lScale = leftScale[band];
+          int rScale = rightScale[band];
+          int commonScale = lScale > rScale ? lScale : rScale;
 
           /* ISO/IEC 14496-3 Chapter 4.6.8.1.1 :
-             M/S joint channel coding can only be used if common_window is ‘1’. */
-          FDK_ASSERT(GetWindowSequence(&pAacDecoderChannelInfo[L]->icsInfo) == GetWindowSequence(&pAacDecoderChannelInfo[R]->icsInfo));
-          FDK_ASSERT(GetWindowShape(&pAacDecoderChannelInfo[L]->icsInfo) == GetWindowShape(&pAacDecoderChannelInfo[R]->icsInfo));
+             M/S joint channel coding can only be used if common_window is ?? */
+          FDK_ASSERT(GetWindowSequence(&pAacDecoderChannelInfo[L]->icsInfo) ==
+                     GetWindowSequence(&pAacDecoderChannelInfo[R]->icsInfo));
+          FDK_ASSERT(GetWindowShape(&pAacDecoderChannelInfo[L]->icsInfo) ==
+                     GetWindowShape(&pAacDecoderChannelInfo[R]->icsInfo));
 
           commonScale++;
-          leftScale[band]=commonScale;
-          rightScale[band]=commonScale;
+          leftScale[band] = commonScale;
+          rightScale[band] = commonScale;
 
-          lScale = fMin(DFRACT_BITS-1, commonScale - lScale);
-          rScale = fMin(DFRACT_BITS-1, commonScale - rScale);
+          lScale = fMin(DFRACT_BITS - 1, commonScale - lScale);
+          rScale = fMin(DFRACT_BITS - 1, commonScale - rScale);
 
           FDK_ASSERT(lScale >= 0 && rScale >= 0);
 
-          for (int index=pScaleFactorBandOffsets[band]; index<pScaleFactorBandOffsets[band+1]; index++)
-          {
-            FIXP_DBL leftCoefficient  = leftSpectrum [index] ;
-            FIXP_DBL rightCoefficient = rightSpectrum [index] ;
+          for (int index = pScaleFactorBandOffsets[band]; index < pScaleFactorBandOffsets[band + 1]; index++) {
+            FIXP_DBL leftCoefficient = leftSpectrum[index];
+            FIXP_DBL rightCoefficient = rightSpectrum[index];
 
-            leftCoefficient >>= lScale ;
-            rightCoefficient >>= rScale ;
+            leftCoefficient >>= lScale;
+            rightCoefficient >>= rScale;
 
-            leftSpectrum [index] = leftCoefficient + rightCoefficient ;
-            rightSpectrum [index] = leftCoefficient - rightCoefficient ;
+            leftSpectrum[index] = leftCoefficient + rightCoefficient;
+            rightSpectrum[index] = leftCoefficient - rightCoefficient;
           }
         }
       }
@@ -218,45 +195,36 @@ void CJointStereo_ApplyMS(
   }
 }
 
-void CJointStereo_ApplyIS(
-        CAacDecoderChannelInfo *pAacDecoderChannelInfo[2],
-        const SHORT *pScaleFactorBandOffsets,
-        const UCHAR *pWindowGroupLength,
-        const int windowGroups,
-        const int scaleFactorBandsTransmitted,
-        const UINT CommonWindow
-        )
-{
+void CJointStereo_ApplyIS(CAacDecoderChannelInfo *pAacDecoderChannelInfo[2], const SHORT *pScaleFactorBandOffsets,
+                          const UCHAR *pWindowGroupLength, const int windowGroups,
+                          const int scaleFactorBandsTransmitted, const UINT CommonWindow) {
   CJointStereoData *pJointStereoData = &pAacDecoderChannelInfo[L]->pComData->jointStereoData;
 
-  for (int window=0,group=0; group<windowGroups; group++)
-  {
+  for (int window = 0, group = 0; group < windowGroups; group++) {
     UCHAR *CodeBook;
     SHORT *ScaleFactor;
     UCHAR groupMask = 1 << group;
 
-    CodeBook = &pAacDecoderChannelInfo[R]->pDynData->aCodeBook[group*16];
-    ScaleFactor = &pAacDecoderChannelInfo[R]->pDynData->aScaleFactor[group*16];
+    CodeBook = &pAacDecoderChannelInfo[R]->pDynData->aCodeBook[group * 16];
+    ScaleFactor = &pAacDecoderChannelInfo[R]->pDynData->aScaleFactor[group * 16];
 
-    for (int groupwin=0; groupwin<pWindowGroupLength[group]; groupwin++, window++)
-    {
+    for (int groupwin = 0; groupwin < pWindowGroupLength[group]; groupwin++, window++) {
       FIXP_DBL *leftSpectrum, *rightSpectrum;
-      SHORT *leftScale = &pAacDecoderChannelInfo[L]->pDynData->aSfbScale[window*16];
-      SHORT *rightScale = &pAacDecoderChannelInfo[R]->pDynData->aSfbScale[window*16];
+      SHORT *leftScale = &pAacDecoderChannelInfo[L]->pDynData->aSfbScale[window * 16];
+      SHORT *rightScale = &pAacDecoderChannelInfo[R]->pDynData->aSfbScale[window * 16];
       int band;
 
-      leftSpectrum = SPEC(pAacDecoderChannelInfo[L]->pSpectralCoefficient, window, pAacDecoderChannelInfo[L]->granuleLength);
-      rightSpectrum = SPEC(pAacDecoderChannelInfo[R]->pSpectralCoefficient, window, pAacDecoderChannelInfo[R]->granuleLength);
+      leftSpectrum =
+          SPEC(pAacDecoderChannelInfo[L]->pSpectralCoefficient, window, pAacDecoderChannelInfo[L]->granuleLength);
+      rightSpectrum =
+          SPEC(pAacDecoderChannelInfo[R]->pSpectralCoefficient, window, pAacDecoderChannelInfo[R]->granuleLength);
 
-      for (band=0; band<scaleFactorBandsTransmitted; band++)
-      {
-        if ((CodeBook [band] == INTENSITY_HCB) ||
-            (CodeBook [band] == INTENSITY_HCB2))
-        {
-          int bandScale = -(ScaleFactor [band] + 100) ;
+      for (band = 0; band < scaleFactorBandsTransmitted; band++) {
+        if ((CodeBook[band] == INTENSITY_HCB) || (CodeBook[band] == INTENSITY_HCB2)) {
+          int bandScale = -(ScaleFactor[band] + 100);
 
-          int msb = bandScale >> 2 ;
-          int lsb = bandScale & 0x03 ;
+          int msb = bandScale >> 2;
+          int lsb = bandScale & 0x03;
 
           /* exponent of MantissaTable[lsb][0] is 1, thus msb+1 below. */
           FIXP_DBL scale = MantissaTable[lsb][0];
@@ -265,30 +233,28 @@ void CJointStereo_ApplyIS(
              The use of intensity stereo coding is signaled by the use of the pseudo codebooks
              INTENSITY_HCB and INTENSITY_HCB2 (15 and 14) only in the right channel of a
              channel_pair_element() having a common ics_info() (common_window == 1). */
-          FDK_ASSERT(GetWindowSequence(&pAacDecoderChannelInfo[L]->icsInfo) == GetWindowSequence(&pAacDecoderChannelInfo[R]->icsInfo));
-          FDK_ASSERT(GetWindowShape(&pAacDecoderChannelInfo[L]->icsInfo) == GetWindowShape(&pAacDecoderChannelInfo[R]->icsInfo));
+          FDK_ASSERT(GetWindowSequence(&pAacDecoderChannelInfo[L]->icsInfo) ==
+                     GetWindowSequence(&pAacDecoderChannelInfo[R]->icsInfo));
+          FDK_ASSERT(GetWindowShape(&pAacDecoderChannelInfo[L]->icsInfo) ==
+                     GetWindowShape(&pAacDecoderChannelInfo[R]->icsInfo));
 
-          rightScale[band] = leftScale[band]+msb+1;
+          rightScale[band] = leftScale[band] + msb + 1;
 
-          if (CommonWindow && (pJointStereoData->MsUsed[band] & groupMask))
-          {
+          if (CommonWindow && (pJointStereoData->MsUsed[band] & groupMask)) {
 
             if (CodeBook[band] == INTENSITY_HCB) /* _NOT_ in-phase */
             {
-              scale = -scale ;
+              scale = -scale;
             }
-          }
-          else
-          {
+          } else {
             if (CodeBook[band] == INTENSITY_HCB2) /* out-of-phase */
             {
-              scale = -scale ;
+              scale = -scale;
             }
           }
 
-          for (int index=pScaleFactorBandOffsets[band]; index<pScaleFactorBandOffsets[band+1]; index++)
-          {
-            rightSpectrum[index] = fMult(leftSpectrum[index],scale);
+          for (int index = pScaleFactorBandOffsets[band]; index < pScaleFactorBandOffsets[band + 1]; index++) {
+            rightSpectrum[index] = fMult(leftSpectrum[index], scale);
           }
         }
       }

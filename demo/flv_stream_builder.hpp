@@ -47,7 +47,7 @@ typedef enum nalu_type {
   NALU_TYPE_SLC_EXT = 20,
   NALU_TYPE_VDRD = 24 // View and Dependency Representation Delimiter NAL Unit
 #endif
-};
+} nalu_type;
 
 namespace amf {
 /// <summary>
@@ -786,7 +786,7 @@ public:
     std::vector<uint8_t> avc_packet;
     avc_packet.reserve(512);
 
-    if (data[4] & 0x1f == NALU_TYPE_IDR) {
+    if ((data[4] & 0x1f) == NALU_TYPE_IDR) {
       avc_packet.emplace_back(KEY_FRAME << 4 | AVC);
     } else {
       avc_packet.emplace_back(INTER_FRAME << 4 | AVC);
@@ -925,10 +925,10 @@ protected:
 
     // Size
     uint32_t size = FLV_TAG_HEADER_SIZE + length;
-    os_.put((length & 0xff000000) >> 24);
-    os_.put((length & 0x00ff0000) >> 16);
-    os_.put((length & 0x0000ff00) >> 8);
-    os_.put((length & 0x000000ff));
+    os_.put((size & 0xff000000) >> 24);
+    os_.put((size & 0x00ff0000) >> 16);
+    os_.put((size & 0x0000ff00) >> 8);
+    os_.put((size & 0x000000ff));
 
     tag_count_++;
   }

@@ -10,8 +10,7 @@
 
 #else
 
-#define PACKED(type_to_pack)                                                   \
-  __pragma(pack(push, 1)) type_to_pack __pragma(pack(pop))
+#define PACKED(type_to_pack) __pragma(pack(push, 1)) type_to_pack __pragma(pack(pop))
 
 #define ALIGNED(type_to_align, n) __declspec(align(n)) type_to_align
 

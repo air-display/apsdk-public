@@ -65,8 +65,10 @@ aaceld_context create_aaceld_decoder() {
   }
   printf("> stream info: channel = %d\tsample_rate = %d\tframe_size = %d\taot "
          "= %d\tbitrate = %d\n",
-         aac->stream_info->channelConfig, aac->stream_info->aacSampleRate,
-         aac->stream_info->aacSamplesPerFrame, aac->stream_info->aot,
+         aac->stream_info->channelConfig,
+         aac->stream_info->aacSampleRate,
+         aac->stream_info->aacSamplesPerFrame,
+         aac->stream_info->aot,
          aac->stream_info->bitRate);
   return aac;
 }
@@ -74,8 +76,8 @@ aaceld_context create_aaceld_decoder() {
 /*
  * called by external, aac data input queue
  */
-void aaceld_decode_frame(aaceld_context aaceld_ctx, unsigned char *inbuffer,
-                         int inputsize, void *outbuffer, int *outputsize) {
+void aaceld_decode_frame(aaceld_context aaceld_ctx, unsigned char *inbuffer, int inputsize, void *outbuffer,
+                         int *outputsize) {
   int ret = 0;
   aaceld_context_s *aaceld = (aaceld_context_s *)aaceld_ctx;
   UCHAR *input_buf[1] = {inbuffer};
@@ -91,8 +93,7 @@ void aaceld_decode_frame(aaceld_context aaceld_ctx, unsigned char *inbuffer,
   }
 
   /* step 2 -> call decoder function */
-  ret = aacDecoder_DecodeFrame(aaceld->phandle, (INT_PCM *)outbuffer,
-                               pcm_pkt_size, aaceld->fdk_flags);
+  ret = aacDecoder_DecodeFrame(aaceld->phandle, (INT_PCM *)outbuffer, pcm_pkt_size, aaceld->fdk_flags);
   if (ret != AAC_DEC_OK) {
     // fprintf(stderr, "aacDecoder_DecodeFrame : 0x%x -- inputsize: %d\n", ret,
     //        inputsize);

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------------------------------------------
 Software License for The Fraunhofer FDK AAC Codec Library for Android
 
-© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+?Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
   All rights reserved.
 
  1.    INTRODUCTION
@@ -83,12 +83,10 @@ amm-info@iis.fraunhofer.de
 
 #include "ton_corr.h"
 
-#include "sbr_ram.h"
-#include "sbr_misc.h"
-#include "genericStds.h"
 #include "autocorr2nd.h"
-
-
+#include "genericStds.h"
+#include "sbr_misc.h"
+#include "sbr_ram.h"
 
 /***************************************************************************
 
@@ -107,7 +105,7 @@ amm-info@iis.fraunhofer.de
    (noise energy B). Hence the quota-matrix contains A/B = q/(1-q).
 
    The samples in nrgVector are scaled by 1.0/16.0
-		The samples in pNrgVectorFreq	are scaled by 1.0/2.0
+                The samples in pNrgVectorFreq	are scaled by 1.0/2.0
    The samples in quotaMatrix are scaled by RELAXATION
 
   \return none.
@@ -115,28 +113,27 @@ amm-info@iis.fraunhofer.de
 */
 /**************************************************************************/
 
-void
-FDKsbrEnc_CalculateTonalityQuotas( HANDLE_SBR_TON_CORR_EST hTonCorr,      /*!< Handle to SBR_TON_CORR struct. */
-                                   FIXP_DBL **RESTRICT sourceBufferReal,  /*!< The real part of the QMF-matrix.  */
-                                   FIXP_DBL **RESTRICT sourceBufferImag,  /*!< The imaginary part of the QMF-matrix. */
-                                   INT usb,                               /*!< upper side band, highest + 1 QMF band in the SBR range. */
-                                   INT qmfScale                       /*!< sclefactor of QMF subsamples */
-                                 )
-{
-  INT     i, k, r, r2, timeIndex, autoCorrScaling;
+void FDKsbrEnc_CalculateTonalityQuotas(
+    HANDLE_SBR_TON_CORR_EST hTonCorr,     /*!< Handle to SBR_TON_CORR struct. */
+    FIXP_DBL **RESTRICT sourceBufferReal, /*!< The real part of the QMF-matrix.  */
+    FIXP_DBL **RESTRICT sourceBufferImag, /*!< The imaginary part of the QMF-matrix. */
+    INT usb,                              /*!< upper side band, highest + 1 QMF band in the SBR range. */
+    INT qmfScale                          /*!< sclefactor of QMF subsamples */
+) {
+  INT i, k, r, r2, timeIndex, autoCorrScaling;
 
-  INT     startIndexMatrix  = hTonCorr->startIndexMatrix;
-  INT     totNoEst          = hTonCorr->numberOfEstimates;
-  INT     noEstPerFrame     = hTonCorr->numberOfEstimatesPerFrame;
-  INT     move              = hTonCorr->move;
-  INT     noQmfChannels     = hTonCorr->noQmfChannels;     /* Numer of Bands */
-  INT     buffLen           = hTonCorr->bufferLength;      /* Numer of Slots */
-  INT     stepSize          = hTonCorr->stepSize;
-  INT    *pBlockLength      = hTonCorr->lpcLength;
-  INT**   RESTRICT signMatrix        = hTonCorr->signMatrix;
-  FIXP_DBL* RESTRICT  nrgVector      = hTonCorr->nrgVector;
-  FIXP_DBL** RESTRICT quotaMatrix    = hTonCorr->quotaMatrix;
-  FIXP_DBL*  RESTRICT pNrgVectorFreq = hTonCorr->nrgVectorFreq;
+  INT startIndexMatrix = hTonCorr->startIndexMatrix;
+  INT totNoEst = hTonCorr->numberOfEstimates;
+  INT noEstPerFrame = hTonCorr->numberOfEstimatesPerFrame;
+  INT move = hTonCorr->move;
+  INT noQmfChannels = hTonCorr->noQmfChannels; /* Numer of Bands */
+  INT buffLen = hTonCorr->bufferLength;        /* Numer of Slots */
+  INT stepSize = hTonCorr->stepSize;
+  INT *pBlockLength = hTonCorr->lpcLength;
+  INT **RESTRICT signMatrix = hTonCorr->signMatrix;
+  FIXP_DBL *RESTRICT nrgVector = hTonCorr->nrgVector;
+  FIXP_DBL **RESTRICT quotaMatrix = hTonCorr->quotaMatrix;
+  FIXP_DBL *RESTRICT pNrgVectorFreq = hTonCorr->nrgVectorFreq;
 
 #define BAND_V_SIZE QMF_MAX_TIME_SLOTS
 #define NUM_V_COMBINE 8 /* Must be a divisor of 64 and fulfill the ASSERTs below */
@@ -144,36 +141,34 @@ FDKsbrEnc_CalculateTonalityQuotas( HANDLE_SBR_TON_CORR_EST hTonCorr,      /*!< H
   FIXP_DBL *realBuf;
   FIXP_DBL *imagBuf;
 
-  FIXP_DBL  alphar[2],alphai[2],fac;
+  FIXP_DBL alphar[2], alphai[2], fac;
 
   C_ALLOC_SCRATCH_START(ac, ACORR_COEFS, 1);
-  C_ALLOC_SCRATCH_START(realBufRef, FIXP_DBL, 2*BAND_V_SIZE*NUM_V_COMBINE);
+  C_ALLOC_SCRATCH_START(realBufRef, FIXP_DBL, 2 * BAND_V_SIZE * NUM_V_COMBINE);
 
   realBuf = realBufRef;
-  imagBuf = realBuf + BAND_V_SIZE*NUM_V_COMBINE;
-
+  imagBuf = realBuf + BAND_V_SIZE * NUM_V_COMBINE;
 
   FDK_ASSERT(buffLen <= BAND_V_SIZE);
-  FDK_ASSERT(sizeof(FIXP_DBL)*NUM_V_COMBINE*BAND_V_SIZE*2 < (1024*sizeof(FIXP_DBL)-sizeof(ACORR_COEFS)) );
+  FDK_ASSERT(sizeof(FIXP_DBL) * NUM_V_COMBINE * BAND_V_SIZE * 2 < (1024 * sizeof(FIXP_DBL) - sizeof(ACORR_COEFS)));
 
   /*
    * Buffering of the quotaMatrix and the quotaMatrixTransp.
    *********************************************************/
-  for(i =  0 ; i < move; i++){
-    FDKmemcpy(quotaMatrix[i],quotaMatrix[i + noEstPerFrame],noQmfChannels * sizeof(FIXP_DBL));
-    FDKmemcpy(signMatrix[i],signMatrix[i + noEstPerFrame],noQmfChannels * sizeof(INT));
+  for (i = 0; i < move; i++) {
+    FDKmemcpy(quotaMatrix[i], quotaMatrix[i + noEstPerFrame], noQmfChannels * sizeof(FIXP_DBL));
+    FDKmemcpy(signMatrix[i], signMatrix[i + noEstPerFrame], noQmfChannels * sizeof(INT));
   }
 
-  FDKmemmove(nrgVector,nrgVector+noEstPerFrame,move*sizeof(FIXP_DBL));
-  FDKmemclear(nrgVector+startIndexMatrix,(totNoEst-startIndexMatrix)*sizeof(FIXP_DBL));
-  FDKmemclear(pNrgVectorFreq,noQmfChannels * sizeof(FIXP_DBL));
+  FDKmemmove(nrgVector, nrgVector + noEstPerFrame, move * sizeof(FIXP_DBL));
+  FDKmemclear(nrgVector + startIndexMatrix, (totNoEst - startIndexMatrix) * sizeof(FIXP_DBL));
+  FDKmemclear(pNrgVectorFreq, noQmfChannels * sizeof(FIXP_DBL));
 
   /*
    * Calculate the quotas for the current time steps.
    **************************************************/
 
-  for (r = 0; r < usb; r++)
-  {
+  for (r = 0; r < usb; r++) {
     int blockLength;
 
     k = hTonCorr->nextSample; /* startSample */
@@ -183,16 +178,15 @@ FDKsbrEnc_CalculateTonalityQuotas( HANDLE_SBR_TON_CORR_EST hTonCorr,      /*!< H
       realBuf -= BAND_V_SIZE;
       imagBuf -= BAND_V_SIZE;
     } else {
-      realBuf += BAND_V_SIZE*(NUM_V_COMBINE-1);
-      imagBuf += BAND_V_SIZE*(NUM_V_COMBINE-1);
+      realBuf += BAND_V_SIZE * (NUM_V_COMBINE - 1);
+      imagBuf += BAND_V_SIZE * (NUM_V_COMBINE - 1);
       for (i = 0; i < buffLen; i++) {
         int v;
         FIXP_DBL *ptr;
-        ptr = realBuf+i;
-        for (v=0; v<NUM_V_COMBINE; v++)
-        {
-          ptr[0] = sourceBufferReal[i][r+v];
-          ptr[0+BAND_V_SIZE*NUM_V_COMBINE] = sourceBufferImag[i][r+v];
+        ptr = realBuf + i;
+        for (v = 0; v < NUM_V_COMBINE; v++) {
+          ptr[0] = sourceBufferReal[i][r + v];
+          ptr[0 + BAND_V_SIZE * NUM_V_COMBINE] = sourceBufferImag[i][r + v];
           ptr -= BAND_V_SIZE;
         }
       }
@@ -200,54 +194,56 @@ FDKsbrEnc_CalculateTonalityQuotas( HANDLE_SBR_TON_CORR_EST hTonCorr,      /*!< H
 
     blockLength = pBlockLength[0];
 
-    while(k <= buffLen - blockLength)
-    {
-      autoCorrScaling = fixMin(getScalefactor(&realBuf[k-LPC_ORDER], LPC_ORDER+blockLength), getScalefactor(&imagBuf[k-LPC_ORDER], LPC_ORDER+blockLength));
-      autoCorrScaling = fixMax(0, autoCorrScaling-1);
+    while (k <= buffLen - blockLength) {
+      autoCorrScaling = fixMin(getScalefactor(&realBuf[k - LPC_ORDER], LPC_ORDER + blockLength),
+                               getScalefactor(&imagBuf[k - LPC_ORDER], LPC_ORDER + blockLength));
+      autoCorrScaling = fixMax(0, autoCorrScaling - 1);
 
-      scaleValues(&realBuf[k-LPC_ORDER], LPC_ORDER+blockLength, autoCorrScaling);
-      scaleValues(&imagBuf[k-LPC_ORDER], LPC_ORDER+blockLength, autoCorrScaling);
+      scaleValues(&realBuf[k - LPC_ORDER], LPC_ORDER + blockLength, autoCorrScaling);
+      scaleValues(&imagBuf[k - LPC_ORDER], LPC_ORDER + blockLength, autoCorrScaling);
 
       autoCorrScaling <<= 1; /* consider qmf buffer scaling twice */
-      autoCorrScaling += autoCorr2nd_cplx ( ac, realBuf+k, imagBuf+k, blockLength );
+      autoCorrScaling += autoCorr2nd_cplx(ac, realBuf + k, imagBuf + k, blockLength);
 
-
-      if(ac->det == FL2FXCONST_DBL(0.0f)){
+      if (ac->det == FL2FXCONST_DBL(0.0f)) {
         alphar[1] = alphai[1] = FL2FXCONST_DBL(0.0f);
 
-        alphar[0] = (ac->r01r)>>2;
-        alphai[0] = (ac->r01i)>>2;
+        alphar[0] = (ac->r01r) >> 2;
+        alphai[0] = (ac->r01i) >> 2;
 
-        fac = fMultDiv2(ac->r00r, ac->r11r)>>1;
+        fac = fMultDiv2(ac->r00r, ac->r11r) >> 1;
+      } else {
+        alphar[1] = (fMultDiv2(ac->r01r, ac->r12r) >> 1) - (fMultDiv2(ac->r01i, ac->r12i) >> 1) -
+                    (fMultDiv2(ac->r02r, ac->r11r) >> 1);
+        alphai[1] = (fMultDiv2(ac->r01i, ac->r12r) >> 1) + (fMultDiv2(ac->r01r, ac->r12i) >> 1) -
+                    (fMultDiv2(ac->r02i, ac->r11r) >> 1);
+
+        alphar[0] = (fMultDiv2(ac->r01r, ac->det) >> (ac->det_scale + 1)) + fMult(alphar[1], ac->r12r) +
+                    fMult(alphai[1], ac->r12i);
+        alphai[0] = (fMultDiv2(ac->r01i, ac->det) >> (ac->det_scale + 1)) + fMult(alphai[1], ac->r12r) -
+                    fMult(alphar[1], ac->r12i);
+
+        fac = fMultDiv2(ac->r00r, fMult(ac->det, ac->r11r)) >> (ac->det_scale + 1);
       }
-      else{
-        alphar[1] = (fMultDiv2(ac->r01r, ac->r12r)>>1) - (fMultDiv2(ac->r01i, ac->r12i)>>1) - (fMultDiv2(ac->r02r, ac->r11r)>>1);
-        alphai[1] = (fMultDiv2(ac->r01i, ac->r12r)>>1) + (fMultDiv2(ac->r01r, ac->r12i)>>1) - (fMultDiv2(ac->r02i, ac->r11r)>>1);
 
-        alphar[0] = (fMultDiv2(ac->r01r, ac->det)>>(ac->det_scale+1)) + fMult(alphar[1], ac->r12r) + fMult(alphai[1], ac->r12i);
-        alphai[0] = (fMultDiv2(ac->r01i, ac->det)>>(ac->det_scale+1)) + fMult(alphai[1], ac->r12r) - fMult(alphar[1], ac->r12i);
-
-        fac = fMultDiv2(ac->r00r, fMult(ac->det, ac->r11r))>>(ac->det_scale+1);
-      }
-
-      if(fac == FL2FXCONST_DBL(0.0f)){
+      if (fac == FL2FXCONST_DBL(0.0f)) {
         quotaMatrix[timeIndex][r] = FL2FXCONST_DBL(0.0f);
         signMatrix[timeIndex][r] = 0;
-      }
-      else {
+      } else {
         /* quotaMatrix is scaled with the factor RELAXATION
            parse RELAXATION in fractional part and shift factor: 1/(1/0.524288 * 2^RELAXATION_SHIFT) */
-        FIXP_DBL tmp,num,denom;
-        INT numShift,denomShift,commonShift;
+        FIXP_DBL tmp, num, denom;
+        INT numShift, denomShift, commonShift;
         INT sign;
 
-        num = fMultDiv2(alphar[0], ac->r01r) + fMultDiv2(alphai[0], ac->r01i) - fMultDiv2(alphar[1], fMult(ac->r02r, ac->r11r)) - fMultDiv2(alphai[1], fMult(ac->r02i, ac->r11r));
+        num = fMultDiv2(alphar[0], ac->r01r) + fMultDiv2(alphai[0], ac->r01i) -
+              fMultDiv2(alphar[1], fMult(ac->r02r, ac->r11r)) - fMultDiv2(alphai[1], fMult(ac->r02i, ac->r11r));
         num = fixp_abs(num);
 
-        denom = (fac>>1) + (fMultDiv2(fac,RELAXATION_FRACT)>>RELAXATION_SHIFT) - num;
+        denom = (fac >> 1) + (fMultDiv2(fac, RELAXATION_FRACT) >> RELAXATION_SHIFT) - num;
         denom = fixp_abs(denom);
 
-        num = fMult(num,RELAXATION_FRACT);
+        num = fMult(num, RELAXATION_FRACT);
 
         numShift = CountLeadingBits(num) - 2;
         num = scaleValue(num, numShift);
@@ -256,46 +252,42 @@ FDKsbrEnc_CalculateTonalityQuotas( HANDLE_SBR_TON_CORR_EST hTonCorr,      /*!< H
         denom = (FIXP_DBL)denom << denomShift;
 
         if ((num > FL2FXCONST_DBL(0.0f)) && (denom != FL2FXCONST_DBL(0.0f))) {
-          commonShift = fixMin(numShift - denomShift + RELAXATION_SHIFT, DFRACT_BITS-1);
+          commonShift = fixMin(numShift - denomShift + RELAXATION_SHIFT, DFRACT_BITS - 1);
           if (commonShift < 0) {
             commonShift = -commonShift;
-            tmp = schur_div(num,denom,16);
-            commonShift = fixMin(commonShift,CountLeadingBits(tmp));
+            tmp = schur_div(num, denom, 16);
+            commonShift = fixMin(commonShift, CountLeadingBits(tmp));
             quotaMatrix[timeIndex][r] = tmp << commonShift;
+          } else {
+            quotaMatrix[timeIndex][r] = schur_div(num, denom, 16) >> commonShift;
           }
-          else {
-            quotaMatrix[timeIndex][r] = schur_div(num,denom,16) >> commonShift;
-          }
-        }
-        else {
+        } else {
           quotaMatrix[timeIndex][r] = FL2FXCONST_DBL(0.0f);
         }
 
         if (ac->r11r != FL2FXCONST_DBL(0.0f)) {
-          if (  ( (ac->r01r >= FL2FXCONST_DBL(0.0f) ) && ( ac->r11r >= FL2FXCONST_DBL(0.0f) ) )
-              ||( (ac->r01r <  FL2FXCONST_DBL(0.0f) ) && ( ac->r11r <  FL2FXCONST_DBL(0.0f) ) )  ) {
+          if (((ac->r01r >= FL2FXCONST_DBL(0.0f)) && (ac->r11r >= FL2FXCONST_DBL(0.0f))) ||
+              ((ac->r01r < FL2FXCONST_DBL(0.0f)) && (ac->r11r < FL2FXCONST_DBL(0.0f)))) {
             sign = 1;
-          }
-          else {
+          } else {
             sign = -1;
           }
-        }
-        else {
+        } else {
           sign = 1;
         }
 
-        if(sign < 0) {
-          r2 = r;       /* (INT) pow(-1, band); */
+        if (sign < 0) {
+          r2 = r; /* (INT) pow(-1, band); */
+        } else {
+          r2 = r + 1; /* (INT) pow(-1, band+1); */
         }
-        else {
-          r2 = r + 1;   /* (INT) pow(-1, band+1); */
-        }
-        signMatrix[timeIndex][r] = 1 - 2*(r2 & 0x1);
+        signMatrix[timeIndex][r] = 1 - 2 * (r2 & 0x1);
       }
 
-      nrgVector[timeIndex] += ((ac->r00r) >> fixMin(DFRACT_BITS-1,(2*qmfScale+autoCorrScaling + SCALE_NRGVEC)));
+      nrgVector[timeIndex] += ((ac->r00r) >> fixMin(DFRACT_BITS - 1, (2 * qmfScale + autoCorrScaling + SCALE_NRGVEC)));
       /* pNrgVectorFreq[r] finally has to be divided by noEstPerFrame, replaced division by shifting with one */
-      pNrgVectorFreq[r] = pNrgVectorFreq[r] + ((ac->r00r) >> fixMin(DFRACT_BITS-1,(2*qmfScale+autoCorrScaling + SCALE_NRGVEC)));
+      pNrgVectorFreq[r] =
+          pNrgVectorFreq[r] + ((ac->r00r) >> fixMin(DFRACT_BITS - 1, (2 * qmfScale + autoCorrScaling + SCALE_NRGVEC)));
 
       blockLength = pBlockLength[1];
       k += stepSize;
@@ -303,8 +295,7 @@ FDKsbrEnc_CalculateTonalityQuotas( HANDLE_SBR_TON_CORR_EST hTonCorr,      /*!< H
     }
   }
 
-
-  C_ALLOC_SCRATCH_END(realBuf, FIXP_DBL, 2*BAND_V_SIZE*NUM_V_COMBINE);
+  C_ALLOC_SCRATCH_END(realBuf, FIXP_DBL, 2 * BAND_V_SIZE * NUM_V_COMBINE);
   C_ALLOC_SCRATCH_END(ac, ACORR_COEFS, 1);
 }
 
@@ -324,27 +315,25 @@ FDKsbrEnc_CalculateTonalityQuotas( HANDLE_SBR_TON_CORR_EST hTonCorr,      /*!< H
 
 */
 /**************************************************************************/
-void
-FDKsbrEnc_TonCorrParamExtr(HANDLE_SBR_TON_CORR_EST hTonCorr,/*!< Handle to SBR_TON_CORR struct. */
-                           INVF_MODE* infVec,               /*!< Vector where the inverse filtering levels will be stored. */
-                           FIXP_DBL * noiseLevels,          /*!< Vector where the noise levels will be stored. */
-                           INT* missingHarmonicFlag,        /*!< Flag set to one or zero, dependent on if any strong sines are missing.*/
-                           UCHAR * missingHarmonicsIndex,   /*!< Vector indicating where sines are missing. */
-                           UCHAR * envelopeCompensation,    /*!< Vector to store compensation values for the energies in. */
-                           const SBR_FRAME_INFO *frameInfo, /*!< Frame info struct, contains the time and frequency grid of the current frame.*/
-                           UCHAR* transientInfo,            /*!< Transient info.*/
-                           UCHAR* freqBandTable,            /*!< Frequency band tables for high-res.*/
-                           INT nSfb,                        /*!< Number of scalefactor bands for high-res. */
-                           XPOS_MODE xposType,              /*!< Type of transposer used in the decoder.*/
-                           UINT sbrSyntaxFlags
-                           )
-{
+void FDKsbrEnc_TonCorrParamExtr(
+    HANDLE_SBR_TON_CORR_EST hTonCorr, /*!< Handle to SBR_TON_CORR struct. */
+    INVF_MODE *infVec,                /*!< Vector where the inverse filtering levels will be stored. */
+    FIXP_DBL *noiseLevels,            /*!< Vector where the noise levels will be stored. */
+    INT *missingHarmonicFlag,         /*!< Flag set to one or zero, dependent on if any strong sines are missing.*/
+    UCHAR *missingHarmonicsIndex,     /*!< Vector indicating where sines are missing. */
+    UCHAR *envelopeCompensation,      /*!< Vector to store compensation values for the energies in. */
+    const SBR_FRAME_INFO
+        *frameInfo,       /*!< Frame info struct, contains the time and frequency grid of the current frame.*/
+    UCHAR *transientInfo, /*!< Transient info.*/
+    UCHAR *freqBandTable, /*!< Frequency band tables for high-res.*/
+    INT nSfb,             /*!< Number of scalefactor bands for high-res. */
+    XPOS_MODE xposType,   /*!< Type of transposer used in the decoder.*/
+    UINT sbrSyntaxFlags) {
   INT band;
-  INT transientFlag = transientInfo[1] ;    /*!< Flag indicating if a transient is present in the current frame. */
-  INT transientPos  = transientInfo[0];     /*!< Position of the transient.*/
+  INT transientFlag = transientInfo[1]; /*!< Flag indicating if a transient is present in the current frame. */
+  INT transientPos = transientInfo[0];  /*!< Position of the transient.*/
   INT transientFrame, transientFrameInvfEst;
-  INVF_MODE* infVecPtr;
-
+  INVF_MODE *infVecPtr;
 
   /* Determine if this is a frame where a transient starts...
 
@@ -353,29 +342,26 @@ FDKsbrEnc_TonCorrParamExtr(HANDLE_SBR_TON_CORR_EST hTonCorr,/*!< Handle to SBR_T
   present frame as well as in the next.
   */
   transientFrame = 0;
-  if(hTonCorr->transientNextFrame){       /* The transient was detected in the previous frame, but is actually */
+  if (hTonCorr->transientNextFrame) { /* The transient was detected in the previous frame, but is actually */
     transientFrame = 1;
     hTonCorr->transientNextFrame = 0;
 
-    if(transientFlag){
-      if(transientPos + hTonCorr->transientPosOffset >= frameInfo->borders[frameInfo->nEnvelopes]){
+    if (transientFlag) {
+      if (transientPos + hTonCorr->transientPosOffset >= frameInfo->borders[frameInfo->nEnvelopes]) {
         hTonCorr->transientNextFrame = 1;
       }
     }
-  }
-  else{
-    if(transientFlag){
-      if(transientPos + hTonCorr->transientPosOffset < frameInfo->borders[frameInfo->nEnvelopes]){
+  } else {
+    if (transientFlag) {
+      if (transientPos + hTonCorr->transientPosOffset < frameInfo->borders[frameInfo->nEnvelopes]) {
         transientFrame = 1;
         hTonCorr->transientNextFrame = 0;
-      }
-      else{
+      } else {
         hTonCorr->transientNextFrame = 1;
       }
     }
   }
   transientFrameInvfEst = transientFrame;
-
 
   /*
     Estimate the required invese filtereing level.
@@ -393,7 +379,7 @@ FDKsbrEnc_TonCorrParamExtr(HANDLE_SBR_TON_CORR_EST hTonCorr,/*!< Handle to SBR_T
   /*
       Detect what tones will be missing.
    */
-  if (xposType == XPOS_LC ){
+  if (xposType == XPOS_LC) {
     FDKsbrEnc_SbrMissingHarmonicsDetectorQmf(&hTonCorr->sbrMissingHarmonicsDetector,
                                              hTonCorr->quotaMatrix,
                                              hTonCorr->signMatrix,
@@ -406,13 +392,10 @@ FDKsbrEnc_TonCorrParamExtr(HANDLE_SBR_TON_CORR_EST hTonCorr,/*!< Handle to SBR_T
                                              nSfb,
                                              envelopeCompensation,
                                              hTonCorr->nrgVectorFreq);
-  }
-  else{
+  } else {
     *missingHarmonicFlag = 0;
-    FDKmemclear(missingHarmonicsIndex,nSfb*sizeof(UCHAR));
+    FDKmemclear(missingHarmonicsIndex, nSfb * sizeof(UCHAR));
   }
-
-
 
   /*
     Noise floor estimation
@@ -432,9 +415,8 @@ FDKsbrEnc_TonCorrParamExtr(HANDLE_SBR_TON_CORR_EST hTonCorr,/*!< Handle to SBR_T
                                      infVecPtr,
                                      sbrSyntaxFlags);
 
-
   /* Store the invfVec data for the next frame...*/
-  for(band = 0 ; band < hTonCorr->sbrInvFilt.noDetectorBands; band++){
+  for (band = 0; band < hTonCorr->sbrInvFilt.noDetectorBands; band++) {
     hTonCorr->sbrInvFilt.prevInvfMode[band] = infVec[band];
   }
 }
@@ -449,35 +431,29 @@ FDKsbrEnc_TonCorrParamExtr(HANDLE_SBR_TON_CORR_EST hTonCorr,/*!< Handle to SBR_T
 
 */
 /**************************************************************************/
-static INT
-findClosestEntry(INT goalSb,
-                 UCHAR *v_k_master,
-                 INT numMaster,
-                 INT direction)
-{
+static INT findClosestEntry(INT goalSb, UCHAR *v_k_master, INT numMaster, INT direction) {
   INT index;
 
-  if( goalSb <= v_k_master[0] )
+  if (goalSb <= v_k_master[0])
     return v_k_master[0];
 
-  if( goalSb >= v_k_master[numMaster] )
+  if (goalSb >= v_k_master[numMaster])
     return v_k_master[numMaster];
 
-  if(direction) {
+  if (direction) {
     index = 0;
-    while( v_k_master[index] < goalSb ) {
+    while (v_k_master[index] < goalSb) {
       index++;
     }
   } else {
     index = numMaster;
-    while( v_k_master[index] > goalSb ) {
+    while (v_k_master[index] > goalSb) {
       index--;
     }
   }
 
   return v_k_master[index];
 }
-
 
 /**************************************************************************/
 /*!
@@ -489,19 +465,18 @@ findClosestEntry(INT goalSb,
 
 */
 /**************************************************************************/
-static INT
-resetPatch(HANDLE_SBR_TON_CORR_EST hTonCorr,  /*!< Handle to SBR_TON_CORR struct. */
-           INT xposctrl,                      /*!< Different patch modes. */
-           INT highBandStartSb,               /*!< Start band of the SBR range. */
-           UCHAR *v_k_master,                   /*!< Master frequency table from which all other table are derived.*/
-           INT numMaster,                     /*!< Number of elements in the master table. */
-           INT fs,                            /*!< Sampling frequency. */
-           INT noChannels)                    /*!< Number of QMF-channels. */
+static INT resetPatch(HANDLE_SBR_TON_CORR_EST hTonCorr, /*!< Handle to SBR_TON_CORR struct. */
+                      INT xposctrl,                     /*!< Different patch modes. */
+                      INT highBandStartSb,              /*!< Start band of the SBR range. */
+                      UCHAR *v_k_master, /*!< Master frequency table from which all other table are derived.*/
+                      INT numMaster,     /*!< Number of elements in the master table. */
+                      INT fs,            /*!< Sampling frequency. */
+                      INT noChannels)    /*!< Number of QMF-channels. */
 {
-  INT patch,k,i;
+  INT patch, k, i;
   INT targetStopBand;
 
-  PATCH_PARAM  *patchParam = hTonCorr->patchParam;
+  PATCH_PARAM *patchParam = hTonCorr->patchParam;
 
   INT sbGuard = hTonCorr->guard;
   INT sourceStartBand;
@@ -514,7 +489,6 @@ resetPatch(HANDLE_SBR_TON_CORR_EST hTonCorr,  /*!< Handle to SBR_TON_CORR struct
 
   INT goalSb;
 
-
   /*
    * Initialize the patching parameter
    */
@@ -524,7 +498,7 @@ resetPatch(HANDLE_SBR_TON_CORR_EST hTonCorr,  /*!< Handle to SBR_TON_CORR struct
     xoverOffset = 0;
   }
 
-  goalSb = (INT)( (2 * noChannels * 16000 + (fs>>1)) / fs ); /* 16 kHz band */
+  goalSb = (INT)((2 * noChannels * 16000 + (fs >> 1)) / fs);   /* 16 kHz band */
   goalSb = findClosestEntry(goalSb, v_k_master, numMaster, 1); /* Adapt region to master-table */
 
   /* First patch */
@@ -533,38 +507,38 @@ resetPatch(HANDLE_SBR_TON_CORR_EST hTonCorr,  /*!< Handle to SBR_TON_CORR struct
 
   /* even (odd) numbered channel must be patched to even (odd) numbered channel */
   patch = 0;
-  while(targetStopBand < usb) {
+  while (targetStopBand < usb) {
 
     /* To many patches */
     if (patch >= MAX_NUM_PATCHES)
-      return(1); /*Number of patches to high */
+      return (1); /*Number of patches to high */
 
     patchParam[patch].guardStartBand = targetStopBand;
     targetStopBand += sbGuard;
     patchParam[patch].targetStartBand = targetStopBand;
 
-    numBandsInPatch = goalSb - targetStopBand;                   /* get the desired range of the patch */
+    numBandsInPatch = goalSb - targetStopBand; /* get the desired range of the patch */
 
-    if ( numBandsInPatch >= lsb - sourceStartBand ) {
+    if (numBandsInPatch >= lsb - sourceStartBand) {
       /* desired number bands are not available -> patch whole source range */
-      patchDistance   = targetStopBand - sourceStartBand;        /* get the targetOffset */
-      patchDistance   = patchDistance & ~1;                      /* rounding off odd numbers and make all even */
+      patchDistance = targetStopBand - sourceStartBand; /* get the targetOffset */
+      patchDistance = patchDistance & ~1;               /* rounding off odd numbers and make all even */
       numBandsInPatch = lsb - (targetStopBand - patchDistance);
       numBandsInPatch = findClosestEntry(targetStopBand + numBandsInPatch, v_k_master, numMaster, 0) -
-                        targetStopBand;  /* Adapt region to master-table */
+                        targetStopBand; /* Adapt region to master-table */
     }
 
     /* desired number bands are available -> get the minimal even patching distance */
-    patchDistance   = numBandsInPatch + targetStopBand - lsb;  /* get minimal distance */
-    patchDistance   = (patchDistance + 1) & ~1;                /* rounding up odd numbers and make all even */
+    patchDistance = numBandsInPatch + targetStopBand - lsb; /* get minimal distance */
+    patchDistance = (patchDistance + 1) & ~1;               /* rounding up odd numbers and make all even */
 
     if (numBandsInPatch <= 0) {
       patch--;
     } else {
       patchParam[patch].sourceStartBand = targetStopBand - patchDistance;
-      patchParam[patch].targetBandOffs  = patchDistance;
+      patchParam[patch].targetBandOffs = patchDistance;
       patchParam[patch].numBandsInPatch = numBandsInPatch;
-      patchParam[patch].sourceStopBand  = patchParam[patch].sourceStartBand + numBandsInPatch;
+      patchParam[patch].sourceStopBand = patchParam[patch].sourceStartBand + numBandsInPatch;
 
       targetStopBand += patchParam[patch].numBandsInPatch;
     }
@@ -573,42 +547,39 @@ resetPatch(HANDLE_SBR_TON_CORR_EST hTonCorr,  /*!< Handle to SBR_TON_CORR struct
     sourceStartBand = hTonCorr->shiftStartSb;
 
     /* Check if we are close to goalSb */
-    if( fixp_abs(targetStopBand - goalSb) < 3) {
+    if (fixp_abs(targetStopBand - goalSb) < 3) {
       goalSb = usb;
     }
 
     patch++;
-
   }
 
   patch--;
 
   /* if highest patch contains less than three subband: skip it */
-  if ( patchParam[patch].numBandsInPatch < 3 && patch > 0 ) {
+  if (patchParam[patch].numBandsInPatch < 3 && patch > 0) {
     patch--;
     targetStopBand = patchParam[patch].targetStartBand + patchParam[patch].numBandsInPatch;
   }
 
   hTonCorr->noOfPatches = patch + 1;
 
-
   /* Assign the index-vector, so we know where to look for the high-band.
      -1 represents a guard-band. */
-  for(k = 0; k < hTonCorr->patchParam[0].guardStartBand; k++)
+  for (k = 0; k < hTonCorr->patchParam[0].guardStartBand; k++)
     hTonCorr->indexVector[k] = k;
 
-  for(i = 0; i < hTonCorr->noOfPatches; i++)
-  {
-    INT sourceStart    = hTonCorr->patchParam[i].sourceStartBand;
-    INT targetStart    = hTonCorr->patchParam[i].targetStartBand;
-    INT numberOfBands  = hTonCorr->patchParam[i].numBandsInPatch;
+  for (i = 0; i < hTonCorr->noOfPatches; i++) {
+    INT sourceStart = hTonCorr->patchParam[i].sourceStartBand;
+    INT targetStart = hTonCorr->patchParam[i].targetStartBand;
+    INT numberOfBands = hTonCorr->patchParam[i].numBandsInPatch;
     INT startGuardBand = hTonCorr->patchParam[i].guardStartBand;
 
-    for(k = 0; k < (targetStart- startGuardBand); k++)
-      hTonCorr->indexVector[startGuardBand+k] = -1;
+    for (k = 0; k < (targetStart - startGuardBand); k++)
+      hTonCorr->indexVector[startGuardBand + k] = -1;
 
-    for(k = 0; k < numberOfBands; k++)
-      hTonCorr->indexVector[targetStart+k] = sourceStart+k;
+    for (k = 0; k < numberOfBands; k++)
+      hTonCorr->indexVector[targetStart + k] = sourceStart + k;
   }
 
   return (0);
@@ -624,27 +595,24 @@ resetPatch(HANDLE_SBR_TON_CORR_EST hTonCorr,  /*!< Handle to SBR_TON_CORR struct
   \return   errorCode, noError if successful.
 */
 /**************************************************************************/
-INT
-FDKsbrEnc_CreateTonCorrParamExtr(HANDLE_SBR_TON_CORR_EST hTonCorr, /*!< Pointer to handle to SBR_TON_CORR struct. */
-                                 INT                     chan)     /*!< Channel index, needed for mem allocation */
+INT FDKsbrEnc_CreateTonCorrParamExtr(HANDLE_SBR_TON_CORR_EST hTonCorr, /*!< Pointer to handle to SBR_TON_CORR struct. */
+                                     INT chan)                         /*!< Channel index, needed for mem allocation */
 {
   INT i;
-  FIXP_DBL* quotaMatrix = GetRam_Sbr_quotaMatrix(chan);
-  INT*      signMatrix  = GetRam_Sbr_signMatrix(chan);
+  FIXP_DBL *quotaMatrix = GetRam_Sbr_quotaMatrix(chan);
+  INT *signMatrix = GetRam_Sbr_signMatrix(chan);
 
   FDKmemclear(hTonCorr, sizeof(SBR_TON_CORR_EST));
 
-  for (i=0; i<MAX_NO_OF_ESTIMATES; i++) {
-    hTonCorr->quotaMatrix[i] = quotaMatrix + (i*QMF_CHANNELS);
-    hTonCorr->signMatrix[i]  = signMatrix  + (i*QMF_CHANNELS);
+  for (i = 0; i < MAX_NO_OF_ESTIMATES; i++) {
+    hTonCorr->quotaMatrix[i] = quotaMatrix + (i * QMF_CHANNELS);
+    hTonCorr->signMatrix[i] = signMatrix + (i * QMF_CHANNELS);
   }
 
-  FDKsbrEnc_CreateSbrMissingHarmonicsDetector (&hTonCorr->sbrMissingHarmonicsDetector, chan);
+  FDKsbrEnc_CreateSbrMissingHarmonicsDetector(&hTonCorr->sbrMissingHarmonicsDetector, chan);
 
   return 0;
 }
-
-
 
 /**************************************************************************/
 /*!
@@ -656,27 +624,26 @@ FDKsbrEnc_CreateTonCorrParamExtr(HANDLE_SBR_TON_CORR_EST hTonCorr, /*!< Pointer 
   \return   errorCode, noError if successful.
 */
 /**************************************************************************/
-INT
-FDKsbrEnc_InitTonCorrParamExtr (INT frameSize,                     /*!< Current SBR frame size. */
-                                HANDLE_SBR_TON_CORR_EST hTonCorr,  /*!< Pointer to handle to SBR_TON_CORR struct. */
-                                HANDLE_SBR_CONFIG_DATA sbrCfg,     /*!< Pointer to SBR configuration parameters. */
-                                INT timeSlots,                     /*!< Number of time-slots per frame */
-                                INT xposCtrl,                      /*!< Different patch modes. */
-                                INT ana_max_level,                 /*!< Maximum level of the adaptive noise. */
-                                INT noiseBands,                    /*!< Number of noise bands per octave. */
-                                INT noiseFloorOffset,              /*!< Noise floor offset. */
-                                UINT useSpeechConfig)              /*!< Speech or music tuning. */
+INT FDKsbrEnc_InitTonCorrParamExtr(INT frameSize,                    /*!< Current SBR frame size. */
+                                   HANDLE_SBR_TON_CORR_EST hTonCorr, /*!< Pointer to handle to SBR_TON_CORR struct. */
+                                   HANDLE_SBR_CONFIG_DATA sbrCfg,    /*!< Pointer to SBR configuration parameters. */
+                                   INT timeSlots,                    /*!< Number of time-slots per frame */
+                                   INT xposCtrl,                     /*!< Different patch modes. */
+                                   INT ana_max_level,                /*!< Maximum level of the adaptive noise. */
+                                   INT noiseBands,                   /*!< Number of noise bands per octave. */
+                                   INT noiseFloorOffset,             /*!< Noise floor offset. */
+                                   UINT useSpeechConfig)             /*!< Speech or music tuning. */
 {
   INT nCols = sbrCfg->noQmfSlots;
-  INT fs    = sbrCfg->sampleFreq;
+  INT fs = sbrCfg->sampleFreq;
   INT noQmfChannels = sbrCfg->noQmfBands;
 
   INT highBandStartSb = sbrCfg->freqBandTable[LOW_RES][0];
-  UCHAR *v_k_master   = sbrCfg->v_k_master;
-  INT numMaster       = sbrCfg->num_Master;
+  UCHAR *v_k_master = sbrCfg->v_k_master;
+  INT numMaster = sbrCfg->num_Master;
 
-  UCHAR **freqBandTable   = sbrCfg->freqBandTable;
-  INT    *nSfb            = sbrCfg->nSfb;
+  UCHAR **freqBandTable = sbrCfg->freqBandTable;
+  INT *nSfb = sbrCfg->nSfb;
 
   INT i;
 
@@ -687,111 +654,101 @@ FDKsbrEnc_InitTonCorrParamExtr (INT frameSize,                     /*!< Current 
   if (sbrCfg->sbrSyntaxFlags & SBR_SYNTAX_LOW_DELAY) {
     switch (timeSlots) {
     case NUMBER_TIME_SLOTS_1920:
-      hTonCorr->lpcLength[0]              = 8 - LPC_ORDER;
-      hTonCorr->lpcLength[1]              = 7 - LPC_ORDER;
-      hTonCorr->numberOfEstimates         = NO_OF_ESTIMATES_LD;
+      hTonCorr->lpcLength[0] = 8 - LPC_ORDER;
+      hTonCorr->lpcLength[1] = 7 - LPC_ORDER;
+      hTonCorr->numberOfEstimates = NO_OF_ESTIMATES_LD;
       hTonCorr->numberOfEstimatesPerFrame = 2; /* sbrCfg->noQmfSlots / 7 */
-      hTonCorr->frameStartIndexInvfEst    = 0;
-      hTonCorr->transientPosOffset        = FRAME_MIDDLE_SLOT_512LD;
+      hTonCorr->frameStartIndexInvfEst = 0;
+      hTonCorr->transientPosOffset = FRAME_MIDDLE_SLOT_512LD;
       break;
     case NUMBER_TIME_SLOTS_2048:
-      hTonCorr->lpcLength[0]              = 8 - LPC_ORDER;
-      hTonCorr->lpcLength[1]              = 8 - LPC_ORDER;
-      hTonCorr->numberOfEstimates         = NO_OF_ESTIMATES_LD;
+      hTonCorr->lpcLength[0] = 8 - LPC_ORDER;
+      hTonCorr->lpcLength[1] = 8 - LPC_ORDER;
+      hTonCorr->numberOfEstimates = NO_OF_ESTIMATES_LD;
       hTonCorr->numberOfEstimatesPerFrame = 2; /* sbrCfg->noQmfSlots / 8 */
-      hTonCorr->frameStartIndexInvfEst    = 0;
-      hTonCorr->transientPosOffset        = FRAME_MIDDLE_SLOT_512LD;
+      hTonCorr->frameStartIndexInvfEst = 0;
+      hTonCorr->transientPosOffset = FRAME_MIDDLE_SLOT_512LD;
       break;
     }
   } else
-  switch (timeSlots) {
-  case NUMBER_TIME_SLOTS_2048:
-    hTonCorr->lpcLength[0]              = 16 - LPC_ORDER; /* blockLength[0] */
-    hTonCorr->lpcLength[1]              = 16 - LPC_ORDER; /* blockLength[0] */
-    hTonCorr->numberOfEstimates         = NO_OF_ESTIMATES_LC;
-    hTonCorr->numberOfEstimatesPerFrame = sbrCfg->noQmfSlots / 16;
-    hTonCorr->frameStartIndexInvfEst    = 0;
-    hTonCorr->transientPosOffset        = FRAME_MIDDLE_SLOT_2048;
-    break;
-  case NUMBER_TIME_SLOTS_1920:
-    hTonCorr->lpcLength[0]              = 15 - LPC_ORDER; /* blockLength[0] */
-    hTonCorr->lpcLength[1]              = 15 - LPC_ORDER; /* blockLength[0] */
-    hTonCorr->numberOfEstimates         = NO_OF_ESTIMATES_LC;
-    hTonCorr->numberOfEstimatesPerFrame = sbrCfg->noQmfSlots / 15;
-    hTonCorr->frameStartIndexInvfEst    = 0;
-    hTonCorr->transientPosOffset        = FRAME_MIDDLE_SLOT_1920;
-    break;
-  default:
-    return -1;
-  }
+    switch (timeSlots) {
+    case NUMBER_TIME_SLOTS_2048:
+      hTonCorr->lpcLength[0] = 16 - LPC_ORDER; /* blockLength[0] */
+      hTonCorr->lpcLength[1] = 16 - LPC_ORDER; /* blockLength[0] */
+      hTonCorr->numberOfEstimates = NO_OF_ESTIMATES_LC;
+      hTonCorr->numberOfEstimatesPerFrame = sbrCfg->noQmfSlots / 16;
+      hTonCorr->frameStartIndexInvfEst = 0;
+      hTonCorr->transientPosOffset = FRAME_MIDDLE_SLOT_2048;
+      break;
+    case NUMBER_TIME_SLOTS_1920:
+      hTonCorr->lpcLength[0] = 15 - LPC_ORDER; /* blockLength[0] */
+      hTonCorr->lpcLength[1] = 15 - LPC_ORDER; /* blockLength[0] */
+      hTonCorr->numberOfEstimates = NO_OF_ESTIMATES_LC;
+      hTonCorr->numberOfEstimatesPerFrame = sbrCfg->noQmfSlots / 15;
+      hTonCorr->frameStartIndexInvfEst = 0;
+      hTonCorr->transientPosOffset = FRAME_MIDDLE_SLOT_1920;
+      break;
+    default:
+      return -1;
+    }
 
-  hTonCorr->bufferLength              = nCols;
-  hTonCorr->stepSize                  = hTonCorr->lpcLength[0] + LPC_ORDER; /* stepSize[0] implicitly 0. */
+  hTonCorr->bufferLength = nCols;
+  hTonCorr->stepSize = hTonCorr->lpcLength[0] + LPC_ORDER; /* stepSize[0] implicitly 0. */
 
-  hTonCorr->nextSample                = LPC_ORDER; /* firstSample */
-  hTonCorr->move                      = hTonCorr->numberOfEstimates - hTonCorr->numberOfEstimatesPerFrame;    /* Number of estimates to move when buffering.*/
-  hTonCorr->startIndexMatrix          = hTonCorr->numberOfEstimates - hTonCorr->numberOfEstimatesPerFrame;    /* Where to store the latest estimations in the tonality Matrix.*/
-  hTonCorr->frameStartIndex           = 0;                      /* Where in the tonality matrix the current frame (to be sent to the decoder) starts. */
+  hTonCorr->nextSample = LPC_ORDER; /* firstSample */
+  hTonCorr->move = hTonCorr->numberOfEstimates -
+                   hTonCorr->numberOfEstimatesPerFrame; /* Number of estimates to move when buffering.*/
+  hTonCorr->startIndexMatrix =
+      hTonCorr->numberOfEstimates -
+      hTonCorr->numberOfEstimatesPerFrame; /* Where to store the latest estimations in the tonality Matrix.*/
+  hTonCorr->frameStartIndex =
+      0; /* Where in the tonality matrix the current frame (to be sent to the decoder) starts. */
   hTonCorr->prevTransientFlag = 0;
   hTonCorr->transientNextFrame = 0;
 
   hTonCorr->noQmfChannels = noQmfChannels;
 
-  for (i=0; i<hTonCorr->numberOfEstimates; i++) {
-    FDKmemclear (hTonCorr->quotaMatrix[i] , sizeof(FIXP_DBL)*noQmfChannels);
-    FDKmemclear (hTonCorr->signMatrix[i] , sizeof(INT)*noQmfChannels);
+  for (i = 0; i < hTonCorr->numberOfEstimates; i++) {
+    FDKmemclear(hTonCorr->quotaMatrix[i], sizeof(FIXP_DBL) * noQmfChannels);
+    FDKmemclear(hTonCorr->signMatrix[i], sizeof(INT) * noQmfChannels);
   }
 
-   /* Reset the patch.*/
+  /* Reset the patch.*/
   hTonCorr->guard = 0;
   hTonCorr->shiftStartSb = 1;
 
-  if(resetPatch(hTonCorr,
-                xposCtrl,
-                highBandStartSb,
-                v_k_master,
-                numMaster,
-                fs,
-                noQmfChannels))
-    return(1);
+  if (resetPatch(hTonCorr, xposCtrl, highBandStartSb, v_k_master, numMaster, fs, noQmfChannels))
+    return (1);
 
-  if(FDKsbrEnc_InitSbrNoiseFloorEstimate (&hTonCorr->sbrNoiseFloorEstimate,
-                                   ana_max_level,
-                                   freqBandTable[LO],
-                                   nSfb[LO],
-                                   noiseBands,
-                                   noiseFloorOffset,
-                                   timeSlots,
-                                   useSpeechConfig))
-    return(1);
+  if (FDKsbrEnc_InitSbrNoiseFloorEstimate(&hTonCorr->sbrNoiseFloorEstimate,
+                                          ana_max_level,
+                                          freqBandTable[LO],
+                                          nSfb[LO],
+                                          noiseBands,
+                                          noiseFloorOffset,
+                                          timeSlots,
+                                          useSpeechConfig))
+    return (1);
 
+  if (FDKsbrEnc_initInvFiltDetector(&hTonCorr->sbrInvFilt,
+                                    hTonCorr->sbrNoiseFloorEstimate.freqBandTableQmf,
+                                    hTonCorr->sbrNoiseFloorEstimate.noNoiseBands,
+                                    useSpeechConfig))
+    return (1);
 
-  if(FDKsbrEnc_initInvFiltDetector(&hTonCorr->sbrInvFilt,
-                            hTonCorr->sbrNoiseFloorEstimate.freqBandTableQmf,
-                            hTonCorr->sbrNoiseFloorEstimate.noNoiseBands,
-                            useSpeechConfig))
-    return(1);
-
-
-
-  if(FDKsbrEnc_InitSbrMissingHarmonicsDetector(
-                                        &hTonCorr->sbrMissingHarmonicsDetector,
-                                        fs,
-                                        frameSize,
-                                        nSfb[HI],
-                                        noQmfChannels,
-                                        hTonCorr->numberOfEstimates,
-                                        hTonCorr->move,
-                                        hTonCorr->numberOfEstimatesPerFrame,
-                                        sbrCfg->sbrSyntaxFlags))
-    return(1);
-
-
+  if (FDKsbrEnc_InitSbrMissingHarmonicsDetector(&hTonCorr->sbrMissingHarmonicsDetector,
+                                                fs,
+                                                frameSize,
+                                                nSfb[HI],
+                                                noQmfChannels,
+                                                hTonCorr->numberOfEstimates,
+                                                hTonCorr->move,
+                                                hTonCorr->numberOfEstimatesPerFrame,
+                                                sbrCfg->sbrSyntaxFlags))
+    return (1);
 
   return (0);
 }
-
-
 
 /**************************************************************************/
 /*!
@@ -803,58 +760,42 @@ FDKsbrEnc_InitTonCorrParamExtr (INT frameSize,                     /*!< Current 
 
 */
 /**************************************************************************/
-INT
-FDKsbrEnc_ResetTonCorrParamExtr(HANDLE_SBR_TON_CORR_EST hTonCorr, /*!< Handle to SBR_TON_CORR struct. */
-                      INT xposctrl,                     /*!< Different patch modes. */
-                      INT highBandStartSb,              /*!< Start band of the SBR range. */
-                      UCHAR *v_k_master,        /*!< Master frequency table from which all other table are derived.*/
-                      INT numMaster,                    /*!< Number of elements in the master table. */
-                      INT fs,                           /*!< Sampling frequency (of the SBR part). */
-                      UCHAR ** freqBandTable,   /*!< Frequency band table for low-res and high-res. */
-                      INT* nSfb,                        /*!< Number of frequency bands (hig-res and low-res). */
-                      INT noQmfChannels                 /*!< Number of QMF channels. */
-                      )
-{
+INT FDKsbrEnc_ResetTonCorrParamExtr(
+    HANDLE_SBR_TON_CORR_EST hTonCorr, /*!< Handle to SBR_TON_CORR struct. */
+    INT xposctrl,                     /*!< Different patch modes. */
+    INT highBandStartSb,              /*!< Start band of the SBR range. */
+    UCHAR *v_k_master,                /*!< Master frequency table from which all other table are derived.*/
+    INT numMaster,                    /*!< Number of elements in the master table. */
+    INT fs,                           /*!< Sampling frequency (of the SBR part). */
+    UCHAR **freqBandTable,            /*!< Frequency band table for low-res and high-res. */
+    INT *nSfb,                        /*!< Number of frequency bands (hig-res and low-res). */
+    INT noQmfChannels                 /*!< Number of QMF channels. */
+) {
 
   /* Reset the patch.*/
   hTonCorr->guard = 0;
   hTonCorr->shiftStartSb = 1;
 
-  if(resetPatch(hTonCorr,
-                xposctrl,
-                highBandStartSb,
-                v_k_master,
-                numMaster,
-                fs,
-                noQmfChannels))
-    return(1);
-
-
+  if (resetPatch(hTonCorr, xposctrl, highBandStartSb, v_k_master, numMaster, fs, noQmfChannels))
+    return (1);
 
   /* Reset the noise floor estimate.*/
-  if(FDKsbrEnc_resetSbrNoiseFloorEstimate (&hTonCorr->sbrNoiseFloorEstimate,
-                                 freqBandTable[LO],
-                                 nSfb[LO]))
-    return(1);
+  if (FDKsbrEnc_resetSbrNoiseFloorEstimate(&hTonCorr->sbrNoiseFloorEstimate, freqBandTable[LO], nSfb[LO]))
+    return (1);
 
   /*
   Reset the inveerse filtereing detector.
   */
-  if(FDKsbrEnc_resetInvFiltDetector(&hTonCorr->sbrInvFilt,
-                           hTonCorr->sbrNoiseFloorEstimate.freqBandTableQmf,
-                           hTonCorr->sbrNoiseFloorEstimate.noNoiseBands))
-    return(1);
-/* Reset the missing harmonics detector. */
-  if(FDKsbrEnc_ResetSbrMissingHarmonicsDetector (&hTonCorr->sbrMissingHarmonicsDetector,
-                                       nSfb[HI]))
-    return(1);
+  if (FDKsbrEnc_resetInvFiltDetector(&hTonCorr->sbrInvFilt,
+                                     hTonCorr->sbrNoiseFloorEstimate.freqBandTableQmf,
+                                     hTonCorr->sbrNoiseFloorEstimate.noNoiseBands))
+    return (1);
+  /* Reset the missing harmonics detector. */
+  if (FDKsbrEnc_ResetSbrMissingHarmonicsDetector(&hTonCorr->sbrMissingHarmonicsDetector, nSfb[HI]))
+    return (1);
 
   return (0);
 }
-
-
-
-
 
 /**************************************************************************/
 /*!
@@ -866,16 +807,15 @@ FDKsbrEnc_ResetTonCorrParamExtr(HANDLE_SBR_TON_CORR_EST hTonCorr, /*!< Handle to
 
 */
 /**************************************************************************/
-void
-FDKsbrEnc_DeleteTonCorrParamExtr (HANDLE_SBR_TON_CORR_EST hTonCorr) /*!< Handle to SBR_TON_CORR struct. */
+void FDKsbrEnc_DeleteTonCorrParamExtr(HANDLE_SBR_TON_CORR_EST hTonCorr) /*!< Handle to SBR_TON_CORR struct. */
 {
 
   if (hTonCorr) {
 
-   FreeRam_Sbr_quotaMatrix(hTonCorr->quotaMatrix);
+    FreeRam_Sbr_quotaMatrix(hTonCorr->quotaMatrix);
 
-   FreeRam_Sbr_signMatrix(hTonCorr->signMatrix);
+    FreeRam_Sbr_signMatrix(hTonCorr->signMatrix);
 
-   FDKsbrEnc_DeleteSbrMissingHarmonicsDetector (&hTonCorr->sbrMissingHarmonicsDetector);
+    FDKsbrEnc_DeleteSbrMissingHarmonicsDetector(&hTonCorr->sbrMissingHarmonicsDetector);
   }
 }

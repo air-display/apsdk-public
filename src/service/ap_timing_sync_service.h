@@ -22,14 +22,12 @@ public:
   void post_send_query();
 
 protected:
-  virtual void on_send_to(asio::ip::udp::endpoint remote_endpoint,
-                          const asio::error_code &e,
+  virtual void on_send_to(asio::ip::udp::endpoint remote_endpoint, const asio::error_code &e,
                           std::size_t bytes_transferred) override;
 
   void post_recv_reply();
 
-  virtual void on_recv_from(asio::ip::udp::endpoint &remote_endpoint,
-                            const asio::error_code &e,
+  virtual void on_recv_from(asio::ip::udp::endpoint &remote_endpoint, const asio::error_code &e,
                             std::size_t bytes_transferred) override;
 
 private:
