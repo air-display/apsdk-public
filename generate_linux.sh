@@ -1,1 +1,5 @@
-cmake -G "Unix Makefiles" -H. -Bbuild.linux -DBUILD_APS_DEMO=TRUE
+cmake \
+    -S . \
+    -B build.linux \
+    -G "Unix Makefiles" \
+    -DBUILD_APS_DEMO=TRUE

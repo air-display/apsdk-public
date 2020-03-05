@@ -1,1 +1,5 @@
-cmake -G "Visual Studio 15 2017" CMakeLists.txt -Bbuild.win -DBUILD_APS_DEMO=TRUE
+cmake ^
+    -S . ^
+    -B build.win ^
+    -G "Visual Studio 16 2019" ^
+    -DBUILD_APS_DEMO=TRUE
