@@ -95,10 +95,14 @@ add_library(${PROJECT_NAME}
 )
 
 if (APPLE)
+    # Disalbe the ARC
+    set(CMAKE_XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC "NO")    
+    
+    # Build framework
     set_target_properties(${PROJECT_NAME} PROPERTIES
-        FRAMEWORK TRUE
-        PUBLIC_HEADER "${PUB_HEADERS}"
-    )
+            FRAMEWORK TRUE
+            PUBLIC_HEADER "${PUB_HEADERS}"
+        )
 endif()
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
