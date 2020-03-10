@@ -3,7 +3,10 @@
 
 net_service::net_service(const std::string &type) : impl_(implementation::get(type)) {}
 
-net_service::~net_service() {}
+net_service::~net_service() {
+  if (impl_)
+    impl_.reset();
+}
 
 void net_service::add_txt_record(const std::string &k, const std::string &v) {
   if (impl_)
