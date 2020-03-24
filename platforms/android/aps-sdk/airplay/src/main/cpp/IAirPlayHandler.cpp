@@ -13,6 +13,7 @@
 
 IAirPlayHandler::IAirPlayHandler(JNIEnv *env)
     : jni_meta_object<IAirPlayHandler, IAirPlayHandler_cls>() {
+  (void)env;
   handler_ = std::make_shared<jni_ap_handler>(this);
 }
 
@@ -22,7 +23,7 @@ void IAirPlayHandler::on_session_begin(ap_session_ptr session) {
   JNIEnv *env = getJNIEnv();
   if (env) {
     GET_METHOD_ID(on_session_begin,
-                  "(Lcom/medialab/airplay/AirPlaySession;)V");
+                  "(Lcom/virtable/airplay/AirPlaySession;)V");
     if (mid) {
       // Create the airplay mirror session object
       jobject obj = AirPlaySession::new_jvmObject(env);

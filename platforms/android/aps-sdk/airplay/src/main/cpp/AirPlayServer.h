@@ -15,7 +15,7 @@
 
 using namespace aps;
 
-static const char AirPlayServer_cls[] = "com/medialab/airplay/AirPlayServer";
+static const char AirPlayServer_cls[] = "com/virtable/airplay/AirPlayServer";
 class AirPlayServer : public nci_object<AirPlayServer, AirPlayServer_cls> {
 public:
   AirPlayServer(JNIEnv *env);

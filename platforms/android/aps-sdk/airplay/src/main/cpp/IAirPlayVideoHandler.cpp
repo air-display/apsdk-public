@@ -12,6 +12,7 @@
 
 IAirPlayVideoHandler::IAirPlayVideoHandler(JNIEnv *env)
     : jni_meta_object<IAirPlayVideoHandler, IAirPlayVideoHandler_cls>() {
+  (void)env;
   handler_ = std::make_shared<jni_ap_video_handler>(this);
 }
 
@@ -81,7 +82,7 @@ void IAirPlayVideoHandler::on_acquire_playback_info(
     const uint64_t session_id, playback_info_t &playback_info) {
   JNIEnv *env = getJNIEnv();
   if (env) {
-    GET_METHOD_ID(get_playback_info, "(J)Lcom/medialab/airplay/PlaybackInfo;");
+    GET_METHOD_ID(get_playback_info, "(J)Lcom/virtable/airplay/PlaybackInfo;");
     if (mid) {
       jobject object = env->CallObjectMethod(jvm_obj_, mid, session_id);
       if (object) {

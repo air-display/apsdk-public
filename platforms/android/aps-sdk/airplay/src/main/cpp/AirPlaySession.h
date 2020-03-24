@@ -15,7 +15,7 @@
 using namespace aps;
 
 static const char AirPlaySession_cls[] =
-    "com/medialab/airplay/AirPlaySession";
+    "com/virtable/airplay/AirPlaySession";
 class AirPlaySession
     : public nci_object<AirPlaySession, AirPlaySession_cls> {
 public:

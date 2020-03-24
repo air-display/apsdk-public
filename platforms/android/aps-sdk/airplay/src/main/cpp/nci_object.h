@@ -36,7 +36,7 @@ public:
   }
 
   static T *attach(JNIEnv *env, jobject o) {
-    T *p = new T(env);
+    T *p = new (std::nothrow) T(env);
     if (p) {
       p->jvm_obj_ = env->NewWeakGlobalRef(o);
       nci_core::set_nciPtr(env, p->jvm_obj_, (jlong) p);
@@ -65,12 +65,12 @@ protected:
 };
 
 #define DEFINE_NCI_METHODS(x)                                                  \
-  extern "C" JNIEXPORT void JNICALL Java_com_medialab_airplay_##x##_nciNew(    \
+  extern "C" JNIEXPORT void JNICALL Java_com_virtable_airplay_##x##_nciNew(    \
       JNIEnv *env, jobject thiz) {                                             \
     x::attach(env, thiz);                                                      \
   }                                                                            \
                                                                                \
-  extern "C" JNIEXPORT void JNICALL Java_com_medialab_airplay_##x##_nciDelete( \
+  extern "C" JNIEXPORT void JNICALL Java_com_virtable_airplay_##x##_nciDelete( \
       JNIEnv *env, jobject thiz) {                                             \
     x::destroy(env, thiz);                                                     \
   }

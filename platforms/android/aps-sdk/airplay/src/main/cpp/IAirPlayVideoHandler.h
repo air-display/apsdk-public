@@ -14,7 +14,7 @@
 using namespace aps;
 
 static const char IAirPlayVideoHandler_cls[] =
-    "com/medialab/airplay/IAirPlayVideoHandler";
+    "com/virtable/airplay/IAirPlayVideoHandler";
 class IAirPlayVideoHandler
     : public jni_meta_object<IAirPlayVideoHandler, IAirPlayVideoHandler_cls> {
 

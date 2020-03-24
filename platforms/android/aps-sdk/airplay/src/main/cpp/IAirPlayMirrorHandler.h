@@ -14,7 +14,7 @@
 using namespace aps;
 
 static const char IAirPlayMirrorHandler_cls[] =
-    "com/medialab/airplay/IAirPlayMirrorHandler";
+    "com/virtable/airplay/IAirPlayMirrorHandler";
 class IAirPlayMirrorHandler
     : public jni_meta_object<IAirPlayMirrorHandler, IAirPlayMirrorHandler_cls> {
 public:

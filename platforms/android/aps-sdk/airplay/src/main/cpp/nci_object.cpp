@@ -11,7 +11,7 @@ jclass nci_core::clz_ = 0;
 jfieldID nci_core::field_nci_obj_ = 0;
 
 void nci_core::initialize(JNIEnv *env) {
-  clz_ = env->FindClass("com/medialab/airplay/NciObject");
+  clz_ = env->FindClass("com/virtable/airplay/NciObject");
   if (clz_) {
     clz_ = static_cast<jclass>(env->NewGlobalRef(clz_));
     field_nci_obj_ = env->GetFieldID(clz_, "nci_obj_", "J");
@@ -34,7 +34,7 @@ void nci_core::set_nciPtr(JNIEnv *env, jobject o, jlong p) {
 void nci_core::throw_null_exception(JNIEnv *env) {
   static jclass cls_NullPointerException =
       env->FindClass("java/lang/NullPointerException");
-  static jmethodID methodId =
-      env->GetMethodID(cls_NullPointerException, "<init>", "()V");
+  // static jmethodID methodId =
+  //     env->GetMethodID(cls_NullPointerException, "<init>", "()V");
   env->ThrowNew(cls_NullPointerException, "Null pointer");
 }

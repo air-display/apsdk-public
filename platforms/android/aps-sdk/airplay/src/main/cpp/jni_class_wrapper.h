@@ -51,7 +51,7 @@ template<typename T, const char *CLS>
 class jni_meta_object : public jni_class_meta<CLS> {
 public:
   static T *attach(JNIEnv *env, jobject o) {
-    T *p = new T(env);
+    T *p = new (std::nothrow)T(env);
     if (p) {
       p->jvm_obj_ = env->NewGlobalRef(o);
     }
@@ -162,7 +162,7 @@ private:
 
 // clang-format off
 
-WRAPPER_CLASS_BEGIN(PlaybackInfo, "com/medialab/airplay/PlaybackInfo")
+WRAPPER_CLASS_BEGIN(PlaybackInfo, "com/virtable/airplay/PlaybackInfo")
   INT_FIELD(stallCount);
   DOUBLE_FIELD(duration);
   FLOAT_FIELD(position);
@@ -174,7 +174,7 @@ WRAPPER_CLASS_BEGIN(PlaybackInfo, "com/medialab/airplay/PlaybackInfo")
 WRAPPER_CLASS_END()
 
 /*
-WRAPPER_CLASS_BEGIN(AudioControlSync, "com/medialab/airplay/AudioControlSync")
+WRAPPER_CLASS_BEGIN(AudioControlSync, "com/virtable/airplay/AudioControlSync")
   SHORT_FIELD(sequence);
   INT_FIELD(timestamp);
   LONG_FIELD(currentNTPTme);
@@ -183,7 +183,7 @@ WRAPPER_CLASS_END()
 */
 
 /*
-WRAPPER_CLASS_BEGIN(AudioControlRetransmit, "com/medialab/airplay/AudioControlRetransmit")
+WRAPPER_CLASS_BEGIN(AudioControlRetransmit, "com/virtable/airplay/AudioControlRetransmit")
   SHORT_FIELD(sequence);
   INT_FIELD(timestamp);
   SHORT_FIELD(lostPacketStart);
@@ -192,13 +192,13 @@ WRAPPER_CLASS_END()
 */
 
 /*
-WRAPPER_CLASS_BEGIN(AirPlayConfigDisplay, "com/medialab/airplay/AirPlayConfigDisplay")
+WRAPPER_CLASS_BEGIN(AirPlayConfigDisplay, "com/virtable/airplay/AirPlayConfigDisplay")
   INT_FIELD(width);
   INT_FIELD(height);
 WRAPPER_CLASS_END()
 */
 
-WRAPPER_CLASS_BEGIN(AirPlayConfig, "com/medialab/airplay/AirPlayConfig")
+WRAPPER_CLASS_BEGIN(AirPlayConfig, "com/virtable/airplay/AirPlayConfig")
   STRING_FIELD(name);
   BOOLEAN_FIELD(publishService);
   STRING_FIELD(macAddress);
@@ -210,7 +210,7 @@ WRAPPER_CLASS_BEGIN(AirPlayConfig, "com/medialab/airplay/AirPlayConfig")
   INT_FIELD(vv);
   INT_FIELD(features);
   INT_FIELD(statusFlag);
-  OBJECT_FIELD(display, "com/medialab/airplay/AirPlayConfigDisplay");
+  OBJECT_FIELD(display, "com/virtable/airplay/AirPlayConfigDisplay");
 WRAPPER_CLASS_END()
 
 // clang-format on
