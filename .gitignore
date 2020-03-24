@@ -1,6 +1,7 @@
-/.vs
-/.vscode
-/.build
+.vs
+.build.*
+.out.*
+.vscode
 /build.*
 /platforms/android/aps-sdk/*.project
 /platforms/android/aps-sdk/.settings/*.prefs

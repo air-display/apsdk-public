@@ -1,6 +1,6 @@
 cmake \
     -S . \
-    -B build.iOS \
+    -B .build.ios \
     -G "Xcode" \
     -DBUILD_APS_DEMO=FALSE \
     -DPLATFORM=OS \

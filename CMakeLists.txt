@@ -5,28 +5,36 @@ project(aps)
 message(STATUS "Current build target system:" ${CMAKE_SYSTEM_NAME})
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(WINDOWS TRUE)
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Android")
-    set(ANDROID TRUE)
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(LINUX TRUE)
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "Android")
+    set(ANDROID TRUE)
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(MACOSX TRUE)
 endif()
 
 # Flags
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 if (WINDOWS)
     set(CMAKE_CXX_STANDARD 17)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-elseif (MACOSX)
-    
+    set(APS_SDK_OUT ${CMAKE_SOURCE_DIR}/.out.win)
+elseif (LINUX)
+    set(APS_SDK_OUT ${CMAKE_SOURCE_DIR}/.out.linux)
 elseif (ANDROID)
 
-elseif (LINUX)
-
+elseif (MACOSX)
+    set(APS_SDK_OUT ${CMAKE_SOURCE_DIR}/.out.mac)
 endif()
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${APS_SDK_OUT}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${APS_SDK_OUT}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${APS_SDK_OUT}/bin)
 
 # Definitions
 add_definitions(-DASIO_STANDALONE)
@@ -34,11 +42,11 @@ add_definitions(-DASIO_NO_TYPEID)
 if (WINDOWS)
     add_definitions(-D_WIN32_WINNT=0x0600) # Windows Vista +
     add_definitions(-DINCL_EXTRA_HTON_FUNCTIONS)
-elseif (MACOS)
+elseif (LINUX)
     
 elseif (ANDROID)
 
-elseif (LINUX)
+elseif (MACOS)
 
 endif()
 
@@ -48,6 +56,12 @@ include_directories(
     third-party
     third-party/asio/include
 )
+
+# srouce 
+add_subdirectory(src)
+
+# third-party
+add_subdirectory(third-party)
 
 # aps-demo
 if ((NOT DEFINED BUILD_APS_DEMO) OR (BUILD_APS_DEMO STREQUAL "") 
@@ -61,9 +75,3 @@ endif()
 if (BUILD_APS_DEMO)
     add_subdirectory(demo)
 endif()
-
-# srouce 
-add_subdirectory(src)
-
-# third-party
-add_subdirectory(third-party)

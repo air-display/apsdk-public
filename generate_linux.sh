@@ -1,5 +1,5 @@
 cmake \
     -S . \
-    -B build.linux \
+    -B .build.linux \
     -G "Unix Makefiles" \
-    -DBUILD_APS_DEMO=TRUE
+    -DBUILD_APS_DEMO=FALSE

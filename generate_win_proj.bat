@@ -1,5 +1,5 @@
 cmake ^
     -S . ^
-    -B build.win ^
+    -B .build.win ^
     -G "Visual Studio 16 2019" ^
-    -DBUILD_APS_DEMO=TRUE
+    -DBUILD_APS_DEMO=FALSE

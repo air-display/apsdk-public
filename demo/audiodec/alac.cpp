@@ -1,4 +1,4 @@
-/*
+﻿/*
  * ALAC (Apple Lossless Audio Codec) decoder
  * Copyright (c) 2005 David Hammerton
  * All rights reserved.
@@ -217,7 +217,7 @@ static int count_leading_zeros(int input) {
   return output;
 }
 #else
-#warning using generic count leading zeroes. You may wish to write one for your CPU / compiler
+#pragma warning("using generic count leading zeroes.You may wish to write one for your CPU / compiler")
 static int count_leading_zeros(int input) {
   int output = 0;
   int curbyte = 0;

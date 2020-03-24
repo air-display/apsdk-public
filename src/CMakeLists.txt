@@ -85,7 +85,7 @@ endif()
 source_group("utils" FILES ${SRC_UTILS})
 
 # Output
-add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME} SHARED
     ${SRC_AP}
     ${SRC_CRYPTO}
     ${SRC_NETWORK}
