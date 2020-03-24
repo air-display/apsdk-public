@@ -84,6 +84,16 @@ elseif (ANDROID)
 endif()
 source_group("utils" FILES ${SRC_UTILS})
 
+# Output
+add_library(${PROJECT_NAME} SHARED
+    ${SRC_AP}
+    ${SRC_CRYPTO}
+    ${SRC_NETWORK}
+    ${SRC_MDNS}
+    ${SRC_SERVICE}
+    ${SRC_UTILS}
+)
+
 if (WINDOWS)
     set(CMAKE_CXX_STANDARD 17)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
@@ -97,20 +107,12 @@ elseif (ANDROID)
 elseif (MACOSX)
     set(APS_SDK_OUT ${CMAKE_SOURCE_DIR}/.out.mac)
 endif()
-
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${APS_SDK_OUT}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${APS_SDK_OUT}/bin)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${APS_SDK_OUT}/bin)
-
-# Output
-add_library(${PROJECT_NAME} SHARED
-    ${SRC_AP}
-    ${SRC_CRYPTO}
-    ${SRC_NETWORK}
-    ${SRC_MDNS}
-    ${SRC_SERVICE}
-    ${SRC_UTILS}
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY "${APS_SDK_OUT}/lib"
+    LIBRARY_OUTPUT_DIRECTORY "${APS_SDK_OUT}/bin"
+    RUNTIME_OUTPUT_DIRECTORY "${APS_SDK_OUT}/bin"
 )
+
 include(GenerateExportHeader)
 generate_export_header(${PROJECT_NAME})
 
