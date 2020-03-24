@@ -84,6 +84,24 @@ elseif (ANDROID)
 endif()
 source_group("utils" FILES ${SRC_UTILS})
 
+if (WINDOWS)
+    set(CMAKE_CXX_STANDARD 17)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+    set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+    set(APS_SDK_OUT ${CMAKE_SOURCE_DIR}/.out.win)
+elseif (LINUX)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+    set(APS_SDK_OUT ${CMAKE_SOURCE_DIR}/.out.linux)
+elseif (ANDROID)
+
+elseif (MACOSX)
+    set(APS_SDK_OUT ${CMAKE_SOURCE_DIR}/.out.mac)
+endif()
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${APS_SDK_OUT}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${APS_SDK_OUT}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${APS_SDK_OUT}/bin)
+
 # Output
 add_library(${PROJECT_NAME} SHARED
     ${SRC_AP}
@@ -93,6 +111,8 @@ add_library(${PROJECT_NAME} SHARED
     ${SRC_SERVICE}
     ${SRC_UTILS}
 )
+include(GenerateExportHeader)
+generate_export_header(${PROJECT_NAME})
 
 if (APPLE)
     # Disalbe the ARC
