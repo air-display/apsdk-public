@@ -40,7 +40,6 @@ elseif (ANDROID)
     )
 elseif (LINUX)
     list(APPEND SRC_MDNS
-        mdns/dns_sd.h
         mdns/Linux/net_service_impl.cpp
     )
 endif()
@@ -106,5 +105,8 @@ elseif (ANDROID)
     target_link_libraries(aps PUBLIC mdnssd)
 elseif (LINUX)
     # pthread is required by asio standalone
-    target_link_libraries(aps PUBLIC pthread)
+    target_link_libraries(aps PUBLIC 
+        pthread
+        dns_sd
+    )
 endif()

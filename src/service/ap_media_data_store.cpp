@@ -1,9 +1,28 @@
+#include <fstream>
 #include <regex>
 
 #include <hlsparser/hlsparse.h>
 #include <service/ap_event_connection_manager.h>
 #include <service/ap_media_data_store.h>
 #include <utils/utils.h>
+
+#if defined(WIN32) && !defined(NDEBUG)
+#include <filesystem>
+void create_serssion_folder(const std::string &session) {
+  std::filesystem::create_directory(session);
+}
+
+void create_resource_file(const std::string &session, const std::string &uri,
+                          const std::string &data) {
+  std::string fn = generate_file_name();
+  fn += string_replace(uri, "/|\\\\", "-");
+  std::string path = session + "/" + fn;
+  std::ofstream ofs;
+  ofs.open(path, std::ofstream::out | std::ofstream::app);
+  ofs << data;
+  ofs.close();
+}
+#endif
 
 namespace aps {
 namespace service {
@@ -26,10 +45,16 @@ void ap_media_data_store::set_store_root(uint16_t port) {
 bool ap_media_data_store::request_media_data(const std::string &primary_uri,
                                              const std::string &session_id) {
   reset();
-  if (is_local_m3u8_uri(primary_uri)) {
-    primary_uri_ = string_replace(primary_uri, SCHEME_LIST, HTTP_SCHEME);
-    primary_uri_ = string_replace(primary_uri_, HOST_LIST, host_);
+
+  app_id id = get_appi_id(primary_uri);
+
+  if (id != e_app_unknown) {
+#if defined(WIN32) && !defined(NDEBUG)
+    create_serssion_folder(session_id);
+#endif
+    app_id_ = id;
     session_id_ = session_id;
+    primary_uri_ = adjust_primary_uri(primary_uri);
     send_fcup_request(primary_uri);
     return true;
   }
@@ -40,13 +65,13 @@ bool ap_media_data_store::request_media_data(const std::string &primary_uri,
 
 std::string ap_media_data_store::process_media_data(const std::string &uri,
                                                     const std::string &data) {
-  std::string path = uri;
   std::string media_data;
 
   if (is_primary_data_uri(uri)) {
     master_t master_playlist;
     if (HLS_OK == hlsparse_master_init(&master_playlist)) {
       if (hlsparse_master(data.c_str(), data.length(), &master_playlist)) {
+
         // Save all media uri
         media_list_t *media_item = &master_playlist.media;
         while (media_item && media_item->data) {
@@ -70,8 +95,7 @@ std::string ap_media_data_store::process_media_data(const std::string &uri,
     media_data = adjust_secondary_meida_data(data);
   }
 
-  path = string_replace(path, SCHEME_LIST, "");
-  path = string_replace(path, HOST_LIST, "");
+  std::string path = extrac_uri_path(uri);
 
   if (!path.empty() && !media_data.empty()) {
     add_media_data(path, media_data);
@@ -99,6 +123,7 @@ std::string ap_media_data_store::query_media_data(const std::string &path) {
 }
 
 void ap_media_data_store::reset() {
+  app_id_ = e_app_unknown;
   request_id_ = 1;
   session_id_.clear();
   primary_uri_.clear();
@@ -107,23 +132,29 @@ void ap_media_data_store::reset() {
   media_data_.clear();
 }
 
-void ap_media_data_store::add_media_data(const std::string &uri,
-                                         const std::string &data) {
-  std::lock_guard<std::mutex> l(mtx_);
-
-  media_data_[uri] = data;
-}
-
-bool ap_media_data_store::is_local_m3u8_uri(const std::string &uri) {
+ap_media_data_store::app_id
+ap_media_data_store::get_appi_id(const std::string &uri) {
   // Youtube
   if (0 == uri.find(MLHLS_SCHEME))
-    return true;
+    return e_app_youtube;
 
   // Netflix
   if (0 == uri.find(NFHLS_SCHEME))
-    return true;
+    return e_app_netflix;
 
-  return false;
+  return e_app_unknown;
+}
+
+void ap_media_data_store::add_media_data(const std::string &uri,
+                                         const std::string &data) {
+  {
+    std::lock_guard<std::mutex> l(mtx_);
+    media_data_[uri] = data;
+  }
+
+#if defined(WIN32) && !defined(NDEBUG)
+  create_resource_file(session_id_, uri, data);
+#endif
 }
 
 bool ap_media_data_store::is_primary_data_uri(const std::string &uri) {
@@ -182,16 +213,42 @@ void ap_media_data_store::send_fcup_request(const std::string &uri) {
   }
 }
 
+std::string ap_media_data_store::adjust_primary_uri(const std::string &uri) {
+  std::string s = uri;
+  s = string_replace(s, SCHEME_LIST, HTTP_SCHEME);
+  s = string_replace(s, HOST_LIST, host_);
+  return s;
+}
+
+std::string ap_media_data_store::extrac_uri_path(const std::string &uri) {
+  std::string s = uri;
+  switch (app_id_) {
+  case e_app_youtube:
+    s = string_replace(s, MLHLS_SCHEME, "");
+    s = string_replace(s, HOST_LIST, "");
+  case e_app_netflix:
+    s = string_replace(s, NFHLS_SCHEME, "");
+    s = string_replace(s, HOST_LIST, "");
+    if (s.at(0) != '/') {
+      s = "/" + s;
+    }
+  default:
+    break;
+  }
+  return s;
+}
+
 std::string
 ap_media_data_store::adjust_primary_media_data(const std::string &data) {
-  std::string r;
-  // Replace all scheme
-  r = string_replace(data, SCHEME_LIST, HTTP_SCHEME);
-
-  // Replace all local host name
-  r = string_replace(r, HOST_LIST, host_);
-
-  return r;
+  switch (app_id_) {
+  case e_app_youtube:
+    return adjust_mlhls_data(data);
+  case e_app_netflix:
+    return adjust_nfhls_data(data);
+  default:
+    break;
+  }
+  return data;
 }
 
 std::string
@@ -218,6 +275,22 @@ ap_media_data_store::adjust_secondary_meida_data(const std::string &data) {
   }
 
   return result;
+}
+
+std::string ap_media_data_store::adjust_mlhls_data(const std::string &data) {
+  std::string s = data;
+  s = string_replace(s, MLHLS_SCHEME, HTTP_SCHEME);
+  s = string_replace(s, HOST_LIST, host_);
+  return s;
+}
+
+std::string ap_media_data_store::adjust_nfhls_data(const std::string &data) {
+  std::string s = data;
+  std::string replace = HTTP_SCHEME;
+  replace += host_;
+  replace += "/";
+  s = string_replace(s, NFHLS_SCHEME, replace);
+  return s;
 }
 
 } // namespace service

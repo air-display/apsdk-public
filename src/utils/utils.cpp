@@ -62,6 +62,21 @@ std::string string_replace(const std::string &str, const std::string &pattern,
   return std::regex_replace(str, p, with);
 }
 
+std::string generate_file_name() {
+  time_t now = time(0);
+  std::tm *local_now = localtime(&now);
+  std::ostringstream oss;
+  // clang-format off
+  oss << local_now->tm_year + 1900 << "-"
+    << local_now->tm_mon + 1 << "-"
+    << local_now->tm_mday << "-"
+    << local_now->tm_hour << "-"
+    << local_now->tm_min << "-"
+    << local_now->tm_sec;
+  // clang-format on
+  return oss.str();
+}
+
 int compare_string_no_case(const char *str1, const char *str2) {
 #if defined(WIN32) || defined(MS_VER_)
   return _strcmpi(str1, str2);

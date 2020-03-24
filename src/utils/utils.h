@@ -136,6 +136,8 @@ std::string generate_mac_address();
 std::string string_replace(const std::string &str, const std::string &pattern,
                            const std::string &with);
 
+std::string generate_file_name();
+
 /// <summary>
 ///
 /// </summary>

@@ -15,12 +15,26 @@ class ap_media_data_store {
   /// <summary>
   ///
   /// </summary>
+  enum app_id {
+    e_app_youtube = 0,
+    e_app_netflix = 1,
+    e_app_unknown = (uint32_t)-1,
+  };
+
+  /// <summary>
+  ///
+  /// </summary>
   static constexpr const char *MLHLS_SCHEME = "mlhls://";
 
   /// <summary>
   ///
   /// </summary>
   static constexpr const char *NFHLS_SCHEME = "nfhls://";
+
+  /// <summary>
+  ///
+  /// </summary>
+  static constexpr const char *NFLX_VIDEO = "nflxvideo";
 
   /// <summary>
   ///
@@ -73,23 +87,34 @@ public:
   void reset();
 
 protected:
-  void add_media_data(const std::string &uri, const std::string &data);
+  app_id get_appi_id(const std::string &uri);
 
-  bool is_local_m3u8_uri(const std::string &uri);
+  void add_media_data(const std::string &uri, const std::string &data);
 
   bool is_primary_data_uri(const std::string &uri);
 
   void send_fcup_request(const std::string &uri);
 
+  std::string adjust_primary_uri(const std::string &uri);
+
+  std::string extrac_uri_path(const std::string &uri);
+
   std::string adjust_primary_media_data(const std::string &data);
 
   std::string adjust_secondary_meida_data(const std::string &data);
+
+  // For Youtube
+  std::string adjust_mlhls_data(const std::string &data);
+
+  // For Netflix
+  std::string adjust_nfhls_data(const std::string &data);
 
   ap_media_data_store();
 
   ~ap_media_data_store();
 
 private:
+  app_id app_id_;
   uint32_t request_id_;
   std::string session_id_;
   std::string primary_uri_;

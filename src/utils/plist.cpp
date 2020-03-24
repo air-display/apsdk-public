@@ -442,6 +442,23 @@ static plist_object_t *bplist_parse_object(const int64_t *reftab,
       free(object);
       return NULL;
     }
+  } else if (object->type == PLIST_TYPE_DATE) {
+    // for date type it is 8 bytes always
+    length = 8;
+    uint8_t *buffer;
+    if (dataidx + length > datalen) {
+      free(object);
+      return NULL;
+    }
+    buffer = (uint8_t *)malloc((size_t)length);
+    if (!buffer) {
+      free(object);
+      return NULL;
+    }
+    memcpy(buffer, data + dataidx, (size_t)length);
+
+    object->value.value_data.length = length;
+    object->value.value_data.value = buffer;
   } else if (object->type == PLIST_TYPE_DATA) {
     uint8_t *buffer;
 
@@ -882,6 +899,27 @@ const plist_object_t *plist_object_dict_get_value(const plist_object_t *object,
       return object->value.value_dict.values[i];
     }
   }
+  return NULL;
+}
+
+const plist_object_t *
+plist_object_dict_get_key_value(const plist_object_t *object, const char **pkey,
+                                uint32_t idx) {
+  if (!object) {
+    return NULL;
+  }
+
+  if (object->type != PLIST_TYPE_DICT) {
+    return NULL;
+  }
+
+  if (idx < object->value.value_dict.size) {
+    if (pkey) {
+      *pkey = object->value.value_dict.keys[idx];
+    }
+    return object->value.value_dict.values[idx];
+  }
+
   return NULL;
 }
 

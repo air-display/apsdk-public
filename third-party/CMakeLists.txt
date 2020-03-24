@@ -10,7 +10,7 @@ file(GLOB_RECURSE curve25519_SRC_FILES
 )
 add_library(curve25519 STATIC ${curve25519_SRC_FILES})
 if(WIN32)
-    set_target_properties(curve25519 PROPERTIES FOLDER thrid-party)
+    set_target_properties(curve25519 PROPERTIES FOLDER third-party)
 endif(WIN32)
 
 #################################################
@@ -20,7 +20,7 @@ file(GLOB_RECURSE ed25519_SRC_FILES
 )
 add_library(ed25519 STATIC ${ed25519_SRC_FILES})
 if(WIN32)
-    set_target_properties(ed25519 PROPERTIES FOLDER thrid-party)
+    set_target_properties(ed25519 PROPERTIES FOLDER third-party)
 endif(WIN32)
 
 #################################################
@@ -47,7 +47,7 @@ file(GLOB_RECURSE playfair_SRC_FILES
 )
 add_library(playfair STATIC ${playfair_SRC_FILES})
 if(WIN32)
-    set_target_properties(playfair PROPERTIES FOLDER thrid-party)
+    set_target_properties(playfair PROPERTIES FOLDER third-party)
 endif(WIN32)
 
 #################################################
@@ -57,7 +57,7 @@ file(GLOB_RECURSE hlsparser_SRC_FILES
 )
 add_library(hlsparser STATIC ${hlsparser_SRC_FILES})
 if(WIN32)
-    set_target_properties(hlsparser PROPERTIES FOLDER thrid-party)
+    set_target_properties(hlsparser PROPERTIES FOLDER third-party)
 endif(WIN32)
 
 #################################################
@@ -67,7 +67,7 @@ file(GLOB_RECURSE opensslaes_SRC_FILES
 )
 add_library(opensslaes STATIC ${opensslaes_SRC_FILES})
 if(WIN32)
-    set_target_properties(opensslaes PROPERTIES FOLDER thrid-party)
+    set_target_properties(opensslaes PROPERTIES FOLDER third-party)
 endif(WIN32)
 
 #################################################
@@ -78,5 +78,5 @@ file(GLOB_RECURSE audiodec_SRC_FILES
 add_library(audiodec STATIC ${audiodec_SRC_FILES})
 target_link_libraries(audiodec PRIVATE fdk-aac)
 if(WIN32)
-    set_target_properties(audiodec PROPERTIES FOLDER thrid-party)
+    set_target_properties(audiodec PROPERTIES FOLDER third-party)
 endif(WIN32)

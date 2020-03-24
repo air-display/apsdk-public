@@ -717,6 +717,11 @@ void ap_airplay_connection::post_play_handler(const request &req,
       return;
     }
 
+#if !defined(NDEBUG)
+    std::string obj_str = data_obj.dump();
+    LOGD() << obj_str;
+#endif // !
+
     const char *id = 0;
     auto uuid_obj = plist_object_dict_get_value(data_obj, "uuid");
     if (0 != plist_object_string_get_value(uuid_obj, &id)) {
@@ -738,9 +743,9 @@ void ap_airplay_connection::post_play_handler(const request &req,
     auto start_position_obj =
         plist_object_dict_get_value(data_obj, "Start-Position-Seconds");
     if (0 != plist_object_real_get_value(start_position_obj, &pos_in_second)) {
-      res.with_status(bad_request);
-      return;
+      LOGI() << "No Start-Position-Seconds in request";
     }
+
     // Adjust this value to milliseconds
     start_pos_in_ms_ = (float)pos_in_second * 1000.f;
   } else if (0 == compare_string_no_case(req.content_type.c_str(),
