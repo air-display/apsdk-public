@@ -1,4 +1,4 @@
-#include <array>
+﻿#include <array>
 #include <sstream>
 
 #include <asio.hpp>
@@ -97,7 +97,7 @@ void aps::ap_crypto::sign_pair_signature(std::vector<uint8_t> &sig) {
                server_.ed_public_key().data(),
                server_.ed_private_key().data());
 
-  pair_verify_aes_ctr_.xcrypt_buffer(signature.data(), signature.size());
+  pair_verify_aes_ctr_.xcrypt_buffer(signature.data(), (uint32_t)signature.size());
 
   sig.assign(signature.begin(), signature.end());
 }
@@ -107,7 +107,7 @@ bool aps::ap_crypto::verify_pair_signature(const uint8_t *p, uint64_t len) {
   encrypted_signature.assign(p, p + len);
 
   std::vector<uint8_t> plain_signature = encrypted_signature;
-  pair_verify_aes_ctr_.xcrypt_buffer(plain_signature.data(), plain_signature.size());
+  pair_verify_aes_ctr_.xcrypt_buffer(plain_signature.data(), (uint32_t)plain_signature.size());
 
   std::vector<uint8_t> message = client_curve_public_key_;
   std::copy(server_.curve_public_key().begin(), server_.curve_public_key().end(), std::back_inserter(message));

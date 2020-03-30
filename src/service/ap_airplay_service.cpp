@@ -1,4 +1,4 @@
-#include <chrono>
+﻿#include <chrono>
 #include <cstring>
 #include <ctime>
 #include <exception>
@@ -142,7 +142,7 @@ void ap_airplay_connection::post_fp_setup_handler(const request &req, response &
       } else if (header->phase == 0x03 && req.content.size() == 164) {
         // Process the hand shake request
         std::vector<uint8_t> content(32, 0);
-        crypto_->fp_handshake(content.data(), req.content.data(), req.content.size());
+        crypto_->fp_handshake(content.data(), req.content.data(), (uint32_t)req.content.size());
         res.with_status(ok).with_content_type(APPLICATION_OCTET_STREAM).with_content(content);
       } else {
         LOGE() << "Invalid request";
@@ -161,7 +161,7 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
     if (req.content_type.compare(APPLICATION_BINARY_PLIST))
       break;
 
-    auto_plist plist_obj = plist_object_from_bplist(req.content.data(), req.content.size());
+    auto_plist plist_obj = plist_object_from_bplist(req.content.data(), (uint32_t)req.content.size());
     auto data_obj = plist_obj.get();
     if (!data_obj)
       break;
@@ -380,7 +380,7 @@ void ap_airplay_connection::get_info_handler(const request &req, response &res) 
       "sourceVersion", plist_object_string(config_->serverVersion().c_str()), 
       "statusFlags", plist_object_integer(config_->statusFlag()), 
       "pi", plist_object_string(config_->pi().c_str()), 
-      "pk", plist_object_data((uint8_t *)config_->pk().c_str(), config_->pk().length()),
+      "pk", plist_object_data((uint8_t *)config_->pk().c_str(), (uint32_t)config_->pk().length()),
       "vv", plist_object_integer(config_->vv()), 
       "audioFormats",
       plist_object_array(1,
@@ -476,12 +476,12 @@ void ap_airplay_connection::set_parameter_handler(const request &req, response &
   } else if (0 == req.content_type.compare(IMAGE_JPEG) || 0 == req.content_type.compare(IMAGE_PNG)) {
     // body is image data
     if (mirror_session_handler_) {
-      mirror_session_handler_->on_audio_set_cover(req.content_type, req.content.data(), req.content.size());
+      mirror_session_handler_->on_audio_set_cover(req.content_type, req.content.data(), (uint32_t)req.content.size());
     }
   } else if (0 == req.content_type.compare(APPLICATION_DMAP_TAGGED)) {
     // body is dmap data
     if (mirror_session_handler_) {
-      mirror_session_handler_->on_audio_set_meta_data(req.content.data(), req.content.size());
+      mirror_session_handler_->on_audio_set_meta_data(req.content.data(), (uint32_t)req.content.size());
     }
   } else {
     LOGE() << "Unknown parameter type: " << req.content_type;
@@ -494,7 +494,7 @@ void ap_airplay_connection::teardown_handler(const request &req, response &res) 
   DUMP_REQUEST_WITH_CONNECTION(req);
 
   if (0 == req.content_type.compare(APPLICATION_BINARY_PLIST)) {
-    auto_plist data_obj = plist_object_from_bplist(req.content.data(), req.content.size());
+    auto_plist data_obj = plist_object_from_bplist(req.content.data(), (uint32_t)req.content.size());
     if (data_obj) {
       auto streams = plist_object_dict_get_value(data_obj, "streams");
       if (streams && PLIST_TYPE_ARRAY == plist_object_get_type(streams)) {
@@ -658,7 +658,7 @@ void ap_airplay_connection::post_play_handler(const request &req, response &res)
     //    uuid = "CA558786-81DC-4F5F-BE5A-30869D597576";
     //    volume = 1;
     //}
-    auto_plist data_obj = plist_object_from_bplist(req.content.data(), req.content.size());
+    auto_plist data_obj = plist_object_from_bplist(req.content.data(), (uint32_t)req.content.size());
     if (!data_obj) {
       res.with_status(bad_request);
       return;
@@ -768,7 +768,7 @@ void ap_airplay_connection::post_action_handler(const request &req, response &re
   DUMP_REQUEST_WITH_CONNECTION(req);
   // req.body (bplist)
 
-  auto_plist data_obj = plist_object_from_bplist(req.content.data(), req.content.size());
+  auto_plist data_obj = plist_object_from_bplist(req.content.data(), (uint32_t)req.content.size());
   if (!data_obj) {
     res.with_status(bad_request);
     return;
@@ -932,7 +932,7 @@ void ap_airplay_connection::put_setProperty_handler(const request &req, response
     // pause = 1;   puase the playback
     // none = 2;    do nothing
     do {
-      auto_plist data_obj = plist_object_from_bplist(req.content.data(), req.content.size());
+      auto_plist data_obj = plist_object_from_bplist(req.content.data(), (uint32_t)req.content.size());
       if (!data_obj) {
         LOGE() << "Failed to pares the actionAtItemEnd value";
         break;
@@ -1143,15 +1143,15 @@ tcp_connection_ptr ap_airplay_service::prepare_new_connection() {
 }
 
 void ap_airplay_service::on_thread_start() {
-  if (handler_) {
-    handler_->on_thread_start();
-  }
+#if __ANDROID__
+  attachCurrentThreadToJvm();
+#endif
 }
 
 void ap_airplay_service::on_thread_stop() {
-  if (handler_) {
-    handler_->on_thread_stop();
-  }
+#if __ANDROID__
+  detachCurrentThreadFromJvm();
+#endif
 }
 
 } // namespace service

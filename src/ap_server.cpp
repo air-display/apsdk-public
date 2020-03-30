@@ -1,4 +1,4 @@
-#include <ctime>
+﻿#include <ctime>
 #include <memory>
 
 #include <ap_config.h>
@@ -143,7 +143,12 @@ private:
 
 ap_server::ap_server() : impl_(new implementation()) {}
 
-ap_server::~ap_server() { impl_.reset(); }
+ap_server::~ap_server() {
+  if (impl_) {
+    delete impl_;
+    impl_ = nullptr;
+  }
+}
 
 void ap_server::set_config(ap_config_ptr &config) { impl_->set_config(config); }
 
@@ -155,4 +160,7 @@ void ap_server::stop() { impl_->stop(); }
 
 uint16_t ap_server::get_service_port() { return impl_->get_service_port(); }
 
+#if __ANDROID__
+void ap_server::setJavaVM(JavaVM *vm) { setJavaVM(vm); }
+#endif
 } // namespace aps

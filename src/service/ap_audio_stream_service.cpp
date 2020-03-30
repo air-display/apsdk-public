@@ -1,4 +1,4 @@
-#include <functional>
+﻿#include <functional>
 
 #include <crypto/ap_crypto.h>
 #include <service/ap_audio_stream_service.h>
@@ -173,7 +173,7 @@ void ap_audio_stream_service::audio_data_packet(rtp_audio_data_packet_t *packet,
   LOGV() << "VALID RTP PACKET: " << length << ", sequence: " << packet->sequence;
 
   if (handler_) {
-    uint32_t payload_length = length - sizeof(rtp_audio_data_packet_t);
+    uint32_t payload_length = (uint32_t)length - (uint32_t)sizeof(rtp_audio_data_packet_t);
     uint32_t encrypted_length = payload_length / 16 * 16;
     if (encrypted_length) {
       crypto_->decrypt_audio_data(packet->payload, encrypted_length);

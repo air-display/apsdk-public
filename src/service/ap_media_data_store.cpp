@@ -1,4 +1,4 @@
-#include <fstream>
+﻿#include <fstream>
 #include <regex>
 
 #include <hlsparser/hlsparse.h>
@@ -6,7 +6,9 @@
 #include <service/ap_media_data_store.h>
 #include <utils/utils.h>
 
-#if defined(WIN32) && !defined(NDEBUG)
+#define PERSIST_STREAM_DATA 0
+
+#if PERSIST_STREAM_DATA
 #include <filesystem>
 void create_serssion_folder(const std::string &session) { std::filesystem::create_directory(session); }
 
@@ -45,7 +47,7 @@ bool ap_media_data_store::request_media_data(const std::string &primary_uri, con
   app_id id = get_appi_id(primary_uri);
 
   if (id != e_app_unknown) {
-#if defined(WIN32) && !defined(NDEBUG)
+#if PERSIST_STREAM_DATA
     create_serssion_folder(session_id);
 #endif
     app_id_ = id;
@@ -145,7 +147,7 @@ void ap_media_data_store::add_media_data(const std::string &uri, const std::stri
     media_data_[uri] = data;
   }
 
-#if defined(WIN32) && !defined(NDEBUG)
+#if PERSIST_STREAM_DATA
   create_resource_file(session_id_, uri, data);
 #endif
 }

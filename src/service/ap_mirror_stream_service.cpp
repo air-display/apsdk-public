@@ -1,4 +1,4 @@
-#include <sstream>
+﻿#include <sstream>
 
 #include <ap_types.h>
 #include <crypto/ap_crypto.h>
@@ -158,15 +158,15 @@ network::tcp_connection_ptr ap_mirror_stream_service::prepare_new_connection() {
 }
 
 void ap_mirror_stream_service::on_thread_start() {
-  if (handler_) {
-    handler_->on_thread_start();
-  }
+#if __ANDROID__
+  attachCurrentThreadToJvm();
+#endif
 }
 
 void ap_mirror_stream_service::on_thread_stop() {
-  if (handler_) {
-    handler_->on_thread_stop();
-  }
+#if __ANDROID__
+  detachCurrentThreadFromJvm();
+#endif
 }
 
 } // namespace service

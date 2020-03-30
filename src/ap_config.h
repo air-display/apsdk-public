@@ -1,4 +1,4 @@
-#ifndef AP_CONFIG_H
+﻿#ifndef AP_CONFIG_H
 #define AP_CONFIG_H
 #pragma once
 
@@ -6,6 +6,12 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+
+#include <ap_export.h>
+
+#if _WIN32
+#pragma warning(disable : 4251)
+#endif
 
 #define DECLARE_STRING_PROPERTY(n)                                                                                     \
 private:                                                                                                               \
@@ -71,7 +77,7 @@ namespace aps {
 /// <summary>
 ///
 /// </summary>
-class ap_config_audio_format {
+class APS_EXPORT ap_config_audio_format {
 public:
   /// <summary>
   ///
@@ -102,7 +108,7 @@ public:
 /// <summary>
 ///
 /// </summary>
-class ap_config_audio_latency {
+class APS_EXPORT ap_config_audio_latency {
 public:
   /// <summary>
   ///
@@ -138,7 +144,7 @@ public:
 /// <summary>
 ///
 /// </summary>
-class ap_config_display {
+class APS_EXPORT ap_config_display {
 public:
   /// <summary>
   ///
@@ -174,7 +180,7 @@ public:
 /// <summary>
 ///
 /// </summary>
-class ap_config {
+class APS_EXPORT ap_config {
 public:
   /// <summary>
   ///

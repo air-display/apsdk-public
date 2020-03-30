@@ -1,17 +1,21 @@
-#ifndef AP_SERVER_H
+﻿#ifndef AP_SERVER_H
 #define AP_SERVER_H
 #pragma once
 
 #include <memory>
+#if __ANDROID__
+#include <jni.h>
+#endif
 
 #include <ap_config.h>
+#include <ap_export.h>
 #include <ap_handler.h>
 
 namespace aps {
 /// <summary>
 ///
 /// </summary>
-class ap_server {
+class APS_EXPORT ap_server {
 public:
   /// <summary>
   ///
@@ -51,6 +55,14 @@ public:
   /// </summary>
   uint16_t get_service_port();
 
+#if __ANDROID__
+  /// <summary>
+  ///
+  /// </summary>
+  /// <param name="vm"></param>
+  static void setJavaVM(JavaVM *vm);
+#endif
+
 private:
   /// <summary>
   ///
@@ -60,7 +72,7 @@ private:
   /// <summary>
   ///
   /// </summary>
-  std::unique_ptr<implementation> impl_;
+  implementation *impl_;
 };
 
 typedef std::shared_ptr<ap_server> ap_server_ptr;

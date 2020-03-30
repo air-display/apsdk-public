@@ -1,10 +1,14 @@
-#ifndef UTILS_H_
+﻿#ifndef UTILS_H_
 #define UTILS_H_
 #pragma once
 #include <cstdint>
 #include <functional>
 #include <string>
 #include <thread>
+
+#if __ANDROID__
+#include <jni.h>
+#endif
 
 #include <asio.hpp>
 
@@ -160,8 +164,36 @@ public:
 };
 typedef thread_guard_s thread_guard_t;
 
+/// <summary>
+///
+/// </summary>
 int compare_string_no_case(const char *str1, const char *str2);
 
+/// <summary>
+///
+/// </summary>
 bool get_youtube_url(const char *data, uint32_t length, std::string &url);
+
+#if __ANDROID__
+/// <summary>
+///
+/// </summary>
+void setGlobalJavaVM(JavaVM *vm);
+
+/// <summary>
+///
+/// </summary>
+JavaVM *getGlobalJavaVM();
+
+/// <summary>
+///
+/// </summary>
+void attachCurrentThreadToJvm();
+
+/// <summary>
+///
+/// </summary>
+void detachCurrentThreadFromJvm();
+#endif
 
 #endif // !UTILS_H_

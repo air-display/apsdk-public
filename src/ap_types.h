@@ -1,4 +1,4 @@
-#ifndef AP_TYPES_H
+﻿#ifndef AP_TYPES_H
 #define AP_TYPES_H
 #pragma once
 #pragma once
@@ -6,9 +6,12 @@
 #include <cstdint>
 #include <cstring>
 
+#include <ap_export.h>
+
 #ifdef __GNUC__
 #define PACKED(type_to_pack) type_to_pack __attribute__((__packed__))
 #else
+#pragma warning(disable : 4200)
 #define PACKED(type_to_pack) __pragma(pack(push, 1)) type_to_pack __pragma(pack(pop))
 #endif
 

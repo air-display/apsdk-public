@@ -1,4 +1,4 @@
-#ifndef AP_HANDLER_H
+﻿#ifndef AP_HANDLER_H
 #define AP_HANDLER_H
 #pragma once
 
@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include <ap_export.h>
 #include <ap_session.h>
 #include <ap_types.h>
 
@@ -14,7 +15,7 @@ namespace aps {
 /// <summary>
 ///
 /// </summary>
-class ap_handler {
+class APS_EXPORT ap_handler {
 public:
   /// <summary>
   ///

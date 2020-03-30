@@ -1,4 +1,4 @@
-#ifndef AP_SESSION_H
+﻿#ifndef AP_SESSION_H
 #define AP_SESSION_H
 #pragma once
 
@@ -7,13 +7,14 @@
 #include <string>
 #include <vector>
 
+#include <ap_export.h>
 #include <ap_types.h>
 
 namespace aps {
 /// <summary>
 ///
 /// </summary>
-class ap_mirror_session_handler {
+class APS_EXPORT ap_mirror_session_handler {
 public:
   virtual ~ap_mirror_session_handler(){};
 
@@ -245,7 +246,7 @@ typedef playback_info_s playback_info_t;
 ///
 /// <remarks>All methods will be called in the mirroring </remarks>
 /// </summary>
-class ap_video_session_handler {
+class APS_EXPORT ap_video_session_handler {
 public:
   virtual ~ap_video_session_handler(){};
 
@@ -323,7 +324,7 @@ enum session_type_e {
 };
 typedef session_type_e session_type_t;
 
-class ap_session {
+class APS_EXPORT ap_session {
 public:
   virtual ~ap_session(){};
 

@@ -28,8 +28,6 @@ set(CMAKE_C_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
 
 if (WINDOWS)
-    set(CMAKE_CXX_STANDARD 17)
-    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 elseif (LINUX)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -51,7 +49,7 @@ elseif (ANDROID)
 
 elseif (MACOS)
 
-endif()
+endif() 
 
 # Include paths
 include_directories(

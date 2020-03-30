@@ -1,6 +1,7 @@
 # public headers
 file(GLOB PUB_HEADERS
     aps.h
+    ap_export.h
     ap_config.h
     ap_handler.h
     ap_server.h
@@ -12,6 +13,7 @@ file(GLOB PUB_HEADERS
 file(GLOB SRC_AP
     aps.h
     aps.cpp
+    ap_export.h
     ap_server.h
     ap_server.cpp
     ap_config.h
@@ -84,6 +86,8 @@ elseif (ANDROID)
 endif()
 source_group("utils" FILES ${SRC_UTILS})
 
+add_definitions(-Daps_EXPORTS)
+
 # Output
 add_library(${PROJECT_NAME} SHARED
     ${SRC_AP}
@@ -113,9 +117,6 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${APS_SDK_OUT}/bin"
 )
 
-include(GenerateExportHeader)
-generate_export_header(${PROJECT_NAME})
-
 if (APPLE)
     # Disalbe the ARC
     set(CMAKE_XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC "NO")    
@@ -143,7 +144,7 @@ if (APPLE)
     endif()
     target_link_libraries(${PROJECT_NAME} PUBLIC ${FOUNDATION_FX})
 elseif (ANDROID)
-    target_link_libraries(${PROJECT_NAME} PUBLIC mdnssd)
+    target_link_libraries(${PROJECT_NAME} PUBLIC mdnssd log)
 elseif (LINUX)
     # pthread is required by asio standalone
     target_link_libraries(${PROJECT_NAME} PUBLIC 
