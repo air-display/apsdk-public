@@ -10,40 +10,36 @@
 #include "IAirPlayVideoHandler.h"
 // clang-format on
 
-void attach_thread() {
-  JavaVM *vm = getJavaVM();
-  if (vm) {
-    JavaVMAttachArgs args;
-    args.version = JNI_VERSION_1_6;
-    args.name = 0;
-    args.group = 0;
-    JNIEnv *env = 0;
-    int status = vm->AttachCurrentThread(&env, &args);
-    if (JNI_OK != status) {
-      __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
-                          "Failed to attach the thread");
-    }
-  }
-}
-
-void detach_thread() {
-  JavaVM *vm = getJavaVM();
-  if (vm) {
-    vm->DetachCurrentThread();
-  }
-}
+//void attach_thread() {
+//  JavaVM *vm = getJavaVM();
+//  if (vm) {
+//    JavaVMAttachArgs args;
+//    args.version = JNI_VERSION_1_6;
+//    args.name = 0;
+//    args.group = 0;
+//    JNIEnv *env = 0;
+//    int status = vm->AttachCurrentThread(&env, &args);
+//    if (JNI_OK != status) {
+//      __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
+//                          "Failed to attach the thread");
+//    }
+//  }
+//}
+//
+//void detach_thread() {
+//  JavaVM *vm = getJavaVM();
+//  if (vm) {
+//    vm->DetachCurrentThread();
+//  }
+//}
 
 jni_ap_handler::jni_ap_handler(IAirPlayHandler *p) : proxy(p) {}
-
-void jni_ap_handler::on_thread_start() { attach_thread(); }
 
 jni_ap_handler::~jni_ap_handler() {
   if (proxy) {
     delete proxy;
   }
 }
-
-void jni_ap_handler::on_thread_stop() { detach_thread(); }
 
 void jni_ap_handler::on_session_begin(
     aps::ap_session_ptr session) {
@@ -58,10 +54,6 @@ void jni_ap_handler::on_session_end(const uint64_t session_id) {
 
 jni_ap_mirror_handler::jni_ap_mirror_handler(IAirPlayMirrorHandler *p)
     : proxy(p) {}
-
-void jni_ap_mirror_handler::on_thread_start() { attach_thread(); }
-
-void jni_ap_mirror_handler::on_thread_stop() { detach_thread(); }
 
 void jni_ap_mirror_handler::on_mirror_stream_started() {
   __android_log_write(ANDROID_LOG_INFO, LOG_TAG, "on_mirror_stream_started");
@@ -148,10 +140,6 @@ void jni_ap_mirror_handler::on_audio_stream_stopped() {
 
 jni_ap_video_handler::jni_ap_video_handler(IAirPlayVideoHandler *p)
     : proxy(p) {}
-
-void jni_ap_video_handler::on_thread_start() { attach_thread(); }
-
-void jni_ap_video_handler::on_thread_stop() { detach_thread(); }
 
 void jni_ap_video_handler::on_video_play(const uint64_t session_id,
                                          const std::string &location,

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <memory>
 #include <queue>
 #include <unordered_set>
@@ -81,10 +81,6 @@ protected:
   void control_sync_packet(rtp_control_sync_packet_t *packet);
 
   void control_retransmit_packet(rtp_control_retransmit_reply_packet_t *packet);
-
-  void on_thread_start();
-
-  void on_thread_stop();
 
   void cache_packet(const uint16_t seq, const uint8_t *buf, std::size_t length);
 

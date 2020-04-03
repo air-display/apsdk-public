@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <array>
 #include <map>
 #include <string>
@@ -161,10 +161,6 @@ public:
 
 protected:
   virtual tcp_connection_ptr prepare_new_connection() override;
-
-  void on_thread_start();
-
-  void on_thread_stop();
 
 private:
   ap_config_ptr config_;

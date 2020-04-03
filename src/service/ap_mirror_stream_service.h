@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <memory>
 #include <vector>
 
@@ -58,10 +58,6 @@ public:
 
 protected:
   virtual network::tcp_connection_ptr prepare_new_connection() override;
-
-  void on_thread_start();
-
-  void on_thread_stop();
 
 private:
   ap_mirror_session_handler_ptr handler_;

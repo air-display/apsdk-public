@@ -18,16 +18,6 @@ class APS_EXPORT ap_mirror_session_handler {
 public:
   virtual ~ap_mirror_session_handler(){};
 
-  /// <summary>
-  ///
-  /// </summary>
-  virtual void on_thread_start(){};
-
-  /// <summary>
-  ///
-  /// </summary>
-  virtual void on_thread_stop(){};
-
   // Mirroring
   /// <summary>
   ///
@@ -249,16 +239,6 @@ typedef playback_info_s playback_info_t;
 class APS_EXPORT ap_video_session_handler {
 public:
   virtual ~ap_video_session_handler(){};
-
-  /// <summary>
-  ///
-  /// </summary>
-  virtual void on_thread_start(){};
-
-  /// <summary>
-  ///
-  /// </summary>
-  virtual void on_thread_stop(){};
 
   /// <summary>
   ///

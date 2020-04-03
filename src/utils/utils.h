@@ -12,11 +12,6 @@
 
 #include <asio.hpp>
 
-/// <summary>
-///
-/// </summary>
-typedef asio::thread aps_thread;
-
 #ifdef __GNUC__
 #ifdef __ANDROID__
 #include <endian.h>
@@ -142,31 +137,6 @@ std::string generate_file_name();
 /// <summary>
 ///
 /// </summary>
-typedef std::function<void()> thread_actoin;
-
-/// <summary>
-///
-/// </summary>
-struct thread_guard_s {
-  thread_guard_s(thread_actoin start, thread_actoin stop) : start_(start), stop_(stop) {
-    if (start_)
-      start_();
-  }
-
-  ~thread_guard_s() {
-    if (stop_)
-      stop_();
-  }
-
-public:
-  thread_actoin start_;
-  thread_actoin stop_;
-};
-typedef thread_guard_s thread_guard_t;
-
-/// <summary>
-///
-/// </summary>
 int compare_string_no_case(const char *str1, const char *str2);
 
 /// <summary>
@@ -195,5 +165,25 @@ void attachCurrentThreadToJvm();
 /// </summary>
 void detachCurrentThreadFromJvm();
 #endif
+
+/// <summary>
+///
+/// </summary>
+typedef std::shared_ptr<asio::thread> aps_thread;
+
+/// <summary>
+///
+/// </summary>
+template <typename Function> aps_thread create_aps_thread(Function f) {
+  return std::make_shared<asio::thread>([f]() {
+#if __ANDROID__
+    attachCurrentThreadToJvm();
+#endif
+      f();
+#if __ANDROID__
+    detachCurrentThreadFromJvm();
+#endif
+  });
+}
 
 #endif // !UTILS_H_

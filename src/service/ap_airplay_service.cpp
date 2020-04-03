@@ -1130,8 +1130,6 @@ void ap_airplay_connection::reverse_connection(const std::string &session) {
 
 ap_airplay_service::ap_airplay_service(ap_config_ptr &config, uint16_t port /*= 0*/)
     : tcp_service_base("ap_airplay_service", port), config_(config) {
-  bind_thread_actions(std::bind(&ap_airplay_service::on_thread_start, this),
-                      std::bind(&ap_airplay_service::on_thread_stop, this));
 }
 
 ap_airplay_service::~ap_airplay_service() {}
@@ -1140,18 +1138,6 @@ void ap_airplay_service::set_handler(ap_handler_ptr &hanlder) { handler_ = hanld
 
 tcp_connection_ptr ap_airplay_service::prepare_new_connection() {
   return std::make_shared<ap_airplay_connection>(io_context(), config_, handler_, shared_from_this());
-}
-
-void ap_airplay_service::on_thread_start() {
-#if __ANDROID__
-  attachCurrentThreadToJvm();
-#endif
-}
-
-void ap_airplay_service::on_thread_stop() {
-#if __ANDROID__
-  detachCurrentThreadFromJvm();
-#endif
 }
 
 } // namespace service

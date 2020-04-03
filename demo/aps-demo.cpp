@@ -3,7 +3,9 @@
 //
 
 #include <fstream>
-#include <strstream>
+#include <iostream>
+#include <sstream>
+#include <string>
 
 #include "audiodec/aac_eld.h"
 #include "audiodec/alac.h"
@@ -12,9 +14,18 @@
 #include "../src/ap_server.h"
 #include "../src/ap_session.h"
 #include "../src/ap_types.h"
-#include "../src/utils/logger.h"
-#include "../src/utils/packing.h"
-#include "../src/utils/utils.h"
+
+#define LOG() std::cout
+#define LOGV() std::cout
+#define LOGD() std::cout
+#define LOGI() std::cout
+#define LOGW() std::cout
+#define LOGE() std::cout
+#define LOGF() std::cout
+
+//#include "../src/utils/logger.h"
+//#include "../src/utils/packing.h"
+//#include "../src/utils/utils.h"
 
 #include "flv_stream_builder.hpp"
 
@@ -38,7 +49,7 @@ public:
   ~airplay_mirror_handler(){};
 
   virtual void on_mirror_stream_started() override {
-    LOGI() << "on_mirror_stream_started";
+    LOGI() << "on_mirror_stream_started" << std::endl;
     init_video_data_file();
     flv_builder_.init_stream_header(true, true);
 
@@ -59,46 +70,46 @@ public:
   }
 
   virtual void on_mirror_stream_codec(const aps::sms_video_codec_packet_t *p) override {
-    LOGI() << "on_mirror_stream_codec: ";
-    start_time_ms = normalize_ntp_to_ms(p->timestamp);
+    LOGI() << "on_mirror_stream_codec: " << std::endl;
+    start_time_ms = /*normalize_ntp_to_ms*/ (p->timestamp);
     flv_builder_.append_video_tag_with_avc_decoder_config(0, p->payload, p->payload_size);
     append_avc_sequence_header(p);
   }
 
   virtual void on_mirror_stream_data(const aps::sms_video_data_packet_t *p) override {
-    uint64_t timestamp_ms = normalize_ntp_to_ms(p->timestamp);
+    uint64_t timestamp_ms = /*normalize_ntp_to_ms*/ (p->timestamp);
     timestamp_ms -= start_time_ms;
     flv_builder_.append_video_tag_with_avc_nalu_data(timestamp_ms, p->payload, p->payload_size);
     append_nalu_data(p);
 
-    LOGI() << "on_mirror_stream_data payload_size: " << p->payload_size << ", timestamp: " << timestamp_ms;
+    LOGI() << "on_mirror_stream_data payload_size: " << p->payload_size << ", timestamp: " << timestamp_ms << std::endl;
   }
 
   virtual void on_mirror_stream_stopped() override {
-    LOGI() << "on_mirror_stream_stopped";
+    LOGI() << "on_mirror_stream_stopped" << std::endl;
     close_video_data_file();
   }
 
   virtual void on_audio_set_volume(const float ratio, const float volume) override {
-    LOGI() << "on_audio_set_volume: " << ratio << ", value: " << volume;
+    LOGI() << "on_audio_set_volume: " << ratio << ", value: " << volume << std::endl;
   }
 
   virtual void on_audio_set_progress(const float ratio, const uint64_t start, const uint64_t current,
                                      const uint64_t end) override {
-    LOGI() << "on_audio_set_progress: " << ratio << ", start: " << start << ", current: " << current
-           << ", end: " << end;
+    LOGI() << "on_audio_set_progress: " << ratio << ", start: " << start << ", current: " << current << ", end: " << end
+           << std::endl;
   }
 
   virtual void on_audio_set_cover(const std::string format, const void *data, const uint32_t length) override {
-    LOGI() << "on_audio_set_cover: " << format;
+    LOGI() << "on_audio_set_cover: " << format << std::endl;
   }
 
   virtual void on_audio_set_meta_data(const void *data, const uint32_t length) override {
-    LOGI() << "on_audio_set_meta_data: " << data;
+    LOGI() << "on_audio_set_meta_data: " << data << std::endl;
   }
 
   virtual void on_audio_stream_started(const aps::audio_data_format_t format) override {
-    LOGI() << "on_audio_stream_started: " << format;
+    LOGI() << "on_audio_stream_started: " << format << std::endl;
     this->format = format;
     init_audio_data_file();
     uint8_t asc[] = {0xF8, 0xE8, 0x50, 0x00};
@@ -111,7 +122,7 @@ public:
   }
 
   virtual void on_audio_stream_data(const aps::rtp_audio_data_packet_t *p, const uint32_t payload_length) override {
-    LOGV() << "on_audio_stream_data: " << payload_length << ", timestamp: " << p->timestamp;
+    LOGV() << "on_audio_stream_data: " << payload_length << ", timestamp: " << p->timestamp << std::endl;
     append_rtp_data(p->payload, payload_length);
     flv_builder_.append_audio_tag_with_aac_frame_data(0,
                                                       flv::audio_data_sound_rate_t::R44KHZ,
@@ -121,9 +132,9 @@ public:
                                                       payload_length);
   }
 
-  virtual void on_audio_stream_stopped() override { LOGI() << "on_audio_stream_stopped"; }
+  virtual void on_audio_stream_stopped() override { LOGI() << "on_audio_stream_stopped" << std::endl; }
 
-  virtual void on_mirror_stream_heartbeat() override { LOGD() << "on_mirror_stream_heartbeat"; }
+  virtual void on_mirror_stream_heartbeat() override { LOGD() << "on_mirror_stream_heartbeat" << std::endl; }
 
 private:
   std::string file_id_;
@@ -144,7 +155,7 @@ private:
 
   void append_avc_sequence_header(const aps::sms_video_codec_packet_t *p) {
     // Convert from H264 AVCC format to H264 Annex-B format
-    uint32_t sc = htonl(0x01);
+    uint32_t sc = /*htonl*/ (0x01);
     std::ostringstream oss;
 
     // Parse SPS
@@ -152,7 +163,7 @@ private:
     for (int i = 0; i < p->decord_record.sps_count; i++) {
       oss.write((char *)&sc, 0x4);
       uint16_t sps_length = *(uint16_t *)cursor;
-      sps_length = ntohs(sps_length);
+      sps_length = /*ntohs*/ (sps_length);
       cursor += sizeof(uint16_t);
       oss.write((char *)cursor, sps_length);
       cursor += sps_length;
@@ -163,7 +174,7 @@ private:
     for (int i = 0; i < pps_count; i++) {
       oss.write((char *)&sc, 0x4);
       uint16_t pps_length = *(uint16_t *)cursor;
-      pps_length = ntohs(pps_length);
+      pps_length = /*ntohs*/ (pps_length);
       cursor += sizeof(uint16_t);
       oss.write((char *)cursor, pps_length);
       cursor += pps_length;
@@ -174,7 +185,7 @@ private:
 
   void append_nalu_data(const aps::sms_video_data_packet_t *p) {
     // Convert from H264 AVCC format to H264 Annex-B format
-    static uint32_t sc = htonl(0x01);
+    static uint32_t sc = /*htonl*/ (0x01);
     video_data_file_.write((char *)&sc, sizeof(uint32_t));
     video_data_file_.write((char *)(p->payload + sizeof(uint32_t)), p->payload_size - sizeof(uint32_t));
   }
@@ -238,35 +249,35 @@ public:
   ~airplay_video_handler(){};
 
   virtual void on_video_play(const uint64_t session_id, const std::string &location, const float start_pos) override {
-    LOGI() << "on_video_play: " << location << ", session: " << session_id;
+    LOGI() << "on_video_play: " << location << ", session: " << session_id << std::endl;
     session_ = session_id;
   }
 
   virtual void on_video_scrub(const uint64_t session_id, const float position) override {
-    LOGI() << "on_video_scrub: " << position;
+    LOGI() << "on_video_scrub: " << position << std::endl;
     if (session_ != session_id) {
-      LOGE() << "Invalid session id: " << session_id << ", current session: " << session_;
+      LOGE() << "Invalid session id: " << session_id << ", current session: " << session_ << std::endl;
     }
   }
 
   virtual void on_video_rate(const uint64_t session_id, const float value) override {
-    LOGI() << "on_video_rate: " << value;
+    LOGI() << "on_video_rate: " << value << std::endl;
     if (session_ != session_id) {
-      LOGE() << "Invalid session id: " << session_id << ", current session: " << session_;
+      LOGE() << "Invalid session id: " << session_id << ", current session: " << session_ << std::endl;
     }
   }
 
   virtual void on_video_stop(const uint64_t session_id) override {
-    LOGI() << "on_video_stop: ";
+    LOGI() << "on_video_stop: " << std::endl;
     if (session_ != session_id) {
-      LOGE() << "Invalid session id: " << session_id << ", current session: " << session_;
+      LOGE() << "Invalid session id: " << session_id << ", current session: " << session_ << std::endl;
     }
   }
 
   virtual void on_acquire_playback_info(const uint64_t session_id, aps::playback_info_t &playback_info) override {
-    LOGV() << "on_acquire_playback_info: ";
+    LOGV() << "on_acquire_playback_info: " << std::endl;
     if (session_ != session_id) {
-      LOGE() << "Invalid session id: " << session_id << ", current session: " << session_;
+      LOGE() << "Invalid session id: " << session_id << ", current session: " << session_ << std::endl;
     }
   }
 };
@@ -285,19 +296,19 @@ public:
   }
 
   virtual void on_session_end(const uint64_t session_id) override {
-    LOGI() << "-------------------on_session_end: " << session_id;
+    LOGI() << "-------------------on_session_end: " << session_id << std::endl;
   }
 
   void on_mirror_session_begin(aps::ap_session_ptr session) {
     uint64_t sid = session->get_session_id();
-    LOGI() << "###################on_mirror_session_begin: " << sid;
+    LOGI() << "###################on_mirror_session_begin: " << sid << std::endl;
     aps::ap_mirror_session_handler_ptr mirror_handler = std::make_shared<airplay_mirror_handler>();
     session->set_mirror_handler(mirror_handler);
   }
 
   void on_video_session_begin(aps::ap_session_ptr session) {
     uint64_t sid = session->get_session_id();
-    LOGI() << "+++++++++++++++++++on_video_session_begin: " << sid;
+    LOGI() << "+++++++++++++++++++on_video_session_begin: " << sid << std::endl;
     aps::ap_video_session_handler_ptr video_handler = std::make_shared<airplay_video_handler>(sid);
     session->set_video_handler(video_handler);
   }
@@ -308,7 +319,7 @@ airplay_handler::airplay_handler() {}
 airplay_handler::~airplay_handler() {}
 
 int main() {
-  logger::init_logger(false, log_level::LL_INFO);
+  // logger::init_logger(false, log_level::LL_INFO);
   aps::ap_server_ptr server = std::make_shared<aps::ap_server>();
   aps::ap_handler_ptr handler = std::make_shared<airplay_handler>();
   aps::ap_config_ptr config = aps::ap_config::default_instance();
@@ -317,9 +328,9 @@ int main() {
   config->name("APS[" + config->macAddress() + "]");
   server->set_config(config);
   server->set_handler(handler);
-  LOGI() << "AP Server is starting....";
+  LOGI() << "AP Server is starting...." << std::endl;
   server->start();
-  LOGI() << "AP Server started....";
+  LOGI() << "AP Server started...." << std::endl;
   getchar();
   server->stop();
   return 0;

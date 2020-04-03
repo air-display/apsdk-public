@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <memory>
 #include <thread>
 
@@ -85,11 +85,6 @@ public:
 
   virtual asio::io_context &io_context() override { return io_context_; }
 
-  void bind_thread_actions(thread_actoin start, thread_actoin stop) {
-    worker_thread_start_ = start;
-    worker_thread_stop_ = stop;
-  }
-
 protected:
   void post_accept() {
     // Create a new client session for incoming connection
@@ -121,12 +116,13 @@ protected:
 protected:
   bool setup() {
     // Create the worker thread
-    worker_thread_ = std::make_shared<aps_thread>([&]() {
+    worker_thread_ = create_aps_thread([&]() {
 #if defined(DEBUG) || defined(_DEBUG)
       set_current_thread_name(service_name_.c_str());
 #endif
-      thread_guard_t guard(worker_thread_start_, worker_thread_stop_);
+
       io_context_.run();
+
     });
 
     if (!worker_thread_)
@@ -159,9 +155,7 @@ private:
   asio::io_context::work io_work_;
   asio::ip::tcp::acceptor acceptor_;
   asio::ip::tcp::endpoint local_endpoint_;
-  std::shared_ptr<aps_thread> worker_thread_;
-  thread_actoin worker_thread_start_;
-  thread_actoin worker_thread_stop_;
+  aps_thread worker_thread_;
 
   tcp_connection_ptr new_session_;
 };

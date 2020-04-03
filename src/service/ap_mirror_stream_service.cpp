@@ -147,26 +147,12 @@ void ap_mirror_stream_connection::handle_socket_error(const asio::error_code &e)
 ap_mirror_stream_service::ap_mirror_stream_service(ap_crypto_ptr &crypto, uint16_t port,
                                                    ap_mirror_session_handler_ptr &handler)
     : network::tcp_service_base("ap_video_stream_service", port, true), handler_(handler), crypto_(crypto) {
-  bind_thread_actions(std::bind(&ap_mirror_stream_service::on_thread_start, this),
-                      std::bind(&ap_mirror_stream_service::on_thread_stop, this));
 }
 
 ap_mirror_stream_service::~ap_mirror_stream_service() {}
 
 network::tcp_connection_ptr ap_mirror_stream_service::prepare_new_connection() {
   return std::make_shared<ap_mirror_stream_connection>(io_context(), crypto_, handler_);
-}
-
-void ap_mirror_stream_service::on_thread_start() {
-#if __ANDROID__
-  attachCurrentThreadToJvm();
-#endif
-}
-
-void ap_mirror_stream_service::on_thread_stop() {
-#if __ANDROID__
-  detachCurrentThreadFromJvm();
-#endif
 }
 
 } // namespace service

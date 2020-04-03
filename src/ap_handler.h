@@ -25,16 +25,6 @@ public:
   /// <summary>
   ///
   /// </summary>
-  virtual void on_thread_start(){};
-
-  /// <summary>
-  ///
-  /// </summary>
-  virtual void on_thread_stop(){};
-
-  /// <summary>
-  ///
-  /// </summary>
   /// <param name="session"></param>
   virtual void on_session_begin(aps::ap_session_ptr session) = 0;
 

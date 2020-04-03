@@ -161,6 +161,6 @@ void ap_server::stop() { impl_->stop(); }
 uint16_t ap_server::get_service_port() { return impl_->get_service_port(); }
 
 #if __ANDROID__
-void ap_server::setJavaVM(JavaVM *vm) { setJavaVM(vm); }
+void ap_server::setJavaVM(JavaVM *vm) { setGlobalJavaVM(vm); }
 #endif
 } // namespace aps

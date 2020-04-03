@@ -86,10 +86,23 @@ elseif (ANDROID)
 endif()
 source_group("utils" FILES ${SRC_UTILS})
 
+set(APS_LIBRARY_TYPE SHARED)
+if (WINDOWS)
+    set(CMAKE_CXX_STANDARD 17)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+    set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+elseif (LINUX)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+elseif (ANDROID)
+    add_definitions(-DAPS_STATIC_LIB)
+    set(APS_LIBRARY_TYPE STATIC)
+elseif (MACOSX)
+endif()
+
 add_definitions(-Daps_EXPORTS)
 
 # Output
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME} ${APS_LIBRARY_TYPE}
     ${SRC_AP}
     ${SRC_CRYPTO}
     ${SRC_NETWORK}
@@ -98,19 +111,7 @@ add_library(${PROJECT_NAME} SHARED
     ${SRC_UTILS}
 )
 
-if (WINDOWS)
-    set(CMAKE_CXX_STANDARD 17)
-    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-    set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-    set(APS_SDK_OUT ${CMAKE_SOURCE_DIR}/.out.win)
-elseif (LINUX)
-    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-    set(APS_SDK_OUT ${CMAKE_SOURCE_DIR}/.out.linux)
-elseif (ANDROID)
-
-elseif (MACOSX)
-    set(APS_SDK_OUT ${CMAKE_SOURCE_DIR}/.out.mac)
-endif()
+set(APS_SDK_OUT ${CMAKE_BINARY_DIR}/output)
 set_target_properties(${PROJECT_NAME} PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${APS_SDK_OUT}/lib"
     LIBRARY_OUTPUT_DIRECTORY "${APS_SDK_OUT}/bin"

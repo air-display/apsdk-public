@@ -3,7 +3,7 @@
 #define AP_EXPORT_H
 
 // clang-format off
-#ifdef APS_STATIC_DEFINE
+#ifdef APS_STATIC_LIB
 #define APS_EXPORT
 #define APS_NO_EXPORT
 #else

@@ -1,4 +1,7 @@
-apply plugin: 'com.android.library'
+plugins {
+    id 'maven-publish'
+    id 'com.android.library'
+}
 
 ext {
     VersionNumberString = "$System.env.NumberVersion"
@@ -8,10 +11,10 @@ ext {
 }
 
 android {
-    compileSdkVersion 27
+    compileSdkVersion 29
     defaultConfig {
         minSdkVersion 17
-        targetSdkVersion 27
+        targetSdkVersion 29
         versionCode 1
         versionName VersionNumberString
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -48,5 +51,29 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 }
 
-// Publish the output aar to maven repository
-apply from: 'upload.gradle'
+afterEvaluate {
+    publishing {
+        publications {
+            // Creates a Maven publication called "release".
+            release(MavenPublication) {
+                // Applies the component for the release build variant.
+                from components.release
+
+                // You can then customize attributes of the publication as shown below.
+                groupId = 'com.virtable.airplay'
+                artifactId = 'apssdk'
+                version = '1.0'
+            }
+
+            // Creates a Maven publication called “debug”.
+            debug(MavenPublication) {
+                // Applies the component for the debug build variant.
+                from components.debug
+
+                groupId = 'com.virtable.airplay'
+                artifactId = 'apssdk-debug'
+                version = '1.0'
+            }
+        }
+    }
+}

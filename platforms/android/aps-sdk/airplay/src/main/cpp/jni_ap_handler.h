@@ -18,10 +18,6 @@ public:
 
   ~jni_ap_handler();
 
-  virtual void on_thread_start() override;
-
-  virtual void on_thread_stop() override;
-
   virtual void
   on_session_begin(aps::ap_session_ptr session) override;
 
@@ -37,10 +33,6 @@ class IAirPlayMirrorHandler;
 class jni_ap_mirror_handler : public ap_mirror_session_handler {
 public:
   jni_ap_mirror_handler(IAirPlayMirrorHandler *p);
-
-  virtual void on_thread_start() override;
-
-  virtual void on_thread_stop() override;
 
   virtual void on_mirror_stream_started() override;
 
@@ -85,10 +77,6 @@ class IAirPlayVideoHandler;
 class jni_ap_video_handler : public ap_video_session_handler {
 public:
   jni_ap_video_handler(IAirPlayVideoHandler *p);
-
-  virtual void on_thread_start() override;
-
-  virtual void on_thread_stop() override;
 
   virtual void on_video_play(const uint64_t session_id, const std::string &location,
                              const float start_pos) override;

@@ -47,6 +47,7 @@ Java_com_virtable_airplay_AirPlayServer_nciGetServicePort(JNIEnv *env,
 AirPlayServer::AirPlayServer(JNIEnv *env)
     : nci_object<AirPlayServer, AirPlayServer_cls>() {
   (void)env;
+  aps::ap_server::setJavaVM(getJavaVM());
   server_ = std::make_shared<ap_server>();
 }
 

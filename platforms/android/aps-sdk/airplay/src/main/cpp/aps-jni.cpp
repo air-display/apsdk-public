@@ -16,7 +16,6 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 
   jni_class_loader::get().init(env);
   nci_core::initialize(env);
-  aps::ap_server::setJavaVM(vm);
 
   return JNI_VERSION_1_6;
 }

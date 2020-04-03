@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <memory>
 #include <thread>
 
@@ -39,9 +39,10 @@ public:
 
   virtual bool open() override {
     // Create the worker thread
-    worker_thread_ = std::make_shared<aps_thread>([&]() {
-      thread_guard_t guard(worker_thread_start_, worker_thread_stop_);
+    worker_thread_ = create_aps_thread([&]() {
+
       io_context_.run();
+
     });
 
     if (!worker_thread_)
@@ -103,20 +104,13 @@ public:
 
   virtual asio::io_context &io_context() override { return io_context_; }
 
-  void bind_thread_actions(thread_actoin start, thread_actoin stop) {
-    worker_thread_start_ = start;
-    worker_thread_stop_ = stop;
-  }
-
 private:
   std::string service_name_;
   asio::io_context io_context_;
   asio::io_context::work io_work_;
   asio::ip::udp::socket socket_;
   asio::ip::udp::endpoint local_endpoint_;
-  std::shared_ptr<aps_thread> worker_thread_;
-  thread_actoin worker_thread_start_;
-  thread_actoin worker_thread_stop_;
+  aps_thread worker_thread_;
 };
 } // namespace network
 } // namespace aps

@@ -80,16 +80,12 @@ ap_audio_stream_service::ap_audio_stream_service(aps::ap_crypto_ptr &crypto,
                                             std::placeholders::_1,
                                             std::placeholders::_2,
                                             std::placeholders::_3));
-  data_service_.bind_thread_actions(std::bind(&ap_audio_stream_service::on_thread_start, this),
-                                    std::bind(&ap_audio_stream_service::on_thread_stop, this));
 
   control_service_.bind_recv_handler(std::bind(&ap_audio_stream_service::control_handler,
                                                this,
                                                std::placeholders::_1,
                                                std::placeholders::_2,
                                                std::placeholders::_3));
-  control_service_.bind_thread_actions(std::bind(&ap_audio_stream_service::on_thread_start, this),
-                                       std::bind(&ap_audio_stream_service::on_thread_stop, this));
 
   LOGD() << "ap_audio_stream_service (" << std::hex << this << ") is being created";
 }
@@ -212,18 +208,6 @@ void ap_audio_stream_service::control_sync_packet(rtp_control_sync_packet_t *pac
 
 void ap_audio_stream_service::control_retransmit_packet(rtp_control_retransmit_reply_packet_t *packet) {
   LOGI() << "audio CONTROL RETRANSMIT packet";
-}
-
-void ap_audio_stream_service::on_thread_start() {
-  if (handler_) {
-    handler_->on_thread_start();
-  }
-}
-
-void ap_audio_stream_service::on_thread_stop() {
-  if (handler_) {
-    handler_->on_thread_stop();
-  }
 }
 
 void ap_audio_stream_service::cache_packet(const uint16_t seq, const uint8_t *buf, std::size_t length) {
