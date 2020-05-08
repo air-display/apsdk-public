@@ -123,6 +123,8 @@
 # *****************************************************************************
 #
 
+message(STATUS "********************** ios toolchain file begins **********************")
+
 # Fix for PThread library not in path
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 set(CMAKE_HAVE_THREADS_LIBRARY 1)
@@ -340,9 +342,9 @@ endif()
 # Set Xcode property for SDKROOT as well if Xcode generator is used
 if(USED_CMAKE_GENERATOR MATCHES "Xcode")
   set(CMAKE_OSX_SYSROOT "${SDK_NAME}" CACHE INTERNAL "")
-  if(NOT DEFINED CMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM)
-    set(CMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "123456789A" CACHE INTERNAL "")
-  endif()
+  # if(NOT DEFINED CMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM)
+  #   set(CMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "123456789A" CACHE INTERNAL "")
+  # endif()
 endif()
 
 # Specify minimum version of deployment target.
@@ -723,3 +725,5 @@ macro(find_host_package)
   set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
   set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
 endmacro(find_host_package)
+
+message(STATUS "********************** ios toolchain file ends **********************")

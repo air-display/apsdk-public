@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.4.1)
+cmake_minimum_required(VERSION 3.14)
 message(STATUS "====================================")
 project(aps)
 
@@ -17,12 +17,13 @@ endif()
 
 # Flags
 # C standard
-set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_STANDARD 11)
 
 # C++ standard
-set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD 11)
 
 # Hide symbols
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
