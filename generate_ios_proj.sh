@@ -4,4 +4,9 @@ cmake \
     -G "Xcode" \
     -DBUILD_APS_DEMO=FALSE \
     -DPLATFORM=OS \
+    -DDEPLOYMENT_TARGET=9.0 \
+    -DENABLE_ARC=FALSE \
+    -DENABLE_BITCODE=FALSE \
+    -DENABLE_VISIBILITY=FALSE \
+    -DENABLE_STRICT_TRY_COMPILE=FALSE \
     -DCMAKE_TOOLCHAIN_FILE=platforms/ios/ios.toolchain.cmake

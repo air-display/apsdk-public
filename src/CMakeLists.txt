@@ -97,6 +97,7 @@ elseif (ANDROID)
     add_definitions(-DAPS_STATIC_LIB)
     set(APS_LIBRARY_TYPE STATIC)
 elseif (MACOSX)
+elseif (IOS)
 endif()
 
 add_definitions(-Daps_EXPORTS)
@@ -119,6 +120,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 )
 
 if (APPLE)
+    message(STATUS "++++++++++ adding configs for APPLE target systems")
     # Disalbe the ARC
     set(CMAKE_XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC "NO")    
     
@@ -139,6 +141,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 
 # Dependencies
 if (APPLE)
+    message(STATUS "++++++++++ adding dependencies for APPLE target systems")
     find_library(FOUNDATION_FX Foundation)
     if (NOT FOUNDATION_FX)
         message(FATAL_ERROR "Foundation.Framework not found")

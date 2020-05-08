@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.4.1)
 message(STATUS "====================================")
 project(aps)
 
-message(STATUS "Current build target system:" ${CMAKE_SYSTEM_NAME})
+message(STATUS "++++++++++ Current build target system:" ${CMAKE_SYSTEM_NAME})
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(WINDOWS TRUE)
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -11,6 +11,8 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Android")
     set(ANDROID TRUE)
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(MACOSX TRUE)
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "iOS")
+    set(IOS TRUE)
 endif()
 
 # Flags
@@ -35,11 +37,12 @@ elseif (ANDROID)
 
 elseif (MACOSX)
 
+elseif (IOS)
+
 endif()
 
 # Definitions
 add_definitions(-DASIO_STANDALONE)
-add_definitions(-DASIO_NO_TYPEID)
 if (WINDOWS)
     add_definitions(-D_WIN32_WINNT=0x0600) # Windows Vista +
     add_definitions(-DINCL_EXTRA_HTON_FUNCTIONS)
@@ -48,6 +51,8 @@ elseif (LINUX)
 elseif (ANDROID)
 
 elseif (MACOS)
+
+elseif (IOS)
 
 endif() 
 
@@ -71,7 +76,7 @@ if ((NOT DEFINED BUILD_APS_DEMO) OR (BUILD_APS_DEMO STREQUAL "")
 elseif(${BUILD_APS_DEMO} MATCHES "(TRUE|true|1|null|ON)")
     option(BUILD_APS_DEMO "Build the aps demo" ON)
 else()
-    message(FATAL_ERROR "INVALID FLAG BUILD_APS_DEMO=" ${BUILD_APS_DEMO})
+    message(FATAL_ERROR "++++++++++ INVALID FLAG BUILD_APS_DEMO=" ${BUILD_APS_DEMO})
 endif()
 if (BUILD_APS_DEMO)
     add_subdirectory(demo)
