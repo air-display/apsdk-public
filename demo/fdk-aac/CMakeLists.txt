@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.10)
 project(fdk-aac)
 
 set(FDK_AAC_INCLUDES

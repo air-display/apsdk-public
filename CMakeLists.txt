@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.10)
 message(STATUS "====================================")
 project(aps)
 
@@ -13,6 +13,9 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(MACOSX TRUE)
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "iOS")
     set(IOS TRUE)
+    if(${CMAKE_VERSION} VERSION_LESS "3.14.0") 
+        message(FATAL_ERROR "CMake Version is too low to build for iOS platform, 3.14+ is required.")
+    endif()
 endif()
 
 # Flags
