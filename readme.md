@@ -20,7 +20,7 @@ Run the generate_vs_proj.bat to generate the project files. Build the generated 
 ## Runtime requirements
 Make sure the Bonjour Service is installed, this is required by APS sdk. Download the runtime library from: https://developer.apple.com/bonjour/
 
-# macOS
+# macOS & iOS
 ## Dependencies:
 No extra dependencies.
 
