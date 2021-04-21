@@ -92,7 +92,9 @@ void ap_airplay_connection::post_pair_setup_handler(const request &req, response
     crypto_->init_client_public_keys(0, 0, req.content.data(), 32);
   }
 
-  res.with_status(ok).with_content(crypto_->server_keys().ed_public_key()).with_content_type(APPLICATION_OCTET_STREAM);
+  res.with_status(ok)
+      .with_content_type(APPLICATION_OCTET_STREAM)
+      .with_content(crypto_->server_keys().ed_public_key());
 }
 
 void ap_airplay_connection::post_pair_verify_handler(const request &req, response &res) {
@@ -113,7 +115,9 @@ void ap_airplay_connection::post_pair_verify_handler(const request &req, respons
     std::vector<uint8_t> res_data = crypto_->server_keys().curve_public_key();
     std::copy(signature.begin(), signature.end(), std::back_inserter(res_data));
 
-    res.with_status(ok).with_content(res_data).with_content_type(APPLICATION_OCTET_STREAM);
+    res.with_status(ok)
+        .with_content_type(APPLICATION_OCTET_STREAM)
+        .with_content(res_data);
 
     return;
   } else {
@@ -240,8 +244,8 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
         // clang format-on
 
         res.with_status(ok)
-            .with_content(audio_stream.to_bytes_array())
-            .with_content_type(APPLICATION_BINARY_PLIST);
+            .with_content_type(APPLICATION_BINARY_PLIST)
+            .with_content(audio_stream.to_bytes_array());
 
         return;
       } else if (stream_type_t::video == type) {
@@ -298,7 +302,9 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
         );
         // clang-format on
 
-        res.with_status(ok).with_content(video_stream.to_bytes_array()).with_content_type(APPLICATION_BINARY_PLIST);
+        res.with_status(ok)
+            .with_content_type(APPLICATION_BINARY_PLIST)
+            .with_content(video_stream.to_bytes_array());
 
         return;
       } else
@@ -354,7 +360,9 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
       auto_plist content = plist_object_dict(
           2, "eventPort", plist_object_integer(0), "timingPort", plist_object_integer(timing_sync_service_->port()));
 
-      res.with_status(ok).with_content_type(APPLICATION_BINARY_PLIST).with_content(content.to_bytes_array());
+      res.with_status(ok)
+          .with_content_type(APPLICATION_BINARY_PLIST)
+          .with_content(content.to_bytes_array());
 
       return;
     }
@@ -414,7 +422,9 @@ void ap_airplay_connection::get_info_handler(const request &req, response &res) 
   );
   // clang-format on
 
-  res.with_status(ok).with_content_type(APPLICATION_BINARY_PLIST).with_content(info.to_bytes_array());
+  res.with_status(ok)
+      .with_content_type(APPLICATION_BINARY_PLIST)
+      .with_content(info.to_bytes_array());
 }
 
 void ap_airplay_connection::post_feedback_handler(const request &req, response &res) {
@@ -433,7 +443,9 @@ void ap_airplay_connection::record_handler(const request &req, response &res) {
 void ap_airplay_connection::get_parameter_handler(const request &req, response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
 
-  res.with_status(ok).with_content_type(TEXT_PARAMETERS).with_content("volume: 0.000000\r\n");
+  res.with_status(ok)
+      .with_content_type(TEXT_PARAMETERS)
+      .with_content("volume: 0.000000\r\n");
 }
 
 void ap_airplay_connection::post_audioMode(const request &req, response &res) {
@@ -1075,52 +1087,52 @@ void ap_airplay_connection::initialize_request_handlers() {
   }
 }
 
-void ap_airplay_connection::send_fcup_request(int request_id, const std::string &url, const std::string &session_id) {
-  std::ostringstream oss;
-  // clang-format off
-    oss << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-           "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
-           "<plist version=\"1.0\">\n"
-           "\t<dict>\n"
-           "\t\t<key>sessionID</key>\n"
-           "\t\t<integer>1</integer>\n"
-           "\t\t<key>type</key>\n"
-           "\t\t<string>unhandledURLRequest</string>\n"
-           "\t\t<key>request</key>\n"
-           "\t\t<dict>\n"
-           "\t\t\t<key>FCUP_Response_ClientInfo</key>\n"
-           "\t\t\t<integer>1</integer>\n"
-           "\t\t\t<key>FCUP_Response_ClientRef</key>\n"
-           "\t\t\t<integer>40030004</integer>\n"
-           "\t\t\t<key>FCUP_Response_RequestID</key>\n"
-           "\t\t\t<integer>" << request_id << "</integer>\n"
-           "\t\t\t<key>FCUP_Response_URL</key>\n"
-           "\t\t\t<string>" << url << "</string>\n"
-           "\t\t\t<key>sessionID</key>\n"
-           "\t\t\t<integer>1</integer>\n"
-           "\t\t\t<key>FCUP_Response_Headers</key>\n"
-           "\t\t\t<dict>\n"
-           "\t\t\t\t<key>X-Playback-Session-Id</key>\n"
-           "\t\t\t\t<string>" << session_id << "</string>\n"
-           "\t\t\t\t<key>User-Agent</key>\n"
-           "\t\t\t\t<string>AppleCoreMedia/1.0.0.11B554a (Apple TV; U; CPU OS 7_0_4 like Mac OS X; en_us)</string>\n"
-           "\t\t\t</dict>\n"
-           "\t\t</dict>\n"
-           "\t</dict>\n"
-           "</plist>";
-  // clang-format on
-
-  request fcup_request("HTTP/1.1", "POST", "/event");
-  fcup_request.with_header("X-Apple-Session-ID", session_id)
-      .with_content_type(TEXT_APPLE_PLIST_XML)
-      .with_content(oss.str());
-
-  auto p = ap_event_connection_manager::get().get(session_id);
-  auto pp = p.lock();
-  if (pp) {
-    pp->send_request(fcup_request);
-  }
-}
+//void ap_airplay_connection::send_fcup_request(int request_id, const std::string &url, const std::string &session_id) {
+//  std::ostringstream oss;
+//  // clang-format off
+//  oss << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+//         "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+//         "<plist version=\"1.0\">\n"
+//         "\t<dict>\n"
+//         "\t\t<key>sessionID</key>\n"
+//         "\t\t<integer>1</integer>\n"
+//         "\t\t<key>type</key>\n"
+//         "\t\t<string>unhandledURLRequest</string>\n"
+//         "\t\t<key>request</key>\n"
+//         "\t\t<dict>\n"
+//         "\t\t\t<key>FCUP_Response_ClientInfo</key>\n"
+//         "\t\t\t<integer>1</integer>\n"
+//         "\t\t\t<key>FCUP_Response_ClientRef</key>\n"
+//         "\t\t\t<integer>40030004</integer>\n"
+//         "\t\t\t<key>FCUP_Response_RequestID</key>\n"
+//         "\t\t\t<integer>" << request_id << "</integer>\n"
+//         "\t\t\t<key>FCUP_Response_URL</key>\n"
+//         "\t\t\t<string>" << url << "</string>\n"
+//         "\t\t\t<key>sessionID</key>\n"
+//         "\t\t\t<integer>1</integer>\n"
+//         "\t\t\t<key>FCUP_Response_Headers</key>\n"
+//         "\t\t\t<dict>\n"
+//         "\t\t\t\t<key>X-Playback-Session-Id</key>\n"
+//         "\t\t\t\t<string>" << session_id << "</string>\n"
+//         "\t\t\t\t<key>User-Agent</key>\n"
+//         "\t\t\t\t<string>AppleCoreMedia/1.0.0.11B554a (Apple TV; U; CPU OS 7_0_4 like Mac OS X; en_us)</string>\n"
+//         "\t\t\t</dict>\n"
+//         "\t\t</dict>\n"
+//         "\t</dict>\n"
+//         "</plist>";
+//  // clang-format on
+//
+//  request fcup_request("HTTP/1.1", "POST", "/event");
+//  fcup_request.with_header("X-Apple-Session-ID", session_id)
+//      .with_content_type(TEXT_APPLE_PLIST_XML)
+//      .with_content(oss.str());
+//
+//  auto p = ap_event_connection_manager::get().get(session_id);
+//  auto pp = p.lock();
+//  if (pp) {
+//    pp->send_request(fcup_request);
+//  }
+//}
 
 void ap_airplay_connection::reverse_connection(const std::string &session) {
   apple_session_id_ = session;

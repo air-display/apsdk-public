@@ -116,7 +116,7 @@ protected:
 
   void initialize_request_handlers();
 
-  void send_fcup_request(int request_id, const std::string &url, const std::string &session_id);
+  //void send_fcup_request(int request_id, const std::string &url, const std::string &session_id);
 
   void reverse_connection(const std::string &session);
 

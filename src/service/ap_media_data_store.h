@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <map>
 #include <memory>
 #include <stack>
@@ -76,10 +76,13 @@ public:
 
   void set_store_root(uint16_t port);
 
+  // request media data from client side
   bool request_media_data(const std::string &primary_uri, const std::string &session_id);
 
+  // generate and store the media data
   std::string process_media_data(const std::string &uri, const std::string &data);
 
+  // serve the media data for player 
   std::string query_media_data(const std::string &path);
 
   void reset();

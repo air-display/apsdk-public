@@ -33,3 +33,6 @@ if(WINDOWS)
     set_target_properties(aps-demo PROPERTIES FOLDER demo)
 endif(WINDOWS)
 
+add_custom_command(TARGET aps-demo POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:aps> $<TARGET_FILE_DIR:aps-demo>
+)
