@@ -105,11 +105,11 @@ protected:
 
     std::string airplay_service_name = ap_config_->name();
     if (airplay_net_service_.publish(airplay_service_name, airplay_tcp_service_->port())) {
-      std::string rapo_name = ap_config_->deviceID();
-      rapo_name += "@";
-      rapo_name += airplay_service_name;
+      std::string raop_name = ap_config_->deviceID();
+      raop_name += "@";
+      raop_name += airplay_service_name;
 
-      if (raop_net_service_.publish(rapo_name, airplay_tcp_service_->port()))
+      if (raop_net_service_.publish(raop_name, airplay_tcp_service_->port()))
         return true;
 
       airplay_net_service_.suppress();
