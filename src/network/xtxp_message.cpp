@@ -1,4 +1,6 @@
-#include <network/xtxp_message.h>
+﻿#include <network/xtxp_message.h>
+
+#define DUMP_REQUEST_BODY 1
 
 namespace aps {
 namespace network {
@@ -74,11 +76,16 @@ void request::dump(const std::string tag) const {
     oss << "        " << header.first << ": " << header.second << std::endl;
 
 #ifdef DUMP_REQUEST_BODY
-  oss << "    Content:";
-  if (content_length)
-    oss.write((char *)content.data(), content.size());
-  else
+  oss << "    Body:";
+  if (0 == content_length)
     oss << "<EMPTY>";
+
+  for (int i = 0; i < content_length; i++) {
+    if (std::isprint(content[i]))
+      oss << content[i];
+    else
+      oss << '.';
+  }
 #endif
   LOGD() << oss.str();
 }

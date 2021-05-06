@@ -225,6 +225,7 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
         if (!audio_stream_service_) {
           audio_stream_service_ = std::make_shared<ap_audio_stream_service>(crypto_, mirror_session_handler_);
           audio_stream_service_->start();
+          LOGI() << "mirroring service audio data port: " << audio_stream_service_->data_port() << ", control port: "<< audio_stream_service_->control_port();
         }
 
         if (mirror_session_handler_) {
@@ -282,6 +283,7 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
           mirror_stream_service_ =
               std::make_shared<ap_mirror_stream_service>(crypto_, 0, mirror_session_handler_);
           mirror_stream_service_->start();
+          LOGI() << "mirroring service video port: " << mirror_stream_service_->port();
         }
 
         uint16_t listen_port = 0;

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <array>
 #include <map>
 #include <string>
@@ -9,7 +9,6 @@
 #include <utils/logger.h>
 #include <utils/packing.h>
 
-//#define DUMP_REQUEST_BODY 1
 
 namespace aps {
 namespace service {
