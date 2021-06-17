@@ -1,20 +1,8 @@
 #################################################
-# fdk-aac
-add_subdirectory(fdk-aac)
+# es-player
+add_subdirectory(esplayer)
 if(WINDOWS)
-    set_target_properties(fdk-aac PROPERTIES FOLDER demo)
-endif(WINDOWS)
-
-#################################################
-# audiodec
-file(GLOB_RECURSE audiodec_SRC_FILES
-    "./audiodec/*.cpp"
-    "./audiodec/*.h"
-)
-add_library(audiodec STATIC ${audiodec_SRC_FILES})
-target_link_libraries(audiodec PRIVATE fdk-aac)
-if(WINDOWS)
-    set_target_properties(audiodec PROPERTIES FOLDER demo)
+    set_target_properties(esplayer PROPERTIES FOLDER demo)
 endif(WINDOWS)
 
 #################################################
@@ -25,10 +13,12 @@ file(GLOB SRC_FILES
     "./*.hpp"
 )
 add_executable(aps-demo ${SRC_FILES})
+
 target_link_libraries(aps-demo PRIVATE
   aps
-  audiodec
+  esplayer
 )
+
 if(WINDOWS)
     set_target_properties(aps-demo PROPERTIES FOLDER demo)
 endif(WINDOWS)

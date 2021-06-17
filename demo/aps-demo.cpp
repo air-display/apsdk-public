@@ -7,13 +7,11 @@
 #include <sstream>
 #include <string>
 
-#include "audiodec/aac_eld.h"
-#include "audiodec/alac.h"
-
 #include "../src/ap_config.h"
 #include "../src/ap_server.h"
 #include "../src/ap_session.h"
 #include "../src/ap_types.h"
+#include "esplayer/es_player.h"
 
 #define LOG() std::cout
 #define LOGV() std::cout
@@ -23,71 +21,38 @@
 #define LOGE() std::cout
 #define LOGF() std::cout
 
-//#include "../src/utils/logger.h"
-//#include "../src/utils/packing.h"
-//#include "../src/utils/utils.h"
-
-#include "flv_stream_builder.hpp"
-
 class airplay_mirror_handler : public aps::ap_mirror_session_handler {
 private:
-  std::ofstream ofs_;
-  flv::flv_stream_builder flv_builder_;
-  uint64_t start_time_ms;
+  esp::es_player es_player_;
 
 public:
-  airplay_mirror_handler() : flv_builder_(ofs_) {
-    time_t now = time(0);
-    std::tm *local_now = localtime(&now);
-    std::ostringstream oss;
-    oss << local_now->tm_year + 1900 << "-" << local_now->tm_mon + 1 << "-" << local_now->tm_mday << "-"
-        << local_now->tm_hour << "-" << local_now->tm_min << "-" << local_now->tm_sec;
-    file_id_ = oss.str();
+  airplay_mirror_handler(){};
 
-    ofs_.open("mirror-data.flv", std::ios_base::binary | std::ios_base::out | std::ios_base::trunc);
-  };
   ~airplay_mirror_handler(){};
 
   virtual void on_mirror_stream_started() override {
     LOGI() << "on_mirror_stream_started" << std::endl;
-    init_video_data_file();
-    flv_builder_.init_stream_header(true, true);
 
-    auto meta = flv::amf::amf_array::create()
-                    ->with_item("audiocodecid", (double)10)
-                    ->with_item("audiosamplerate", (double)44100)
-                    ->with_item("audiosamplesize", (double)16)
-                    ->with_item("stereo", true)
-                    ->with_item("videocodecid", (double)7)
-        //->with_item("framerate", (double)30)
-        //->with_item("videodatarate", (double)520)
-        //->with_item("width", (double)1920)
-        //->with_item("height", (double)1080)
-        //->with_item("filesize", (double)0)
-        ;
-
-    flv_builder_.append_meta_tag(meta);
+    es_player_.open_video_renderer();
   }
 
   virtual void on_mirror_stream_codec(const aps::sms_video_codec_packet_t *p) override {
     LOGI() << "on_mirror_stream_codec: " << std::endl;
-    start_time_ms = /*normalize_ntp_to_ms*/ (p->timestamp);
-    flv_builder_.append_video_tag_with_avc_decoder_config(0, p->payload, p->payload_size);
-    append_avc_sequence_header(p);
+
+    es_player_.open_video_decoder(p->payload, p->payload_size);
   }
 
   virtual void on_mirror_stream_data(const aps::sms_video_data_packet_t *p) override {
-    uint64_t timestamp_ms = /*normalize_ntp_to_ms*/ (p->timestamp);
-    timestamp_ms -= start_time_ms;
-    flv_builder_.append_video_tag_with_avc_nalu_data(timestamp_ms, p->payload, p->payload_size);
-    append_nalu_data(p);
+    LOGI() << "on_mirror_stream_data payload_size: " << p->payload_size << ", timestamp: " << p->timestamp << std::endl;
 
-    LOGI() << "on_mirror_stream_data payload_size: " << p->payload_size << ", timestamp: " << timestamp_ms << std::endl;
+    es_player_.feed_video(const_cast<uint8_t *>(p->payload), p->payload_size);
   }
 
   virtual void on_mirror_stream_stopped() override {
     LOGI() << "on_mirror_stream_stopped" << std::endl;
-    close_video_data_file();
+
+    es_player_.close_video_renderer();
+    es_player_.close_video_decoder();
   }
 
   virtual void on_audio_set_volume(const float ratio, const float volume) override {
@@ -110,136 +75,26 @@ public:
 
   virtual void on_audio_stream_started(const aps::audio_data_format_t format) override {
     LOGI() << "on_audio_stream_started: " << format << std::endl;
-    this->format = format;
-    init_audio_data_file();
     uint8_t asc[] = {0xF8, 0xE8, 0x50, 0x00};
-    flv_builder_.append_audio_tag_with_aac_specific_config(0,
-                                                           flv::audio_data_sound_rate_t::R44KHZ,
-                                                           flv::audio_data_sound_size_t::S16BIT,
-                                                           flv::audio_data_sound_type_t::STEREO,
-                                                           asc,
-                                                           4);
+
+    es_player_.open_audio_decoder(asc, sizeof(asc));
+    es_player_.open_audio_renderer();
   }
 
   virtual void on_audio_stream_data(const aps::rtp_audio_data_packet_t *p, const uint32_t payload_length) override {
     LOGV() << "on_audio_stream_data: " << payload_length << ", timestamp: " << p->timestamp << std::endl;
-    append_rtp_data(p->payload, payload_length);
-    flv_builder_.append_audio_tag_with_aac_frame_data(0,
-                                                      flv::audio_data_sound_rate_t::R44KHZ,
-                                                      flv::audio_data_sound_size_t::S16BIT,
-                                                      flv::audio_data_sound_type_t::STEREO,
-                                                      p->payload,
-                                                      payload_length);
+
+    es_player_.feed_audio(const_cast<uint8_t *>(p->payload), payload_length);
   }
 
-  virtual void on_audio_stream_stopped() override { LOGI() << "on_audio_stream_stopped" << std::endl; }
+  virtual void on_audio_stream_stopped() override {
+    LOGI() << "on_audio_stream_stopped" << std::endl;
+
+    es_player_.close_audio_renderer();
+    es_player_.close_audio_decoder();
+  }
 
   virtual void on_mirror_stream_heartbeat() override { LOGD() << "on_mirror_stream_heartbeat" << std::endl; }
-
-private:
-  std::string file_id_;
-
-  std::ofstream video_data_file_;
-  void init_video_data_file() {
-    if (video_data_file_.is_open()) {
-      video_data_file_.close();
-    }
-
-    std::ostringstream oss;
-    oss << file_id_ << "-screen"
-        << ".h264";
-
-    auto mode = std::ios_base::binary | std::ios_base::binary | std::ios_base::trunc;
-    video_data_file_.open(oss.str(), mode);
-  }
-
-  void append_avc_sequence_header(const aps::sms_video_codec_packet_t *p) {
-    // Convert from H264 AVCC format to H264 Annex-B format
-    uint32_t sc = /*htonl*/ (0x01);
-    std::ostringstream oss;
-
-    // Parse SPS
-    uint8_t *cursor = (uint8_t *)p->decord_record.start;
-    for (int i = 0; i < p->decord_record.sps_count; i++) {
-      oss.write((char *)&sc, 0x4);
-      uint16_t sps_length = *(uint16_t *)cursor;
-      sps_length = /*ntohs*/ (sps_length);
-      cursor += sizeof(uint16_t);
-      oss.write((char *)cursor, sps_length);
-      cursor += sps_length;
-    }
-
-    // Parse PPS
-    uint8_t pps_count = *cursor++;
-    for (int i = 0; i < pps_count; i++) {
-      oss.write((char *)&sc, 0x4);
-      uint16_t pps_length = *(uint16_t *)cursor;
-      pps_length = /*ntohs*/ (pps_length);
-      cursor += sizeof(uint16_t);
-      oss.write((char *)cursor, pps_length);
-      cursor += pps_length;
-    }
-    std::string buffer = oss.str();
-    video_data_file_.write((char *)buffer.c_str(), buffer.length());
-  }
-
-  void append_nalu_data(const aps::sms_video_data_packet_t *p) {
-    // Convert from H264 AVCC format to H264 Annex-B format
-    static uint32_t sc = /*htonl*/ (0x01);
-    video_data_file_.write((char *)&sc, sizeof(uint32_t));
-    video_data_file_.write((char *)(p->payload + sizeof(uint32_t)), p->payload_size - sizeof(uint32_t));
-  }
-
-  void close_video_data_file() { video_data_file_.close(); }
-
-  aps::audio_data_format_t format;
-  aps::alac_context alac_ctx = 0;
-  aps::aaceld_context aaceld_ctx = 0;
-  std::ofstream audio_data_file_;
-  void init_audio_data_file() {
-    std::ostringstream oss;
-
-    if (format == aps::audio_format_alac) {
-      alac_ctx = aps::create_alac_decoder();
-      oss << file_id_ << "-audio"
-          << ".alac.pcm";
-    } else if (format == aps::audio_format_aac_eld) {
-      aaceld_ctx = aps::create_aaceld_decoder();
-      oss << file_id_ << "-audio"
-          << ".aac-eld.pcm";
-    }
-
-    if (audio_data_file_.is_open()) {
-      audio_data_file_.close();
-    }
-
-    auto mode = std::ios_base::binary | std::ios_base::binary | std::ios_base::trunc;
-    audio_data_file_.open(oss.str(), mode);
-  }
-
-  void append_rtp_data(const uint8_t *p, int32_t length) {
-    std::vector<uint8_t> output(4096);
-    int outsize = 0;
-
-    if (format == aps::audio_format_alac) {
-      aps::alac_decode_frame(alac_ctx, (unsigned char *)p, output.data(), &outsize);
-    } else if (format == aps::audio_format_aac_eld) {
-      aps::aaceld_decode_frame(aaceld_ctx, (unsigned char *)p, length, output.data(), &outsize);
-    }
-
-    audio_data_file_.write((char *)output.data(), outsize);
-  }
-
-  void close_audio_data_file() {
-    audio_data_file_.close();
-    if (alac_ctx) {
-      aps::destory_alac_decoder(alac_ctx);
-    }
-
-    if (aaceld_ctx) {
-      aps::destroy_aaceld_decoder(aaceld_ctx);
-    }
-  }
 };
 
 class airplay_video_handler : public aps::ap_video_session_handler {
@@ -331,7 +186,7 @@ int main() {
   LOGI() << "AP Server is starting...." << std::endl;
   server->start();
   LOGI() << "AP Server started...." << std::endl;
-  getchar();
+  (void)(getchar());
   server->stop();
   return 0;
 }
