@@ -79,22 +79,20 @@ public:
 
   void close_audio_decoder();
 
-  void open_audio_renderer();
+  void open_audio_renderer(int frequency);
 
   void close_audio_renderer();
 
   bool feed_audio(uint8_t *data, int len);
 
-private:
-  AVCodecContext *m_video_codec_ctx = nullptr;
+private: // video
   bool create_video_decoder_resource(const uint8_t *config, int len);
   void destroy_video_decoder_resource();
+  void render_video_frame(AVFrame *frm);
 
-  AVCodecContext *m_audio_codec_ctx = nullptr;
-  bool create_audio_decoder_resource(const uint8_t *config, int len);
-  void destroy_audio_decoder_resource();
+  // decoder context
+  AVCodecContext *m_video_codec_ctx = nullptr;
 
-private:
   // frame pool used by video decoder
   es_frame_pool m_video_frm_pool;
 
@@ -104,32 +102,35 @@ private:
   SDL_Window *m_sdl_window = nullptr;
   SDL_Renderer *m_sdl_renderer = nullptr;
   SDL_Texture *m_sdl_texture = nullptr;
-  AVFrame *m_yuv_frame = nullptr;
+  AVFrame *m_picture_frame = nullptr;
   SwsContext *m_sws_ctx = nullptr;
 
   int m_last_source_width = 0;
   int m_last_source_height = 0;
-  int m_last_texture_widht = 0;
-  int m_last_texture_height = 0;
-  std::mutex m_video_resource_update_lock;
-  std::shared_ptr<std::thread> m_window_thread;
-  std::shared_ptr<std::thread> m_worker_thread;
+  int m_last_window_width = 0;
+  int m_last_window_height = 0;
+  std::shared_ptr<std::thread> m_video_rendering_thread;
 
   bool create_video_renderer_resource();
   void destroy_video_renderer_resource();
 
-  void scale_frame(const AVFrame *frame);
+  void video_rendering_loop();
+  void update_video_renderer_resource(const AVFrame *frame);
+  void update_video_renderer_frame(const AVFrame *frame);
   void present_frame();
-  void update_video_render_resource();
 
-  void video_renderer_window_loop();
-  void video_renderer_worker_loop();
+private: // audio
+  bool create_audio_decoder_resource(const uint8_t *config, int len);
+  void destroy_audio_decoder_resource();
+  void render_audio_frame(AVFrame *frm);
+
+  // decoder context
+  AVCodecContext *m_audio_codec_ctx = nullptr;
 
   // frame pool used by audio decoder
   es_frame_pool m_audio_frm_pool;
 
-  // decoded audio frame queue
-  es_frame_queue m_audio_render_frm_queue;
+  SDL_AudioDeviceID m_sdl_audio_device = 0;
 };
 } // namespace esp
 

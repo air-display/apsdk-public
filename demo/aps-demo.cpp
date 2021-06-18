@@ -75,10 +75,14 @@ public:
 
   virtual void on_audio_stream_started(const aps::audio_data_format_t format) override {
     LOGI() << "on_audio_stream_started: " << format << std::endl;
-    uint8_t asc[] = {0xF8, 0xE8, 0x50, 0x00};
 
+    // aac-eld 44.1kHz channel = 2
+    // |0xF8, 0xE8, 0x50, 0x00
+    // |11111 000111 | 0100 | 0010 | 1 0000 0000 0000
+    // |  32   +  7  |   4  |   2  |
+    uint8_t asc[] = {0xF8, 0xE8, 0x50, 0x00};
     es_player_.open_audio_decoder(asc, sizeof(asc));
-    es_player_.open_audio_renderer();
+    es_player_.open_audio_renderer(44100);
   }
 
   virtual void on_audio_stream_data(const aps::rtp_audio_data_packet_t *p, const uint32_t payload_length) override {

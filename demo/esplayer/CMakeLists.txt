@@ -5,13 +5,15 @@ file(GLOB_RECURSE esplayer_SRC_FILES
 
 add_library(esplayer STATIC ${esplayer_SRC_FILES})
 
-target_include_directories(esplayer PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/../deps/include
-)
+if(WINDOWS)
+    target_include_directories(esplayer PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/../deps/win/include
+    )
 
-target_link_directories(esplayer PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/../deps/$<CONFIG>/lib
-)
+    target_link_directories(esplayer PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/../deps/win/$(PlatformShortName)/$<CONFIG>/lib
+    )
+endif(WINDOWS)
 
 set(esplayer_LINKED_LIBS
     SDL2
