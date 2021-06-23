@@ -5,8 +5,8 @@
 #include <ap_server.h>
 #include <mdns/net_service.h>
 #include <service/ap_airplay_service.h>
-#include <service/ap_media_data_store.h>
-#include <service/ap_media_http_service.h>
+#include <service/ap_casting_media_data_store.h>
+#include <service/ap_casting_media_http_service.h>
 
 using namespace aps::service;
 using namespace aps::network;
@@ -16,7 +16,7 @@ class ap_server::implementation {
 public:
   implementation()
       : airplay_net_service_("_airplay._tcp"), raop_net_service_("_raop._tcp"), airplay_tcp_service_(0),
-        ap_media_http_service_(0) {}
+        ap_casting_media_http_service_(0) {}
 
   ~implementation() { release_net_service(); }
 
@@ -41,13 +41,13 @@ public:
       LOGD() << "AP service running on " << airplay_tcp_service_->port();
     }
 
-    ap_media_http_service_ = std::make_shared<ap_media_http_service>(ap_config_, 0);
+    ap_casting_media_http_service_ = std::make_shared<ap_casting_media_http_service>(ap_config_, 0);
 
-    if (!ap_media_http_service_->start()) {
+    if (!ap_casting_media_http_service_->start()) {
       LOGW() << "Failed to start media service";
     } else {
-      ap_media_data_store::get().set_store_root(ap_media_http_service_->port());
-      LOGD() << "Media service running on " << ap_media_http_service_->port();
+      ap_casting_media_data_store::get().set_store_root(ap_casting_media_http_service_->port());
+      LOGD() << "Media service running on " << ap_casting_media_http_service_->port();
     }
 
     if (!initialize_net_service()) {
@@ -138,7 +138,7 @@ private:
 
   ap_airplay_service_ptr airplay_tcp_service_;
 
-  ap_media_http_service_ptr ap_media_http_service_;
+  ap_casting_media_http_service_ptr ap_casting_media_http_service_;
 };
 
 ap_server::ap_server() : impl_(new implementation()) {}

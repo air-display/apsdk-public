@@ -15,10 +15,10 @@
 #include <network/xtxp_connection_base.h>
 #include <network/xtxp_message.h>
 #include <service/ap_airplay_service_details.h>
-#include <service/ap_audio_stream_service.h>
-#include <service/ap_content_parser.h>
-#include <service/ap_mirror_stream_service.h>
-#include <service/ap_timing_sync_service.h>
+#include <service/ap_casting_content_parser.h>
+#include <service/ap_mirroring_audio_stream_service.h>
+#include <service/ap_mirroring_timing_sync_service.h>
+#include <service/ap_mirroring_video_stream_service.h>
 
 using namespace aps::network;
 
@@ -39,9 +39,9 @@ public:
 
   virtual void disconnect() override;
 
-  virtual void set_mirror_handler(ap_mirror_session_handler_ptr handler) override;
+  virtual void set_mirror_handler(ap_mirroring_session_handler_ptr handler) override;
 
-  virtual void set_video_handler(ap_video_session_handler_ptr handler) override;
+  virtual void set_video_handler(ap_casting_session_handler_ptr handler) override;
 
 protected:
   // RTSP
@@ -116,33 +116,31 @@ protected:
 
   void initialize_request_handlers();
 
-  //void send_fcup_request(int request_id, const std::string &url, const std::string &session_id);
+  // void send_fcup_request(int request_id, const std::string &url, const std::string &session_id);
 
   void reverse_connection(const std::string &session);
 
 private:
   uint64_t session_id_;
   uint32_t session_type_;
-  std::string agent_;
   agent_version_t agent_version_;
   ap_config_ptr config_;
-  ap_handler_ptr handler_;
   ap_crypto_ptr crypto_;
-  ap_timing_sync_service_ptr timing_sync_service_;
   tcp_service_weak_ptr service_;
+  ap_handler_ptr handler_;
 
-  // For mirroring
-  // bool is_mirror_session_;
-  ap_video_stream_service_ptr mirror_stream_service_;
-  ap_audio_stream_service_ptr audio_stream_service_;
-  ap_mirror_session_handler_ptr mirror_session_handler_;
+  // Screen mirroring service resource
+  ap_mirroring_video_stream_service_ptr mirroring_video_stream_service_;
+  ap_mirroring_audio_stream_service_ptr mirroring_audio_stream_service_;
+  ap_mirroring_timing_sync_service_ptr timing_sync_service_;
+  ap_mirroring_session_handler_ptr mirroring_session_handler_;
 
-  // For video streaming
-  // bool is_video_session_;
+  // Video cast service resource
+  std::string agent_;
   float start_pos_in_ms_;
   std::string playback_uuid_;
   std::string apple_session_id_;
-  ap_video_session_handler_ptr video_session_handler_;
+  ap_casting_session_handler_ptr video_session_handler_;
 };
 
 typedef std::shared_ptr<ap_airplay_connection> ap_airplay_connection_ptr;

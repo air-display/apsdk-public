@@ -21,14 +21,14 @@
 #define LOGE() std::cout
 #define LOGF() std::cout
 
-class airplay_mirror_handler : public aps::ap_mirror_session_handler {
+class airplay_mirroring_handler : public aps::ap_mirroring_session_handler {
 private:
   esp::es_player es_player_;
 
 public:
-  airplay_mirror_handler(){};
+  airplay_mirroring_handler(){};
 
-  ~airplay_mirror_handler(){};
+  ~airplay_mirroring_handler(){};
 
   virtual void on_mirror_stream_started() override {
     LOGI() << "on_mirror_stream_started" << std::endl;
@@ -101,11 +101,11 @@ public:
   virtual void on_mirror_stream_heartbeat() override { LOGD() << "on_mirror_stream_heartbeat" << std::endl; }
 };
 
-class airplay_video_handler : public aps::ap_video_session_handler {
+class airplay_cast_handler : public aps::ap_casting_session_handler {
 public:
   uint64_t session_;
-  airplay_video_handler(uint64_t sid) : session_(sid){};
-  ~airplay_video_handler(){};
+  airplay_cast_handler(uint64_t sid) : session_(sid){};
+  ~airplay_cast_handler(){};
 
   virtual void on_video_play(const uint64_t session_id, const std::string &location, const float start_pos) override {
     LOGI() << "on_video_play: " << location << ", session: " << session_id << std::endl;
@@ -147,9 +147,9 @@ public:
   ~airplay_handler();
 
   virtual void on_session_begin(aps::ap_session_ptr session) override {
-    if (aps::video_session == session->get_session_type()) {
+    if (aps::casting_session == session->get_session_type()) {
       on_video_session_begin(session);
-    } else if (aps::mirror_session == session->get_session_type()) {
+    } else if (aps::mirroring_session == session->get_session_type()) {
       on_mirror_session_begin(session);
     }
   }
@@ -161,14 +161,14 @@ public:
   void on_mirror_session_begin(aps::ap_session_ptr session) {
     uint64_t sid = session->get_session_id();
     LOGI() << "###################on_mirror_session_begin: " << sid << std::endl;
-    aps::ap_mirror_session_handler_ptr mirror_handler = std::make_shared<airplay_mirror_handler>();
+    aps::ap_mirroring_session_handler_ptr mirror_handler = std::make_shared<airplay_mirroring_handler>();
     session->set_mirror_handler(mirror_handler);
   }
 
   void on_video_session_begin(aps::ap_session_ptr session) {
     uint64_t sid = session->get_session_id();
     LOGI() << "+++++++++++++++++++on_video_session_begin: " << sid << std::endl;
-    aps::ap_video_session_handler_ptr video_handler = std::make_shared<airplay_video_handler>(sid);
+    aps::ap_casting_session_handler_ptr video_handler = std::make_shared<airplay_cast_handler>(sid);
     session->set_video_handler(video_handler);
   }
 };

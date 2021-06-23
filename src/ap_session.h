@@ -14,9 +14,9 @@ namespace aps {
 /// <summary>
 ///
 /// </summary>
-class APS_EXPORT ap_mirror_session_handler {
+class APS_EXPORT ap_mirroring_session_handler {
 public:
-  virtual ~ap_mirror_session_handler(){};
+  virtual ~ap_mirroring_session_handler(){};
 
   // Mirroring
   /// <summary>
@@ -136,12 +136,12 @@ public:
 /// <summary>
 ///
 /// </summary>
-typedef std::shared_ptr<ap_mirror_session_handler> ap_mirror_session_handler_ptr;
+typedef std::shared_ptr<ap_mirroring_session_handler> ap_mirroring_session_handler_ptr;
 
 /// <summary>
 ///
 /// </summary>
-typedef std::weak_ptr<ap_mirror_session_handler> ap_mirror_session_handler_weakptr;
+typedef std::weak_ptr<ap_mirroring_session_handler> ap_mirroring_session_handler_weakptr;
 
 /// <summary>
 ///
@@ -236,9 +236,9 @@ typedef playback_info_s playback_info_t;
 ///
 /// <remarks>All methods will be called in the mirroring </remarks>
 /// </summary>
-class APS_EXPORT ap_video_session_handler {
+class APS_EXPORT ap_casting_session_handler {
 public:
-  virtual ~ap_video_session_handler(){};
+  virtual ~ap_casting_session_handler(){};
 
   /// <summary>
   ///
@@ -289,16 +289,16 @@ public:
 /// <summary>
 ///
 /// </summary>
-typedef std::shared_ptr<ap_video_session_handler> ap_video_session_handler_ptr;
+typedef std::shared_ptr<ap_casting_session_handler> ap_casting_session_handler_ptr;
 
 /// <summary>
 ///
 /// </summary>
-typedef std::weak_ptr<ap_video_session_handler> ap_video_session_handler_weakptr;
+typedef std::weak_ptr<ap_casting_session_handler> ap_casting_session_handler_weakptr;
 
 enum session_type_e {
-  mirror_session = 0,
-  video_session = 1,
+  mirroring_session = 0,
+  casting_session = 1,
 
   unknown_session = (uint32_t)-1
 };
@@ -314,9 +314,9 @@ public:
 
   virtual void disconnect() = 0;
 
-  virtual void set_mirror_handler(ap_mirror_session_handler_ptr handler) = 0;
+  virtual void set_mirror_handler(ap_mirroring_session_handler_ptr handler) = 0;
 
-  virtual void set_video_handler(ap_video_session_handler_ptr handler) = 0;
+  virtual void set_video_handler(ap_casting_session_handler_ptr handler) = 0;
 };
 
 typedef std::shared_ptr<ap_session> ap_session_ptr;

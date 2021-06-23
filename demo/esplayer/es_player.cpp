@@ -130,7 +130,7 @@ void es_player::close_video_renderer() {
 
 bool es_player::feed_video(uint8_t *data, int len) {
   AVPacket packet;
-  av_init_packet(&packet);
+  av_new_packet(&packet, 0);
   packet.data = data;
   packet.size = len;
 
@@ -196,7 +196,7 @@ void es_player::close_audio_renderer() {
 
 bool es_player::feed_audio(uint8_t *data, int len) {
   AVPacket packet;
-  av_init_packet(&packet);
+  av_new_packet(&packet, 0);
   packet.data = data;
   packet.size = len;
 
@@ -430,8 +430,9 @@ void es_player::update_video_renderer_resource(const AVFrame *frame) {
     // calculate the new image size
     float width_ratio = (float)window_width / frame->width;
     float height_ratio = (float)window_height / frame->height;
-    int picture_width = (width_ratio <= height_ratio) ? frame->width * width_ratio : frame->width * height_ratio;
-    int picture_height = (width_ratio <= height_ratio) ? frame->height * height_ratio : frame->height * height_ratio;
+    int picture_width = (int)((width_ratio <= height_ratio) ? frame->width * width_ratio : frame->width * height_ratio);
+    int picture_height =
+        (int)((width_ratio <= height_ratio) ? frame->height * height_ratio : frame->height * height_ratio);
 
     // update the texture
     if (m_sdl_texture) {
