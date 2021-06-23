@@ -34,7 +34,7 @@ void IAirPlayHandler::on_session_begin(ap_session_ptr session) {
     } else {
       __android_log_write(
           ANDROID_LOG_ERROR, LOG_TAG,
-          "Failed to get method id of on_mirror_stream_started");
+          "Failed to get method id of on_video_stream_started");
     }
   }
 }

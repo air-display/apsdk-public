@@ -32,7 +32,7 @@ Java_com_virtable_airplay_AirPlaySession_nciSetMirrorHandler(
   AirPlaySession *p = AirPlaySession::get(env, instance);
   if (p) {
     if (handler) {
-      IAirPlayMirrorHandler *h = IAirPlayMirrorHandler::attach(env, handler);
+      IAirPlayMirroringHandler *h = IAirPlayMirroringHandler::attach(env, handler);
       p->setMirrorHandler(h);
     } else {
       p->setMirrorHandler(0);
@@ -46,7 +46,7 @@ Java_com_virtable_airplay_AirPlaySession_nciSetVideoHandler(
   AirPlaySession *p = AirPlaySession::get(env, instance);
   if (p) {
     if (handler) {
-      IAirPlayVideoHandler *h = IAirPlayVideoHandler::attach(env, handler);
+      IAirPlayCastingHandler *h = IAirPlayCastingHandler::attach(env, handler);
       p->setVideoHandler(h);
     } else {
       p->setVideoHandler(0);
@@ -89,11 +89,11 @@ int AirPlaySession::get_session_type() {
   return -1;
 }
 
-void AirPlaySession::setMirrorHandler(IAirPlayMirrorHandler *handler) {
+void AirPlaySession::setMirrorHandler(IAirPlayMirroringHandler *handler) {
   auto p = session_.lock();
   if (p) {
     if (handler) {
-      auto h = handler->get_ap_mirror_session_handler();
+      auto h = handler->get_mirroring_session_handler();
       p->set_mirror_handler(h);
     } else {
       p->set_mirror_handler(0);
@@ -101,11 +101,11 @@ void AirPlaySession::setMirrorHandler(IAirPlayMirrorHandler *handler) {
   }
 }
 
-void AirPlaySession::setVideoHandler(IAirPlayVideoHandler *handler) {
+void AirPlaySession::setVideoHandler(IAirPlayCastingHandler *handler) {
   auto p = session_.lock();
   if (p) {
     if (handler) {
-      auto h = handler->get_ap_video_session_handler();
+      auto h = handler->get_casting_session_handler();
       p->set_video_handler(h);
     } else {
       p->set_video_handler(0);

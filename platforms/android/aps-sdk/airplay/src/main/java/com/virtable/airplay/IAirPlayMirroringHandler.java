@@ -1,6 +1,6 @@
 package com.virtable.airplay;
 
-public interface IAirPlayMirrorHandler {
+public interface IAirPlayMirroringHandler {
   /**
    * Represents the PCM audio data format.
    */
@@ -24,12 +24,12 @@ public interface IAirPlayMirrorHandler {
   /**
    * Gets called when the mirroring stream starting.
    */
-  void on_mirror_stream_started();
+  void on_video_stream_started();
 
   /**
    * Gets called when the mirroring video data codec to be set.
    */
-  void on_mirror_stream_codec(byte[] data);
+  void on_video_stream_codec(byte[] data);
 
   /**
    * Gets called when the mirroring video data is coming.
@@ -37,18 +37,18 @@ public interface IAirPlayMirrorHandler {
    * @param data      The mirroring video data (Containing 1 or more frames data).
    * @param timestamp The timestamp of this video data.
    */
-  void on_mirror_stream_data(byte[] data, long timestamp);
+  void on_video_stream_data(byte[] data, long timestamp);
 
   /**
    * Gets called when the mirroring video heartbeat is coming.
    *
    */
-  void on_mirror_stream_heartbeat();
+  void on_video_stream_heartbeat();
 
   /**
-   * Gets called when the mirroring session stopped.
+   * Gets called when the mirroring video stream stopped.
    */
-  void on_mirror_stream_stopped();
+  void on_video_stream_stopped();
 
   /**
    * Gets called when the sender requires to set the volume.

@@ -13,24 +13,24 @@
 
 using namespace aps;
 
-static const char IAirPlayMirrorHandler_cls[] =
-    "com/virtable/airplay/IAirPlayMirrorHandler";
-class IAirPlayMirrorHandler
-    : public jni_meta_object<IAirPlayMirrorHandler, IAirPlayMirrorHandler_cls> {
+static const char IAirPlayMirroringHandler_cls[] =
+    "com/virtable/airplay/IAirPlayMirroringHandler";
+class IAirPlayMirroringHandler
+    : public jni_meta_object<IAirPlayMirroringHandler, IAirPlayMirroringHandler_cls> {
 public:
-  IAirPlayMirrorHandler(JNIEnv *env);
+  IAirPlayMirroringHandler(JNIEnv *env);
 
-  ap_mirror_session_handler_ptr get_ap_mirror_session_handler();
+  ap_mirroring_session_handler_ptr get_mirroring_session_handler();
 
-  void on_mirror_stream_started();
+  void on_video_stream_started();
 
-  void on_mirror_stream_codec(const aps::sms_video_codec_packet_t *p);
+  void on_video_stream_codec(const aps::sms_video_codec_packet_t *p);
 
-  void on_mirror_stream_data(const aps::sms_video_data_packet_t *p);
+  void on_video_stream_data(const aps::sms_video_data_packet_t *p);
 
-  void on_mirror_stream_heartbeat();
+  void on_video_stream_heartbeat();
 
-  void on_mirror_stream_stopped();
+  void on_video_stream_stopped();
 
   void on_audio_set_volume(const float ratio, const float volume);
 

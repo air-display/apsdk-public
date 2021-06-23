@@ -29,23 +29,23 @@ private:
 };
 typedef std::shared_ptr<jni_ap_handler> jni_ap_handler_ptr;
 
-class IAirPlayMirrorHandler;
-class jni_ap_mirror_handler : public ap_mirror_session_handler {
+class IAirPlayMirroringHandler;
+class jni_ap_mirror_handler : public ap_mirroring_session_handler {
 public:
-  jni_ap_mirror_handler(IAirPlayMirrorHandler *p);
+  jni_ap_mirror_handler(IAirPlayMirroringHandler *p);
 
-  virtual void on_mirror_stream_started() override;
-
-  virtual void
-  on_mirror_stream_codec(const aps::sms_video_codec_packet_t *p) override;
+  virtual void on_video_stream_started() override;
 
   virtual void
-  on_mirror_stream_data(const aps::sms_video_data_packet_t *p) override;
+  on_video_stream_codec(const aps::sms_video_codec_packet_t *p) override;
 
   virtual void
-  on_mirror_stream_heartbeat() override;
+  on_video_stream_data(const aps::sms_video_data_packet_t *p) override;
 
-  virtual void on_mirror_stream_stopped() override;
+  virtual void
+  on_video_stream_heartbeat() override;
+
+  virtual void on_video_stream_stopped() override;
 
   virtual void on_audio_set_volume(const float ratio,
                                    const float volume) override;
@@ -69,14 +69,14 @@ public:
   virtual void on_audio_stream_stopped() override;
 
 private:
-  IAirPlayMirrorHandler *proxy;
+  IAirPlayMirroringHandler *proxy;
 };
 typedef std::shared_ptr<jni_ap_mirror_handler> jni_ap_mirror_handler_ptr;
 
-class IAirPlayVideoHandler;
-class jni_ap_video_handler : public ap_video_session_handler {
+class IAirPlayCastingHandler;
+class jni_ap_video_handler : public ap_casting_session_handler {
 public:
-  jni_ap_video_handler(IAirPlayVideoHandler *p);
+  jni_ap_video_handler(IAirPlayCastingHandler *p);
 
   virtual void on_video_play(const uint64_t session_id, const std::string &location,
                              const float start_pos) override;
@@ -93,7 +93,7 @@ public:
                            playback_info_t &playback_info) override;
 
 private:
-  IAirPlayVideoHandler *proxy;
+  IAirPlayCastingHandler *proxy;
 };
 typedef std::shared_ptr<jni_ap_video_handler> jni_ap_video_handler_ptr;
 

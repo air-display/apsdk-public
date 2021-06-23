@@ -25,7 +25,7 @@ public:
   /// <remarks>
   /// THREAD_AIRPLAY
   /// </remarks>
-  virtual void on_mirror_stream_started() = 0;
+  virtual void on_video_stream_started() = 0;
 
   /// <summary>
   ///
@@ -33,7 +33,7 @@ public:
   /// <remarks>
   /// THREAD_AIRPLAY
   /// </remarks>
-  virtual void on_mirror_stream_stopped() = 0;
+  virtual void on_video_stream_stopped() = 0;
 
   /// <summary>
   ///
@@ -42,7 +42,7 @@ public:
   /// <remarks>
   /// THREAD_VIDEO_STREAM
   /// </remarks>
-  virtual void on_mirror_stream_codec(const aps::sms_video_codec_packet_t *p) = 0;
+  virtual void on_video_stream_codec(const aps::sms_video_codec_packet_t *p) = 0;
 
   /// <summary>
   ///
@@ -51,7 +51,7 @@ public:
   /// <remarks>
   /// THREAD_VIDEO_STREAM
   /// </remarks>
-  virtual void on_mirror_stream_data(const aps::sms_video_data_packet_t *p) = 0;
+  virtual void on_video_stream_data(const aps::sms_video_data_packet_t *p) = 0;
 
   /// <summary>
   ///
@@ -59,7 +59,7 @@ public:
   /// <remarks>
   /// THREAD_VIDEO_STREAM
   /// </remarks>
-  virtual void on_mirror_stream_heartbeat() = 0;
+  virtual void on_video_stream_heartbeat() = 0;
 
   // Audio
   /// <summary>

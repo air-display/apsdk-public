@@ -16,11 +16,11 @@
 package com.virtable.apserversdk;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.util.Pair;
@@ -33,54 +33,40 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.exoplayer2.C;
-import com.google.android.exoplayer2.C.ContentType;
-import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.PlaybackParameters;
-import com.google.android.exoplayer2.PlaybackPreparer;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.mediacodec.MediaCodecRenderer.DecoderInitializationException;
 import com.google.android.exoplayer2.mediacodec.MediaCodecUtil.DecoderQueryException;
-import com.google.android.exoplayer2.offline.FilteringManifestParser;
 import com.google.android.exoplayer2.source.BehindLiveWindowException;
-import com.google.android.exoplayer2.source.ExtractorMediaSource;
-import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
-import com.google.android.exoplayer2.source.dash.DashMediaSource;
-import com.google.android.exoplayer2.source.dash.manifest.DashManifestParser;
-import com.google.android.exoplayer2.source.hls.HlsMediaSource;
-import com.google.android.exoplayer2.source.hls.playlist.DefaultHlsPlaylistParserFactory;
-import com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource;
-import com.google.android.exoplayer2.source.smoothstreaming.manifest.SsManifestParser;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.MappingTrackSelector.MappedTrackInfo;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
-import com.google.android.exoplayer2.ui.DebugTextViewHelper;
 import com.google.android.exoplayer2.ui.PlayerControlView;
 import com.google.android.exoplayer2.ui.PlayerView;
-import com.google.android.exoplayer2.ui.TrackSelectionView;
-import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
-import com.google.android.exoplayer2.upstream.HttpDataSource;
+import com.google.android.exoplayer2.ui.TrackSelectionDialogBuilder;
+import com.google.android.exoplayer2.util.DebugTextViewHelper;
 import com.google.android.exoplayer2.util.ErrorMessageProvider;
 import com.google.android.exoplayer2.util.EventLogger;
 import com.google.android.exoplayer2.util.Util;
 import com.virtable.airplay.AirPlaySession;
-import com.virtable.airplay.IAirPlayVideoHandler;
+import com.virtable.airplay.IAirPlayCastingHandler;
 import com.virtable.airplay.PlaybackInfo;
 
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
 
+import static com.google.android.exoplayer2.Player.DISCONTINUITY_REASON_INTERNAL;
+
 /**
  * An activity that plays media using {@link SimpleExoPlayer}.
  */
 public class APSPlayerActivity extends Activity
-    implements OnClickListener, PlaybackPreparer, PlayerControlView.VisibilityListener, IAirPlayVideoHandler {
+    implements OnClickListener, PlayerControlView.VisibilityListener, IAirPlayCastingHandler {
   public static final String AIRPLAY_SESSION_ID = "airplay_session_id";
   public static final String START_WINDOW_INDEX = "start_window_index";
   public static final String START_POSITION = "start_position";
@@ -102,13 +88,10 @@ public class APSPlayerActivity extends Activity
     DEFAULT_COOKIE_MANAGER.setCookiePolicy(CookiePolicy.ACCEPT_ORIGINAL_SERVER);
   }
 
-  private String userAgent;
   private PlayerView playerView;
   private LinearLayout debugRootView;
   private TextView debugTextView;
-  private DataSource.Factory dataSourceFactory;
   private SimpleExoPlayer player;
-  private MediaSource mediaSource;
   private DefaultTrackSelector trackSelector;
   private DefaultTrackSelector.Parameters trackSelectorParameters;
 
@@ -117,7 +100,6 @@ public class APSPlayerActivity extends Activity
   private TrackGroupArray lastSeenTrackGroupArray;
 
   private long sessionId;
-  private int sessionType;
   private Uri location;
   private boolean startAutoPlay;
   private int startWindow;
@@ -126,7 +108,7 @@ public class APSPlayerActivity extends Activity
   private long durationInSeconds;
   private long currentPositionInSeconds;
   private boolean isPaused;
-  private PlaybackInfo playbackInfo = new PlaybackInfo();
+  private final PlaybackInfo playbackInfo = new PlaybackInfo();
 
   private AirPlaySession session;
   private Handler playerClientHandler;
@@ -155,8 +137,6 @@ public class APSPlayerActivity extends Activity
     session = APSDemoApplication.getInstance().getSession(sessionId);
     location = getIntent().getData();
 
-    userAgent = Util.getUserAgent(this, "APSDemo");
-
     if (savedInstanceState != null) {
       startAutoPlay = savedInstanceState.getBoolean(KEY_AUTO_PLAY);
       startWindow = savedInstanceState.getInt(KEY_WINDOW);
@@ -166,10 +146,9 @@ public class APSPlayerActivity extends Activity
       startAutoPlay = true;
       startWindow = getIntent().getIntExtra(START_WINDOW_INDEX, C.INDEX_UNSET);
       startPosition = (int) getIntent().getFloatExtra(START_POSITION, C.TIME_UNSET);
-      trackSelectorParameters = new DefaultTrackSelector.ParametersBuilder().build();
+      trackSelectorParameters = new DefaultTrackSelector.ParametersBuilder(this).build();
     }
 
-    dataSourceFactory = buildDataSourceFactory();
     if (CookieHandler.getDefault() != DEFAULT_COOKIE_MANAGER) {
       CookieHandler.setDefault(DEFAULT_COOKIE_MANAGER);
     }
@@ -285,22 +264,17 @@ public class APSPlayerActivity extends Activity
                 || (rendererType == C.TRACK_TYPE_AUDIO
                 && mappedTrackInfo.getTypeSupport(C.TRACK_TYPE_VIDEO)
                 == MappedTrackInfo.RENDERER_SUPPORT_NO_TRACKS);
-        Pair<AlertDialog, TrackSelectionView> dialogPair =
-            TrackSelectionView.getDialog(this, title, trackSelector, rendererIndex);
-        dialogPair.second.setShowDisableOption(true);
-        dialogPair.second.setAllowAdaptiveSelections(allowAdaptiveSelections);
-        dialogPair.first.show();
+
+                new TrackSelectionDialogBuilder(this, title, trackSelector, rendererIndex)
+                        .setShowDisableOption(true)
+                        .setAllowAdaptiveSelections(allowAdaptiveSelections)
+                        .build()
+                        .show();
       }
     }
   }
 
   // PlaybackControlView.VisibilityListener implementation
-  @Override
-  public void preparePlayback() {
-    initializePlayer();
-  }
-
-  // Internal methods
   @Override
   public void onVisibilityChange(int visibility) {
     debugRootView.setVisibility(visibility);
@@ -319,10 +293,10 @@ public class APSPlayerActivity extends Activity
       }
     };
 
-    playerClientHandler = new Handler(msg -> {
+    playerClientHandler = new Handler(Looper.getMainLooper(), msg -> {
       switch (msg.what) {
       case PLAYER_PLAY:
-        preparePlayback();
+        initializePlayer();
         break;
       case PLAYER_SCRUB:
         if (null == player)
@@ -362,54 +336,28 @@ public class APSPlayerActivity extends Activity
     if (player == null) {
       lastSeenTrackGroupArray = null;
 
-      trackSelector = new DefaultTrackSelector();
+      trackSelector = new DefaultTrackSelector(this);
       trackSelector.setParameters(trackSelectorParameters);
 
-      player = ExoPlayerFactory.newSimpleInstance(this,
-          new DefaultRenderersFactory(this), trackSelector);
+      player = new SimpleExoPlayer.Builder(this)
+              .setTrackSelector(trackSelector)
+              .build();
       player.addListener(new PlayerEventListener());
       player.setPlayWhenReady(startAutoPlay);
       player.addAnalyticsListener(new EventLogger(trackSelector));
 
       playerView.setPlayer(player);
-      playerView.setPlaybackPreparer(this);
+
       debugViewHelper = new DebugTextViewHelper(player, debugTextView);
       debugViewHelper.start();
     }
 
-    mediaSource = null == location ? null : buildMediaSource(location);
-
-    if (location != null && mediaSource != null) {
+    if (location != null) {
       player.seekTo(0, startPosition);
-      player.prepare(mediaSource, false, true);
+      player.setMediaItem(MediaItem.fromUri(location), false);
+      player.prepare();
     }
     updateButtonVisibilities();
-  }
-
-  private MediaSource buildMediaSource(Uri uri) {
-    @ContentType int type = Util.inferContentType(uri, null);
-    switch (type) {
-    case C.TYPE_DASH:
-      return new DashMediaSource.Factory(dataSourceFactory)
-          .setManifestParser(
-              new FilteringManifestParser<>(new DashManifestParser(), null))
-          .createMediaSource(uri);
-    case C.TYPE_SS:
-      return new SsMediaSource.Factory(dataSourceFactory)
-          .setManifestParser(
-              new FilteringManifestParser<>(new SsManifestParser(), null))
-          .createMediaSource(uri);
-    case C.TYPE_HLS:
-      return new HlsMediaSource.Factory(dataSourceFactory)
-          .setPlaylistParserFactory(
-              new DefaultHlsPlaylistParserFactory(null))
-          .createMediaSource(uri);
-    case C.TYPE_OTHER:
-      return new ExtractorMediaSource.Factory(dataSourceFactory).createMediaSource(uri);
-    default: {
-      throw new IllegalStateException("Unsupported type: " + type);
-    }
-    }
   }
 
   private void releasePlayer() {
@@ -420,7 +368,6 @@ public class APSPlayerActivity extends Activity
       debugViewHelper = null;
       player.release();
       player = null;
-      mediaSource = null;
       trackSelector = null;
     }
   }
@@ -445,21 +392,8 @@ public class APSPlayerActivity extends Activity
     startWindow = C.INDEX_UNSET;
     startPosition = C.TIME_UNSET;
   }
-  /**
-   * Returns a {@link DataSource.Factory}.
-   */
-  public DataSource.Factory buildDataSourceFactory() {
-    return new DefaultDataSourceFactory(this, buildHttpDataSourceFactory());
-  }
 
   // User controls
-  /**
-   * Returns a {@link HttpDataSource.Factory}.
-   */
-  public HttpDataSource.Factory buildHttpDataSourceFactory() {
-    return new DefaultHttpDataSourceFactory(userAgent);
-  }
-
   private void updateButtonVisibilities() {
     debugRootView.removeAllViews();
     if (player == null) {
@@ -586,11 +520,11 @@ public class APSPlayerActivity extends Activity
     return playbackInfo;
   }
 
-  private class PlayerEventListener implements Player.EventListener {
+  private class PlayerEventListener implements Player.Listener {
 
     @Override
-    public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-      if (playbackState == Player.STATE_ENDED) {
+    public void onPlaybackStateChanged(@Player.State int state) {
+      if (state == Player.STATE_ENDED) {
         showControls();
       }
       updateButtonVisibilities();
@@ -602,8 +536,8 @@ public class APSPlayerActivity extends Activity
     //}
 
     @Override
-    public void onPositionDiscontinuity(@Player.DiscontinuityReason int reason) {
-      if (player.getPlaybackError() != null) {
+    public void onPositionDiscontinuity(Player.PositionInfo oldPosition, Player.PositionInfo newPosition, @Player.DiscontinuityReason int reason) {
+      if (DISCONTINUITY_REASON_INTERNAL != reason) {
         // The user has performed a seek whilst in the error state. Update the resume position so
         // that if the user then retries, playback resumes from the position to which they seeked.
         updateStartPosition();
@@ -630,11 +564,11 @@ public class APSPlayerActivity extends Activity
         MappedTrackInfo mappedTrackInfo = trackSelector.getCurrentMappedTrackInfo();
         if (mappedTrackInfo != null) {
           if (mappedTrackInfo.getTypeSupport(C.TRACK_TYPE_VIDEO)
-              == MappedTrackInfo.RENDERER_SUPPORT_UNSUPPORTED_TRACKS) {
+                  == MappedTrackInfo.RENDERER_SUPPORT_UNSUPPORTED_TRACKS) {
             showToast(R.string.error_unsupported_video);
           }
           if (mappedTrackInfo.getTypeSupport(C.TRACK_TYPE_AUDIO)
-              == MappedTrackInfo.RENDERER_SUPPORT_UNSUPPORTED_TRACKS) {
+                  == MappedTrackInfo.RENDERER_SUPPORT_UNSUPPORTED_TRACKS) {
             showToast(R.string.error_unsupported_audio);
           }
         }
@@ -654,7 +588,7 @@ public class APSPlayerActivity extends Activity
           // Special case for decoder initialization failures.
           DecoderInitializationException decoderInitializationException =
               (DecoderInitializationException) cause;
-          if (decoderInitializationException.decoderName == null) {
+          if (decoderInitializationException.codecInfo == null) {
             if (decoderInitializationException.getCause() instanceof DecoderQueryException) {
               errorString = getString(R.string.error_querying_decoders);
             } else if (decoderInitializationException.secureDecoderRequired) {
@@ -669,7 +603,7 @@ public class APSPlayerActivity extends Activity
             errorString =
                 getString(
                     R.string.error_instantiating_decoder,
-                    decoderInitializationException.decoderName);
+                    decoderInitializationException.codecInfo.name);
           }
         }
       }

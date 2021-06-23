@@ -8,8 +8,8 @@
 #include <aps.h>
 #include "aps-jni.h"
 #include "nci_object.h"
-#include "IAirPlayMirrorHandler.h"
-#include "IAirPlayVideoHandler.h"
+#include "IAirPlayMirroringHandler.h"
+#include "IAirPlayCastingHandler.h"
 // clang-format on
 
 using namespace aps;
@@ -27,9 +27,9 @@ public:
 
   int get_session_type();
 
-  void setMirrorHandler(IAirPlayMirrorHandler *handler);
+  void setMirrorHandler(IAirPlayMirroringHandler *handler);
 
-  void setVideoHandler(IAirPlayVideoHandler *handler);
+  void setVideoHandler(IAirPlayCastingHandler *handler);
 
   void disconnect();
 

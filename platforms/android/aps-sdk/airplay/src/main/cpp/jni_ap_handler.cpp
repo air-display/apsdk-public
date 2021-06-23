@@ -6,8 +6,8 @@
 #include "nci_object.h"
 #include "jni_ap_handler.h"
 #include "IAirPlayHandler.h"
-#include "IAirPlayMirrorHandler.h"
-#include "IAirPlayVideoHandler.h"
+#include "IAirPlayMirroringHandler.h"
+#include "IAirPlayCastingHandler.h"
 // clang-format on
 
 //void attach_thread() {
@@ -52,39 +52,39 @@ void jni_ap_handler::on_session_end(const uint64_t session_id) {
     proxy->on_session_end(session_id);
 }
 
-jni_ap_mirror_handler::jni_ap_mirror_handler(IAirPlayMirrorHandler *p)
+jni_ap_mirror_handler::jni_ap_mirror_handler(IAirPlayMirroringHandler *p)
     : proxy(p) {}
 
-void jni_ap_mirror_handler::on_mirror_stream_started() {
-  __android_log_write(ANDROID_LOG_INFO, LOG_TAG, "on_mirror_stream_started");
+void jni_ap_mirror_handler::on_video_stream_started() {
+  __android_log_write(ANDROID_LOG_INFO, LOG_TAG, "on_video_stream_started");
   if (proxy)
-    proxy->on_mirror_stream_started();
+    proxy->on_video_stream_started();
 }
 
-void jni_ap_mirror_handler::on_mirror_stream_codec(
+void jni_ap_mirror_handler::on_video_stream_codec(
     const aps::sms_video_codec_packet_t *p) {
-  __android_log_write(ANDROID_LOG_INFO, LOG_TAG, "on_mirror_stream_codec");
+  __android_log_write(ANDROID_LOG_INFO, LOG_TAG, "on_video_stream_codec");
   if (proxy)
-    proxy->on_mirror_stream_codec(p);
+    proxy->on_video_stream_codec(p);
 }
 
-void jni_ap_mirror_handler::on_mirror_stream_data(
+void jni_ap_mirror_handler::on_video_stream_data(
     const aps::sms_video_data_packet_t *p) {
-  //__android_log_write(ANDROID_LOG_VERBOSE, LOG_TAG, "on_mirror_stream_data");
+  //__android_log_write(ANDROID_LOG_VERBOSE, LOG_TAG, "on_video_stream_data");
   if (proxy)
-    proxy->on_mirror_stream_data(p);
+    proxy->on_video_stream_data(p);
 }
 
-void jni_ap_mirror_handler::on_mirror_stream_heartbeat() {
-  //__android_log_write(ANDROID_LOG_VERBOSE, LOG_TAG, "on_mirror_stream_heartbeat");
+void jni_ap_mirror_handler::on_video_stream_heartbeat() {
+  //__android_log_write(ANDROID_LOG_VERBOSE, LOG_TAG, "on_video_stream_heartbeat");
   if (proxy)
-    proxy->on_mirror_stream_heartbeat();
+    proxy->on_video_stream_heartbeat();
 }
 
-void jni_ap_mirror_handler::on_mirror_stream_stopped() {
-  __android_log_write(ANDROID_LOG_INFO, LOG_TAG, "on_mirror_stream_stopped");
+void jni_ap_mirror_handler::on_video_stream_stopped() {
+  __android_log_write(ANDROID_LOG_INFO, LOG_TAG, "on_video_stream_stopped");
   if (proxy)
-    proxy->on_mirror_stream_stopped();
+    proxy->on_video_stream_stopped();
 }
 
 void jni_ap_mirror_handler::on_audio_set_volume(const float ratio,
@@ -138,7 +138,7 @@ void jni_ap_mirror_handler::on_audio_stream_stopped() {
     proxy->on_audio_stream_stopped();
 }
 
-jni_ap_video_handler::jni_ap_video_handler(IAirPlayVideoHandler *p)
+jni_ap_video_handler::jni_ap_video_handler(IAirPlayCastingHandler *p)
     : proxy(p) {}
 
 void jni_ap_video_handler::on_video_play(const uint64_t session_id,

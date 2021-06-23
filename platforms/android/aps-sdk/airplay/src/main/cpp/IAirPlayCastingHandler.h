@@ -13,15 +13,15 @@
 
 using namespace aps;
 
-static const char IAirPlayVideoHandler_cls[] =
-    "com/virtable/airplay/IAirPlayVideoHandler";
-class IAirPlayVideoHandler
-    : public jni_meta_object<IAirPlayVideoHandler, IAirPlayVideoHandler_cls> {
+static const char IAirPlayCastingHandler_cls[] =
+    "com/virtable/airplay/IAirPlayCastingHandler";
+class IAirPlayCastingHandler
+    : public jni_meta_object<IAirPlayCastingHandler, IAirPlayCastingHandler_cls> {
 
 public:
-  IAirPlayVideoHandler(JNIEnv *env);
+  IAirPlayCastingHandler(JNIEnv *env);
 
-  ap_video_session_handler_ptr get_ap_video_session_handler();
+  ap_casting_session_handler_ptr get_casting_session_handler();
 
   void on_video_play(const uint64_t session_id, const std::string &location,
                      const float start_pos);

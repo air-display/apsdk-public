@@ -1,6 +1,6 @@
 package com.virtable.airplay;
 
-public interface IAirPlayVideoHandler {
+public interface IAirPlayCastingHandler {
   /**
    * Gets called when the video stream session starting.
    *

@@ -43,16 +43,16 @@ public class AirPlaySession extends NciObject {
   /**
    * @param handler The mirror session handler.
    */
-  private native void nciSetMirrorHandler(IAirPlayMirrorHandler handler);
-  public void setMirrorHandler(IAirPlayMirrorHandler handler) {
+  private native void nciSetMirrorHandler(IAirPlayMirroringHandler handler);
+  public void setMirrorHandler(IAirPlayMirroringHandler handler) {
     nciSetMirrorHandler(handler);
   }
 
   /**
    * @param handler The video stream session handler.
    */
-  private native void nciSetVideoHandler(IAirPlayVideoHandler handler);
-  public void setVideoHandler(IAirPlayVideoHandler handler) {
+  private native void nciSetVideoHandler(IAirPlayCastingHandler handler);
+  public void setVideoHandler(IAirPlayCastingHandler handler) {
     nciSetVideoHandler(handler);
   }
 

@@ -7,23 +7,23 @@
 #include <ostream>
 #include <sstream>
 #include "jni_class_wrapper.h"
-#include "IAirPlayVideoHandler.h"
+#include "IAirPlayCastingHandler.h"
 // clang-format on
 
-IAirPlayVideoHandler::IAirPlayVideoHandler(JNIEnv *env)
-    : jni_meta_object<IAirPlayVideoHandler, IAirPlayVideoHandler_cls>() {
+IAirPlayCastingHandler::IAirPlayCastingHandler(JNIEnv *env)
+    : jni_meta_object<IAirPlayCastingHandler, IAirPlayCastingHandler_cls>() {
   (void)env;
   handler_ = std::make_shared<jni_ap_video_handler>(this);
 }
 
-ap_video_session_handler_ptr
-IAirPlayVideoHandler::get_ap_video_session_handler() {
+ap_casting_session_handler_ptr
+IAirPlayCastingHandler::get_casting_session_handler() {
   return handler_;
 }
 
-void IAirPlayVideoHandler::on_video_play(const uint64_t session_id,
-                                         const std::string &location,
-                                         const float start_pos) {
+void IAirPlayCastingHandler::on_video_play(const uint64_t session_id,
+                                           const std::string &location,
+                                           const float start_pos) {
   JNIEnv *env = getJNIEnv();
   if (env) {
     GET_METHOD_ID(on_video_play, "(JLjava/lang/String;F)V");
@@ -37,8 +37,8 @@ void IAirPlayVideoHandler::on_video_play(const uint64_t session_id,
   }
 }
 
-void IAirPlayVideoHandler::on_video_scrub(const uint64_t session_id,
-                                          const float position) {
+void IAirPlayCastingHandler::on_video_scrub(const uint64_t session_id,
+                                            const float position) {
   JNIEnv *env = getJNIEnv();
   if (env) {
     GET_METHOD_ID(on_video_scrub, "(JF)V");
@@ -51,8 +51,8 @@ void IAirPlayVideoHandler::on_video_scrub(const uint64_t session_id,
   }
 }
 
-void IAirPlayVideoHandler::on_video_rate(const uint64_t session_id,
-                                         const float value) {
+void IAirPlayCastingHandler::on_video_rate(const uint64_t session_id,
+                                           const float value) {
   JNIEnv *env = getJNIEnv();
   if (env) {
     GET_METHOD_ID(on_video_rate, "(JF)V");
@@ -65,7 +65,7 @@ void IAirPlayVideoHandler::on_video_rate(const uint64_t session_id,
   }
 }
 
-void IAirPlayVideoHandler::on_video_stop(const uint64_t session_id) {
+void IAirPlayCastingHandler::on_video_stop(const uint64_t session_id) {
   JNIEnv *env = getJNIEnv();
   if (env) {
     GET_METHOD_ID(on_video_stop, "(J)V");
@@ -78,7 +78,7 @@ void IAirPlayVideoHandler::on_video_stop(const uint64_t session_id) {
   }
 }
 
-void IAirPlayVideoHandler::on_acquire_playback_info(
+void IAirPlayCastingHandler::on_acquire_playback_info(
     const uint64_t session_id, playback_info_t &playback_info) {
   JNIEnv *env = getJNIEnv();
   if (env) {

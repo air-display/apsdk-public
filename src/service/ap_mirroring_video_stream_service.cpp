@@ -87,20 +87,20 @@ void ap_mirroring_video_stream_connection::process_packet() {
     sms_video_data_packet_t *p = (sms_video_data_packet_t *)header_;
     crypto_->decrypt_video_frame(payload_, p->payload_size);
     if (handler_) {
-      handler_->on_mirror_stream_data(p);
+      handler_->on_video_stream_data(p);
     }
   } else if (sms_video_codec == header_->payload_type) {
     // Process the codec packet
     LOGV() << "mirror CODEC packet: " << header_->payload_size;
     sms_video_codec_packet_t *p = (sms_video_codec_packet_t *)header_;
     if (handler_) {
-      handler_->on_mirror_stream_codec(p);
+        handler_->on_video_stream_codec(p);
     }
   } else if (sms_payload_5 == header_->payload_type) {
     // Process the 5 packet
     LOGV() << "mirror 5 packet: " << header_->payload_size;
     if (handler_) {
-      handler_->on_mirror_stream_heartbeat();
+      handler_->on_video_stream_heartbeat();
     }
   } else {
     // Unknown packet

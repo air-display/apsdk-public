@@ -7,7 +7,7 @@
 #include <ostream>
 #include <sstream>
 #include "jni_class_wrapper.h"
-#include "IAirPlayMirrorHandler.h"
+#include "IAirPlayMirroringHandler.h"
 // clang-format on
 
 static uint64_t normalize_ntp_to_ms(uint64_t ntp) {
@@ -18,35 +18,35 @@ static uint64_t normalize_ntp_to_ms(uint64_t ntp) {
   return (milliseconds + fraction);
 }
 
-IAirPlayMirrorHandler::IAirPlayMirrorHandler(JNIEnv *env)
-    : jni_meta_object<IAirPlayMirrorHandler, IAirPlayMirrorHandler_cls>() {
+IAirPlayMirroringHandler::IAirPlayMirroringHandler(JNIEnv *env)
+    : jni_meta_object<IAirPlayMirroringHandler, IAirPlayMirroringHandler_cls>() {
   handler_ = std::make_shared<jni_ap_mirror_handler>(this);
 }
 
-ap_mirror_session_handler_ptr
-IAirPlayMirrorHandler::get_ap_mirror_session_handler() {
+ap_mirroring_session_handler_ptr
+IAirPlayMirroringHandler::get_mirroring_session_handler() {
   return handler_;
 }
 
-void IAirPlayMirrorHandler::on_mirror_stream_started() {
+void IAirPlayMirroringHandler::on_video_stream_started() {
   JNIEnv *env = getJNIEnv();
   if (env) {
-    GET_METHOD_ID(on_mirror_stream_started, "()V");
+    GET_METHOD_ID(on_video_stream_started, "()V");
     if (mid) {
       env->CallVoidMethod(jvm_obj_, mid);
     } else {
       __android_log_write(
           ANDROID_LOG_ERROR, LOG_TAG,
-          "Failed to get method id of on_mirror_stream_started");
+          "Failed to get method id of on_video_stream_started");
     }
   }
 }
 
-void IAirPlayMirrorHandler::on_mirror_stream_codec(
+void IAirPlayMirroringHandler::on_video_stream_codec(
     const aps::sms_video_codec_packet_t *p) {
   JNIEnv *env = getJNIEnv();
   if (env) {
-    GET_METHOD_ID(on_mirror_stream_codec, "([B)V");
+    GET_METHOD_ID(on_video_stream_codec, "([B)V");
     if (mid) {
       jbyteArray byte_array = env->NewByteArray(p->payload_size);
       env->SetByteArrayRegion(byte_array, 0, p->payload_size,
@@ -55,16 +55,16 @@ void IAirPlayMirrorHandler::on_mirror_stream_codec(
       env->DeleteLocalRef(byte_array);
     } else {
       __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
-                          "Failed to get method id of on_mirror_stream_codec");
+                          "Failed to get method id of on_video_stream_codec");
     }
   }
 }
 
-void IAirPlayMirrorHandler::on_mirror_stream_data(
+void IAirPlayMirroringHandler::on_video_stream_data(
     const aps::sms_video_data_packet_t *p) {
   JNIEnv *env = getJNIEnv();
   if (env) {
-    GET_METHOD_ID(on_mirror_stream_data, "([BJ)V");
+    GET_METHOD_ID(on_video_stream_data, "([BJ)V");
     if (mid) {
       jbyteArray byte_array = env->NewByteArray(p->payload_size);
       env->SetByteArrayRegion(byte_array, 0, p->payload_size,
@@ -75,40 +75,40 @@ void IAirPlayMirrorHandler::on_mirror_stream_data(
       env->DeleteLocalRef(byte_array);
     } else {
       __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
-                          "Failed to get method id of on_mirror_stream_data");
+                          "Failed to get method id of on_video_stream_data");
     }
   }
 }
 
-void IAirPlayMirrorHandler::on_mirror_stream_heartbeat() {
+void IAirPlayMirroringHandler::on_video_stream_heartbeat() {
   JNIEnv *env = getJNIEnv();
   if (env) {
-    GET_METHOD_ID(on_mirror_stream_heartbeat, "()V");
+    GET_METHOD_ID(on_video_stream_heartbeat, "()V");
     if (mid) {
       env->CallVoidMethod(jvm_obj_, mid);
     } else {
       __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
-                          "Failed to get method id of on_mirror_stream_heartbeat");
+                          "Failed to get method id of on_video_stream_heartbeat");
     }
   }
 }
 
-void IAirPlayMirrorHandler::on_mirror_stream_stopped() {
+void IAirPlayMirroringHandler::on_video_stream_stopped() {
   JNIEnv *env = getJNIEnv();
   if (env) {
-    GET_METHOD_ID(on_mirror_stream_stopped, "()V");
+    GET_METHOD_ID(on_video_stream_stopped, "()V");
     if (mid) {
       env->CallVoidMethod(jvm_obj_, mid);
     } else {
       __android_log_write(
           ANDROID_LOG_ERROR, LOG_TAG,
-          "Failed to get method id of on_mirror_stream_stopped");
+          "Failed to get method id of on_video_stream_stopped");
     }
   }
 }
 
-void IAirPlayMirrorHandler::on_audio_set_volume(const float ratio,
-                                                const float volume) {
+void IAirPlayMirroringHandler::on_audio_set_volume(const float ratio,
+                                                   const float volume) {
   JNIEnv *env = getJNIEnv();
   if (env) {
     GET_METHOD_ID(on_audio_set_volume, "(FF)V");
@@ -121,10 +121,10 @@ void IAirPlayMirrorHandler::on_audio_set_volume(const float ratio,
   }
 }
 
-void IAirPlayMirrorHandler::on_audio_set_progress(const float ratio,
-                                                  const uint64_t start,
-                                                  const uint64_t current,
-                                                  const uint64_t end) {
+void IAirPlayMirroringHandler::on_audio_set_progress(const float ratio,
+                                                     const uint64_t start,
+                                                     const uint64_t current,
+                                                     const uint64_t end) {
   JNIEnv *env = getJNIEnv();
   if (env) {
     GET_METHOD_ID(on_audio_set_progress, "(FJJJ)V");
@@ -137,9 +137,9 @@ void IAirPlayMirrorHandler::on_audio_set_progress(const float ratio,
   }
 }
 
-void IAirPlayMirrorHandler::on_audio_set_cover(const std::string format,
-                                               const void *data,
-                                               const uint32_t length) {
+void IAirPlayMirroringHandler::on_audio_set_cover(const std::string format,
+                                                  const void *data,
+                                                  const uint32_t length) {
   JNIEnv *env = getJNIEnv();
   if (env) {
     GET_METHOD_ID(on_audio_set_cover, "(Ljava/lang/String;[B)V");
@@ -157,8 +157,8 @@ void IAirPlayMirrorHandler::on_audio_set_cover(const std::string format,
   }
 }
 
-void IAirPlayMirrorHandler::on_audio_set_meta_data(const void *data,
-                                                   const uint32_t length) {
+void IAirPlayMirroringHandler::on_audio_set_meta_data(const void *data,
+                                                      const uint32_t length) {
   JNIEnv *env = getJNIEnv();
   if (env) {
     GET_METHOD_ID(on_audio_set_meta_data, "([B)V");
@@ -174,7 +174,7 @@ void IAirPlayMirrorHandler::on_audio_set_meta_data(const void *data,
   }
 }
 
-void IAirPlayMirrorHandler::on_audio_stream_started(
+void IAirPlayMirroringHandler::on_audio_stream_started(
     const aps::audio_data_format_t format) {
   JNIEnv *env = getJNIEnv();
   if (env) {
@@ -188,7 +188,7 @@ void IAirPlayMirrorHandler::on_audio_stream_started(
   }
 }
 
-void IAirPlayMirrorHandler::on_audio_stream_data(
+void IAirPlayMirroringHandler::on_audio_stream_data(
     const aps::rtp_audio_data_packet_t *p, const uint32_t payload_length) {
   JNIEnv *env = getJNIEnv();
   if (env) {
@@ -206,7 +206,7 @@ void IAirPlayMirrorHandler::on_audio_stream_data(
   }
 }
 
-void IAirPlayMirrorHandler::on_audio_stream_stopped() {
+void IAirPlayMirroringHandler::on_audio_stream_stopped() {
   JNIEnv *env = getJNIEnv();
   if (env) {
     GET_METHOD_ID(on_audio_stream_stopped, "()V");

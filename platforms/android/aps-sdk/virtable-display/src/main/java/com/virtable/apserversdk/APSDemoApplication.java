@@ -15,7 +15,7 @@ import com.virtable.airplay.AirPlayConfig;
 import com.virtable.airplay.AirPlaySession;
 import com.virtable.airplay.AirPlayServer;
 import com.virtable.airplay.IAirPlayHandler;
-import com.virtable.airplay.IAirPlayMirrorHandler;
+import com.virtable.airplay.IAirPlayMirroringHandler;
 
 import java.io.IOException;
 import java.io.PipedOutputStream;
@@ -220,31 +220,31 @@ public class APSDemoApplication extends Application implements Application.Activ
   }
 
   private void createNewMirrorSession(AirPlaySession session) {
-    IAirPlayMirrorHandler h = new IAirPlayMirrorHandler() {
+    IAirPlayMirroringHandler h = new IAirPlayMirroringHandler() {
       private PipedOutputStream videoOutputStream;
       private PipedOutputStream audioOutputStream;
 
       @Override
-      public void on_mirror_stream_started() {
-        Log.d(TAG, "on_mirror_stream_started: ");
+      public void on_video_stream_started() {
+        Log.d(TAG, "on_video_stream_started: ");
         videoOutputStream = new PipedOutputStream();
 
       }
 
       @Override
-      public void on_mirror_stream_codec(byte[] data) {
-        Log.i(TAG, "on_mirror_stream_codec: ");
+      public void on_video_stream_codec(byte[] data) {
+        Log.i(TAG, "on_video_stream_codec: ");
 
 
       }
 
       @Override
-      public void on_mirror_stream_data(byte[] data, long timestamp) {
+      public void on_video_stream_data(byte[] data, long timestamp) {
         int frame_size = ((int)data[0])<< 24;
         frame_size += ((int)data[1]) << 16;
         frame_size += ((int)data[2]) << 8;
         frame_size += (int)data[3];
-        //Log.v(TAG, "on_mirror_stream_data: length " + data.length + ", frame size: " + frame_size + ", timestamp " + timestamp);
+        //Log.v(TAG, "on_video_stream_data: length " + data.length + ", frame size: " + frame_size + ", timestamp " + timestamp);
         Log.v(TAG, String.format("P========:%02x, %02x, %02x, %02x ========= frame size %d",
             data[0],
             data[1],
@@ -255,14 +255,14 @@ public class APSDemoApplication extends Application implements Application.Activ
       }
 
       @Override
-      public void on_mirror_stream_heartbeat() {
-        Log.i(TAG, "on_mirror_stream_heartbeat: ");
+      public void on_video_stream_heartbeat() {
+        Log.i(TAG, "on_video_stream_heartbeat: ");
 
       }
 
       @Override
-      public void on_mirror_stream_stopped() {
-        Log.i(TAG, "on_mirror_stream_stopped: ");
+      public void on_video_stream_stopped() {
+        Log.i(TAG, "on_video_stream_stopped: ");
         try {
           videoOutputStream.close();
           videoOutputStream = null;
