@@ -11,12 +11,13 @@ ext {
 }
 
 android {
-    compileSdkVersion 29
-    ndkVersion '21.1.6352462'
+    compileSdkVersion 30
+    // ndkVersion '21.1.6352462'
+    ndkVersion '22.1.7171670'
     // workaround of gradle bug: https://github.com/gradle/gradle/issues/12440
     defaultConfig {
         minSdkVersion 18
-        targetSdkVersion 29
+        targetSdkVersion 30
         versionCode 1
         versionName VersionNumberString
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -36,7 +37,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    buildToolsVersion '28.0.3'
+    buildToolsVersion '30.0.3'
     productFlavors {
     }
     externalNativeBuild {
@@ -48,9 +49,9 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    testImplementation 'junit:junit:4.13'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 }
 
 afterEvaluate {
