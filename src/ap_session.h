@@ -314,9 +314,9 @@ public:
 
   virtual void disconnect() = 0;
 
-  virtual void set_mirror_handler(ap_mirroring_session_handler_ptr handler) = 0;
+  virtual void set_mirroring_handler(ap_mirroring_session_handler_ptr handler) = 0;
 
-  virtual void set_video_handler(ap_casting_session_handler_ptr handler) = 0;
+  virtual void set_casting_handler(ap_casting_session_handler_ptr handler) = 0;
 };
 
 typedef std::shared_ptr<ap_session> ap_session_ptr;

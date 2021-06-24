@@ -162,14 +162,14 @@ public:
     uint64_t sid = session->get_session_id();
     LOGI() << "###################on_mirror_session_begin: " << sid << std::endl;
     aps::ap_mirroring_session_handler_ptr mirror_handler = std::make_shared<airplay_mirroring_handler>();
-    session->set_mirror_handler(mirror_handler);
+    session->set_mirroring_handler(mirror_handler);
   }
 
   void on_video_session_begin(aps::ap_session_ptr session) {
     uint64_t sid = session->get_session_id();
     LOGI() << "+++++++++++++++++++on_video_session_begin: " << sid << std::endl;
     aps::ap_casting_session_handler_ptr video_handler = std::make_shared<airplay_cast_handler>(sid);
-    session->set_video_handler(video_handler);
+    session->set_casting_handler(video_handler);
   }
 };
 

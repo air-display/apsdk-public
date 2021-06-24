@@ -61,13 +61,13 @@ uint64_t ap_airplay_connection::get_session_id() { return session_id_; }
 
 uint32_t ap_airplay_connection::get_session_type() { return session_type_; }
 
-void ap_airplay_connection::set_mirror_handler(ap_mirroring_session_handler_ptr handler) {
+void ap_airplay_connection::set_mirroring_handler(ap_mirroring_session_handler_ptr handler) {
   if (mirroring_session == session_type_) {
     mirroring_session_handler_ = handler;
   }
 }
 
-void ap_airplay_connection::set_video_handler(ap_casting_session_handler_ptr handler) {
+void ap_airplay_connection::set_casting_handler(ap_casting_session_handler_ptr handler) {
   if (casting_session == session_type_) {
     video_session_handler_ = handler;
   }
