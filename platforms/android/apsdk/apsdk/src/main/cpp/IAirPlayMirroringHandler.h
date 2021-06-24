@@ -14,7 +14,7 @@
 using namespace aps;
 
 static const char IAirPlayMirroringHandler_cls[] =
-    "com/virtable/airplay/IAirPlayMirroringHandler";
+    "com/sheensoftlab/apsdk/IAirPlayMirroringHandler";
 class IAirPlayMirroringHandler
     : public jni_meta_object<IAirPlayMirroringHandler, IAirPlayMirroringHandler_cls> {
 public:

@@ -15,7 +15,7 @@
 using namespace aps;
 
 static const char AirPlaySession_cls[] =
-    "com/virtable/airplay/AirPlaySession";
+    "com/sheensoftlab/apsdk/AirPlaySession";
 class AirPlaySession
     : public nci_object<AirPlaySession, AirPlaySession_cls> {
 public:

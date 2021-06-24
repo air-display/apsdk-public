@@ -23,7 +23,7 @@ void IAirPlayHandler::on_session_begin(ap_session_ptr session) {
   JNIEnv *env = getJNIEnv();
   if (env) {
     GET_METHOD_ID(on_session_begin,
-                  "(Lcom/virtable/airplay/AirPlaySession;)V");
+                  "(Lcom/sheensoftlab/apsdk/AirPlaySession;)V");
     if (mid) {
       // Create the airplay mirror session object
       jobject obj = AirPlaySession::new_jvmObject(env);

@@ -1,5 +1,5 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="app_name">Virtable Display</string>
+    <string name="app_name">SheenScreenMobile</string>
 
     <string name="unexpected_intent_action">Unexpected intent action: <xliff:g id="action">%1$s</xliff:g></string>
 
@@ -41,4 +41,5 @@
     <string name="title_activity_apsmirror_player">FullscreenActivity</string>
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="title_activity_apmirror_player">FullscreenActivity</string>
 </resources>

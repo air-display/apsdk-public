@@ -19,8 +19,8 @@ public class ExampleInstrumentedTest {
     @Test
     public void useAppContext() {
         // Context of the app under test.
-        Context appContext = InstrumentationRegistry.getTargetContext();
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        assertEquals("com.virtable.airplay.test", appContext.getPackageName());
+        assertEquals("com.sheensoftlab.apsdk.test", appContext.getPackageName());
     }
 }

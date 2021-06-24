@@ -8,17 +8,17 @@
 DEFINE_NCI_METHODS(AirPlayServer);
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_virtable_airplay_AirPlayServer_nciStart(JNIEnv *env, jobject thiz) {
+Java_com_sheensoftlab_apsdk_AirPlayServer_nciStart(JNIEnv *env, jobject thiz) {
   return static_cast<jboolean>(AirPlayServer::get(env, thiz)->start());
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_virtable_airplay_AirPlayServer_nciStop(JNIEnv *env, jobject thiz) {
+Java_com_sheensoftlab_apsdk_AirPlayServer_nciStop(JNIEnv *env, jobject thiz) {
   AirPlayServer::get(env, thiz)->stop();
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_virtable_airplay_AirPlayServer_nciSetConfig(JNIEnv *env, jobject thiz,
+Java_com_sheensoftlab_apsdk_AirPlayServer_nciSetConfig(JNIEnv *env, jobject thiz,
                                                      jobject config) {
   env->DeleteLocalRef(config);
   AirPlayConfig airPlayConfig = AirPlayConfig::attach(env, config);
@@ -26,7 +26,7 @@ Java_com_virtable_airplay_AirPlayServer_nciSetConfig(JNIEnv *env, jobject thiz,
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_virtable_airplay_AirPlayServer_nciSetHandler(JNIEnv *env, jobject thiz,
+Java_com_sheensoftlab_apsdk_AirPlayServer_nciSetHandler(JNIEnv *env, jobject thiz,
                                                       jobject handler) {
   if (handler) {
     auto airplayHandler = IAirPlayHandler::attach(env, handler);
@@ -39,7 +39,7 @@ Java_com_virtable_airplay_AirPlayServer_nciSetHandler(JNIEnv *env, jobject thiz,
 }
 
 extern "C" JNIEXPORT jint JNICALL
-Java_com_virtable_airplay_AirPlayServer_nciGetServicePort(JNIEnv *env,
+Java_com_sheensoftlab_apsdk_AirPlayServer_nciGetServicePort(JNIEnv *env,
                                                           jobject thiz) {
   return AirPlayServer::get(env, thiz)->getServicePort();
 }

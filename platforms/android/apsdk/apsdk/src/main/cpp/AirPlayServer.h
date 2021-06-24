@@ -15,7 +15,7 @@
 
 using namespace aps;
 
-static const char AirPlayServer_cls[] = "com/virtable/airplay/AirPlayServer";
+static const char AirPlayServer_cls[] = "com/sheensoftlab/apsdk/AirPlayServer";
 class AirPlayServer : public nci_object<AirPlayServer, AirPlayServer_cls> {
 public:
   AirPlayServer(JNIEnv *env);

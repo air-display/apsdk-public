@@ -61,7 +61,7 @@ afterEvaluate {
                 from components.release
 
                 // customize attributes of the publication as shown below.
-                groupId = 'com.virtable.airplay'
+                groupId = 'com.sheensoftlab.apsdk'
                 artifactId = 'apssdk'
                 version = '1.0'
             }
@@ -71,7 +71,7 @@ afterEvaluate {
                 // applies the component for the debug build variant.
                 from components.debug
 
-                groupId = 'com.virtable.airplay'
+                groupId = 'com.sheensoftlab.apsdk'
                 artifactId = 'apssdk-debug'
                 version = '1.0'
             }
