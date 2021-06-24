@@ -1,0 +1,27 @@
+                    Executable : C:\Users\sheen\AppData\Local\Android\Sdk\cmake\3.10.2.4988404\bin\cmake.exe
+arguments : 
+-HC:\Users\sheen\Projects\aps\platforms\android\aps-sdk\apsdk
+-DCMAKE_CXX_FLAGS=-std=c++11 -fexceptions
+-DCMAKE_FIND_ROOT_PATH=C:\Users\sheen\Projects\aps\platforms\android\aps-sdk\apsdk\.cxx\cmake\release\prefab\x86_64\prefab
+-DCMAKE_BUILD_TYPE=Release
+-DCMAKE_TOOLCHAIN_FILE=C:\Users\sheen\AppData\Local\Android\Sdk\ndk\22.1.7171670\build\cmake\android.toolchain.cmake
+-DANDROID_ABI=x86_64
+-DANDROID_NDK=C:\Users\sheen\AppData\Local\Android\Sdk\ndk\22.1.7171670
+-DANDROID_PLATFORM=android-18
+-DCMAKE_ANDROID_ARCH_ABI=x86_64
+-DCMAKE_ANDROID_NDK=C:\Users\sheen\AppData\Local\Android\Sdk\ndk\22.1.7171670
+-DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=C:\Users\sheen\Projects\aps\platforms\android\aps-sdk\apsdk\build\intermediates\cmake\release\obj\x86_64
+-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=C:\Users\sheen\Projects\aps\platforms\android\aps-sdk\apsdk\build\intermediates\cmake\release\obj\x86_64
+-DCMAKE_MAKE_PROGRAM=C:\Users\sheen\AppData\Local\Android\Sdk\cmake\3.10.2.4988404\bin\ninja.exe
+-DCMAKE_SYSTEM_NAME=Android
+-DCMAKE_SYSTEM_VERSION=18
+-DANDROID_STL=c++_static
+-DANDROID_TOOLCHAIN=clang
+-BC:\Users\sheen\Projects\aps\platforms\android\aps-sdk\apsdk\.cxx\cmake\release\x86_64
+-GNinja
+jvmArgs : 
+
+
+                    Build command args: []
+                    Version: 1

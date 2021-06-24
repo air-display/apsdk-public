@@ -1,0 +1,129 @@
+{
+  "stringTable": {},
+  "buildFiles": [
+    "C:\\Users\\sheen\\Projects\\aps\\CMakeLists.txt",
+    "C:\\Users\\sheen\\Projects\\aps\\src\\CMakeLists.txt",
+    "C:\\Users\\sheen\\Projects\\aps\\third-party\\CMakeLists.txt",
+    "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "C:\\Users\\sheen\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+      "-C",
+      "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\release\\x86_64",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "C:\\Users\\sheen\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+    "-C",
+    "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\release\\x86_64",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "mdnssd-Release-x86_64": {
+      "buildCommandComponents": [
+        "C:\\Users\\sheen\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\release\\x86_64",
+        "mdnssd"
+      ],
+      "buildType": "release",
+      "abi": "x86_64",
+      "artifactName": "mdnssd",
+      "output": "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\release\\x86_64\\aps\\third-party\\libmdnssd.a"
+    },
+    "curve25519-Release-x86_64": {
+      "buildCommandComponents": [
+        "C:\\Users\\sheen\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\release\\x86_64",
+        "curve25519"
+      ],
+      "buildType": "release",
+      "abi": "x86_64",
+      "artifactName": "curve25519",
+      "output": "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\release\\x86_64\\aps\\third-party\\libcurve25519.a"
+    },
+    "aps-Release-x86_64": {
+      "buildCommandComponents": [
+        "C:\\Users\\sheen\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\release\\x86_64",
+        "aps"
+      ],
+      "buildType": "release",
+      "abi": "x86_64",
+      "artifactName": "aps",
+      "output": "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\release\\x86_64\\output\\lib\\libaps.a"
+    },
+    "aps-jni-Release-x86_64": {
+      "buildCommandComponents": [
+        "C:\\Users\\sheen\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\release\\x86_64",
+        "aps-jni"
+      ],
+      "buildType": "release",
+      "abi": "x86_64",
+      "artifactName": "aps-jni",
+      "output": "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\build\\intermediates\\cmake\\release\\obj\\x86_64\\libaps-jni.so",
+      "runtimeFiles": []
+    },
+    "playfair-Release-x86_64": {
+      "buildCommandComponents": [
+        "C:\\Users\\sheen\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\release\\x86_64",
+        "playfair"
+      ],
+      "buildType": "release",
+      "abi": "x86_64",
+      "artifactName": "playfair",
+      "output": "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\release\\x86_64\\aps\\third-party\\libplayfair.a"
+    },
+    "ed25519-Release-x86_64": {
+      "buildCommandComponents": [
+        "C:\\Users\\sheen\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\release\\x86_64",
+        "ed25519"
+      ],
+      "buildType": "release",
+      "abi": "x86_64",
+      "artifactName": "ed25519",
+      "output": "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\release\\x86_64\\aps\\third-party\\libed25519.a"
+    },
+    "hlsparser-Release-x86_64": {
+      "buildCommandComponents": [
+        "C:\\Users\\sheen\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\release\\x86_64",
+        "hlsparser"
+      ],
+      "buildType": "release",
+      "abi": "x86_64",
+      "artifactName": "hlsparser",
+      "output": "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\release\\x86_64\\aps\\third-party\\libhlsparser.a"
+    },
+    "opensslaes-Release-x86_64": {
+      "buildCommandComponents": [
+        "C:\\Users\\sheen\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\release\\x86_64",
+        "opensslaes"
+      ],
+      "buildType": "release",
+      "abi": "x86_64",
+      "artifactName": "opensslaes",
+      "output": "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\release\\x86_64\\aps\\third-party\\libopensslaes.a"
+    }
+  },
+  "toolchains": {},
+  "cFileExtensions": [
+    "c"
+  ],
+  "cppFileExtensions": [
+    "cpp"
+  ]
+}

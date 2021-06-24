@@ -1,1 +1,3 @@
-include ':virtable-display', ':airplay'
+include ':apsdk'
+include ':app:sheenscreen-mb'
+include ':app:sheenscreen-tv'

@@ -1,0 +1,129 @@
+{
+  "stringTable": {},
+  "buildFiles": [
+    "C:\\Users\\sheen\\Projects\\aps\\CMakeLists.txt",
+    "C:\\Users\\sheen\\Projects\\aps\\src\\CMakeLists.txt",
+    "C:\\Users\\sheen\\Projects\\aps\\third-party\\CMakeLists.txt",
+    "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "C:\\Users\\sheen\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+      "-C",
+      "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\debug\\x86",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "C:\\Users\\sheen\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+    "-C",
+    "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\debug\\x86",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "ed25519-Debug-x86": {
+      "buildCommandComponents": [
+        "C:\\Users\\sheen\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\debug\\x86",
+        "ed25519"
+      ],
+      "buildType": "debug",
+      "abi": "x86",
+      "artifactName": "ed25519",
+      "output": "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\debug\\x86\\aps\\third-party\\libed25519.a"
+    },
+    "playfair-Debug-x86": {
+      "buildCommandComponents": [
+        "C:\\Users\\sheen\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\debug\\x86",
+        "playfair"
+      ],
+      "buildType": "debug",
+      "abi": "x86",
+      "artifactName": "playfair",
+      "output": "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\debug\\x86\\aps\\third-party\\libplayfair.a"
+    },
+    "aps-Debug-x86": {
+      "buildCommandComponents": [
+        "C:\\Users\\sheen\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\debug\\x86",
+        "aps"
+      ],
+      "buildType": "debug",
+      "abi": "x86",
+      "artifactName": "aps",
+      "output": "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\debug\\x86\\output\\lib\\libaps.a"
+    },
+    "hlsparser-Debug-x86": {
+      "buildCommandComponents": [
+        "C:\\Users\\sheen\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\debug\\x86",
+        "hlsparser"
+      ],
+      "buildType": "debug",
+      "abi": "x86",
+      "artifactName": "hlsparser",
+      "output": "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\debug\\x86\\aps\\third-party\\libhlsparser.a"
+    },
+    "curve25519-Debug-x86": {
+      "buildCommandComponents": [
+        "C:\\Users\\sheen\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\debug\\x86",
+        "curve25519"
+      ],
+      "buildType": "debug",
+      "abi": "x86",
+      "artifactName": "curve25519",
+      "output": "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\debug\\x86\\aps\\third-party\\libcurve25519.a"
+    },
+    "opensslaes-Debug-x86": {
+      "buildCommandComponents": [
+        "C:\\Users\\sheen\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\debug\\x86",
+        "opensslaes"
+      ],
+      "buildType": "debug",
+      "abi": "x86",
+      "artifactName": "opensslaes",
+      "output": "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\debug\\x86\\aps\\third-party\\libopensslaes.a"
+    },
+    "mdnssd-Debug-x86": {
+      "buildCommandComponents": [
+        "C:\\Users\\sheen\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\debug\\x86",
+        "mdnssd"
+      ],
+      "buildType": "debug",
+      "abi": "x86",
+      "artifactName": "mdnssd",
+      "output": "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\debug\\x86\\aps\\third-party\\libmdnssd.a"
+    },
+    "aps-jni-Debug-x86": {
+      "buildCommandComponents": [
+        "C:\\Users\\sheen\\AppData\\Local\\Android\\Sdk\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\.cxx\\cmake\\debug\\x86",
+        "aps-jni"
+      ],
+      "buildType": "debug",
+      "abi": "x86",
+      "artifactName": "aps-jni",
+      "output": "C:\\Users\\sheen\\Projects\\aps\\platforms\\android\\aps-sdk\\apsdk\\build\\intermediates\\cmake\\debug\\obj\\x86\\libaps-jni.so",
+      "runtimeFiles": []
+    }
+  },
+  "toolchains": {},
+  "cFileExtensions": [
+    "c"
+  ],
+  "cppFileExtensions": [
+    "cpp"
+  ]
+}

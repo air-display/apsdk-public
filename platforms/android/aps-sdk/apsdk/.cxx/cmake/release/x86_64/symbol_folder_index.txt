@@ -1,0 +1,1 @@
+C:\Users\sheen\Projects\aps\platforms\android\aps-sdk\apsdk\build\intermediates\cmake\release\obj\x86_64
