@@ -1,4 +1,0 @@
-C:\Users\sheen\Projects\aps\CMakeLists.txt
-C:\Users\sheen\Projects\aps\src\CMakeLists.txt
-C:\Users\sheen\Projects\aps\third-party\CMakeLists.txt
-C:\Users\sheen\Projects\aps\platforms\android\aps-sdk\apsdk\CMakeLists.txt
