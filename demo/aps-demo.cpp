@@ -30,25 +30,25 @@ public:
 
   ~airplay_mirroring_handler(){};
 
-  virtual void on_mirror_stream_started() override {
+  virtual void on_video_stream_started() override {
     LOGI() << "on_mirror_stream_started" << std::endl;
 
     es_player_.open_video_renderer();
   }
 
-  virtual void on_mirror_stream_codec(const aps::sms_video_codec_packet_t *p) override {
+  virtual void on_video_stream_codec(const aps::sms_video_codec_packet_t *p) override {
     LOGI() << "on_mirror_stream_codec: " << std::endl;
 
     es_player_.open_video_decoder(p->payload, p->payload_size);
   }
 
-  virtual void on_mirror_stream_data(const aps::sms_video_data_packet_t *p) override {
+  virtual void on_video_stream_data(const aps::sms_video_data_packet_t *p) override {
     LOGI() << "on_mirror_stream_data payload_size: " << p->payload_size << ", timestamp: " << p->timestamp << std::endl;
 
     es_player_.feed_video(const_cast<uint8_t *>(p->payload), p->payload_size);
   }
 
-  virtual void on_mirror_stream_stopped() override {
+  virtual void on_video_stream_stopped() override {
     LOGI() << "on_mirror_stream_stopped" << std::endl;
 
     es_player_.close_video_renderer();
@@ -98,7 +98,7 @@ public:
     es_player_.close_audio_decoder();
   }
 
-  virtual void on_mirror_stream_heartbeat() override { LOGD() << "on_mirror_stream_heartbeat" << std::endl; }
+  virtual void on_video_stream_heartbeat() override { LOGD() << "on_mirror_stream_heartbeat" << std::endl; }
 };
 
 class airplay_cast_handler : public aps::ap_casting_session_handler {
