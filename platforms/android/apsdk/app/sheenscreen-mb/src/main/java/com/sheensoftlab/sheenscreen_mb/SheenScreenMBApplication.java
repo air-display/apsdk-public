@@ -158,7 +158,7 @@ public class SheenScreenMBApplication extends Application implements Application
     protected void initializeAirPlayServer() {
         if (null == airplayServer) {
             AirPlayConfig config = AirPlayConfig.defaultInstance();
-            config.setName(String.format("iScreen[%s]", config.getDeviceID()));
+            config.setName(String.format("SheenScreen[%s]", config.getDeviceID()));
             config.setMacAddress(getDeviceUniqueId(config.getMacAddress()));
             //config.setPublishService(false);
             config.getDisplay().setWidth(1920);
@@ -225,116 +225,13 @@ public class SheenScreenMBApplication extends Application implements Application
         intent.putExtra(APMirrorPlayerActivity.AIRPLAY_SESSION_ID, session.getSessionId());
         startActivity(intent);
 
-
-        IAirPlayMirroringHandler h = new IAirPlayMirroringHandler() {
-            private PipedOutputStream videoOutputStream;
-            private PipedOutputStream audioOutputStream;
-
-            @Override
-            public void on_video_stream_started() {
-                Log.d(TAG, "on_video_stream_started: ");
-                videoOutputStream = new PipedOutputStream();
-
+        synchronized (session) {
+            try {
+                session.wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-
-            @Override
-            public void on_video_stream_codec(byte[] data) {
-                Log.i(TAG, "on_video_stream_codec: ");
-
-
-            }
-
-            @Override
-            public void on_video_stream_data(byte[] data, long timestamp) {
-                int frame_size = ((int) data[0]) << 24;
-                frame_size += ((int) data[1]) << 16;
-                frame_size += ((int) data[2]) << 8;
-                frame_size += (int) data[3];
-                //Log.v(TAG, "on_video_stream_data: length " + data.length + ", frame size: " + frame_size + ", timestamp " + timestamp);
-                Log.v(TAG, String.format("P========:%02x, %02x, %02x, %02x ========= frame size %d",
-                        data[0],
-                        data[1],
-                        data[2],
-                        data[3],
-                        frame_size
-                ));
-            }
-
-            @Override
-            public void on_video_stream_heartbeat() {
-                Log.i(TAG, "on_video_stream_heartbeat: ");
-
-            }
-
-            @Override
-            public void on_video_stream_stopped() {
-                Log.i(TAG, "on_video_stream_stopped: ");
-                try {
-                    videoOutputStream.close();
-                    videoOutputStream = null;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void on_audio_set_volume(float ratio, float volume) {
-                Log.i(TAG, String.format("on_audio_set_volume: ratio = %f, volume = %f", ratio, volume));
-            }
-
-            @Override
-            public void on_audio_set_progress(float ratio, long start, long current, long end) {
-                Log.i(TAG, String.format("on_audio_set_progress: ratio = %f, start = %d, current = %d, end = %d",
-                        ratio, start, current, end));
-            }
-
-            @Override
-            public void on_audio_set_cover(String format, byte[] data) {
-                Log.i(TAG, String.format("on_audio_set_cover: format %s, length %d", format, data.length));
-            }
-
-            @Override
-            public void on_audio_set_meta_data(byte[] data) {
-                Log.i(TAG, String.format("on_audio_set_meta_data: length %d", data.length));
-            }
-
-            @Override
-            public void on_audio_stream_started(int format) {
-                if (format == PCM) {
-                    Log.i(TAG, "on_audio_stream_started: PCM");
-
-                } else if (format == ALAC) {
-                    Log.i(TAG, "on_audio_stream_started: ALAC");
-
-                } else if (format == AAC) {
-                    Log.i(TAG, "on_audio_stream_started: AAC");
-
-                } else if (format == AACELD) {
-                    Log.i(TAG, "on_audio_stream_started: AACELD");
-
-                } else {
-                    Log.i(TAG, "on_audio_stream_started: Unknown");
-                }
-                audioOutputStream = new PipedOutputStream();
-            }
-
-            @Override
-            public void on_audio_stream_data(byte[] data, long timestamp) {
-                Log.v(TAG, "on_audio_stream_data: " + data.length + ", timestamp: " + timestamp);
-            }
-
-            @Override
-            public void on_audio_stream_stopped() {
-                Log.i(TAG, "on_audio_stream_stopped: ");
-                try {
-                    audioOutputStream.close();
-                    audioOutputStream = null;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-        session.setMirrorHandler(h);
+        }
     }
 
     private void createCastingSession(AirPlaySession session) {

@@ -28,8 +28,6 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -48,7 +46,6 @@ import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.MappingTrackSelector.MappedTrackInfo;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.ui.PlayerControlView;
-import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.ui.TrackSelectionDialogBuilder;
 import com.google.android.exoplayer2.util.DebugTextViewHelper;
 import com.google.android.exoplayer2.util.ErrorMessageProvider;
@@ -57,6 +54,7 @@ import com.google.android.exoplayer2.util.Util;
 import com.sheensoftlab.apsdk.AirPlaySession;
 import com.sheensoftlab.apsdk.IAirPlayCastingHandler;
 import com.sheensoftlab.apsdk.PlaybackInfo;
+import com.sheensoftlab.sheenscreen_mb.databinding.ActivityApcastPlayerBinding;
 
 import java.net.CookieHandler;
 import java.net.CookieManager;
@@ -64,11 +62,14 @@ import java.net.CookiePolicy;
 
 import static com.google.android.exoplayer2.Player.DISCONTINUITY_REASON_INTERNAL;
 
+
 public class APCastPlayerActivity extends Activity implements OnClickListener, PlayerControlView.VisibilityListener, IAirPlayCastingHandler {
     public static final String AIRPLAY_SESSION_ID = "airplay_session_id";
     public static final String START_WINDOW_INDEX = "start_window_index";
     public static final String START_POSITION = "start_position";
     private static final String TAG = "APSPlayerActivity";
+
+    private ActivityApcastPlayerBinding binding;
 
     // Saved instance state keys.
     private static final String KEY_TRACK_SELECTOR_PARAMETERS = "track_selector_parameters";
@@ -87,9 +88,6 @@ public class APCastPlayerActivity extends Activity implements OnClickListener, P
     }
 
     private final PlaybackInfo playbackInfo = new PlaybackInfo();
-    private PlayerView playerView;
-    private LinearLayout debugRootView;
-    private TextView debugTextView;
     private SimpleExoPlayer player;
     private DefaultTrackSelector trackSelector;
     private DefaultTrackSelector.Parameters trackSelectorParameters;
@@ -167,7 +165,7 @@ public class APCastPlayerActivity extends Activity implements OnClickListener, P
             return false;
         });
         playerClientHandler.postDelayed(updatePlaybackInfo, 500);
-        session.setVideoHandler(this);
+        session.setCastHandler(this);
 
         synchronized (session) {
             session.notifyAll();
@@ -188,9 +186,9 @@ public class APCastPlayerActivity extends Activity implements OnClickListener, P
             player.setPlayWhenReady(startAutoPlay);
             player.addAnalyticsListener(new EventLogger(trackSelector));
 
-            playerView.setPlayer(player);
+            binding.playerView.setPlayer(player);
 
-            debugViewHelper = new DebugTextViewHelper(player, debugTextView);
+            debugViewHelper = new DebugTextViewHelper(player, binding.debugInfoView);
             debugViewHelper.start();
         }
 
@@ -235,7 +233,7 @@ public class APCastPlayerActivity extends Activity implements OnClickListener, P
     }
 
     private void updateButtonVisibilities() {
-        debugRootView.removeAllViews();
+        binding.playerControlView.removeAllViews();
         if (player == null) {
             return;
         }
@@ -266,13 +264,13 @@ public class APCastPlayerActivity extends Activity implements OnClickListener, P
                 button.setText(label);
                 button.setTag(i);
                 button.setOnClickListener(this);
-                debugRootView.addView(button);
+                binding.playerControlView.addView(button);
             }
         }
     }
 
     private void showControls() {
-        debugRootView.setVisibility(View.VISIBLE);
+        binding.playerControlView.setVisibility(View.VISIBLE);
     }
 
     private void showToast(int messageId) {
@@ -289,6 +287,14 @@ public class APCastPlayerActivity extends Activity implements OnClickListener, P
     public void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate: ");
         super.onCreate(savedInstanceState);
+
+        binding = ActivityApcastPlayerBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+
+        binding.rootView.setOnClickListener(this);
+        binding.playerView.setControllerVisibilityListener(this);
+        binding.playerView.setErrorMessageProvider(new PlayerErrorMessageProvider());
+        binding.playerView.requestFocus();
 
         sessionId = getIntent().getLongExtra(AIRPLAY_SESSION_ID, 0);
         session = SheenScreenMBApplication.getInstance().getSession(sessionId);
@@ -310,17 +316,6 @@ public class APCastPlayerActivity extends Activity implements OnClickListener, P
             CookieHandler.setDefault(DEFAULT_COOKIE_MANAGER);
         }
 
-        setContentView(R.layout.activity_apcast_player);
-        View rootView = findViewById(R.id.root);
-        rootView.setOnClickListener(this);
-        debugRootView = findViewById(R.id.controls_root);
-        debugTextView = findViewById(R.id.debug_text_view);
-
-        playerView = findViewById(R.id.player_view);
-        playerView.setControllerVisibilityListener(this);
-        playerView.setErrorMessageProvider(new PlayerErrorMessageProvider());
-        playerView.requestFocus();
-
         prepareSessionHandler();
     }
 
@@ -338,8 +333,8 @@ public class APCastPlayerActivity extends Activity implements OnClickListener, P
         super.onStart();
         if (Util.SDK_INT > 23) {
             initializePlayer();
-            if (playerView != null) {
-                playerView.onResume();
+            if (binding.playerView != null) {
+                binding.playerView.onResume();
             }
         }
     }
@@ -350,8 +345,8 @@ public class APCastPlayerActivity extends Activity implements OnClickListener, P
         super.onResume();
         if (Util.SDK_INT <= 23 || player == null) {
             initializePlayer();
-            if (playerView != null) {
-                playerView.onResume();
+            if (binding.playerView != null) {
+                binding.playerView.onResume();
             }
         }
     }
@@ -361,8 +356,8 @@ public class APCastPlayerActivity extends Activity implements OnClickListener, P
         Log.d(TAG, "onPause: ");
         super.onPause();
         if (Util.SDK_INT <= 23) {
-            if (playerView != null) {
-                playerView.onPause();
+            if (binding.playerView != null) {
+                binding.playerView.onPause();
             }
             releasePlayer();
         }
@@ -373,8 +368,8 @@ public class APCastPlayerActivity extends Activity implements OnClickListener, P
         Log.d(TAG, "onStop: ");
         super.onStop();
         if (Util.SDK_INT > 23) {
-            if (playerView != null) {
-                playerView.onPause();
+            if (binding.playerView != null) {
+                binding.playerView.onPause();
             }
             releasePlayer();
         }
@@ -402,14 +397,14 @@ public class APCastPlayerActivity extends Activity implements OnClickListener, P
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         // See whether the player view wants to handle media or DPAD keys events.
-        return playerView.dispatchKeyEvent(event) || super.dispatchKeyEvent(event);
+        return binding.playerView.dispatchKeyEvent(event) || super.dispatchKeyEvent(event);
     }
     // endregion
 
     // region Methods implementation of View.OnClickListener
     @Override
     public void onClick(View view) {
-        if (view.getParent() == debugRootView) {
+        if (view.getParent() == binding.playerControlView) {
             MappedTrackInfo mappedTrackInfo = trackSelector.getCurrentMappedTrackInfo();
             if (mappedTrackInfo != null) {
                 CharSequence title = ((Button) view).getText();
@@ -434,7 +429,7 @@ public class APCastPlayerActivity extends Activity implements OnClickListener, P
     // region Methods implementation of PlaybackControlView.VisibilityListener
     @Override
     public void onVisibilityChange(int visibility) {
-        debugRootView.setVisibility(visibility);
+        binding.playerControlView.setVisibility(visibility);
     }
     // endregion
 

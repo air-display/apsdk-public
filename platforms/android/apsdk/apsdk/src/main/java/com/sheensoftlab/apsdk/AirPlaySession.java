@@ -51,9 +51,9 @@ public class AirPlaySession extends NciObject {
   /**
    * @param handler The video stream session handler.
    */
-  private native void nciSetVideoHandler(IAirPlayCastingHandler handler);
-  public void setVideoHandler(IAirPlayCastingHandler handler) {
-    nciSetVideoHandler(handler);
+  private native void nciSetCastHandler(IAirPlayCastingHandler handler);
+  public void setCastHandler(IAirPlayCastingHandler handler) {
+    nciSetCastHandler(handler);
   }
 
   /**

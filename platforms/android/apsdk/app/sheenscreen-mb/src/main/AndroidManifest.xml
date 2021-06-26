@@ -12,6 +12,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
+        android:usesCleartextTraffic="true"
         tools:ignore="GoogleAppIndexingWarning">
         <activity android:name=".MainActivity">
             <intent-filter>
@@ -43,7 +44,7 @@
             android:name=".APMirrorPlayerActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_apmirror_player"
-            android:theme="@style/AppTheme.Fullscreen" />
+            android:theme="@style/AppTheme.NoTitleBar.FullScreen" />
 
         <service
             android:name="com.google.android.exoplayer2.scheduler.PlatformScheduler$PlatformSchedulerService"

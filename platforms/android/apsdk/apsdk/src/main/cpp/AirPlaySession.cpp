@@ -41,7 +41,7 @@ Java_com_sheensoftlab_apsdk_AirPlaySession_nciSetMirrorHandler(
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_sheensoftlab_apsdk_AirPlaySession_nciSetVideoHandler(
+Java_com_sheensoftlab_apsdk_AirPlaySession_nciSetCastHandler(
     JNIEnv *env, jobject instance, jobject handler) {
   AirPlaySession *p = AirPlaySession::get(env, instance);
   if (p) {
