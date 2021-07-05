@@ -63,4 +63,20 @@ public class AirPlaySession extends NciObject {
   public void disconnect() {
     nciDisconnect();
   }
+
+  // The callback interface
+  public interface StopHandler {
+    void onSessionStop();
+  }
+
+  private StopHandler mStopHandler;
+  public void setStopHandler(StopHandler handler) {
+    mStopHandler = handler;
+  }
+
+  public void stopSession() {
+    if (null != mStopHandler) {
+      mStopHandler.onSessionStop();
+    }
+  }
 }

@@ -1,5 +1,6 @@
 package com.sheensoftlab.sheenscreen_mb;
 
+import android.content.Intent;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -25,12 +26,11 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-public class APMirrorPlayerActivity extends AppCompatActivity implements SurfaceHolder.Callback, IAirPlayMirroringHandler {
-    public static final String AIRPLAY_SESSION_ID = "airplay_session_id";
+public class APMirrorPlayerActivity extends AppCompatActivity implements SurfaceHolder.Callback, IAirPlayMirroringHandler, AirPlaySession.StopHandler {
+    public static final String AIRPLAY_SESSION_ID = "airplay_session";
     private static final String TAG = "APMirrorPlayerActivity";
 
     private ActivityApmirrorPlayerBinding binding;
-    private long sessionId;
     private AirPlaySession session;
 
     @Override
@@ -42,18 +42,51 @@ public class APMirrorPlayerActivity extends AppCompatActivity implements Surface
 
         binding.surfaceView.getHolder().addCallback(this);
 
-        sessionId = getIntent().getLongExtra(AIRPLAY_SESSION_ID, 0);
-        session = SheenScreenMBApplication.getInstance().getSession(sessionId);
-        session.setMirrorHandler(this);
+        long sessionId = getIntent().getLongExtra(AIRPLAY_SESSION_ID, 0);
+        session = APAirPlayService.getInstance().lookupSession(sessionId);
+        if (null != session) {
+            session.setStopHandler(this);
+            session.setMirrorHandler(this);
+        }
 
+        //noinspection SynchronizeOnNonFinalField
         synchronized (session) {
             session.notifyAll();
         }
     }
 
     @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
+    public void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (null != session) {
+            session.disconnect();
+        }
     }
 
     // region Methods implementation of SufaceHolder.Callback
@@ -178,6 +211,11 @@ public class APMirrorPlayerActivity extends AppCompatActivity implements Surface
         closeAudio();
     }
 
+    @Override
+    public void onSessionStop() {
+        this.finish();
+    }
+
     // region Audio Player
     private MediaCodec audioDecoder;
     private AudioTrack audioTrack;
@@ -196,27 +234,6 @@ public class APMirrorPlayerActivity extends AppCompatActivity implements Surface
                 Log.e(TAG, "openAudio: Failed to ceate the audio decoder");
                 return;
             }
-//            audioDecoder.setCallback(new MediaCodec.Callback() {
-//                @Override
-//                public void onInputBufferAvailable(@NonNull MediaCodec mediaCodec, int i) {
-//
-//                }
-//
-//                @Override
-//                public void onOutputBufferAvailable(@NonNull MediaCodec mediaCodec, int i, @NonNull MediaCodec.BufferInfo bufferInfo) {
-//
-//                }
-//
-//                @Override
-//                public void onError(@NonNull MediaCodec mediaCodec, @NonNull MediaCodec.CodecException e) {
-//
-//                }
-//
-//                @Override
-//                public void onOutputFormatChanged(@NonNull MediaCodec mediaCodec, @NonNull MediaFormat mediaFormat) {
-//
-//                }
-//            });
             audioDecoder.configure(inputFormat, null, null, 0);
         } catch (Exception e) {
             e.printStackTrace();
@@ -324,32 +341,9 @@ public class APMirrorPlayerActivity extends AppCompatActivity implements Surface
             videoDecoder = MediaCodec.createDecoderByType(AP_VIDEO_FORMAT_MIME);
             if (null == videoDecoder) {
                 Log.e(TAG, "openAudio: Failed to ceate the video decoder");
-                return;
             }
-//            videoDecoder.setCallback(new MediaCodec.Callback() {
-//                @Override
-//                public void onInputBufferAvailable(@NonNull MediaCodec mediaCodec, int i) {
-//
-//                }
-//
-//                @Override
-//                public void onOutputBufferAvailable(@NonNull MediaCodec mediaCodec, int i, @NonNull MediaCodec.BufferInfo bufferInfo) {
-//
-//                }
-//
-//                @Override
-//                public void onError(@NonNull MediaCodec mediaCodec, @NonNull MediaCodec.CodecException e) {
-//
-//                }
-//
-//                @Override
-//                public void onOutputFormatChanged(@NonNull MediaCodec mediaCodec, @NonNull MediaFormat mediaFormat) {
-//
-//                }
-//            });
         } catch (IOException e) {
             e.printStackTrace();
-            return;
         }
     }
 

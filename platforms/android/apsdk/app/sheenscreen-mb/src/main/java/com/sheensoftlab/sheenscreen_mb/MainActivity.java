@@ -1,5 +1,6 @@
 package com.sheensoftlab.sheenscreen_mb;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -13,6 +14,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "onCreate: ");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        startService(new Intent(this, APAirPlayService.class));
     }
 
     protected void onStart() {

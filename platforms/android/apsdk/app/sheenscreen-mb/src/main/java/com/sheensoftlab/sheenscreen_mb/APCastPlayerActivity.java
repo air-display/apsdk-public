@@ -63,7 +63,7 @@ import java.net.CookiePolicy;
 import static com.google.android.exoplayer2.Player.DISCONTINUITY_REASON_INTERNAL;
 
 
-public class APCastPlayerActivity extends Activity implements OnClickListener, PlayerControlView.VisibilityListener, IAirPlayCastingHandler {
+public class APCastPlayerActivity extends Activity implements OnClickListener, PlayerControlView.VisibilityListener, IAirPlayCastingHandler, AirPlaySession.StopHandler {
     public static final String AIRPLAY_SESSION_ID = "airplay_session_id";
     public static final String START_WINDOW_INDEX = "start_window_index";
     public static final String START_POSITION = "start_position";
@@ -91,7 +91,6 @@ public class APCastPlayerActivity extends Activity implements OnClickListener, P
     private SimpleExoPlayer player;
     private DefaultTrackSelector trackSelector;
     private DefaultTrackSelector.Parameters trackSelectorParameters;
-    // Fields used only for ad playback. The ads loader is loaded via reflection.
     private DebugTextViewHelper debugViewHelper;
     private TrackGroupArray lastSeenTrackGroupArray;
     private long sessionId;
@@ -167,6 +166,7 @@ public class APCastPlayerActivity extends Activity implements OnClickListener, P
         playerClientHandler.postDelayed(updatePlaybackInfo, 500);
         session.setCastHandler(this);
 
+        //noinspection SynchronizeOnNonFinalField
         synchronized (session) {
             session.notifyAll();
         }
@@ -297,7 +297,11 @@ public class APCastPlayerActivity extends Activity implements OnClickListener, P
         binding.playerView.requestFocus();
 
         sessionId = getIntent().getLongExtra(AIRPLAY_SESSION_ID, 0);
-        session = SheenScreenMBApplication.getInstance().getSession(sessionId);
+        session = APAirPlayService.getInstance().lookupSession(sessionId);
+        if (null != session) {
+            session.setStopHandler(this);
+            session.setCastHandler(this);
+        }
         location = getIntent().getData();
 
         if (savedInstanceState != null) {
@@ -321,7 +325,7 @@ public class APCastPlayerActivity extends Activity implements OnClickListener, P
 
     @Override
     public void onNewIntent(Intent intent) {
-        Log.d(TAG, "onNewIntent: ");
+        super.onNewIntent(intent);
         releasePlayer();
         clearStartPosition();
         setIntent(intent);
@@ -329,55 +333,42 @@ public class APCastPlayerActivity extends Activity implements OnClickListener, P
 
     @Override
     public void onStart() {
-        Log.d(TAG, "onStart: ");
         super.onStart();
         if (Util.SDK_INT > 23) {
             initializePlayer();
-            if (binding.playerView != null) {
-                binding.playerView.onResume();
-            }
+            binding.playerView.onResume();
         }
     }
 
     @Override
     public void onResume() {
-        Log.d(TAG, "onResume: ");
         super.onResume();
         if (Util.SDK_INT <= 23 || player == null) {
             initializePlayer();
-            if (binding.playerView != null) {
-                binding.playerView.onResume();
-            }
+            binding.playerView.onResume();
         }
     }
 
     @Override
     public void onPause() {
-        Log.d(TAG, "onPause: ");
         super.onPause();
         if (Util.SDK_INT <= 23) {
-            if (binding.playerView != null) {
-                binding.playerView.onPause();
-            }
+            binding.playerView.onPause();
             releasePlayer();
         }
     }
 
     @Override
     public void onStop() {
-        Log.d(TAG, "onStop: ");
         super.onStop();
         if (Util.SDK_INT > 23) {
-            if (binding.playerView != null) {
-                binding.playerView.onPause();
-            }
+            binding.playerView.onPause();
             releasePlayer();
         }
     }
 
     @Override
     public void onDestroy() {
-        Log.d(TAG, "onDestroy: ");
         super.onDestroy();
         if (session != null) {
             session.disconnect();
@@ -494,7 +485,6 @@ public class APCastPlayerActivity extends Activity implements OnClickListener, P
 
         if (null != playerClientHandler) {
             playerClientHandler.removeCallbacksAndMessages(null);
-            APCastPlayerActivity.this.finish();
         }
     }
 
@@ -511,6 +501,11 @@ public class APCastPlayerActivity extends Activity implements OnClickListener, P
         playbackInfo.stallCount = 0;
         Log.d(TAG, String.format("get_playback_info: duration = %f, position = %f", playbackInfo.duration, playbackInfo.position));
         return playbackInfo;
+    }
+
+    @Override
+    public void onSessionStop() {
+        this.finish();
     }
     // endregion
 
@@ -570,6 +565,7 @@ public class APCastPlayerActivity extends Activity implements OnClickListener, P
         }
     }
 
+    @SuppressWarnings("NullableProblems")
     private class PlayerErrorMessageProvider implements ErrorMessageProvider<ExoPlaybackException> {
         @Override
         public Pair<Integer, String> getErrorMessage(ExoPlaybackException e) {
