@@ -88,11 +88,11 @@ public:
   void reset();
 
 protected:
-  app_id get_appi_id(const std::string &uri);
+  static app_id get_appi_id(const std::string &uri);
 
   void add_media_data(const std::string &uri, const std::string &data);
 
-  bool is_primary_data_uri(const std::string &uri);
+  static bool is_primary_data_uri(const std::string &uri);
 
   void send_fcup_request(const std::string &uri);
 
@@ -102,7 +102,7 @@ protected:
 
   std::string adjust_primary_media_data(const std::string &data);
 
-  std::string adjust_secondary_meida_data(const std::string &data);
+  static std::string adjust_secondary_meida_data(const std::string &data);
 
   // For Youtube
   std::string adjust_mlhls_data(const std::string &data);

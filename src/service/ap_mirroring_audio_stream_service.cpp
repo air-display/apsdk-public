@@ -13,7 +13,7 @@ namespace service {
 audio_udp_service::audio_udp_service(const std::string &name)
     : aps::network::udp_service_base(name), recv_buf_(RTP_PACKET_MAX_LEN, 0) {}
 
-audio_udp_service::~audio_udp_service() {}
+audio_udp_service::~audio_udp_service() = default;
 
 bool audio_udp_service::open() {
   if (aps::network::udp_service_base::open()) {
@@ -123,7 +123,7 @@ void ap_mirroring_audio_stream_service::data_handler(const uint8_t *buf, const a
       return;
     }
 
-    rtp_packet_header_t *header = (rtp_packet_header_t *)buf;
+    auto *header = (rtp_packet_header_t *)buf;
     header->sequence = ntohs(header->sequence);
     header->timestamp = ntohl(header->timestamp);
     if (header->payload_type != rtp_audio_data) {
@@ -188,7 +188,7 @@ void ap_mirroring_audio_stream_service::control_handler(const uint8_t *buf, cons
 
     LOGV() << "ap_audio_stream_service::control_handler, " << bytes_transferred;
 
-    rtp_packet_header_t *header = (rtp_packet_header_t *)buf;
+    auto *header = (rtp_packet_header_t *)buf;
     header->sequence = ntohs(header->sequence);
     header->timestamp = ntohl(header->timestamp);
     if (header->payload_type == rtp_ctrl_timing_sync && bytes_transferred == sizeof(rtp_control_sync_packet_t)) {
@@ -222,7 +222,7 @@ void ap_mirroring_audio_stream_service::process_cached_packet(bool flush /* = fa
     auto p = cached_queue_.top();
     if (flush || p->sequence == expected_seq_) {
       cached_queue_.pop();
-      rtp_audio_data_packet_t *header = (rtp_audio_data_packet_t *)p->data.data();
+      auto *header = (rtp_audio_data_packet_t *)p->data.data();
       audio_data_packet(header, p->data.size());
       expected_seq_ = p->sequence + 1;
     } else {

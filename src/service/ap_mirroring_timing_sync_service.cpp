@@ -9,7 +9,7 @@ namespace service {
 ap_mirroring_timing_sync_service::ap_mirroring_timing_sync_service(const uint16_t port /*= 0*/)
     : network::udp_service_base("ap_timing_sync_service", port) {}
 
-ap_mirroring_timing_sync_service::~ap_mirroring_timing_sync_service() {}
+ap_mirroring_timing_sync_service::~ap_mirroring_timing_sync_service() = default;
 
 void ap_mirroring_timing_sync_service::set_server_endpoint(const asio::ip::address &addr, uint16_t port) {
   remote_endpoint_.address(addr);

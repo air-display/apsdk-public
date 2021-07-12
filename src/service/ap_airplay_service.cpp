@@ -3,6 +3,7 @@
 #include <ctime>
 #include <exception>
 #include <stdexcept>
+#include <utility>
 
 #include <ap_types.h>
 #include <service/ap_airplay_service.h>
@@ -22,8 +23,15 @@ namespace aps {
 namespace service {
 ap_airplay_connection::ap_airplay_connection(asio::io_context &io_ctx, ap_config_ptr &config, ap_handler_ptr &hanlder,
                                              tcp_service_weak_ptr service)
-    : xtxp_connection_base(io_ctx), session_type_(unknown_session), config_(config), handler_(hanlder),
-      service_(service), mirroring_session_handler_(0), video_session_handler_(0) {
+    : xtxp_connection_base(io_ctx)
+    , session_id_(0)
+    , session_type_(unknown_session)
+    , start_pos_in_ms_(0)
+    , config_(config)
+    , handler_(hanlder)
+    , service_(std::move(service))
+    , mirroring_session_handler_(nullptr)
+    , video_session_handler_(nullptr) {
   init_session_id();
   crypto_ = std::make_shared<ap_crypto>();
   timing_sync_service_ = std::make_shared<ap_mirroring_timing_sync_service>();
@@ -89,7 +97,7 @@ void ap_airplay_connection::post_pair_setup_handler(const request &req, response
   DUMP_REQUEST_WITH_CONNECTION(req);
 
   if (32 == req.content.size()) {
-    crypto_->init_client_public_keys(0, 0, req.content.data(), 32);
+    crypto_->init_client_public_keys(nullptr, 0, req.content.data(), 32);
   }
 
   res.with_status(ok).with_content_type(APPLICATION_OCTET_STREAM).with_content(crypto_->server_keys().ed_public_key());
@@ -98,7 +106,7 @@ void ap_airplay_connection::post_pair_setup_handler(const request &req, response
 void ap_airplay_connection::post_pair_verify_handler(const request &req, response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
 
-  pair_verify_header_t *header = (pair_verify_header_t *)req.content.data();
+  auto *header = (pair_verify_header_t *)req.content.data();
   if (header->is_first_frame) {
     crypto_->init_client_public_keys(req.content.data() + 4,
                                      32, // client curve public key
@@ -128,7 +136,7 @@ void ap_airplay_connection::post_pair_verify_handler(const request &req, respons
 void ap_airplay_connection::post_fp_setup_handler(const request &req, response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
 
-  fp_header_t *header = (fp_header_t *)req.content.data();
+  auto *header = (fp_header_t *)req.content.data();
   if (header->signature[0] == 'F' && header->signature[1] == 'P' && header->signature[2] == 'L' &&
       header->signature[3] == 'Y') {
     if (header->major_version == 0x03) {
@@ -327,13 +335,13 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
       //  timingPort = 63254;
       //  timingProtocol = NTP;
       //}
-      const uint8_t *piv = 0;
+      const uint8_t *piv = nullptr;
       uint64_t iv_len = 0;
       auto eiv_obj = plist_object_dict_get_value(data_obj, "eiv");
       if (0 != plist_object_data_get_value(eiv_obj, &piv, &iv_len))
         break;
 
-      const uint8_t *pkey = 0;
+      const uint8_t *pkey = nullptr;
       uint64_t key_len = 0;
       auto ekey_obj = plist_object_dict_get_value(data_obj, "ekey");
       if (0 != plist_object_data_get_value(ekey_obj, &pkey, &key_len))
@@ -362,11 +370,10 @@ void ap_airplay_connection::setup_handler(const request &req, response &res) {
 
       return;
     }
-  } while (0);
+  } while (false);
 
   // Bad request
   res.with_status(bad_request);
-  return;
 }
 
 void ap_airplay_connection::get_info_handler(const request &req, response &res) {
@@ -551,7 +558,7 @@ void ap_airplay_connection::flush_handler(const request &req, response &res) {
   if (rtp_info_header != req.headers.end()) {
     auto rtp_info = rtp_info_header->second;
     if (!strncmp(rtp_info.c_str(), "seq=", 4)) {
-      uint64_t next_seq = strtol(rtp_info.c_str() + 4, 0, 10);
+      uint64_t next_seq = strtol(rtp_info.c_str() + 4, nullptr, 10);
       (void)next_seq;
       // Flush
     }
@@ -674,7 +681,7 @@ void ap_airplay_connection::post_play_handler(const request &req, response &res)
     LOGD() << obj_str;
 #endif // !
 
-    const char *id = 0;
+    const char *id = nullptr;
     auto uuid_obj = plist_object_dict_get_value(data_obj, "uuid");
     if (0 != plist_object_string_get_value(uuid_obj, &id)) {
       res.with_status(bad_request);
@@ -682,7 +689,7 @@ void ap_airplay_connection::post_play_handler(const request &req, response &res)
     }
     playback_uuid_ = id;
 
-    const char *l = 0;
+    const char *l = nullptr;
     auto content_location_obj = plist_object_dict_get_value(data_obj, "Content-Location");
     if (0 != plist_object_string_get_value(content_location_obj, &l)) {
       res.with_status(bad_request);
@@ -720,7 +727,7 @@ void ap_airplay_connection::post_play_handler(const request &req, response &res)
     return;
   }
 
-  if (!ap_casting_media_data_store::get().request_media_data(location.c_str(), it_session_id->second.c_str())) {
+  if (!ap_casting_media_data_store::get().request_media_data(location, it_session_id->second)) {
     // Normal URL
     if (video_session_handler_) {
       video_session_handler_->on_video_play(session_id_, location, start_pos_in_ms_);
@@ -779,7 +786,7 @@ void ap_airplay_connection::post_action_handler(const request &req, response &re
     return;
   }
 
-  const char *type = 0;
+  const char *type = nullptr;
   auto type_obj = plist_object_dict_get_value(data_obj, "type");
   if (0 != plist_object_string_get_value(type_obj, &type)) {
     res.with_status(bad_request);
@@ -800,14 +807,14 @@ void ap_airplay_connection::post_action_handler(const request &req, response &re
     auto params_dict = plist_object_dict_get_value(data_obj, "params");
 
     auto fcup_uri_obj = plist_object_dict_get_value(params_dict, "FCUP_Response_URL");
-    const char *fcup_uri = 0;
+    const char *fcup_uri = nullptr;
     if (0 != plist_object_string_get_value(fcup_uri_obj, &fcup_uri)) {
       res.with_status(bad_request);
       return;
     }
 
     auto fcup_data_obj = plist_object_dict_get_value(params_dict, "FCUP_Response_Data");
-    const uint8_t *fcup_data = 0;
+    const uint8_t *fcup_data = nullptr;
     uint64_t data_len = 0;
     if (0 != plist_object_data_get_value(fcup_data_obj, &fcup_data, &data_len)) {
       res.with_status(bad_request);
@@ -1011,7 +1018,7 @@ void ap_airplay_connection::add_common_header(const request &req, response &res)
 }
 
 void ap_airplay_connection::init_session_id() {
-  uint64_t address = (uint64_t)this;
+  auto address = (uint64_t)this;
   uint64_t timestamp =
       std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
           .count();
@@ -1075,7 +1082,7 @@ void ap_airplay_connection::initialize_request_handlers() {
   };
 
   // Register all the request handlers
-  for (auto route : routes_table) {
+  for (const auto& route : routes_table) {
     register_request_route(route);
   }
 }
@@ -1138,7 +1145,7 @@ void ap_airplay_connection::reverse_connection(const std::string &session) {
 ap_airplay_service::ap_airplay_service(ap_config_ptr &config, uint16_t port /*= 0*/)
     : tcp_service_base("ap_airplay_service", port), config_(config) {}
 
-ap_airplay_service::~ap_airplay_service() {}
+ap_airplay_service::~ap_airplay_service() = default;
 
 void ap_airplay_service::set_handler(ap_handler_ptr &hanlder) { handler_ = hanlder; }
 

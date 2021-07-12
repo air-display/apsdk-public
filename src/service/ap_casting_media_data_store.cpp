@@ -31,9 +31,9 @@ aps::service::ap_casting_media_data_store &ap_casting_media_data_store::get() {
   return s_instance;
 }
 
-ap_casting_media_data_store::ap_casting_media_data_store() { hlsparse_global_init(); }
+ap_casting_media_data_store::ap_casting_media_data_store() : app_id_(e_app_unknown) { hlsparse_global_init(); }
 
-ap_casting_media_data_store::~ap_casting_media_data_store() {}
+ap_casting_media_data_store::~ap_casting_media_data_store() = default;
 
 void ap_casting_media_data_store::set_store_root(uint16_t port) {
   std::ostringstream oss;

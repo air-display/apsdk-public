@@ -1,5 +1,7 @@
 ﻿#include <service/ap_casting_event_connection_manager.h>
 
+#include <utility>
+
 namespace aps {
 namespace service {
 aps::service::ap_casting_event_connection_manager &ap_casting_event_connection_manager::get() {
@@ -9,7 +11,7 @@ aps::service::ap_casting_event_connection_manager &ap_casting_event_connection_m
 
 void ap_casting_event_connection_manager::insert(const std::string &id, xtxp_connection_base_weak_ptr p) {
   std::lock_guard<std::mutex> l(mtx_);
-  even_connection_map_[id] = p;
+  even_connection_map_[id] = std::move(p);
 }
 
 void ap_casting_event_connection_manager::remove(const std::string &id) {
@@ -29,9 +31,9 @@ xtxp_connection_base_weak_ptr ap_casting_event_connection_manager::get(const std
   return xtxp_connection_base_weak_ptr();
 }
 
-ap_casting_event_connection_manager::ap_casting_event_connection_manager() {}
+ap_casting_event_connection_manager::ap_casting_event_connection_manager() = default;
 
-ap_casting_event_connection_manager::~ap_casting_event_connection_manager() {}
+ap_casting_event_connection_manager::~ap_casting_event_connection_manager() = default;
 
 } // namespace service
 } // namespace aps

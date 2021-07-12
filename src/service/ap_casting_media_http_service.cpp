@@ -9,7 +9,7 @@ ap_casting_media_http_connection::ap_casting_media_http_connection(asio::io_cont
   initialize_request_handlers();
 }
 
-ap_casting_media_http_connection::~ap_casting_media_http_connection() {}
+ap_casting_media_http_connection::~ap_casting_media_http_connection() = default;
 
 void ap_casting_media_http_connection::get_handler(const request &req, response &res) {
   DUMP_REQUEST_WITH_CONNECTION(req);
@@ -35,7 +35,7 @@ void ap_casting_media_http_connection::initialize_request_handlers() {
   request_route_t routes_table[] = {
       {"HTTP", "GET", "*", RH(get_handler)},
   };
-  for (auto route : routes_table) {
+  for (const auto& route : routes_table) {
     register_request_route(route);
   }
 }
@@ -47,7 +47,7 @@ std::shared_ptr<xtxp_connection_base> ap_casting_media_http_connection::shared_f
 ap_casting_media_http_service::ap_casting_media_http_service(ap_config_ptr &config, uint16_t port /*= 0*/)
     : tcp_service_base("ap_casting_media_http_service", port), config_(config) {}
 
-ap_casting_media_http_service::~ap_casting_media_http_service() {}
+ap_casting_media_http_service::~ap_casting_media_http_service() = default;
 
 network::tcp_connection_ptr ap_casting_media_http_service::prepare_new_connection() {
   return std::make_shared<ap_casting_media_http_connection>(io_context());

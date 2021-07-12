@@ -1,4 +1,5 @@
 ﻿#include <sstream>
+#include <utility>
 
 #include <ap_types.h>
 #include <crypto/ap_crypto.h>
@@ -10,7 +11,7 @@ namespace aps {
 namespace service {
 ap_mirroring_video_stream_connection::ap_mirroring_video_stream_connection(
     asio::io_context &io_ctx, ap_crypto_ptr &crypto, ap_mirroring_session_handler_ptr handler /*= 0*/)
-    : network::tcp_connection_base(io_ctx), handler_(handler), crypto_(crypto), buffer_(SMS_BUFFER_SIZE) {
+    : network::tcp_connection_base(io_ctx), handler_(std::move(handler)), crypto_(crypto), buffer_(SMS_BUFFER_SIZE) {
   header_ = (sms_packet_header_t *)buffer_.data();
   payload_ = buffer_.data() + sizeof(sms_packet_header_t);
 
@@ -37,6 +38,7 @@ void ap_mirroring_video_stream_connection::post_receive_packet_header() {
 void ap_mirroring_video_stream_connection::on_packet_header_received(const asio::error_code &e,
                                                                      std::size_t bytes_transferred) {
   if (e) {
+    (void)(bytes_transferred);
     handle_socket_error(e);
     return;
   }
@@ -84,7 +86,7 @@ void ap_mirroring_video_stream_connection::process_packet() {
   if (sms_video_data == header_->payload_type || sms_payload_4096 == header_->payload_type) {
     // Process the video packet
     LOGV() << "mirror VIDEO packet: " << header_->payload_size;
-    sms_video_data_packet_t *p = (sms_video_data_packet_t *)header_;
+    auto *p = (sms_video_data_packet_t *)header_;
     crypto_->decrypt_video_frame(payload_, p->payload_size);
     if (handler_) {
       handler_->on_video_stream_data(p);
@@ -92,7 +94,7 @@ void ap_mirroring_video_stream_connection::process_packet() {
   } else if (sms_video_codec == header_->payload_type) {
     // Process the codec packet
     LOGV() << "mirror CODEC packet: " << header_->payload_size;
-    sms_video_codec_packet_t *p = (sms_video_codec_packet_t *)header_;
+    auto *p = (sms_video_codec_packet_t *)header_;
     if (handler_) {
         handler_->on_video_stream_codec(p);
     }
@@ -150,7 +152,7 @@ ap_mirroring_video_stream_service::ap_mirroring_video_stream_service(ap_crypto_p
                                                                      ap_mirroring_session_handler_ptr &handler)
     : network::tcp_service_base("ap_mirroring_video_stream_service", port, true), handler_(handler), crypto_(crypto) {}
 
-ap_mirroring_video_stream_service::~ap_mirroring_video_stream_service() {}
+ap_mirroring_video_stream_service::~ap_mirroring_video_stream_service() = default;
 
 network::tcp_connection_ptr ap_mirroring_video_stream_service::prepare_new_connection() {
   return std::make_shared<ap_mirroring_video_stream_connection>(io_context(), crypto_, handler_);

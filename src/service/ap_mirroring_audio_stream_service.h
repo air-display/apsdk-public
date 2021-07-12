@@ -34,7 +34,7 @@ public:
                             std::size_t bytes_transferred) override;
 
 protected:
-  void handle_socket_error(const asio::error_code &e);
+    void handle_socket_error(const asio::error_code &e);
 
 private:
   std::vector<uint8_t> recv_buf_;

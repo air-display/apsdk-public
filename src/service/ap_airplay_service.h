@@ -121,9 +121,9 @@ protected:
   void reverse_connection(const std::string &session);
 
 private:
-  uint64_t session_id_;
+  uint64_t session_id_ = 0;
   uint32_t session_type_;
-  agent_version_t agent_version_;
+  agent_version_t agent_version_ = {0, 0, 0, 0};
   ap_config_ptr config_;
   ap_crypto_ptr crypto_;
   tcp_service_weak_ptr service_;

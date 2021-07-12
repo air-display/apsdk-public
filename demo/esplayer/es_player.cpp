@@ -427,6 +427,7 @@ void es_player::update_video_renderer_resource(const AVFrame *frame) {
       || m_last_window_width != window_width   //
       || m_last_window_height != window_height //
   ) {
+    SDL_Log("===== Source size: %d x %d", frame->width, frame->height);
     // calculate the new image size
     float width_ratio = (float)window_width / frame->width;
     float height_ratio = (float)window_height / frame->height;
