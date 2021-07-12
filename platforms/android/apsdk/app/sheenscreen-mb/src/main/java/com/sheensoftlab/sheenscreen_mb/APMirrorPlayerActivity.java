@@ -13,8 +13,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.util.Log;
+import android.view.OrientationEventListener;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 import android.widget.RelativeLayout;
 
 import androidx.annotation.NonNull;
@@ -301,33 +303,37 @@ public class APMirrorPlayerActivity extends AppCompatActivity implements IAirPla
         private final SampleRingBuffer m_buffer;
         private final ConditionVariable m_signal;
         private final SurfaceView m_surfaceView;
+        private final OrientationEventListener m_orientationEventListener;
 
         private Thread m_worker;
         private AvcConfig m_avcConfig;
         private MediaCodec m_decoder;
 
-        public VideoPlayer(@NonNull SurfaceView surfaceVew) {
-            m_surfaceView = surfaceVew;
+        public VideoPlayer(@NonNull SurfaceView surfaceView) {
             m_buffer = new SampleRingBuffer(16);
             m_signal = new ConditionVariable();
+            m_surfaceView = surfaceView;
+
+            m_orientationEventListener = new OrientationEventListener(m_surfaceView.getContext()) {
+                @Override
+                public void onOrientationChanged(int orientation) {
+                    adjustVideoSurface();
+                }
+            };
+            m_orientationEventListener.enable();
         }
 
         // region Methods implementation of SufaceHolder.Callback
         @Override
         public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
-
         }
 
         @Override
         public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int i1, int i2) {
-            Log.d(TAG, "surface changed, new size: " + i1 + " x " + i2 + ", pixelformat: " + i);
-            //updateScaleInfo();
-//            adjustVideoSurface();
         }
 
         @Override
         public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
-
         }
         // endregion
 
@@ -417,7 +423,6 @@ public class APMirrorPlayerActivity extends AppCompatActivity implements IAirPla
                         break;
                     }
                     case MediaCodec.INFO_OUTPUT_FORMAT_CHANGED: {
-                        // updateScaleInfo();
                         adjustVideoSurface();
                         Log.d(TAG, "video output format changed: " + m_decoder.getOutputFormat());
                         break;
@@ -494,75 +499,33 @@ public class APMirrorPlayerActivity extends AppCompatActivity implements IAirPla
 
 
         public void adjustVideoSurface() {
-            if (null == m_decoder)
-                return;
+            try {
+                if (null == m_decoder) {
+                    Log.e(TAG, "Invalid decoder");
+                    return;
+                }
 
-            MediaFormat fmt = m_decoder.getOutputFormat();
-            int videoWidth = fmt.getInteger(MediaFormat.KEY_WIDTH);
-            int videoHeight = fmt.getInteger(MediaFormat.KEY_HEIGHT);
-            Log.d(TAG, "Video size:" + videoWidth + " x " + videoHeight);
+                MediaFormat fmt = m_decoder.getOutputFormat();
+                if (null == fmt) {
+                    Log.e(TAG, "Failed to get ouput format");
+                    return;
+                }
 
-            int surfaceWidth = binding.rootLayout.getWidth();
-            int surfaceHeight = binding.rootLayout.getHeight();
-            Log.d(TAG, "Surface size:" + surfaceWidth + " x " + surfaceHeight);
+                int videoWidth = fmt.getInteger(MediaFormat.KEY_WIDTH);
+                int videoHeight = fmt.getInteger(MediaFormat.KEY_HEIGHT);
+                int surfaceWidth = ((View)m_surfaceView.getParent()).getWidth();
+                int surfaceHeight = ((View)m_surfaceView.getParent()).getHeight();
+                float scaleRatio = Math.max(((float) videoWidth / surfaceWidth), (float) videoHeight / surfaceHeight);
+                int surfaceNewWidth = (int) Math.ceil((float) videoWidth / scaleRatio);
+                int surfaceNewHeight = (int) Math.ceil((float) videoHeight / scaleRatio);
 
-            float sacleRatio;
-            if (getResources().getConfiguration().orientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
-                sacleRatio = Math.max((float) videoWidth / surfaceWidth, (float) videoHeight / surfaceHeight);
-            } else {
-                sacleRatio = Math.max(((float) videoWidth / surfaceHeight), (float) videoHeight / surfaceWidth);
+                RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(surfaceNewWidth, surfaceNewHeight);
+                params.addRule(RelativeLayout.CENTER_IN_PARENT);
+                m_surfaceView.post(() -> m_surfaceView.setLayoutParams(params));
+            } catch (IllegalStateException e) {
+                Log.e(TAG, "Failed to adjust the surface view size:" + e);
             }
-
-            videoWidth = (int) Math.ceil((float) videoWidth / sacleRatio);
-            videoHeight = (int) Math.ceil((float) videoHeight / sacleRatio);
-
-            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(videoWidth, videoHeight);
-            params.addRule(RelativeLayout.CENTER_IN_PARENT, binding.rootLayout.getId());
-            m_surfaceView.post(() -> m_surfaceView.setLayoutParams(params));
         }
-
-//        private void updateScaleInfo() {
-//            if (null == m_decoder)
-//                return;
-//
-//            MediaFormat fmt = m_decoder.getOutputFormat();
-//            Log.d(TAG, "video output format:" + fmt);
-//            int frameWidth = fmt.getInteger(MediaFormat.KEY_WIDTH);
-//            int frameHeight = fmt.getInteger(MediaFormat.KEY_HEIGHT);
-//            Log.d(TAG, "Image size:" + frameWidth + " x " + frameHeight);
-//
-//            int canvasWidth = m_surfaceView.getWidth();
-//            int canvasHeight = m_surfaceView.getHeight();
-//            Log.d(TAG, "Canvas size:" + canvasWidth + " x " + canvasHeight);
-//
-//            float frameAspect = (float) frameWidth / frameHeight;
-//            float ratioX = (float) frameWidth / canvasWidth;
-//            float ratioY = (float) frameHeight / canvasHeight;
-//
-//            float scaleX = m_surfaceView.getScaleX();
-//            float scaleY = m_surfaceView.getScaleY();
-//            Log.d(TAG, "Current scale:" + scaleX + " x " + scaleY);
-//
-//            if (frameWidth > canvasWidth || frameHeight > canvasHeight) {
-//                Log.d(TAG, "need to scale down");
-//                // scale down
-//                if (ratioX < ratioY) {
-//                    // keep scale y, adjust ratio x
-//                    float width = canvasHeight * frameAspect;
-//                    m_surfaceView.setScaleX(width / canvasWidth);
-//                } else if (ratioX > ratioY) {
-//                    // keep scale x, adjust ratio y
-//                    float height = canvasWidth / frameAspect;
-//                    m_surfaceView.setScaleY(height / canvasHeight);
-//                } else {
-//                    // no need to adjust
-//                }
-//            } else {
-//                // scale up ?
-//                Log.d(TAG, "need to scale up");
-//
-//            }
-//        }
 
         public void convertAvccToAnnexB(byte[] data) {
             int nextNaluStart = 0;

@@ -10,6 +10,4 @@
         <item name="fullscreenBackgroundColor">@color/black</item>
         <item name="fullscreenTextColor">@color/white</item>
     </style>
-
-    <color name="white">#FFFFFF</color>
 </resources>
