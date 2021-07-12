@@ -65,12 +65,12 @@ protected:
 };
 
 #define DEFINE_NCI_METHODS(x)                                                  \
-  extern "C" JNIEXPORT void JNICALL Java_com_sheensoftlab_apsdk_##x##_nciNew(    \
+  extern "C" JNIEXPORT void JNICALL Java_com_sheentech_apsdk_##x##_nciNew(    \
       JNIEnv *env, jobject thiz) {                                             \
     x::attach(env, thiz);                                                      \
   }                                                                            \
                                                                                \
-  extern "C" JNIEXPORT void JNICALL Java_com_sheensoftlab_apsdk_##x##_nciDelete( \
+  extern "C" JNIEXPORT void JNICALL Java_com_sheentech_apsdk_##x##_nciDelete( \
       JNIEnv *env, jobject thiz) {                                             \
     x::destroy(env, thiz);                                                     \
   }

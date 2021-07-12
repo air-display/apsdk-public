@@ -162,7 +162,7 @@ private:
 
 // clang-format off
 
-WRAPPER_CLASS_BEGIN(PlaybackInfo, "com/sheensoftlab/apsdk/PlaybackInfo")
+WRAPPER_CLASS_BEGIN(PlaybackInfo, "com/sheentech/apsdk/PlaybackInfo")
   INT_FIELD(stallCount);
   DOUBLE_FIELD(duration);
   FLOAT_FIELD(position);
@@ -174,7 +174,7 @@ WRAPPER_CLASS_BEGIN(PlaybackInfo, "com/sheensoftlab/apsdk/PlaybackInfo")
 WRAPPER_CLASS_END()
 
 /*
-WRAPPER_CLASS_BEGIN(AudioControlSync, "com/sheensoftlab/apsdk/AudioControlSync")
+WRAPPER_CLASS_BEGIN(AudioControlSync, "com/sheentech/apsdk/AudioControlSync")
   SHORT_FIELD(sequence);
   INT_FIELD(timestamp);
   LONG_FIELD(currentNTPTme);
@@ -183,7 +183,7 @@ WRAPPER_CLASS_END()
 */
 
 /*
-WRAPPER_CLASS_BEGIN(AudioControlRetransmit, "com/sheensoftlab/apsdk/AudioControlRetransmit")
+WRAPPER_CLASS_BEGIN(AudioControlRetransmit, "com/sheentech/apsdk/AudioControlRetransmit")
   SHORT_FIELD(sequence);
   INT_FIELD(timestamp);
   SHORT_FIELD(lostPacketStart);
@@ -192,13 +192,13 @@ WRAPPER_CLASS_END()
 */
 
 /*
-WRAPPER_CLASS_BEGIN(AirPlayConfigDisplay, "com/sheensoftlab/apsdk/AirPlayConfigDisplay")
+WRAPPER_CLASS_BEGIN(AirPlayConfigDisplay, "com/sheentech/apsdk/AirPlayConfigDisplay")
   INT_FIELD(width);
   INT_FIELD(height);
 WRAPPER_CLASS_END()
 */
 
-WRAPPER_CLASS_BEGIN(AirPlayConfig, "com/sheensoftlab/apsdk/AirPlayConfig")
+WRAPPER_CLASS_BEGIN(AirPlayConfig, "com/sheentech/apsdk/AirPlayConfig")
   STRING_FIELD(name);
   BOOLEAN_FIELD(publishService);
   STRING_FIELD(macAddress);
@@ -210,7 +210,7 @@ WRAPPER_CLASS_BEGIN(AirPlayConfig, "com/sheensoftlab/apsdk/AirPlayConfig")
   INT_FIELD(vv);
   INT_FIELD(features);
   INT_FIELD(statusFlag);
-  OBJECT_FIELD(display, "com/sheensoftlab/apsdk/AirPlayConfigDisplay");
+  OBJECT_FIELD(display, "com/sheentech/apsdk/AirPlayConfigDisplay");
 WRAPPER_CLASS_END()
 
 // clang-format on

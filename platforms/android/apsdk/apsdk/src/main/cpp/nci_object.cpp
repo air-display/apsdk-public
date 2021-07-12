@@ -11,7 +11,7 @@ jclass nci_core::clz_ = 0;
 jfieldID nci_core::field_nci_obj_ = 0;
 
 void nci_core::initialize(JNIEnv *env) {
-  clz_ = env->FindClass("com/sheensoftlab/apsdk/NciObject");
+  clz_ = env->FindClass("com/sheentech/apsdk/NciObject");
   if (clz_) {
     clz_ = static_cast<jclass>(env->NewGlobalRef(clz_));
     field_nci_obj_ = env->GetFieldID(clz_, "nci_obj_", "J");

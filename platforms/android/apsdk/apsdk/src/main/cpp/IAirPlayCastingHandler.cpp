@@ -82,7 +82,7 @@ void IAirPlayCastingHandler::on_acquire_playback_info(
     const uint64_t session_id, playback_info_t &playback_info) {
   JNIEnv *env = getJNIEnv();
   if (env) {
-    GET_METHOD_ID(get_playback_info, "(J)Lcom/sheensoftlab/apsdk/PlaybackInfo;");
+    GET_METHOD_ID(get_playback_info, "(J)Lcom/sheentech/apsdk/PlaybackInfo;");
     if (mid) {
       jobject object = env->CallObjectMethod(jvm_obj_, mid, session_id);
       if (object) {

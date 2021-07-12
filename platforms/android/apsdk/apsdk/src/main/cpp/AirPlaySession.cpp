@@ -7,7 +7,7 @@
 DEFINE_NCI_METHODS(AirPlaySession);
 
 extern "C" JNIEXPORT jint JNICALL
-Java_com_sheensoftlab_apsdk_AirPlaySession_nciGetSessionType(
+Java_com_sheentech_apsdk_AirPlaySession_nciGetSessionType(
     JNIEnv *env, jobject instance) {
   AirPlaySession *p = AirPlaySession::get(env, instance);
   if (p) {
@@ -17,7 +17,7 @@ Java_com_sheensoftlab_apsdk_AirPlaySession_nciGetSessionType(
 }
 
 extern "C" JNIEXPORT jlong JNICALL
-Java_com_sheensoftlab_apsdk_AirPlaySession_nciGetSessionId(
+Java_com_sheentech_apsdk_AirPlaySession_nciGetSessionId(
     JNIEnv *env, jobject instance) {
   AirPlaySession *p = AirPlaySession::get(env, instance);
   if (p) {
@@ -27,7 +27,7 @@ Java_com_sheensoftlab_apsdk_AirPlaySession_nciGetSessionId(
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_sheensoftlab_apsdk_AirPlaySession_nciSetMirrorHandler(
+Java_com_sheentech_apsdk_AirPlaySession_nciSetMirrorHandler(
     JNIEnv *env, jobject instance, jobject handler) {
   AirPlaySession *p = AirPlaySession::get(env, instance);
   if (p) {
@@ -41,7 +41,7 @@ Java_com_sheensoftlab_apsdk_AirPlaySession_nciSetMirrorHandler(
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_sheensoftlab_apsdk_AirPlaySession_nciSetCastHandler(
+Java_com_sheentech_apsdk_AirPlaySession_nciSetCastHandler(
     JNIEnv *env, jobject instance, jobject handler) {
   AirPlaySession *p = AirPlaySession::get(env, instance);
   if (p) {
@@ -55,7 +55,7 @@ Java_com_sheensoftlab_apsdk_AirPlaySession_nciSetCastHandler(
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_sheensoftlab_apsdk_AirPlaySession_nciDisconnect(JNIEnv *env,
+Java_com_sheentech_apsdk_AirPlaySession_nciDisconnect(JNIEnv *env,
                                                              jobject instance) {
   AirPlaySession *p = AirPlaySession::get(env, instance);
   if (p) {

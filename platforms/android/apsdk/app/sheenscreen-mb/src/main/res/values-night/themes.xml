@@ -1,6 +1,0 @@
-<resources>
-    <style name="ThemeOverlay.Apsdk.FullscreenContainer" parent="">
-        <item name="fullscreenBackgroundColor">@color/black</item>
-        <item name="fullscreenTextColor">@color/white</item>
-    </style>
-</resources>

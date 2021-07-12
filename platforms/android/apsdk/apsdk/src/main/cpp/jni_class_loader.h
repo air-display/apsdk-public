@@ -16,7 +16,7 @@ public:
   }
 
   void init(JNIEnv *env) {
-    jclass nci_object_clz = env->FindClass("com/sheensoftlab/apsdk/NciObject");
+    jclass nci_object_clz = env->FindClass("com/sheentech/apsdk/NciObject");
     jclass class_clz = env->GetObjectClass(nci_object_clz);
 
     jclass class_loader_clz = env->FindClass("java/lang/ClassLoader");

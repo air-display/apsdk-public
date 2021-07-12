@@ -14,7 +14,7 @@
 using namespace aps;
 
 static const char IAirPlayHandler_cls[] =
-    "com/sheensoftlab/apsdk/IAirPlayHandler";
+    "com/sheentech/apsdk/IAirPlayHandler";
 class IAirPlayHandler
     : public jni_meta_object<IAirPlayHandler, IAirPlayHandler_cls> {
 
