@@ -1,6 +1,7 @@
 package com.sheensoftlab.sheenscreen_mb;
 
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -8,31 +9,591 @@ import android.media.AudioTrack;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.ConditionVariable;
 import android.util.Log;
 import android.view.SurfaceHolder;
+import android.view.SurfaceView;
+import android.widget.RelativeLayout;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.collection.CircularArray;
 
+import com.google.android.exoplayer2.ParserException;
+import com.google.android.exoplayer2.util.ParsableByteArray;
+import com.google.android.exoplayer2.video.AvcConfig;
 import com.sheensoftlab.apsdk.AirPlaySession;
 import com.sheensoftlab.apsdk.IAirPlayMirroringHandler;
 import com.sheensoftlab.sheenscreen_mb.databinding.ActivityApmirrorPlayerBinding;
 
-import org.junit.Assert;
-
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 
-public class APMirrorPlayerActivity extends AppCompatActivity implements SurfaceHolder.Callback, IAirPlayMirroringHandler, AirPlaySession.StopHandler {
-    public static final String AIRPLAY_SESSION_ID = "airplay_session";
+import static java.lang.Thread.MAX_PRIORITY;
+
+public class APMirrorPlayerActivity extends AppCompatActivity implements IAirPlayMirroringHandler, AirPlaySession.StopHandler {
     private static final String TAG = "APMirrorPlayerActivity";
+    public static final String AIRPLAY_SESSION_ID = "airplay_session";
 
     private ActivityApmirrorPlayerBinding binding;
     private AirPlaySession session;
+    private AudioPlayer audioPlayer;
+    private VideoPlayer videoPlayer;
 
+    // region SampleRingBuffer
+    class SampleRingBuffer {
+        private final CircularArray<byte[]> buffer;
+        private final int capacity;
+
+        public SampleRingBuffer(int capacity) {
+            int DEFAULT_CAPACITY = 16;
+            this.capacity = capacity > 0 ? capacity : DEFAULT_CAPACITY;
+            this.buffer = new CircularArray<>(this.capacity);
+        }
+
+        public boolean tryPush(byte[] data) {
+            synchronized (buffer) {
+                if (buffer.size() >= capacity) {
+                    return false;
+                }
+
+                buffer.addLast(data);
+                return true;
+            }
+        }
+
+        public void push(byte[] data) {
+            synchronized (buffer) {
+                if (buffer.size() >= capacity) {
+                    buffer.popFirst();
+                }
+
+                buffer.addLast(data);
+            }
+        }
+
+        public byte[] pop() {
+            synchronized (buffer) {
+                if (buffer.isEmpty()) {
+                    return null;
+                }
+
+                return buffer.popFirst();
+            }
+        }
+
+        public void clear() {
+            synchronized (buffer) {
+                buffer.clear();
+            }
+        }
+    }
+    // endregion
+
+    // region AudioPlayer
+    class AudioPlayer implements Runnable {
+        private final String TAG = "AudioPlayer";
+        private final SampleRingBuffer m_buffer;
+        private final ConditionVariable m_signal;
+
+        private Thread m_worker;
+        private MediaCodec m_decoder;
+        private AudioTrack m_renderer;
+
+        public AudioPlayer() {
+            m_buffer = new SampleRingBuffer(8);
+            m_signal = new ConditionVariable();
+        }
+
+        public boolean initialize(String codecMime, MediaFormat inputFormat) {
+            if (null != m_worker) {
+                throw new RuntimeException("worker thread is running already.");
+            }
+
+            if (!configMediaCodec(codecMime, inputFormat)) {
+                return false;
+            }
+
+            m_worker = new Thread(this);
+            m_worker.setPriority(MAX_PRIORITY);
+
+            return true;
+        }
+
+        public void start() throws RuntimeException {
+            if (null == m_worker) {
+                throw new RuntimeException("video worker hasn't been initialized.");
+            }
+
+            // start the worker
+            m_worker.start();
+        }
+
+        public void setVolume(float vol) {
+            if (null != m_renderer) {
+                m_renderer.setVolume(vol);
+            }
+        }
+
+        public void feedAudioData(byte[] data) {
+            m_buffer.push(data);
+        }
+
+        public void stop() {
+            if (null == m_worker) {
+                return;
+            }
+
+            // stop worker thread
+            m_signal.open();
+            try {
+                m_worker.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public void uninitialize() throws RuntimeException {
+            if (null != m_worker && Thread.State.TERMINATED != m_worker.getState()) {
+                throw new RuntimeException("video worker is still running.");
+            }
+
+            if (null != m_worker) {
+                m_worker = null;
+            }
+
+            // stop audio decoder and track
+            if (null != m_decoder) {
+                m_decoder.stop();
+                m_decoder = null;
+            }
+
+            if (null != m_renderer) {
+                m_renderer.stop();
+                m_renderer = null;
+            }
+        }
+
+        @Override
+        public void run() {
+            Log.w(TAG, "audio worker thread is starting");
+
+            byte[] sample = null;
+            int inputIndex, outputIndex;
+            MediaCodec.BufferInfo outputBufferInfo = new MediaCodec.BufferInfo();
+
+            m_signal.close();
+            while (!m_signal.block(5)) {
+                // get decoded sample
+                outputIndex = m_decoder.dequeueOutputBuffer(outputBufferInfo, 0);
+                switch (outputIndex) {
+                    case MediaCodec.INFO_TRY_AGAIN_LATER: {
+                        Log.v(TAG, "audio output buffer not avaiable");
+                        break;
+                    }
+                    case MediaCodec.INFO_OUTPUT_FORMAT_CHANGED: {
+                        Log.d(TAG, "audio output format changed: " + m_decoder.getOutputFormat());
+                        configAudioTrack();
+                        break;
+                    }
+                    case MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED: {
+                        Log.d(TAG, "audio output buffers changed");
+                        break;
+                    }
+                    default: {
+                        if (null != m_renderer) {
+                            m_renderer.write(m_decoder.getOutputBuffer(outputIndex), outputBufferInfo.size, AudioTrack.WRITE_BLOCKING);
+                        }
+                        m_decoder.releaseOutputBuffer(outputIndex, false);
+                        break;
+                    }
+                }
+
+                if (null == sample) {
+                    // get data from ring buffer
+                    sample = m_buffer.pop();
+                }
+
+                if (null == sample) {
+                    // no data to process
+                    continue;
+                }
+
+                // get input buffer
+                inputIndex = m_decoder.dequeueInputBuffer(0);
+                if (inputIndex < 0) {
+                    Log.v(TAG, "audio input buffer not avaiable");
+                    continue;
+                }
+
+                // fill the input buffer and return the buffer back
+                m_decoder.getInputBuffer(inputIndex).put(sample);
+                m_decoder.queueInputBuffer(inputIndex, 0, sample.length, 0, 0);
+
+                // reset the data
+                sample = null;
+            }
+            Log.w(TAG, "audio worker thread is exiting");
+        }
+
+        protected boolean configMediaCodec(String codecMime, MediaFormat inputFormat) {
+            // create and config the decoder
+            try {
+                m_decoder = MediaCodec.createDecoderByType(codecMime);
+                if (null == m_decoder) {
+                    Log.e(TAG, "failed to ceate the audio decoder");
+                    return false;
+                }
+                m_decoder.configure(inputFormat, null, null, 0);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
+
+            m_decoder.start();
+            return true;
+        }
+
+        protected void configAudioTrack() {
+            // build the media format
+            MediaFormat outputFormat = m_decoder.getOutputFormat();
+            int outSmapleRate = 44100;
+            if (outputFormat.containsKey(MediaFormat.KEY_SAMPLE_RATE)) {
+                outSmapleRate = outputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+            }
+
+            int outChannelMask = 0;
+            if (outputFormat.containsKey(MediaFormat.KEY_CHANNEL_MASK)) {
+                outChannelMask = outputFormat.getInteger(MediaFormat.KEY_CHANNEL_MASK);
+            }
+
+            int outPCMEncoding = AudioFormat.ENCODING_PCM_16BIT;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                if (outputFormat.containsKey(MediaFormat.KEY_PCM_ENCODING)) {
+                    outPCMEncoding = outputFormat.getInteger(MediaFormat.KEY_PCM_ENCODING);
+                }
+            }
+
+            int bufferSizeInBytes = AudioTrack.getMinBufferSize(outSmapleRate, outChannelMask, outPCMEncoding);
+            m_renderer = new AudioTrack(
+                    new AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_MEDIA)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                            .build(),
+                    new AudioFormat.Builder()
+                            .setSampleRate(outSmapleRate)
+                            .setChannelMask(outChannelMask)
+                            .setEncoding(outPCMEncoding)
+                            .build(),
+                    bufferSizeInBytes,
+                    AudioTrack.MODE_STREAM,
+                    AudioManager.AUDIO_SESSION_ID_GENERATE);
+
+            m_renderer.play();
+        }
+    }
+    // endregion
+
+    // region VideoPlayer
+    class VideoPlayer implements Runnable, SurfaceHolder.Callback {
+        private final String TAG = "VideoPlayer";
+        private final SampleRingBuffer m_buffer;
+        private final ConditionVariable m_signal;
+        private final SurfaceView m_surfaceView;
+
+        private Thread m_worker;
+        private AvcConfig m_avcConfig;
+        private MediaCodec m_decoder;
+
+        public VideoPlayer(@NonNull SurfaceView surfaceVew) {
+            m_surfaceView = surfaceVew;
+            m_buffer = new SampleRingBuffer(16);
+            m_signal = new ConditionVariable();
+        }
+
+        // region Methods implementation of SufaceHolder.Callback
+        @Override
+        public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
+
+        }
+
+        @Override
+        public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+            Log.d(TAG, "surface changed, new size: " + i1 + " x " + i2 + ", pixelformat: " + i);
+            //updateScaleInfo();
+//            adjustVideoSurface();
+        }
+
+        @Override
+        public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
+
+        }
+        // endregion
+
+        public boolean initialize(String codecMime, byte[] rawConfig) {
+            if (null != m_worker) {
+                throw new RuntimeException("worker thread is running already.");
+            }
+
+            try {
+                m_avcConfig = AvcConfig.parse(new ParsableByteArray(rawConfig));
+            } catch (ParserException e) {
+                e.printStackTrace();
+                return false;
+            }
+
+            MediaFormat format = MediaFormat.createVideoFormat(codecMime, m_avcConfig.width, m_avcConfig.height);
+            format.setByteBuffer("csd-0", buildCodecCsd());
+            if (!configMediaCodec(codecMime, format)) {
+                return false;
+            }
+
+            m_worker = new Thread(this);
+            m_worker.setPriority(MAX_PRIORITY);
+
+            return true;
+        }
+
+        public void start() throws RuntimeException {
+            if (null == m_worker) {
+                throw new RuntimeException("video worker hasn't been initialized.");
+            }
+
+            // start the worker
+            m_worker.start();
+        }
+
+        public void feedVideoData(byte[] data) {
+            convertAvccToAnnexB(data);
+            m_buffer.push(data);
+        }
+
+        public void stop() {
+            if (null == m_worker) {
+                return;
+            }
+
+            // stop worker thread
+            m_signal.open();
+            try {
+                m_worker.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public void uninitialize() throws RuntimeException {
+            if (null != m_worker && Thread.State.TERMINATED != m_worker.getState()) {
+                throw new RuntimeException("video worker is still running.");
+            }
+
+            if (null != m_worker) {
+                m_worker = null;
+            }
+
+            // stop audio decoder and track
+            if (null != m_decoder) {
+                m_decoder.stop();
+                m_decoder = null;
+            }
+        }
+
+        @Override
+        public void run() {
+            Log.w(TAG, "video worker thread is starting");
+
+            byte[] sample = null;
+            int inputIndex, outputIndex;
+            MediaCodec.BufferInfo outputBufferInfo = new MediaCodec.BufferInfo();
+
+            m_signal.close();
+            while (!m_signal.block(10)) {
+                // get decoded sample
+                outputIndex = m_decoder.dequeueOutputBuffer(outputBufferInfo, 0);
+                switch (outputIndex) {
+                    case MediaCodec.INFO_TRY_AGAIN_LATER: {
+                        Log.v(TAG, "video output buffer not avaiable");
+                        break;
+                    }
+                    case MediaCodec.INFO_OUTPUT_FORMAT_CHANGED: {
+                        // updateScaleInfo();
+                        adjustVideoSurface();
+                        Log.d(TAG, "video output format changed: " + m_decoder.getOutputFormat());
+                        break;
+                    }
+                    case MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED: {
+                        Log.d(TAG, "video output buffers changed");
+                        break;
+                    }
+                    default: {
+                        m_decoder.releaseOutputBuffer(outputIndex, true);
+                        break;
+                    }
+                }
+
+                if (null == sample) {
+                    // get data from ring buffer
+                    sample = m_buffer.pop();
+                }
+
+                if (null == sample) {
+                    // no data to process
+                    continue;
+                }
+
+                // get input buffer
+                inputIndex = m_decoder.dequeueInputBuffer(0);
+                if (inputIndex < 0) {
+                    Log.v(TAG, "video input buffer not avaiable");
+                    continue;
+                }
+
+                // fill the input buffer and return the buffer back
+                m_decoder.getInputBuffer(inputIndex).put(sample);
+                m_decoder.queueInputBuffer(inputIndex, 0, sample.length, 0, 0);
+
+                // reset the data
+                sample = null;
+            }
+            Log.w(TAG, "video worker thread is exiting");
+        }
+
+        protected ByteBuffer buildCodecCsd() {
+            int totalCodecPrivateSize = 0;
+            for (byte[] data : m_avcConfig.initializationData) {
+                totalCodecPrivateSize += data.length;
+            }
+            ByteBuffer bb = ByteBuffer.allocate(totalCodecPrivateSize);
+            for (byte[] data : m_avcConfig.initializationData) {
+                bb.put(data);
+            }
+            bb.flip();
+            return bb;
+        }
+
+        protected boolean configMediaCodec(String codecMime, MediaFormat inputFormat) {
+            // create and config the decoder
+            try {
+                m_decoder = MediaCodec.createDecoderByType(codecMime);
+                if (null == m_decoder) {
+                    Log.e(TAG, "failed to ceate the video decoder");
+                    return false;
+                }
+
+                m_surfaceView.getHolder().addCallback(this);
+                m_decoder.configure(inputFormat, m_surfaceView.getHolder().getSurface(), null, 0);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
+
+            m_decoder.start();
+            return true;
+        }
+
+
+        public void adjustVideoSurface() {
+            if (null == m_decoder)
+                return;
+
+            MediaFormat fmt = m_decoder.getOutputFormat();
+            int videoWidth = fmt.getInteger(MediaFormat.KEY_WIDTH);
+            int videoHeight = fmt.getInteger(MediaFormat.KEY_HEIGHT);
+            Log.d(TAG, "Video size:" + videoWidth + " x " + videoHeight);
+
+            int surfaceWidth = binding.rootLayout.getWidth();
+            int surfaceHeight = binding.rootLayout.getHeight();
+            Log.d(TAG, "Surface size:" + surfaceWidth + " x " + surfaceHeight);
+
+            float sacleRatio;
+            if (getResources().getConfiguration().orientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
+                sacleRatio = Math.max((float) videoWidth / surfaceWidth, (float) videoHeight / surfaceHeight);
+            } else {
+                sacleRatio = Math.max(((float) videoWidth / surfaceHeight), (float) videoHeight / surfaceWidth);
+            }
+
+            videoWidth = (int) Math.ceil((float) videoWidth / sacleRatio);
+            videoHeight = (int) Math.ceil((float) videoHeight / sacleRatio);
+
+            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(videoWidth, videoHeight);
+            params.addRule(RelativeLayout.CENTER_IN_PARENT, binding.rootLayout.getId());
+            m_surfaceView.post(() -> m_surfaceView.setLayoutParams(params));
+        }
+
+//        private void updateScaleInfo() {
+//            if (null == m_decoder)
+//                return;
+//
+//            MediaFormat fmt = m_decoder.getOutputFormat();
+//            Log.d(TAG, "video output format:" + fmt);
+//            int frameWidth = fmt.getInteger(MediaFormat.KEY_WIDTH);
+//            int frameHeight = fmt.getInteger(MediaFormat.KEY_HEIGHT);
+//            Log.d(TAG, "Image size:" + frameWidth + " x " + frameHeight);
+//
+//            int canvasWidth = m_surfaceView.getWidth();
+//            int canvasHeight = m_surfaceView.getHeight();
+//            Log.d(TAG, "Canvas size:" + canvasWidth + " x " + canvasHeight);
+//
+//            float frameAspect = (float) frameWidth / frameHeight;
+//            float ratioX = (float) frameWidth / canvasWidth;
+//            float ratioY = (float) frameHeight / canvasHeight;
+//
+//            float scaleX = m_surfaceView.getScaleX();
+//            float scaleY = m_surfaceView.getScaleY();
+//            Log.d(TAG, "Current scale:" + scaleX + " x " + scaleY);
+//
+//            if (frameWidth > canvasWidth || frameHeight > canvasHeight) {
+//                Log.d(TAG, "need to scale down");
+//                // scale down
+//                if (ratioX < ratioY) {
+//                    // keep scale y, adjust ratio x
+//                    float width = canvasHeight * frameAspect;
+//                    m_surfaceView.setScaleX(width / canvasWidth);
+//                } else if (ratioX > ratioY) {
+//                    // keep scale x, adjust ratio y
+//                    float height = canvasWidth / frameAspect;
+//                    m_surfaceView.setScaleY(height / canvasHeight);
+//                } else {
+//                    // no need to adjust
+//                }
+//            } else {
+//                // scale up ?
+//                Log.d(TAG, "need to scale up");
+//
+//            }
+//        }
+
+        public void convertAvccToAnnexB(byte[] data) {
+            int nextNaluStart = 0;
+            long currentNaluLength = 0;
+
+            while (nextNaluStart < data.length) {
+                int counter = 0;
+                while (counter < m_avcConfig.nalUnitLengthFieldLength) {
+                    // extract the original NALU length
+                    currentNaluLength <<= 8;
+                    currentNaluLength |= (long)(data[nextNaluStart + counter] & 0xff);
+
+                    // replace the length field with NAUL separator
+                    if (counter == m_avcConfig.nalUnitLengthFieldLength -1) {
+                        data[nextNaluStart + counter] = 0x01;
+                    } else {
+                        data[nextNaluStart + counter] = 0x00;
+                    }
+
+                    // increase counter
+                    counter++;
+                }
+
+                // move to next NAUL start
+                nextNaluStart += m_avcConfig.nalUnitLengthFieldLength + currentNaluLength;
+            }
+        }
+    }
+    // endregion
+
+    // region View Methods
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,18 +601,15 @@ public class APMirrorPlayerActivity extends AppCompatActivity implements Surface
         binding = ActivityApmirrorPlayerBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        binding.surfaceView.getHolder().addCallback(this);
-
         long sessionId = getIntent().getLongExtra(AIRPLAY_SESSION_ID, 0);
         session = APAirPlayService.getInstance().lookupSession(sessionId);
         if (null != session) {
             session.setStopHandler(this);
             session.setMirrorHandler(this);
-        }
 
-        //noinspection SynchronizeOnNonFinalField
-        synchronized (session) {
-            session.notifyAll();
+            synchronized (session) {
+                session.notifyAll();
+            }
         }
     }
 
@@ -88,69 +646,71 @@ public class APMirrorPlayerActivity extends AppCompatActivity implements Surface
             session.disconnect();
         }
     }
-
-    // region Methods implementation of SufaceHolder.Callback
-    @Override
-    public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
-
-    }
-
-    @Override
-    public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int i1, int i2) {
-        //reconfigVideoDecoder();
-    }
-
-    @Override
-    public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
-
-    }
     // endregion
 
     // region Methods implementation of IAirPlayMirroringHandler
     @Override
     public void on_video_stream_started() {
         Log.d(TAG, "on_video_stream_started: ");
-        openVideo();
+        videoPlayer = new VideoPlayer(binding.surfaceView);
     }
 
     @Override
     public void on_video_stream_codec(byte[] data) {
+        String AP_VIDEO_FORMAT_MIME = "video/avc";
+
         Log.i(TAG, "on_video_stream_codec: ");
-        configVideo(data);
+        if (null == data || 0 == data.length) {
+            return;
+        }
+
+        if (null != videoPlayer) {
+            // stop and uninitialize
+            videoPlayer.stop();
+            videoPlayer.uninitialize();
+
+            // initialize and start
+            videoPlayer.initialize(AP_VIDEO_FORMAT_MIME, data);
+            videoPlayer.start();
+        }
     }
 
     @Override
     public void on_video_stream_data(byte[] data, long timestamp) {
-        int frame_size = ((int) data[0]) << 24;
-        frame_size += ((int) data[1]) << 16;
-        frame_size += ((int) data[2]) << 8;
-        frame_size += (int) data[3];
-        //Log.v(TAG, "on_video_stream_data: length " + data.length + ", frame size: " + frame_size + ", timestamp " + timestamp);
-        Log.v(TAG, String.format("P========:%02x, %02x, %02x, %02x ========= frame size %d",
-                data[0],
-                data[1],
-                data[2],
-                data[3],
-                frame_size
-        ));
-        feedVideo(data);
+        long frame_size = ((long) (data[0] & 0xff)) << 24;
+        frame_size |= (((long) (data[1] & 0xff)) << 16);
+        frame_size |= (((long) (data[2] & 0xff)) << 8);
+        frame_size |= ((long) (data[3] & 0xff));
+        Log.v(TAG, "on_video_stream_data: frame size: " + frame_size + ", length: " + data.length);
+        Log.v(TAG, String.format("on_video_stream_data: %02x, %02x, %02x, %02x",
+                data[0], data[1], data[2], data[3]));
+
+        if (null != videoPlayer) {
+            videoPlayer.feedVideoData(data);
+        }
     }
 
     @Override
     public void on_video_stream_heartbeat() {
-        Log.i(TAG, "on_video_stream_heartbeat: ");
-
+        Log.v(TAG, "on_video_stream_heartbeat: ");
     }
 
     @Override
     public void on_video_stream_stopped() {
         Log.i(TAG, "on_video_stream_stopped: ");
-        closeVideo();
+        if (null != videoPlayer) {
+            videoPlayer.stop();
+            videoPlayer.uninitialize();
+            videoPlayer = null;
+        }
     }
 
     @Override
     public void on_audio_set_volume(float ratio, float volume) {
         Log.i(TAG, String.format("on_audio_set_volume: ratio = %f, volume = %f", ratio, volume));
+        if (null != audioPlayer) {
+            audioPlayer.setVolume(ratio / 100);
+        }
     }
 
     @Override
@@ -158,7 +718,6 @@ public class APMirrorPlayerActivity extends AppCompatActivity implements Surface
         Log.i(TAG, String.format("on_audio_set_progress: ratio = %f, start = %d, current = %d, end = %d",
                 ratio, start, current, end));
     }
-    // endregion
 
     @Override
     public void on_audio_set_cover(String format, byte[] data) {
@@ -172,387 +731,67 @@ public class APMirrorPlayerActivity extends AppCompatActivity implements Surface
 
     @Override
     public void on_audio_stream_started(int format) {
+        int AP_AUDIO_SAMPLE_RATE = 44100;
+        int AP_AUDIO_CHANNEL_COUNT = 2;
+        int AP_AUDIO_CHANNEL_MASK = AudioFormat.CHANNEL_OUT_STEREO;
+
         String codecMime = "";
-        MediaFormat inputFormat = MediaFormat.createAudioFormat("", AP_AUDIO_SAMPLE_RATE, AP_AUDIO_CHANNEL_COUNT);
+        MediaFormat audioFormat = MediaFormat.createAudioFormat(codecMime, AP_AUDIO_SAMPLE_RATE, AP_AUDIO_CHANNEL_COUNT);
+        audioFormat.setInteger(MediaFormat.KEY_CHANNEL_MASK, AP_AUDIO_CHANNEL_MASK);
         if (format == ALAC) {
             Log.i(TAG, "on_audio_stream_started: ALAC");
             codecMime = "audio/alac";
-            inputFormat.setString(MediaFormat.KEY_MIME, codecMime);
+            audioFormat.setString(MediaFormat.KEY_MIME, codecMime);
         } else if (format == AAC) {
             Log.i(TAG, "on_audio_stream_started: AAC");
             codecMime = "audio/mp4a-latm";
-            inputFormat.setString(MediaFormat.KEY_MIME, codecMime);
+            audioFormat.setString(MediaFormat.KEY_MIME, codecMime);
         } else if (format == AACELD) {
             Log.i(TAG, "on_audio_stream_started: AACELD");
             codecMime = "audio/mp4a-latm";
-            inputFormat.setString(MediaFormat.KEY_MIME, codecMime);
+            audioFormat.setString(MediaFormat.KEY_MIME, codecMime);
             int AP_AUDIO_AAC_PROFILE = MediaCodecInfo.CodecProfileLevel.AACObjectELD;
-            inputFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, AP_AUDIO_AAC_PROFILE);
+            audioFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, AP_AUDIO_AAC_PROFILE);
             byte[] AP_AUDIO_AAC_RAW_CONFIG = new byte[]{(byte) 0xF8, (byte) 0xE8, (byte) 0x50, (byte) 0x00};
-            inputFormat.setByteBuffer("csd-0", ByteBuffer.wrap(AP_AUDIO_AAC_RAW_CONFIG));
+            audioFormat.setByteBuffer("csd-0", ByteBuffer.wrap(AP_AUDIO_AAC_RAW_CONFIG));
         } else if (format == PCM) {
             Log.i(TAG, "on_audio_stream_started: PCM");
+            return;
         } else {
             Log.i(TAG, "on_audio_stream_started: Unknown");
+            return;
         }
 
-        openAudio(codecMime, inputFormat);
+        audioPlayer = new AudioPlayer();
+        if (!audioPlayer.initialize(codecMime, audioFormat)) {
+            Log.e(TAG,"Failed to initialize the audio player");
+            audioPlayer = null;
+            return;
+        }
+        audioPlayer.start();
     }
 
     @Override
     public void on_audio_stream_data(byte[] data, long timestamp) {
         Log.v(TAG, "on_audio_stream_data: " + data.length + ", timestamp: " + timestamp);
-        feedAudio(data);
+        if (null != audioPlayer) {
+            audioPlayer.feedAudioData(data);
+        }
     }
 
     @Override
     public void on_audio_stream_stopped() {
         Log.i(TAG, "on_audio_stream_stopped: ");
-        closeAudio();
+        if (null != audioPlayer) {
+            audioPlayer.stop();
+            audioPlayer.uninitialize();
+            audioPlayer = null;
+        }
     }
 
     @Override
     public void onSessionStop() {
         this.finish();
     }
-
-    // region Audio Player
-    private MediaCodec audioDecoder;
-    private AudioTrack audioTrack;
-    private MediaCodec.BufferInfo audioOutputBufferInfo;
-    private final int AP_AUDIO_SAMPLE_RATE = 44100;
-    private final int AP_AUDIO_CHANNEL_COUNT = 2;
-    private final int AP_AUDIO_PCM_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
-    private final int AP_AUDIO_CHANNEL_MASK = AudioFormat.CHANNEL_OUT_STEREO;
-
-    private void openAudio(String codecMime, MediaFormat inputFormat) {
-        audioOutputBufferInfo = new MediaCodec.BufferInfo();
-        // create and config the decoder
-        try {
-            audioDecoder = MediaCodec.createDecoderByType(codecMime);
-            if (null == audioDecoder) {
-                Log.e(TAG, "openAudio: Failed to ceate the audio decoder");
-                return;
-            }
-            audioDecoder.configure(inputFormat, null, null, 0);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return;
-        }
-
-        // create the audio renderer
-        reconfigAudioRederer();
-
-        // start the decoder
-        audioDecoder.start();
-    }
-
-    private void feedAudio(byte[] data) {
-        if (null == audioDecoder || null == audioTrack) {
-            return;
-        }
-
-        processAudio(data);
-    }
-
-    private void closeAudio() {
-        if (null != audioDecoder) {
-            audioDecoder.stop();
-            audioDecoder.release();
-            audioDecoder = null;
-        }
-
-        if (audioTrack != null) {
-            audioTrack.stop();
-            audioTrack = null;
-        }
-    }
-
-    void reconfigAudioRederer() {
-        if (null != audioTrack) {
-            audioTrack.stop();
-            audioTrack = null;
-        }
-
-        MediaFormat outputFormat = audioDecoder.getOutputFormat();
-        int outSmapleRate = AP_AUDIO_SAMPLE_RATE;
-        int outChannelMask = AP_AUDIO_CHANNEL_MASK;
-        int outPCMEncoding = AP_AUDIO_PCM_ENCODING;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-            outSmapleRate = outputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE, AP_AUDIO_SAMPLE_RATE);
-            outChannelMask = outputFormat.getInteger(MediaFormat.KEY_CHANNEL_MASK, AP_AUDIO_CHANNEL_MASK);
-            outPCMEncoding = outputFormat.getInteger(MediaFormat.KEY_PCM_ENCODING, AP_AUDIO_PCM_ENCODING);
-        }
-        int bufferSizeInBytes = AudioTrack.getMinBufferSize(outSmapleRate, outChannelMask, outPCMEncoding);
-        audioTrack = new AudioTrack(
-                new AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                        .build(),
-                new AudioFormat.Builder()
-                        .setSampleRate(outSmapleRate)
-                        .setChannelMask(outChannelMask)
-                        .setEncoding(outPCMEncoding)
-                        .build(),
-                bufferSizeInBytes,
-                AudioTrack.MODE_STREAM,
-                AudioManager.AUDIO_SESSION_ID_GENERATE);
-        audioTrack.play();
-    }
-
-    void processAudio(byte[] data) {
-        int inIndex = audioDecoder.dequeueInputBuffer(0);
-        if (inIndex >= 0) {
-            audioDecoder.getInputBuffer(inIndex).put(data);
-            audioDecoder.queueInputBuffer(inIndex, 0, data.length, 0, 0);
-        }
-
-        int outIndex = audioDecoder.dequeueOutputBuffer(audioOutputBufferInfo, 0);
-        switch (outIndex) {
-            case MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED:
-                break;
-            case MediaCodec.INFO_OUTPUT_FORMAT_CHANGED:
-                Log.d(TAG, "new format " + audioDecoder.getOutputFormat());
-                reconfigAudioRederer();
-                break;
-            case MediaCodec.INFO_TRY_AGAIN_LATER:
-                Log.d(TAG, "dequeueOutputBuffer timed out!");
-                break;
-            default:
-                audioTrack.write(audioDecoder.getOutputBuffer(outIndex), audioOutputBufferInfo.size, AudioTrack.WRITE_BLOCKING);
-                audioDecoder.releaseOutputBuffer(outIndex, false);
-                break;
-        }
-    }
     // endregion
-
-    // region Video Player
-    MediaCodec videoDecoder;
-    private MediaCodec.BufferInfo videoOutputBufferInfo;
-    private AvcCConfig avcCConfig;
-
-    private final String AP_VIDEO_FORMAT_MIME = "video/avc";
-
-    private void openVideo() {
-        videoOutputBufferInfo = new MediaCodec.BufferInfo();
-
-        // create and config the decoder
-        try {
-            videoDecoder = MediaCodec.createDecoderByType(AP_VIDEO_FORMAT_MIME);
-            if (null == videoDecoder) {
-                Log.e(TAG, "openAudio: Failed to ceate the video decoder");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void configVideo(byte[] config) {
-        avcCConfig = new AvcCConfig(config);
-        innerConfigVideoDecoder(avcCConfig);
-    }
-
-    private void feedVideo(byte[] data) {
-        if (null == videoDecoder) {
-            return;
-        }
-
-        processVideo(data);
-    }
-
-    private void closeVideo() {
-        if (null != videoDecoder) {
-            videoDecoder.stop();
-            videoDecoder.release();
-            videoDecoder = null;
-        }
-     }
-
-    private void innerConfigVideoDecoder(AvcCConfig avcCConfig) {
-        if (null == videoDecoder) {
-            return;
-        }
-        videoDecoder.reset();
-
-        try {
-            MediaFormat format = MediaFormat.createVideoFormat(AP_VIDEO_FORMAT_MIME, 1920, 1080);
-            format.setByteBuffer("csd-0", avcCConfig.toAnnexB());
-            videoDecoder.configure(format, binding.surfaceView.getHolder().getSurface(), null, 0);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return;
-        }
-
-        videoDecoder.start();
-    }
-
-    private void reconfigVideoDecoder() {
-        innerConfigVideoDecoder(avcCConfig);
-    }
-
-    private void processVideo(byte[] data) {
-        int inIndex = videoDecoder.dequeueInputBuffer(0);
-        if (inIndex >= 0) {
-            int nalLenSize = avcCConfig.nalLengthSize;
-            if (data.length >= nalLenSize) {
-                data[--nalLenSize] = 1;
-                while(--nalLenSize >= 0) data[nalLenSize] = 0;
-            }
-            videoDecoder.getInputBuffer(inIndex).put(data);
-            videoDecoder.queueInputBuffer(inIndex, 0, data.length, 0, 0);
-        }
-
-        int outIndex = videoDecoder.dequeueOutputBuffer(videoOutputBufferInfo, 0);
-        switch (outIndex) {
-            case MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED:
-                break;
-            case MediaCodec.INFO_OUTPUT_FORMAT_CHANGED:
-                Log.d(TAG, "new format " + videoDecoder.getOutputFormat());
-                break;
-            case MediaCodec.INFO_TRY_AGAIN_LATER:
-                Log.d(TAG, "dequeueOutputBuffer timed out!");
-                break;
-            default:
-                videoDecoder.releaseOutputBuffer(outIndex, true);
-                break;
-        }
-    }
-    // endregion
-
-    private class AvcCConfig {
-        private int profile;
-        private int profileCompat;
-        private int level;
-        private int nalLengthSize;
-
-        private List<ByteBuffer> spsList;
-        private List<ByteBuffer> ppsList;
-
-        public AvcCConfig() {
-            this.spsList = new ArrayList<ByteBuffer>();
-            this.ppsList = new ArrayList<ByteBuffer>();
-        }
-
-        public AvcCConfig(byte[] data) {
-            this.spsList = new ArrayList<ByteBuffer>();
-            this.ppsList = new ArrayList<ByteBuffer>();
-            parse(ByteBuffer.wrap(data));
-        }
-
-        public void parse(ByteBuffer input) {
-            input.position(input.position() + Math.min(input.remaining(), 1));
-            profile = input.get() & 0xff;
-            profileCompat = input.get() & 0xff;
-            level = input.get() & 0xff;
-            int flags = input.get() & 0xff;
-            nalLengthSize = (flags & 0x03) + 1;
-
-            int nSPS = input.get() & 0x1f; // 3 bits reserved + 5 bits number of
-            // sps
-            for (int i = 0; i < nSPS; i++) {
-                int spsSize = input.getShort();
-                Assert.assertEquals(0x27, input.get() & 0x3f);
-
-                ByteBuffer spsSlice = input.duplicate();
-                int limit = input.position() + spsSize - 1;
-                spsSlice.limit(limit);
-                input.position(limit);
-                spsList.add(spsSlice);
-            }
-
-            int nPPS = input.get() & 0xff;
-            for (int i = 0; i < nPPS; i++) {
-                int ppsSize = input.getShort();
-                Assert.assertEquals(0x28, input.get() & 0x3f);
-
-                ByteBuffer ppsSlice = input.duplicate();
-                int limit = input.position() + ppsSize - 1;
-                ppsSlice.limit(limit);
-                input.position(limit);
-                ppsList.add(ppsSlice);
-            }
-        }
-
-        public void generate(ByteBuffer out) {
-            out.put((byte) 0x1); // version
-            out.put((byte) profile);
-            out.put((byte) profileCompat);
-            out.put((byte) level);
-            out.put((byte) 0xff);
-
-            out.put((byte) (spsList.size() | 0xe0));
-            for (ByteBuffer sps : spsList) {
-                out.putShort((short) (sps.remaining() + 1));
-                out.put((byte) 0x67);
-
-                if (sps.hasArray()) {
-                    out.put(sps.array(), sps.arrayOffset() + sps.position(), Math.min(out.remaining(), sps.remaining()));
-                } else {
-                    out.put(sps.duplicate().get(new byte[Math.min(sps.remaining(), out.remaining())]));
-                }
-            }
-
-            out.put((byte) ppsList.size());
-            for (ByteBuffer pps : ppsList) {
-                out.putShort((byte) (pps.remaining() + 1));
-                out.put((byte) 0x68);
-
-                if (pps.hasArray()) {
-                    out.put(pps.array(), pps.arrayOffset() + pps.position(), Math.min(out.remaining(), pps.remaining()));
-                } else {
-                    out.put(pps.duplicate().get(new byte[Math.min(pps.remaining(), out.remaining())]));
-                }
-            }
-        }
-
-        public int getProfile() {
-            return profile;
-        }
-
-        public int getProfileCompat() {
-            return profileCompat;
-        }
-
-        public int getLevel() {
-            return level;
-        }
-
-        public List<ByteBuffer> getSpsList() {
-            return spsList;
-        }
-
-        public List<ByteBuffer> getPpsList() {
-            return ppsList;
-        }
-
-        public int getNalLengthSize() {
-            return nalLengthSize;
-        }
-
-        public ByteBuffer toAnnexB() {
-            int totalCodecPrivateSize = 0;
-            for (ByteBuffer byteBuffer : spsList) {
-                totalCodecPrivateSize += byteBuffer.remaining() + 5;
-            }
-            for (ByteBuffer byteBuffer : ppsList) {
-                totalCodecPrivateSize += byteBuffer.remaining() + 5;
-            }
-
-            ByteBuffer bb = ByteBuffer.allocate(totalCodecPrivateSize);
-            for (ByteBuffer byteBuffer : spsList) {
-                bb.putInt(1);
-                bb.put((byte) 0x67);
-                bb.put(byteBuffer.duplicate());
-            }
-            for (ByteBuffer byteBuffer : ppsList) {
-                bb.putInt(1);
-                bb.put((byte) 0x68);
-                bb.put(byteBuffer.duplicate());
-            }
-            bb.flip();
-            return bb;
-        }
-    }
-
 }
