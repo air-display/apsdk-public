@@ -6,19 +6,16 @@ file(GLOB_RECURSE curve25519_SRC_FILES
     "./curve25519/*.h"
 )
 add_library(curve25519 STATIC ${curve25519_SRC_FILES})
-if(WINDOWS)
-    set_target_properties(curve25519 PROPERTIES FOLDER third-party)
-endif(WINDOWS)
+# set_property(TARGET curve25519 PROPERTY INTERFACE_SOURCES ON)
+set_target_properties(curve25519 PROPERTIES FOLDER apsdk/third-party)
 
-#################################################
+    #################################################
 file(GLOB_RECURSE ed25519_SRC_FILES
     "./ed25519/*.c"
     "./ed25519/*.h"
 )
 add_library(ed25519 STATIC ${ed25519_SRC_FILES})
-if(WINDOWS)
-    set_target_properties(ed25519 PROPERTIES FOLDER third-party)
-endif(WINDOWS)
+set_target_properties(ed25519 PROPERTIES FOLDER apsdk/third-party)
 
 #################################################
 if (ANDROID)
@@ -43,9 +40,7 @@ file(GLOB_RECURSE playfair_SRC_FILES
     "./playfair/*.h"
 )
 add_library(playfair STATIC ${playfair_SRC_FILES})
-if(WINDOWS)
-    set_target_properties(playfair PROPERTIES FOLDER third-party)
-endif(WINDOWS)
+set_target_properties(playfair PROPERTIES FOLDER apsdk/third-party)
 
 #################################################
 file(GLOB_RECURSE hlsparser_SRC_FILES
@@ -53,9 +48,7 @@ file(GLOB_RECURSE hlsparser_SRC_FILES
     "./hlsparser/*.h"
 )
 add_library(hlsparser STATIC ${hlsparser_SRC_FILES})
-if(WINDOWS)
-    set_target_properties(hlsparser PROPERTIES FOLDER third-party)
-endif(WINDOWS)
+set_target_properties(hlsparser PROPERTIES FOLDER apsdk/third-party)
 
 #################################################
 file(GLOB_RECURSE opensslaes_SRC_FILES
@@ -63,6 +56,4 @@ file(GLOB_RECURSE opensslaes_SRC_FILES
     "./opensslaes/*.h"
 )
 add_library(opensslaes STATIC ${opensslaes_SRC_FILES})
-if(WINDOWS)
-    set_target_properties(opensslaes PROPERTIES FOLDER third-party)
-endif(WINDOWS)
+set_target_properties(opensslaes PROPERTIES FOLDER apsdk/third-party)

@@ -132,7 +132,7 @@ if (APPLE)
         )
 endif()
 
-target_link_libraries(${PROJECT_NAME} PUBLIC
+target_link_libraries(${PROJECT_NAME} PRIVATE
     curve25519
     ed25519
     hlsparser
