@@ -1,0 +1,61 @@
+//
+//  APAirPlayService.m
+//  AirDisplay
+//
+//  Created by Sheen Tian on 2021/7/13.
+//
+
+#import "APAirPlayServer.h"
+#import "APAirPlayConfig+internal.h"
+#import "APAirPlaySession+internal.h"
+
+#include "../../src/ap_server.h"
+
+class APSessionHandler : public aps::ap_handler {
+private:
+    id<APAirPlaySessionDelegate> delegate;
+public:
+    APSessionHandler(id<APAirPlaySessionDelegate> d) : delegate(d) {}
+    
+    virtual void on_session_begin(aps::ap_session_ptr session) override {
+        @autoreleasepool {
+            [delegate onSessionBegin:[APAirPlaySession createFromCObj:session]];
+        }
+    }
+
+    virtual void on_session_end(const uint64_t session_id) override {
+        @autoreleasepool {
+            [delegate onSessionEnd:session_id];
+        }
+    }
+};
+
+@implementation APAirPlayServer
+{
+    aps::ap_server_ptr _server;
+    id<APAirPlaySessionDelegate> _sessionDelegate;
+}
+
+- (instancetype)init {
+    _server = std::make_shared<aps::ap_server>();
+}
+
+- (void)setConfig:(APAirPlayConfig*) config {
+    aps::ap_config_ptr p = [config getCObj];
+    _server->set_config(p);
+}
+
+- (void)setSessionDelegate:(id<APAirPlaySessionDelegate>) delegate {
+    aps::ap_handler_ptr h = std::make_shared<APSessionHandler>(delegate);
+    _server->set_handler(h);
+}
+
+- (bool)start {
+    return _server->start();
+}
+
+- (void)stop {
+    _server->stop();
+}
+
+@end

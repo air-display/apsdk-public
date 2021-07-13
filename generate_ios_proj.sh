@@ -9,4 +9,4 @@ cmake \
     -DENABLE_BITCODE=FALSE \
     -DENABLE_VISIBILITY=FALSE \
     -DENABLE_STRICT_TRY_COMPILE=FALSE \
-    -DCMAKE_TOOLCHAIN_FILE=platforms/ios/ios.toolchain.cmake
+    -DCMAKE_TOOLCHAIN_FILE=cmake/ios.toolchain.cmake

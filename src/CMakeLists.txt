@@ -1,13 +1,37 @@
-# public headers
-file(GLOB PUB_HEADERS
-    aps.h
-    ap_export.h
-    ap_config.h
-    ap_handler.h
-    ap_server.h
-    ap_session.h
-    ap_types.h
-)
+set(SRC_AP_PLATFORM)
+if (APPLE)
+    # public headers
+    file(GLOB PUB_HEADERS
+        ${AP_PLATFORM_SOURCE}/apple/APSDK.h
+        ${AP_PLATFORM_SOURCE}/apple/APAirPlayServer.h
+        ${AP_PLATFORM_SOURCE}/apple/APAirPlayConfig.h
+        ${AP_PLATFORM_SOURCE}/apple/APAirPlaySession.h
+        ${AP_PLATFORM_SOURCE}/apple/APAirPlaySessionDelegate.h
+        ${AP_PLATFORM_SOURCE}/apple/APAirPlayMirroringDelegate.h
+        ${AP_PLATFORM_SOURCE}/apple/APAirPlayCastingDelegate.h
+
+    )
+
+    file(GLOB SRC_AP_PLATFORM
+        ${AP_PLATFORM_SOURCE}/apple/*.h
+        ${AP_PLATFORM_SOURCE}/apple/*.hpp
+        ${AP_PLATFORM_SOURCE}/apple/*.m
+        ${AP_PLATFORM_SOURCE}/apple/*.mm
+    )
+    list(APPEND SRC_AP_PLATFORM)
+    source_group("apoc" FILES ${SRC_AP_PLATFORM})
+else()
+    # public headers
+    file(GLOB PUB_HEADERS
+        aps.h
+        ap_export.h
+        ap_config.h
+        ap_handler.h
+        ap_server.h
+        ap_session.h
+        ap_types.h
+    )
+endif()
 
 # Source files
 file(GLOB SRC_AP
@@ -105,6 +129,7 @@ add_definitions(-Daps_EXPORTS)
 
 # Output
 add_library(${PROJECT_NAME} ${APS_LIBRARY_TYPE}
+    ${SRC_AP_PLATFORM}
     ${SRC_AP}
     ${SRC_CRYPTO}
     ${SRC_NETWORK}

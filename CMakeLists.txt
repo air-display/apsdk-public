@@ -61,7 +61,9 @@ elseif (MACOS)
 
 elseif (IOS)
 
-endif() 
+endif()
+
+set(AP_PLATFORM_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/platforms)
 
 # Include paths
 include_directories(
