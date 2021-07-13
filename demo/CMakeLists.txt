@@ -1,28 +1,25 @@
 #################################################
-# es-player
-add_subdirectory(esplayer)
-if(WINDOWS)
-    set_target_properties(esplayer PROPERTIES FOLDER demo)
-endif(WINDOWS)
-
-#################################################
-# aps-demo
+project(apsdk-demo)
 file(GLOB SRC_FILES
     "./*.cpp"
     "./*.h"
     "./*.hpp"
 )
-add_executable(aps-demo ${SRC_FILES})
-
-target_link_libraries(aps-demo PRIVATE
-  aps
-  esplayer
+add_executable(${PROJECT_NAME}
+  ${SRC_FILES}
 )
 
-if(WINDOWS)
-    set_target_properties(aps-demo PROPERTIES FOLDER demo)
-endif(WINDOWS)
+target_link_libraries(${PROJECT_NAME}  
+  PRIVATE
+    apsdk
+)
 
-add_custom_command(TARGET aps-demo POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:aps> $<TARGET_FILE_DIR:aps-demo>
+set_target_properties(${PROJECT_NAME}
+  PROPERTIES
+    FOLDER demo
+)
+
+add_custom_command(TARGET ${PROJECT_NAME}
+  POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:apsdk> $<TARGET_FILE_DIR:${PROJECT_NAME}>
 )
