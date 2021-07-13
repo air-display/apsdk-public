@@ -5,7 +5,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 # Include the aps directory to current source directory as a virtual directory
-add_subdirectory(../../../.. aps)
+add_subdirectory(../../../.. apsdk)
 
 # Include the header files directory
 include_directories(
@@ -43,7 +43,8 @@ find_library( # Sets the name of the path variable.
 
 	# Specifies the name of the NDK library that
 	# you want CMake to locate.
-	log)
+	log
+)
 
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in this
@@ -51,9 +52,10 @@ find_library( # Sets the name of the path variable.
 
 target_link_libraries( # Specifies the target library.
 	aps-jni
+	apsdk
 
-	aps
 	# Links the target library to the log library
 	# included in the NDK.
-	${log-lib})
+	${log-lib}
+)
 
