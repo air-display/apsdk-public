@@ -147,9 +147,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 if (APPLE)
     message(STATUS "++++++++++ adding configs for APPLE target systems")
-    # Disalbe the ARC
-    set(CMAKE_XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC "NO")    
-    
+
     # Build framework
     set_target_properties(${PROJECT_NAME} PROPERTIES
             FRAMEWORK TRUE
@@ -157,12 +155,21 @@ if (APPLE)
         )
 endif()
 
-target_link_libraries(${PROJECT_NAME} PRIVATE
+add_dependencies(${PROJECT_NAME}
     curve25519
     ed25519
     hlsparser
     opensslaes
     playfair
+)
+
+target_link_libraries(${PROJECT_NAME}
+    PUBLIC
+        curve25519
+        ed25519
+        hlsparser
+        opensslaes
+        playfair
 )
 
 # Dependencies

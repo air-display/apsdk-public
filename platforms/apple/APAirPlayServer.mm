@@ -37,7 +37,11 @@ public:
 }
 
 - (instancetype)init {
-    _server = std::make_shared<aps::ap_server>();
+    self = [super init];
+    if (self) {
+        _server = std::make_shared<aps::ap_server>();
+    }
+    return self;
 }
 
 - (void)setConfig:(APAirPlayConfig*) config {
