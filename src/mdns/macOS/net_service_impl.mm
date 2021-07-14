@@ -1,6 +1,32 @@
 #include <Foundation/Foundation.h>
 
+#include "../../utils/logger.h"
+
 #include "../net_service_impl.h"
+
+@interface NetServiceDelegate : NSObject<NSNetServiceDelegate>
+
+- (void)netServiceWillPublish:(NSNetService *)sender;
+- (void)netServiceDidPublish:(NSNetService *)sender;
+- (void)netService:(NSNetService *)sender didNotPublish:(NSDictionary<NSString *, NSNumber *> *)errorDict;
+
+@end
+
+@implementation NetServiceDelegate
+
+- (void)netServiceWillPublish:(NSNetService *)sender {
+    LOGD() << "service will publish";
+}
+
+- (void)netServiceDidPublish:(NSNetService *)sender {
+    LOGD() << "service published";
+}
+
+- (void)netService:(NSNetService *)sender didNotPublish:(NSDictionary<NSString *, NSNumber *> *)errorDict {
+    LOGD() << "service did not publish";
+}
+
+@end
 
 class net_service::net_service_impl : public net_service::implementation {
 public:
@@ -28,6 +54,10 @@ public:
   virtual bool publish(const std::string &name, const uint16_t port) override {
     NSString *n = [NSString stringWithUTF8String:name.c_str()];
     net_service_ = [[NSNetService alloc] initWithDomain:@"" type:type_ name:n port:port];
+    
+    NetServiceDelegate* delegate = [[NetServiceDelegate alloc] init];
+    [net_service_ setDelegate:delegate];
+      
     NSData *txt_data = [NSNetService dataFromTXTRecordDictionary:txt_records_];
     [net_service_ setTXTRecordData:txt_data];
     [net_service_ publish];
