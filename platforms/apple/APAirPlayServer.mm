@@ -45,7 +45,10 @@ public:
 }
 
 - (void)setConfig:(APAirPlayConfig*) config {
-    aps::ap_config_ptr p = [config getCObj];
+    aps::ap_config_ptr p = aps::ap_config::default_instance();
+    p->name(config.name.UTF8String);
+    p->macAddress(config.macAddress.UTF8String);
+    p->publishService(config.publishService);
     _server->set_config(p);
 }
 
