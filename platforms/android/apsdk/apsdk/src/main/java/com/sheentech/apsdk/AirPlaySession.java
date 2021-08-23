@@ -1,5 +1,7 @@
 package com.sheentech.apsdk;
 
+import android.os.ConditionVariable;
+
 /**
  *
  */
@@ -78,5 +80,18 @@ public class AirPlaySession extends NciObject {
     if (null != mStopHandler) {
       mStopHandler.onSessionStop();
     }
+  }
+
+  private ConditionVariable mCondiationVariable = new ConditionVariable();
+  public void waitForReady() {
+    mCondiationVariable.block();
+  }
+
+  public void notifyReady() {
+    mCondiationVariable.open();
+  }
+
+  public void resetReady() {
+    mCondiationVariable.close();
   }
 }
