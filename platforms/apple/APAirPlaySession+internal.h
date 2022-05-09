@@ -7,10 +7,10 @@
 
 #import <Foundation/Foundation.h>
 
-#import <APSDK/APAirPlayMirroringDelegate.h>
-#import <APSDK/APAirPlayCastingDelegate.h>
+#import <APS/APAirPlayMirroringDelegate.h>
+#import <APS/APAirPlayCastingDelegate.h>
 
-#include "../../src/ap_session.h"
+#include <ap_session.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

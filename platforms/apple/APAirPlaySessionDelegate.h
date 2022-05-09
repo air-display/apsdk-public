@@ -7,7 +7,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import <APSDK/APAirPlaySession.h>
+#import <APS/APAirPlaySession.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

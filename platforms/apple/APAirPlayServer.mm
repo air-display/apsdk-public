@@ -9,7 +9,7 @@
 #import "APAirPlayConfig+internal.h"
 #import "APAirPlaySession+internal.h"
 
-#include "../../src/ap_server.h"
+#include <ap_server.h>
 
 class APSessionHandler : public aps::ap_handler {
 private:

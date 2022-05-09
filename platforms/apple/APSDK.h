@@ -7,10 +7,10 @@
 
 #import <Foundation/Foundation.h>
 
-#import <APSDK/APAirPlayConfig.h>
-#import <APSDK/APAirPlayServer.h>
-#import <APSDK/APAirPlaySession.h>
-#import <APSDK/APAirPlaySessionDelegate.h>
-#import <APSDK/APAirPlayMirroringDelegate.h>
-#import <APSDK/APAirPlayCastingDelegate.h>
+#import <APS/APAirPlayConfig.h>
+#import <APS/APAirPlayServer.h>
+#import <APS/APAirPlaySession.h>
+#import <APS/APAirPlaySessionDelegate.h>
+#import <APS/APAirPlayMirroringDelegate.h>
+#import <APS/APAirPlayCastingDelegate.h>
 

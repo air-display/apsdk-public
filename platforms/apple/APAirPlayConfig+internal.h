@@ -7,7 +7,7 @@
 
 #import <Foundation/Foundation.h>
 
-#include "../../src/ap_config.h"
+#include <ap_config.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

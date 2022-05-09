@@ -14,3 +14,4 @@ platforms/android/apsdk/mobile/*.classpath
 platforms/android/apsdk/mobile/*.project
 platforms/android/apsdk/mobile/.settings/*.prefs
 platforms/android/apsdk/.idea/gradle.xml
+.DS_Store

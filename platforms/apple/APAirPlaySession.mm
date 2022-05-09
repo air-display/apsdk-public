@@ -8,7 +8,7 @@
 #import "APAirPlaySession.h"
 #import "APAirPlaySession+internal.h"
 
-#include "../../src/ap_session.h"
+#include <ap_session.h>
 
 class APMirroringHandler : public aps::ap_mirroring_session_handler {
 private:
