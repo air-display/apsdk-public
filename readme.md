@@ -4,11 +4,11 @@ APS(Airplay Server) is an complete implementation of Airplay server including sc
 
 | Platform | Master |
 | --- |  :---: |
-| **Windows** |  [![Build status](https://dev.azure.com/sheentian/T-Work/_apis/build/status/AirplayServerSDK-Build-Windows?branchName=master)](https://dev.azure.com/sheentian/T-Work/_build/latest?definitionId=20?branchName=master) |
-| **Android** | [![Build status](https://dev.azure.com/sheentian/T-Work/_apis/build/status/AirplayServerSDK-Build-Android?branchName=master)](https://dev.azure.com/sheentian/T-Work/_build/latest?definitionId=21?branchName=master) |
-| **macOS** | [![Build status](https://dev.azure.com/sheentian/T-Work/_apis/build/status/AirplayServerSDK-Build-macOS?branchName=master)](https://dev.azure.com/sheentian/T-Work/_build/latest?definitionId=22?branchName=master) |
-| **iOS** | [![Build Status](https://dev.azure.com/sheentian/T-Work/_apis/build/status/AirplayServerSDK-Build-iOS?branchName=master)](https://dev.azure.com/sheentian/T-Work/_build/latest?definitionId=24&branchName=master) |
-| **Linux** |[![Build status](https://dev.azure.com/sheentian/T-Work/_apis/build/status/AirplayServerSDK-Build-Linux)](https://dev.azure.com/sheentian/T-Work/_build/latest?definitionId=23)|
+| **Windows** | [![Build on Windows](https://github.com/air-display/apsdk/actions/workflows/build-windows.yml/badge.svg)](https://github.com/air-display/apsdk/actions/workflows/build-windows.yml) |
+| **Android** | [![Build on Android](https://github.com/air-display/apsdk/actions/workflows/build-android.yml/badge.svg)](https://github.com/air-display/apsdk/actions/workflows/build-android.yml) |
+| **macOS**   | [![Build on macOS](https://github.com/air-display/apsdk/actions/workflows/build-macos.yml/badge.svg)](https://github.com/air-display/apsdk/actions/workflows/build-macos.yml) |
+| **iOS**     | [![Build on iOS](https://github.com/air-display/apsdk/actions/workflows/build-ios.yml/badge.svg)](https://github.com/air-display/apsdk/actions/workflows/build-ios.yml) |
+| **Linux**   | [![Build on Linux](https://github.com/air-display/apsdk/actions/workflows/build-linux.yml/badge.svg)](https://github.com/air-display/apsdk/actions/workflows/build-linux.yml) |
 
 # Windows
 ## Dependencies: 
