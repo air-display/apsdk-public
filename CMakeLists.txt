@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.18)
 message(STATUS "====================================")
 project(apsdk)
 
@@ -69,7 +69,7 @@ set(AP_PLATFORM_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/platforms)
 
 # Include paths
 include_directories(
-    src
+    include
     third-party
     third-party/asio/include
 )

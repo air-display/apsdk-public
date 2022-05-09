@@ -11,7 +11,7 @@ add_executable(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}  
   PRIVATE
-    apsdk
+    aps
 )
 
 set_target_properties(${PROJECT_NAME}
@@ -21,5 +21,5 @@ set_target_properties(${PROJECT_NAME}
 
 add_custom_command(TARGET ${PROJECT_NAME}
   POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:apsdk> $<TARGET_FILE_DIR:${PROJECT_NAME}>
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:aps> $<TARGET_FILE_DIR:${PROJECT_NAME}>
 )

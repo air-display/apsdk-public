@@ -7,10 +7,10 @@
 #include <sstream>
 #include <string>
 
-#include "../src/ap_config.h"
-#include "../src/ap_server.h"
-#include "../src/ap_session.h"
-#include "../src/ap_types.h"
+#include <ap_config.h>
+#include <ap_server.h>
+#include <ap_session.h>
+#include <ap_types.h>
 
 #define LOG() std::cout
 #define LOGV() std::cout
@@ -26,9 +26,7 @@ public:
 
   ~airplay_mirroring_handler(){};
 
-  virtual void on_video_stream_started() override {
-    LOGI() << "on_mirror_stream_started" << std::endl;
-  }
+  virtual void on_video_stream_started() override { LOGI() << "on_mirror_stream_started" << std::endl; }
 
   virtual void on_video_stream_codec(const aps::sms_video_codec_packet_t *p) override {
     LOGI() << "on_mirror_stream_codec: " << std::endl;
@@ -38,9 +36,7 @@ public:
     LOGI() << "on_mirror_stream_data payload_size: " << p->payload_size << ", timestamp: " << p->timestamp << std::endl;
   }
 
-  virtual void on_video_stream_stopped() override {
-    LOGI() << "on_mirror_stream_stopped" << std::endl;
-  }
+  virtual void on_video_stream_stopped() override { LOGI() << "on_mirror_stream_stopped" << std::endl; }
 
   virtual void on_audio_set_volume(const float ratio, const float volume) override {
     LOGI() << "on_audio_set_volume: " << ratio << ", value: " << volume << std::endl;
@@ -74,9 +70,7 @@ public:
     LOGV() << "on_audio_stream_data: " << payload_length << ", timestamp: " << p->timestamp << std::endl;
   }
 
-  virtual void on_audio_stream_stopped() override {
-    LOGI() << "on_audio_stream_stopped" << std::endl;
-  }
+  virtual void on_audio_stream_stopped() override { LOGI() << "on_audio_stream_stopped" << std::endl; }
 
   virtual void on_video_stream_heartbeat() override { LOGD() << "on_mirror_stream_heartbeat" << std::endl; }
 };

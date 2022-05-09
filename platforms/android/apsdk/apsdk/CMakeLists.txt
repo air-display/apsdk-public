@@ -2,7 +2,8 @@
 # documentation: https://d.android.com/studio/projects/add-native-code.html
 
 # Sets the minimum version of CMake required to build the native library.
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.18)
+project(aps-jni)
 
 # Include the aps directory to current source directory as a virtual directory
 add_subdirectory(../../../.. apsdk)
@@ -10,7 +11,8 @@ add_subdirectory(../../../.. apsdk)
 # Include the header files directory
 include_directories(
 	src/main/cpp
-	../../../../src
+	../../../../include
+    ../../../../src
 )
 
 # Creates and names a library, sets it as either STATIC
@@ -52,7 +54,7 @@ find_library( # Sets the name of the path variable.
 
 target_link_libraries( # Specifies the target library.
 	aps-jni
-	apsdk
+	aps
 
 	# Links the target library to the log library
 	# included in the NDK.

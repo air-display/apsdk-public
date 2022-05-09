@@ -1,5 +1,4 @@
 plugins {
-    id 'maven-publish'
     id 'com.android.library'
 }
 
@@ -11,14 +10,15 @@ ext {
 }
 
 android {
-    compileSdkVersion 30
-    ndkVersion '22.1.7171670'
+    compileSdkVersion 32
+
     defaultConfig {
         minSdkVersion 18
-        targetSdkVersion 30
+        targetSdkVersion 32
+
         versionCode 1
         versionName VersionNumberString
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
         externalNativeBuild {
             cmake {
                 cppFlags "-std=c++11 -fexceptions"
@@ -26,6 +26,7 @@ android {
             }
         }
     }
+
     buildTypes {
         debug {
             debuggable true
@@ -35,13 +36,17 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    buildToolsVersion '30.0.3'
-    productFlavors {
-    }
+
     externalNativeBuild {
         cmake {
+            version "3.18.1"
             path file('CMakeLists.txt')
         }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 }
 
@@ -50,31 +55,4 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
-}
-
-afterEvaluate {
-    publishing {
-        publications {
-            // creates a Maven publication called "release".
-            release(MavenPublication) {
-                // applies the component for the release build variant.
-                from components.release
-
-                // customize attributes of the publication as shown below.
-                groupId = 'com.sheentech.apsdk'
-                artifactId = 'apssdk'
-                version = '1.0'
-            }
-
-            // creates a Maven publication called “debug”.
-            debug(MavenPublication) {
-                // applies the component for the debug build variant.
-                from components.debug
-
-                groupId = 'com.sheentech.apsdk'
-                artifactId = 'apssdk-debug'
-                version = '1.0'
-            }
-        }
-    }
 }

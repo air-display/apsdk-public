@@ -1,3 +1,5 @@
+project(aps)
+
 set(SRC_AP_PLATFORM)
 if (APPLE)
     # public headers
@@ -23,28 +25,28 @@ if (APPLE)
 else()
     # public headers
     file(GLOB PUB_HEADERS
-        aps.h
-        ap_export.h
-        ap_config.h
-        ap_handler.h
-        ap_server.h
-        ap_session.h
-        ap_types.h
+        ../include/aps.h
+        ../include/ap_export.h
+        ../include/ap_config.h
+        ../include/ap_handler.h
+        ../include/ap_server.h
+        ../include/ap_session.h
+        ../include/ap_types.h
     )
 endif()
 
 # Source files
 file(GLOB SRC_AP
-    aps.h
+    ../include/aps.h
+    ../include/ap_export.h
+    ../include/ap_server.h
+    ../include/ap_config.h
+    ../include/ap_handler.h
+    ../include/ap_session.h
+    ../include/ap_types.h
     aps.cpp
-    ap_export.h
-    ap_server.h
-    ap_server.cpp
-    ap_config.h
     ap_config.cpp
-    ap_handler.h
-    ap_session.h
-    ap_types.h
+    ap_server.cpp
 )
 source_group("ap" FILES ${SRC_AP})
 
@@ -138,6 +140,12 @@ add_library(${PROJECT_NAME} ${APS_LIBRARY_TYPE}
     ${SRC_UTILS}
 )
 
+target_include_directories(${PROJECT_NAME}
+    PUBLIC
+        .
+        ../include
+)
+
 set(APS_SDK_OUT ${CMAKE_BINARY_DIR}/output)
 set_target_properties(${PROJECT_NAME} PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${APS_SDK_OUT}/lib"
@@ -189,3 +197,7 @@ elseif (LINUX)
         dns_sd
     )
 endif()
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    FOLDER apsdk
+)
