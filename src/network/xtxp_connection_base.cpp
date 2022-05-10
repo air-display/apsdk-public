@@ -1,4 +1,4 @@
-#include <network/xtxp_connection_base.h>
+﻿#include <network/xtxp_connection_base.h>
 
 namespace aps {
 namespace network {
@@ -161,7 +161,7 @@ void xtxp_connection_base::on_message_head_received(const asio::error_code &e, s
     return;
   }
 
-  int content_length = is_reversed_ ? response_.content_length : request_.content_length;
+  size_t content_length = is_reversed_ ? response_.content_length : request_.content_length;
 
   if (content_length == 0) {
     // This is a head only message, process and prepare to read next one

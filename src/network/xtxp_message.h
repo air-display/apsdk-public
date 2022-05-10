@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <cstdint>
 #include <cstring>
 #include <iterator>
@@ -40,7 +40,7 @@ typedef std::map<std::string, std::string> header_map;
 class xtxp_message {
 public:
   std::string scheme_version;
-  int content_length;
+  size_t content_length;
   std::string content_type;
   header_map headers;
   std::vector<uint8_t> content;

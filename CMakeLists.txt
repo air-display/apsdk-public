@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.18)
 project(apsdk)
 
 option(BUILD_APS_DEMO "Build the demo project" OFF)
+option(BUILD_APS_STATIC "Build as static library" OFF)
 
 message(STATUS "++++++++++ Current build target system:" ${CMAKE_SYSTEM_NAME})
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
