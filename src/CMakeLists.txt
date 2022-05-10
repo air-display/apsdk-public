@@ -138,8 +138,8 @@ endif ()
 if (WINDOWS)
     set(CMAKE_CXX_STANDARD 17)
     target_compile_definitions(${PROJECT_NAME} 
-        PRIVATE_HEADER  
-        -D_CRT_SECURE_NO_WARNINGS
+        PRIVATE 
+            -D_CRT_SECURE_NO_WARNINGS
     )
 endif ()
 
