@@ -105,19 +105,6 @@ elseif (ANDROID)
 endif()
 source_group("utils" FILES ${SRC_UTILS})
 
-if (WINDOWS)
-    set(CMAKE_CXX_STANDARD 17)
-    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-    set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-elseif (LINUX)
-    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-elseif (ANDROID)
-    add_definitions(-DAPS_STATIC_LIB)
-elseif (MACOSX)
-elseif (IOS)
-endif()
-
 if (BUILD_APS_STATIC)
     set(APS_LIBRARY_TYPE STATIC)
 else ()
@@ -140,12 +127,31 @@ if (BUILD_APS_STATIC)
     target_compile_definitions(${PROJECT_NAME}
         PRIVATE
             -DAPS_STATIC_LIB
-        )
+    )
 else ()
     target_compile_definitions(${PROJECT_NAME}
         PRIVATE
             -Daps_EXPORTS
-        )
+    )
+endif ()
+
+if (WINDOWS)
+    set(CMAKE_CXX_STANDARD 17)
+    target_compile_definitions(${PROJECT_NAME} 
+        PRIVATE_HEADER  
+        -D_CRT_SECURE_NO_WARNINGS
+    )
+endif ()
+
+if (LINUX)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif()
+
+if (APPLE)
+    target_compile_definitions(${PROJECT_NAME}
+        PRIVATE
+            -DAPS_STATIC_LIB
+    )
 endif ()
 
 target_include_directories(${PROJECT_NAME}
