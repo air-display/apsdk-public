@@ -13,10 +13,9 @@ if (APPLE)
         ${AP_PLATFORM_SOURCE}/apple/APAirPlayCastingDelegate.h
 
     )
+    source_group("include" FILES ${PUB_HEADERS})
 
     file(GLOB SRC_AP_PLATFORM
-        ${AP_PLATFORM_SOURCE}/apple/*.h
-        ${AP_PLATFORM_SOURCE}/apple/*.hpp
         ${AP_PLATFORM_SOURCE}/apple/*.m
         ${AP_PLATFORM_SOURCE}/apple/*.mm
     )
@@ -33,17 +32,11 @@ else()
         ../include/ap_session.h
         ../include/ap_types.h
     )
+    source_group("include" FILES ${PUB_HEADERS})
 endif()
 
 # Source files
 file(GLOB SRC_AP
-    ../include/aps.h
-    ../include/ap_export.h
-    ../include/ap_server.h
-    ../include/ap_config.h
-    ../include/ap_handler.h
-    ../include/ap_session.h
-    ../include/ap_types.h
     aps.cpp
     ap_config.cpp
     ap_server.cpp
@@ -131,6 +124,7 @@ add_definitions(-Daps_EXPORTS)
 
 # Output
 add_library(${PROJECT_NAME} ${APS_LIBRARY_TYPE}
+    ${PUB_HEADERS}
     ${SRC_AP_PLATFORM}
     ${SRC_AP}
     ${SRC_CRYPTO}
