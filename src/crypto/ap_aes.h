@@ -3,6 +3,7 @@
 #pragma once
 
 #include <array>
+#include <cstdint>
 
 #include <opensslaes/aes.h>
 
