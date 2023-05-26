@@ -5,7 +5,7 @@
 #include <curve25519/curve25519-donna.h>
 #include <ed25519/ed25519.h>
 #include <ed25519/sha512.h>
-#include <playfair/playfair.h>
+#include <fairplay/fairplay.h>
 #include <utils/utils.h>
 
 #include "ap_crypto.h"
@@ -115,10 +115,7 @@ bool aps::ap_crypto::verify_pair_signature(const uint8_t *p, uint64_t len) {
   return ed25519_verify(plain_signature.data(), message.data(), message.size(), client_ed_public_key_.data());
 }
 
-void aps::ap_crypto::fp_setup(const uint8_t mode, uint8_t *content) {
-  uint8_t *pos = (uint8_t *)&(reply_message[mode]);
-  memcpy(content, pos, 142);
-}
+void aps::ap_crypto::fp_setup(const uint8_t mode, uint8_t *content) { fairplay_setup(mode, content); }
 
 void aps::ap_crypto::fp_handshake(uint8_t *content, const uint8_t *keymsg, const uint32_t len) {
   if (!keymsg)
@@ -126,13 +123,11 @@ void aps::ap_crypto::fp_handshake(uint8_t *content, const uint8_t *keymsg, const
 
   this->fp_key_message_.assign(keymsg, keymsg + len);
 
-  uint8_t *pos = (uint8_t *)&(fp_header);
-  memcpy(content, pos, 12);
-  memcpy(content + 12, &keymsg[144], 20);
+  fairplay_handshake(&keymsg[144], content);
 }
 
 void aps::ap_crypto::fp_decrypt(const uint8_t *key, uint8_t *out) {
-  playfair_decrypt(fp_key_message_.data(), (uint8_t *)key, out);
+  fairplay_decrypt(fp_key_message_.data(), (uint8_t *)key, out);
 }
 
 void aps::ap_crypto::init_client_aes_info(const uint8_t *piv, uint64_t iv_len, const uint8_t *pkey, uint64_t key_len) {

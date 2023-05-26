@@ -1,0 +1,3 @@
+[submodule "third-party/fairplay/details"]
+	path = third-party/fairplay/details
+	url = https://github.com/air-display/fairplay.git

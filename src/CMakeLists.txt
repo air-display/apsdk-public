@@ -1,7 +1,8 @@
 project(aps)
 
 set(SRC_AP_PLATFORM)
-if (APPLE)
+
+if(APPLE)
     # public headers
     file(GLOB PUB_HEADERS
         ${AP_PLATFORM_SOURCE}/apple/APSDK.h
@@ -11,7 +12,6 @@ if (APPLE)
         ${AP_PLATFORM_SOURCE}/apple/APAirPlaySessionDelegate.h
         ${AP_PLATFORM_SOURCE}/apple/APAirPlayMirroringDelegate.h
         ${AP_PLATFORM_SOURCE}/apple/APAirPlayCastingDelegate.h
-
     )
     source_group("include" FILES ${PUB_HEADERS})
 
@@ -53,25 +53,27 @@ file(GLOB SRC_MDNS
     mdns/*.h
     mdns/*.cpp
 )
-if (WINDOWS)
+
+if(WINDOWS)
     list(APPEND SRC_MDNS
         mdns/dns_sd.h
         mdns/Windows/net_service_impl.cpp
     )
-elseif (APPLE)
+elseif(APPLE)
     list(APPEND SRC_MDNS
         mdns/macOS/net_service_impl.mm
     )
-elseif (ANDROID)
+elseif(ANDROID)
     list(APPEND SRC_MDNS
         mdns/dns_sd.h
         mdns/Android/net_service_impl.cpp
     )
-elseif (LINUX)
+elseif(LINUX)
     list(APPEND SRC_MDNS
         mdns/Linux/net_service_impl.cpp
     )
 endif()
+
 source_group("mdns" FILES ${SRC_MDNS})
 
 file(GLOB SRC_NETWORK
@@ -90,26 +92,28 @@ file(GLOB SRC_UTILS
     utils/*.h
     utils/*.cpp
 )
-if (WIN32)
+
+if(WIN32)
     list(APPEND SRC_UTILS
         utils/Windows/utils_impl.cpp
     )
-elseif (APPLE)
+elseif(APPLE)
     list(APPEND SRC_UTILS
         utils/macOS/utils_impl.cpp
     )
-elseif (ANDROID)
+elseif(ANDROID)
     list(APPEND SRC_UTILS
         utils/Android/utils_impl.cpp
     )
 endif()
+
 source_group("utils" FILES ${SRC_UTILS})
 
-if (BUILD_APS_STATIC)
+if(BUILD_APS_STATIC)
     set(APS_LIBRARY_TYPE STATIC)
-else ()
+else()
     set(APS_LIBRARY_TYPE SHARED)
-endif ()
+endif()
 
 # Output
 add_library(${PROJECT_NAME} ${APS_LIBRARY_TYPE}
@@ -123,41 +127,41 @@ add_library(${PROJECT_NAME} ${APS_LIBRARY_TYPE}
     ${SRC_UTILS}
 )
 
-if (BUILD_APS_STATIC)
+if(BUILD_APS_STATIC)
     target_compile_definitions(${PROJECT_NAME}
         PRIVATE
-            -DAPS_STATIC_LIB
+        -DAPS_STATIC_LIB
     )
-else ()
+else()
     target_compile_definitions(${PROJECT_NAME}
         PRIVATE
-            -Daps_EXPORTS
+        -Daps_EXPORTS
     )
-endif ()
+endif()
 
-if (WINDOWS)
+if(WINDOWS)
     set(CMAKE_CXX_STANDARD 17)
-    target_compile_definitions(${PROJECT_NAME} 
-        PRIVATE 
-            -D_CRT_SECURE_NO_WARNINGS
+    target_compile_definitions(${PROJECT_NAME}
+        PRIVATE
+        -D_CRT_SECURE_NO_WARNINGS
     )
-endif ()
+endif()
 
-if (LINUX)
+if(LINUX)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
-if (APPLE)
+if(APPLE)
     target_compile_definitions(${PROJECT_NAME}
         PRIVATE
-            -DAPS_STATIC_LIB
+        -DAPS_STATIC_LIB
     )
-endif ()
+endif()
 
 target_include_directories(${PROJECT_NAME}
     PUBLIC
-        .
-        ../include
+    .
+    ../include
 )
 
 set(APS_SDK_OUT ${CMAKE_BINARY_DIR}/output)
@@ -167,14 +171,14 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${APS_SDK_OUT}/bin"
 )
 
-if (APPLE)
+if(APPLE)
     message(STATUS "++++++++++ adding configs for APPLE target systems")
 
     # Build framework
     set_target_properties(${PROJECT_NAME} PROPERTIES
-            FRAMEWORK TRUE
-            PUBLIC_HEADER "${PUB_HEADERS}"
-        )
+        FRAMEWORK TRUE
+        PUBLIC_HEADER "${PUB_HEADERS}"
+    )
 endif()
 
 add_dependencies(${PROJECT_NAME}
@@ -182,31 +186,33 @@ add_dependencies(${PROJECT_NAME}
     ed25519
     hlsparser
     opensslaes
-    playfair
+    fairplay
 )
 
 target_link_libraries(${PROJECT_NAME}
     PUBLIC
-        curve25519
-        ed25519
-        hlsparser
-        opensslaes
-        playfair
+    curve25519
+    ed25519
+    hlsparser
+    opensslaes
+    fairplay
 )
 
 # Dependencies
-if (APPLE)
+if(APPLE)
     message(STATUS "++++++++++ adding dependencies for APPLE target systems")
     find_library(FOUNDATION_FX Foundation)
-    if (NOT FOUNDATION_FX)
+
+    if(NOT FOUNDATION_FX)
         message(FATAL_ERROR "Foundation.Framework not found")
     endif()
+
     target_link_libraries(${PROJECT_NAME} PUBLIC ${FOUNDATION_FX})
-elseif (ANDROID)
+elseif(ANDROID)
     target_link_libraries(${PROJECT_NAME} PUBLIC mdnssd log)
-elseif (LINUX)
+elseif(LINUX)
     # pthread is required by asio standalone
-    target_link_libraries(${PROJECT_NAME} PUBLIC 
+    target_link_libraries(${PROJECT_NAME} PUBLIC
         pthread
         dns_sd
     )

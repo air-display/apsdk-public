@@ -1,6 +1,6 @@
 README
 ===========================
-APS(Airplay Server) is an complete implementation of Airplay server including screen mirroring and video streaming. And this project is written for cross-platform.
+APS(Airplay Server) is a complete implementation of Airplay server including screen mirroring and video streaming. And this project is written for cross-platform.
 
 | Platform | Master |
 | --- |  :---: |
@@ -9,6 +9,9 @@ APS(Airplay Server) is an complete implementation of Airplay server including sc
 | **macOS**   | [![Build on macOS](https://github.com/air-display/apsdk/actions/workflows/build-macos.yml/badge.svg)](https://github.com/air-display/apsdk/actions/workflows/build-macos.yml) |
 | **iOS**     | [![Build on iOS](https://github.com/air-display/apsdk/actions/workflows/build-ios.yml/badge.svg)](https://github.com/air-display/apsdk/actions/workflows/build-ios.yml) |
 | **Linux**   | [![Build on Linux](https://github.com/air-display/apsdk/actions/workflows/build-linux.yml/badge.svg)](https://github.com/air-display/apsdk/actions/workflows/build-linux.yml) |
+
+# About fairplay
+This project includes a submodule named [fairplay](https://github.com/air-display/fairplay) located in [third-party\fairplay](third-party\fairplay). Because the [fairplay](https://github.com/air-display/fairplay) project is currently private, if you perform submodule updating, you will get permission errors. Actually you can build apsdk project without this submodule (obviously it will not work because apsdk will use empty implementation).
 
 # Windows
 ## Dependencies: 
@@ -49,7 +52,7 @@ sudo apt-get install libavahi-compat-libdnssd-dev
 ```
 
 ## Build instructions:
-Run the generate_linux_proj.bat to generate the project files. Build the xCode project.
+Run the generate_linux_proj.bat to generate the GUN make files.
 
 ## Runtime requirements
 [avahi-packages](https://launchpad.net/ubuntu/+source/avahi) are needed, at least the following pacakges are installed:

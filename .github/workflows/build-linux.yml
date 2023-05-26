@@ -2,9 +2,9 @@ name: Build on Linux
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -22,7 +22,7 @@ jobs:
       - name: Checkout Source
         uses: actions/checkout@v2
         with:
-          submodules: 'true'
+          submodules: 'false'
 
       - name: Install libavahi
         run: sudo apt-get install libavahi-compat-libdnssd-dev

@@ -1,0 +1,31 @@
+﻿/**
+ * @file fairplay.c.in.c
+ * @author Sheen Tian Shen (sheentianshen@gmail.com)
+ * @brief Sample file of fairplay implementation
+ * @date 2023-05-27
+ *
+ * @copyright Copyright (c) 2023
+ *
+ */
+#include <stdint.h>
+
+void fairplay_setup(const uint8_t mode, uint8_t *out) {
+  // TO-DO
+  // This is a just a sample file for fairplay implementation,
+  // If you are interested in the real work implementation please
+  // reach out to me
+}
+
+void fairplay_handshake(const uint8_t *key_msg, uint8_t *out) {
+  // TO-DO
+  // This is a just a sample file for fairplay implementation,
+  // If you are interested in the real work implementation please
+  // reach out to me
+}
+
+void fairplay_decrypt(uint8_t *message, uint8_t *cipher_text, uint8_t *out) {
+  // TO-DO
+  // This is a just a sample file for fairplay implementation,
+  // If you are interested in the real work implementation please
+  // reach out to me
+}
