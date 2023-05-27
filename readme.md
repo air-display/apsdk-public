@@ -2,7 +2,7 @@ README
 ===========================
 APS(Airplay Server) is a complete implementation of Airplay server including screen mirroring and video streaming. And this project is written for cross-platform.
 
-| Platform | Master |
+| Platform | Build Status |
 | --- |  :---: |
 | **Windows** | [![Build on Windows](https://github.com/air-display/apsdk/actions/workflows/build-windows.yml/badge.svg)](https://github.com/air-display/apsdk/actions/workflows/build-windows.yml) |
 | **Android** | [![Build on Android](https://github.com/air-display/apsdk/actions/workflows/build-android.yml/badge.svg)](https://github.com/air-display/apsdk/actions/workflows/build-android.yml) |
