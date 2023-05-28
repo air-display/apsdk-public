@@ -1,5 +1,8 @@
-README
+About APSDK
 ===========================
+
+**请注意本项目的所遵循的开源协议-GPL**
+
 APS(Airplay Server) is a complete implementation of Airplay server including screen mirroring and video streaming. And this project is written for cross-platform.
 
 | Platform | Build Status |
