@@ -1,9 +1,4 @@
-//
-//  APAirPlayService.m
-//  AirDisplay
-//
-//  Created by Sheen Tian on 2021/7/13.
-//
+
 
 #import "APAirPlayServer.h"
 #import "APAirPlayConfig+internal.h"

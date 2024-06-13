@@ -1,9 +1,4 @@
-//
-//  APAirPlayConfig.m
-//  AirDisplay
-//
-//  Created by Sheen Tian on 2021/7/13.
-//
+
 
 #include <sys/time.h>
 

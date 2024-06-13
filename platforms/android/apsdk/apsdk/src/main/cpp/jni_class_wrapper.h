@@ -1,6 +1,23 @@
-//
-// Created by shiontian on 11/11/2018.
-//
+/*
+ *  File: jni_class_wrapper.h
+ *  Project: apsdk
+ *  Created: Oct 25, 2018
+ *  Author: Sheen Tian
+ *
+ *  This file is part of apsdk (https://github.com/air-display/apsdk-public)
+ *  Copyright (C) 2018-2024 Sheen Tian
+ *
+ *  apsdk is free software: you can redistribute it and/or modify it under the terms
+ *  of the GNU General Public License as published by the Free Software Foundation,
+ *  either version 3 of the License, or (at your option) any later version.
+ *
+ *  apsdk is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *  See the GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with Foobar.
+ *  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #ifndef JNI_CLASS_WRAPPER_H
 #define JNI_CLASS_WRAPPER_H
@@ -9,7 +26,7 @@
 #include <jni_class_loader.h>
 #include <mutex>
 
-template<const char *CLS> class jni_class_meta {
+template <const char *CLS> class jni_class_meta {
 protected:
   static jclass get_class(JNIEnv *env) {
     static jclass clz_ = 0;
@@ -17,10 +34,9 @@ protected:
       return clz_;
     clz_ = jni_class_loader::get().find_class(CLS, env);
     if (clz_) {
-      clz_ = (jclass) env->NewGlobalRef(clz_);
+      clz_ = (jclass)env->NewGlobalRef(clz_);
     } else {
-      __android_log_print(ANDROID_LOG_ERROR, LOG_TAG,
-                          "Failed to find class: %s", CLS);
+      __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Failed to find class: %s", CLS);
     }
     return clz_;
   }
@@ -33,25 +49,23 @@ protected:
     if (clz) {
       constructor_ = env->GetMethodID(clz, "<init>", "()V");
       if (!constructor_) {
-        __android_log_print(ANDROID_LOG_ERROR, LOG_TAG,
-                            "Failed to find constructor of class:%s", CLS);
+        __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Failed to find constructor of class:%s", CLS);
       }
     }
     return constructor_;
   }
 };
 
-#define GET_METHOD_ID(name, sig)                                               \
-  static jmethodID mid = env->GetMethodID(get_class(env), #name, sig);         \
-  if (!mid)                                                                    \
-    mid = env->GetMethodID(get_class(env), #name, sig);                        \
+#define GET_METHOD_ID(name, sig)                                                                                       \
+  static jmethodID mid = env->GetMethodID(get_class(env), #name, sig);                                                 \
+  if (!mid)                                                                                                            \
+    mid = env->GetMethodID(get_class(env), #name, sig);                                                                \
   ;
 
-template<typename T, const char *CLS>
-class jni_meta_object : public jni_class_meta<CLS> {
+template <typename T, const char *CLS> class jni_meta_object : public jni_class_meta<CLS> {
 public:
   static T *attach(JNIEnv *env, jobject o) {
-    T *p = new (std::nothrow)T(env);
+    T *p = new (std::nothrow) T(env);
     if (p) {
       p->jvm_obj_ = env->NewGlobalRef(o);
     }
@@ -61,7 +75,7 @@ public:
   static void destroy(JNIEnv *env, jobject o) {
     T *p = T::get(env, o);
     jobject ref = p->jvm_obj_;
-    delete (T *) ((void *) (p));
+    delete (T *)((void *)(p));
     if (ref) {
       env->DeleteGlobalRef(ref);
     }
@@ -80,45 +94,42 @@ typedef jboolean Boolean;
 typedef jbyte Byte;
 typedef jobject Object;
 
-#define WRAPPER_CLASS_BEGIN(c, p)                                              \
-  static const char c##_cls[] = p;                                             \
-  class c : public jni_class_meta<c##_cls> {                                   \
-  public:                                                                      \
-    ~c() {}                                                                    \
-    static c attach(JNIEnv *env, jobject obj) { return c(env, obj); }          \
-    static c create(JNIEnv *env) {                                             \
-      jobject obj =                                                            \
-          env->NewObject(jni_class_meta<c##_cls>::get_class(env),              \
-                         jni_class_meta<c##_cls>::get_constructor(env));       \
-      return c(env, obj);                                                      \
-    }                                                                          \
-    jobject get() { return obj_; }                                             \
-                                                                               \
-  protected:                                                                   \
-    JNIEnv *env_;                                                              \
-    jobject obj_;                                                              \
+#define WRAPPER_CLASS_BEGIN(c, p)                                                                                      \
+  static const char c##_cls[] = p;                                                                                     \
+  class c : public jni_class_meta<c##_cls> {                                                                           \
+  public:                                                                                                              \
+    ~c() {}                                                                                                            \
+    static c attach(JNIEnv *env, jobject obj) { return c(env, obj); }                                                  \
+    static c create(JNIEnv *env) {                                                                                     \
+      jobject obj =                                                                                                    \
+          env->NewObject(jni_class_meta<c##_cls>::get_class(env), jni_class_meta<c##_cls>::get_constructor(env));      \
+      return c(env, obj);                                                                                              \
+    }                                                                                                                  \
+    jobject get() { return obj_; }                                                                                     \
+                                                                                                                       \
+  protected:                                                                                                           \
+    JNIEnv *env_;                                                                                                      \
+    jobject obj_;                                                                                                      \
     c(JNIEnv *env, jobject obj) : env_(env), obj_(obj) {}
 
-#define WRAPPER_CLASS_END()                                                    \
-  }                                                                            \
+#define WRAPPER_CLASS_END()                                                                                            \
+  }                                                                                                                    \
   ;
 
-#define FIELD(x, t, s)                                                         \
-public:                                                                        \
-  t x() const {                                                                \
-    static jfieldID fid = env_->GetFieldID(get_class(env_), #x, s);            \
-    return env_->Get##t##Field(obj_, fid);                                     \
-  }                                                                            \
-  void x(t v) {                                                                \
-    static jfieldID fid = env_->GetFieldID(get_class(env_), #x, s);            \
-    env_->Set##t##Field(obj_, fid, v);                                         \
+#define FIELD(x, t, s)                                                                                                 \
+public:                                                                                                                \
+  t x() const {                                                                                                        \
+    static jfieldID fid = env_->GetFieldID(get_class(env_), #x, s);                                                    \
+    return env_->Get##t##Field(obj_, fid);                                                                             \
+  }                                                                                                                    \
+  void x(t v) {                                                                                                        \
+    static jfieldID fid = env_->GetFieldID(get_class(env_), #x, s);                                                    \
+    env_->Set##t##Field(obj_, fid, v);                                                                                 \
   }
 
 class String {
 public:
-  static String attach(JNIEnv *env, jstring obj, bool auto_release = true) {
-    return String(env, obj, auto_release);
-  }
+  static String attach(JNIEnv *env, jstring obj, bool auto_release = true) { return String(env, obj, auto_release); }
 
   static String fromUTF8(JNIEnv *env, const char *s) {
     jstring obj = env->NewStringUTF(s);
@@ -136,7 +147,7 @@ protected:
   String(JNIEnv *env, jstring obj, bool auto_release) : env_(env), obj_(obj) {}
 };
 
-template<typename T> class LocalJvmObject : public T {
+template <typename T> class LocalJvmObject : public T {
 public:
   LocalJvmObject(const T &other) : T(other) {}
 
