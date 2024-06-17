@@ -857,7 +857,7 @@ void ap_airplay_connection::post_action_handler(const request &req, response &re
     }
 
     res.with_content_type(TEXT_APPLE_PLIST_XML).with_content(ERROR_STATUS_RESPONSE);
-  } else if (0 == compare_string_no_case(type, "playlistInster")) {
+  } else if (0 == compare_string_no_case(type, "playlistInsert")) {
     LOGD() << "Action type: " << type << ". Add new playback.";
 
   } else if (0 == compare_string_no_case(type, "playlistRemove")) {
