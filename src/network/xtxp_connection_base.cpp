@@ -55,7 +55,7 @@ void request_route_table::register_request_route(const request_route_t &route) {
   }
 }
 
-request_hanlder request_route_table::query_handler(const request &req, error_code &ec) {
+request_handler request_route_table::query_handler(const request &req, error_code &ec) {
   std::lock_guard<std::mutex> l(mtx_);
 
   std::string scheme;
@@ -64,7 +64,7 @@ request_hanlder request_route_table::query_handler(const request &req, error_cod
     scheme = req.scheme_version.substr(0, index);
   }
 
-  request_hanlder handler;
+  request_handler handler;
 
   auto it_scheme_method = route_table_.find(scheme);
   if (it_scheme_method == route_table_.end()) {

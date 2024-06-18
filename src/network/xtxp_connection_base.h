@@ -36,12 +36,12 @@ namespace network {
 /// <summary>
 ///
 /// </summary>
-typedef std::function<void(const request &req, response &res)> request_hanlder;
+typedef std::function<void(const request &req, response &res)> request_handler;
 
 /// <summary>
 /// path -> handler
 /// </summary>
-typedef std::map<std::string, request_hanlder> path_map;
+typedef std::map<std::string, request_handler> path_map;
 
 /// <summary>
 /// method -> path table
@@ -57,7 +57,7 @@ struct request_route_s {
   std::string scheme;
   std::string method;
   std::string path;
-  request_hanlder handler;
+  request_handler handler;
 };
 typedef request_route_s request_route_t;
 
@@ -80,7 +80,7 @@ public:
 
   void register_request_route(const request_route_t &route);
 
-  request_hanlder query_handler(const request &req, error_code &ec);
+  request_handler query_handler(const request &req, error_code &ec);
 
 private:
   route_table route_table_;

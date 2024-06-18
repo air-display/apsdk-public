@@ -62,7 +62,7 @@ public:
 
   void set_config(ap_config_ptr &config) { ap_config_ = config; }
 
-  void set_handler(ap_handler_ptr hanlder) { ap_handler_ = hanlder; }
+  void set_handler(ap_handler_ptr handler) { ap_handler_ = handler; }
 
   bool start() {
     if (airplay_tcp_service_)
@@ -192,7 +192,7 @@ ap_server::~ap_server() {
 
 void ap_server::set_config(ap_config_ptr &config) { impl_->set_config(config); }
 
-void ap_server::set_handler(ap_handler_ptr &hanlder) { impl_->set_handler(hanlder); }
+void ap_server::set_handler(ap_handler_ptr &handler) { impl_->set_handler(handler); }
 
 bool aps::ap_server::start() { return impl_->start(); }
 

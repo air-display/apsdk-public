@@ -48,7 +48,7 @@ protected:
   ~ap_casting_event_connection_manager();
 
 private:
-  event_connection_map even_connection_map_;
+  event_connection_map event_connection_map_;
   std::mutex mtx_;
 };
 
