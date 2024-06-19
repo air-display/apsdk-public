@@ -176,7 +176,7 @@ public:
 
   ~ap_airplay_service();
 
-  void set_handler(ap_handler_ptr &hanlder);
+  void set_handler(ap_handler_ptr &handler);
 
 protected:
   virtual tcp_connection_ptr prepare_new_connection() override;

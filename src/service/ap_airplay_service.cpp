@@ -42,14 +42,14 @@ using namespace aps::service::details;
 
 namespace aps {
 namespace service {
-ap_airplay_connection::ap_airplay_connection(asio::io_context &io_ctx, ap_config_ptr &config, ap_handler_ptr &hanlder,
+ap_airplay_connection::ap_airplay_connection(asio::io_context &io_ctx, ap_config_ptr &config, ap_handler_ptr &handler,
                                              tcp_service_weak_ptr service)
     : xtxp_connection_base(io_ctx)
     , session_id_(0)
     , session_type_(unknown_session)
     , start_pos_in_ms_(0)
     , config_(config)
-    , handler_(hanlder)
+    , handler_(handler)
     , service_(std::move(service))
     , mirroring_session_handler_(nullptr)
     , video_session_handler_(nullptr) {
@@ -1168,7 +1168,7 @@ ap_airplay_service::ap_airplay_service(ap_config_ptr &config, uint16_t port /*= 
 
 ap_airplay_service::~ap_airplay_service() = default;
 
-void ap_airplay_service::set_handler(ap_handler_ptr &hanlder) { handler_ = hanlder; }
+void ap_airplay_service::set_handler(ap_handler_ptr &handler) { handler_ = handler; }
 
 tcp_connection_ptr ap_airplay_service::prepare_new_connection() {
   return std::make_shared<ap_airplay_connection>(io_context(), config_, handler_, shared_from_this());

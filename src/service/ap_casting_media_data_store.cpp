@@ -31,7 +31,7 @@
 
 #if PERSIST_STREAM_DATA
 #include <filesystem>
-void create_serssion_folder(const std::string &session) { std::filesystem::create_directory(session); }
+void create_session_folder(const std::string &session) { std::filesystem::create_directory(session); }
 
 void create_resource_file(const std::string &session, const std::string &uri, const std::string &data) {
   std::string fn = generate_file_name();
@@ -69,7 +69,7 @@ bool ap_casting_media_data_store::request_media_data(const std::string &primary_
 
   if (id != e_app_unknown) {
 #if PERSIST_STREAM_DATA
-    create_serssion_folder(session_id);
+    create_session_folder(session_id);
 #endif
     app_id_ = id;
     session_id_ = session_id;
@@ -110,10 +110,10 @@ std::string ap_casting_media_data_store::process_media_data(const std::string &u
     media_data = adjust_primary_media_data(data);
   } else {
     // Adjust the secondary media data and cache it
-    media_data = adjust_secondary_meida_data(data);
+    media_data = adjust_secondary_media_data(data);
   }
 
-  std::string path = extrac_uri_path(uri);
+  std::string path = extract_uri_path(uri);
 
   if (!path.empty() && !media_data.empty()) {
     add_media_data(path, media_data);
@@ -236,7 +236,7 @@ std::string ap_casting_media_data_store::adjust_primary_uri(const std::string &u
   return s;
 }
 
-std::string ap_casting_media_data_store::extrac_uri_path(const std::string &uri) {
+std::string ap_casting_media_data_store::extract_uri_path(const std::string &uri) {
   std::string s = uri;
   switch (app_id_) {
   case e_app_youtube:
@@ -266,7 +266,7 @@ std::string ap_casting_media_data_store::adjust_primary_media_data(const std::st
   return data;
 }
 
-std::string ap_casting_media_data_store::adjust_secondary_meida_data(const std::string &data) {
+std::string ap_casting_media_data_store::adjust_secondary_media_data(const std::string &data) {
   std::string result = data;
 
   static std::regex youtube_pattern("#YT-EXT-CONDENSED-URL:BASE-URI=\"(.*)\",PARAMS=.*PREFIX=\"(.*)\"");
