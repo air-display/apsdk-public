@@ -92,14 +92,14 @@ std::string ap_casting_media_data_store::process_media_data(const std::string &u
 
         // Save all media uri
         media_list_t *media_item = &master_playlist.media;
-        while (media_item && media_item->data) {
+        while (media_item && media_item->data && media_item->data->uri) {
           uri_stack_.push(media_item->data->uri);
           media_item = media_item->next;
         }
 
         // Save all stream uri
         stream_inf_list_t *stream_item = &master_playlist.stream_infs;
-        while (stream_item && stream_item->data) {
+        while (stream_item && stream_item->data && stream_item->data->uri) {
           uri_stack_.push(stream_item->data->uri);
           stream_item = stream_item->next;
         }
