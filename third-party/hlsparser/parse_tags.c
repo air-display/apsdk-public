@@ -1441,8 +1441,7 @@ int parse_start(const char *src, size_t size, start_t *dest) {
     if (EQUAL(pt, TIMEOFFSET)) {
       ++pt; // get past the '=' sign
       float *value = dest ? &dest->time_offset : NULL;
-      (void)value;
-      pt += parse_str_to_float(pt, &dest->time_offset, size - (pt - src));
+      pt += parse_str_to_float(pt, value, size - (pt - src));
     } else if (EQUAL(pt, PRECISE)) {
       ++pt; // get past the '=' sign
       if (EQUAL(pt, YES)) {
